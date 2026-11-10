@@ -1,0 +1,32 @@
+{
+  "name": "novus-jobs-server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "start": "node dist/index.js",
+    "dev": "npm run build && node dist/index.js",
+    "test": "npm run build && node --test dist/**/*.test.js",
+    "linkedin:login": "npm run build && node dist/sources/linkedin-login.js",
+    "service:install": "npm run build && node dist/service/launchd.js install",
+    "service:uninstall": "node dist/service/launchd.js uninstall",
+    "service:restart": "node dist/service/launchd.js restart"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.8.0",
+    "@fastify/static": "^10.1.10",
+    "better-sqlite3": "^13.0.3",
+    "fastify": "^5.12.8",
+    "playwright": "^1.65.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^9.6.0",
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
+  }
+}
