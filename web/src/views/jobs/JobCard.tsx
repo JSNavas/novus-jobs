@@ -12,8 +12,9 @@ interface JobCardProps {
 }
 
 const statusActions: { status: JobStatus; label: string; variant: 'contained' | 'outlined' | 'text' }[] = [
-  { status: JobStatus.Saved, label: 'Guardar', variant: 'contained' },
+  { status: JobStatus.New, label: 'Marcar como nueva', variant: 'text' },
   { status: JobStatus.Seen, label: 'Marcar como vista', variant: 'outlined' },
+  { status: JobStatus.Saved, label: 'Guardar', variant: 'contained' },
   { status: JobStatus.Dismissed, label: 'Descartar', variant: 'text' },
 ];
 

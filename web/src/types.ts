@@ -34,11 +34,6 @@ export enum JobLocation {
   Unknown = 'unknown',
 }
 
-export enum RunTrigger {
-  Scheduled = 'scheduled',
-  Manual = 'manual',
-}
-
 export interface Job {
   id: number;
   source: string;
