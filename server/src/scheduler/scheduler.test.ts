@@ -64,6 +64,37 @@ describe('Scheduler', () => {
     assert.equal(runner.scheduled, 0);
   });
 
+  it('mientras se inicia sesión no se lanza nada, y la franja NO se marca', () => {
+    // La franja tiene que quedar pendiente: en cuanto termina el login, el tick
+    // siguiente la recupera. Marcarla aquí perdería la pasada del día.
+    const scheduler = schedulerAt('2026-11-10T17:20:00Z');
+    scheduler.pauseForLogin();
+    scheduler.tick();
+    assert.equal(runner.scheduled, 0);
+    assert.equal(store.read(), undefined);
+  });
+
+  it('al reanudar se recupera la franja que se perdió durante el login', () => {
+    const scheduler = schedulerAt('2026-11-10T17:20:00Z');
+    scheduler.pauseForLogin();
+    scheduler.tick();
+    scheduler.resume();
+    scheduler.tick();
+    assert.equal(runner.scheduled, 1);
+    assert.deepEqual(store.read(), { date: '2026-11-10', hour: 13 });
+  });
+
+  it('la pausa caduca sola: un login abandonado no apaga las pasadas para siempre', () => {
+    let clock = new Date('2026-11-10T17:20:00Z');
+    const scheduler = new Scheduler({ hours: [9, 13, 18], store, runner, clock: () => clock });
+    scheduler.pauseForLogin();
+    assert.equal(scheduler.isPaused(), true);
+    clock = new Date('2026-11-10T17:50:00Z'); // media hora después
+    assert.equal(scheduler.isPaused(), false);
+    scheduler.tick();
+    assert.equal(runner.scheduled, 1);
+  });
+
   it('LastPassStore devuelve undefined si el fichero no existe o está roto', () => {
     assert.equal(store.read(), undefined);
   });

@@ -38,12 +38,22 @@ interface SchedulerOptions {
 }
 
 /**
+ * Cuánto se pausan las pasadas mientras el señor inicia sesión a mano.
+ *
+ * Es un techo, no una espera: el login avisa al terminar y la pausa se levanta
+ * sola. El techo está para que un login que se abandone a medias —o un script
+ * que muera— no deje las pasadas apagadas para siempre.
+ */
+const LOGIN_PAUSE_MS = 15 * 60_000;
+
+/**
  * Ritmo de ARTIO: tick cada 10 minutos que solo comprueba si toca, sin leer
  * nada. Un tick ocupado no marca la franja, así que se reintenta en el siguiente.
  */
 export class Scheduler {
   private interval: ReturnType<typeof setInterval> | null = null;
   private startupTimer: ReturnType<typeof setTimeout> | null = null;
+  private pausedUntil: number | null = null;
   private readonly clock: () => Date;
 
   constructor(private readonly options: SchedulerOptions) {
@@ -63,7 +73,35 @@ export class Scheduler {
     this.startupTimer = null;
   }
 
+  /**
+   * Pausa las pasadas mientras hay una ventana de login abierta.
+   *
+   * Sin esto, el login y la pasada se pelean por el perfil: el señor abre la
+   * ventana, llega la franja de las 13:00, la pasada intenta arrancar su
+   * Chromium sobre el mismo perfil y falla — o peor, el señor cierra el login y
+   * la pasada se queda con una sesión a medio guardar.
+   *
+   * La franja NO se marca: si tocaba mirar y no se pudo, se recupera en el tick
+   * siguiente, que es exactamente lo que `shouldRunPass` sabe hacer.
+   */
+  pauseForLogin(): Date {
+    this.pausedUntil = this.clock().getTime() + LOGIN_PAUSE_MS;
+    console.log('[scheduler] pasadas pausadas mientras inicias sesión');
+    return new Date(this.pausedUntil);
+  }
+
+  resume(): void {
+    if (this.pausedUntil === null) return;
+    this.pausedUntil = null;
+    console.log('[scheduler] pasadas reanudadas');
+  }
+
+  isPaused(): boolean {
+    return this.pausedUntil !== null && this.clock().getTime() < this.pausedUntil;
+  }
+
   tick(): void {
+    if (this.isPaused()) return;
     const slot = shouldRunPass(toVet(this.clock()), this.options.hours, this.options.store.read());
     if (!slot) return;
     if (this.options.runner.isBusy()) return;

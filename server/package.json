@@ -11,8 +11,8 @@
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "start": "node dist/index.js",
     "dev": "npm run build && node dist/index.js",
-    "test": "npm run build && node --test dist/**/*.test.js",
-    "linkedin:login": "npm run build && node dist/sources/linkedin-login.js",
+    "test": "npm run build && node --test --test-reporter=spec \"dist/**/*.test.js\"",
+    "login": "npm run build && node dist/cli/login.js",
     "service:install": "npm run build && node dist/service/launchd.js install",
     "service:uninstall": "node dist/service/launchd.js uninstall",
     "service:restart": "node dist/service/launchd.js restart"

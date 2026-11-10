@@ -18,6 +18,8 @@ interface JobStats {
   new: number;
   saved: number;
   total: number;
+  /** Cuántas hay en cada estado. El menú lateral las enseña como contador. */
+  byStatus: Record<JobStatus, number>;
 }
 
 interface JobRow {
@@ -25,6 +27,7 @@ interface JobRow {
   source: string;
   fingerprint: string;
   title: string | null;
+  role: string | null;
   company: string | null;
   author: string | null;
   text: string;
@@ -45,7 +48,7 @@ interface JobRow {
   posted_at: string | null;
 }
 
-const JOB_COLUMNS = `id, source, fingerprint, title, company, author, text, url, location, location_kind,
+const JOB_COLUMNS = `id, source, fingerprint, title, role, company, author, text, url, location, location_kind,
   verdict, rejection_reason, seniority, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
   judge_status, status, found_at, posted_at`;
 
@@ -55,6 +58,7 @@ function toJob(row: JobRow): Job {
     source: row.source,
     fingerprint: row.fingerprint,
     title: row.title,
+    role: row.role,
     company: row.company,
     author: row.author,
     text: row.text,
@@ -82,10 +86,10 @@ export class JobsRepository {
   /** `true` si la oferta es nueva; `false` si esa huella ya estaba en la BD. */
   insert(job: NewJob): boolean {
     const result = this.db.prepare(`
-      INSERT OR IGNORE INTO jobs (source, fingerprint, title, company, author, text, url, location, location_kind,
+      INSERT OR IGNORE INTO jobs (source, fingerprint, title, role, company, author, text, url, location, location_kind,
         verdict, rejection_reason, seniority, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
         judge_status, status, found_at, posted_at)
-      VALUES (@source, @fingerprint, @title, @company, @author, @text, @url, @location, @locationKind,
+      VALUES (@source, @fingerprint, @title, @role, @company, @author, @text, @url, @location, @locationKind,
         @verdict, @rejectionReason, @seniority, @isAggregator, @isUncertain, @stackMatch, @applyUrl, @contactEmail,
         @judgeStatus, @status, @foundAt, @postedAt)
     `).run({
@@ -114,25 +118,51 @@ export class JobsRepository {
     return result.changes > 0 ? this.findById(id) : null;
   }
 
-  list(query: JobQuery): { items: Job[]; total: number } {
+  /**
+   * La lista, y además CUÁNTAS HAY EN CADA PESTAÑA con los mismos filtros.
+   *
+   * El recuento por seniority se calcula ignorando la pestaña elegida, y eso
+   * es el arreglo de un bug que se veía feo: el menú decía "1 nueva" y la
+   * lista salía vacía con un "No hay ofertas nuevas". Las dos cosas eran
+   * ciertas por separado —la única oferta era junior y estaba en la otra
+   * pestaña— pero juntas parecían un error. Un contador que no cuadra con lo
+   * que se ve debajo destruye la confianza en todo lo demás.
+   */
+  list(query: JobQuery): { items: Job[]; total: number; bySeniority: Record<JobSeniority, number> } {
     const { where, params } = this.buildWhere(query);
     const total = this.db.prepare<unknown[], { count: number }>(`SELECT COUNT(*) AS count FROM jobs ${where}`).get(...params)?.count ?? 0;
     const rows = this.db.prepare<unknown[], JobRow>(
       `SELECT ${JOB_COLUMNS} FROM jobs ${where} ORDER BY found_at DESC, id DESC LIMIT ? OFFSET ?`,
     ).all(...params, query.limit, query.offset);
-    return { items: rows.map(toJob), total };
+    return { items: rows.map(toJob), total, bySeniority: this.countBySeniority(query) };
   }
 
+  private countBySeniority(query: JobQuery): Record<JobSeniority, number> {
+    const { where, params } = this.buildWhere({ ...query, seniority: null });
+    const rows = this.db.prepare<unknown[], { seniority: JobSeniority; count: number }>(
+      `SELECT seniority, COUNT(*) AS count FROM jobs ${where} GROUP BY seniority`,
+    ).all(...params);
+    const counts = Object.fromEntries(Object.values(JobSeniority).map((s) => [s, 0])) as Record<JobSeniority, number>;
+    for (const row of rows) counts[row.seniority] = row.count;
+    return counts;
+  }
+
+  /**
+   * El resumen de la bandeja. Se cuenta por estado en una sola consulta y se
+   * rellenan los estados sin ninguna oferta: un contador que desaparece cuando
+   * vale cero hace dudar de si la lista está vacía o rota.
+   */
   stats(): JobStats {
-    const row = this.db.prepare<[], { fresh: number; saved: number; total: number }>(`
-      SELECT
-        COALESCE(SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END), 0) AS fresh,
-        COALESCE(SUM(CASE WHEN status = 'saved' THEN 1 ELSE 0 END), 0) AS saved,
-        COUNT(*) AS total
-      FROM jobs WHERE verdict = 'accepted'
-    `).get();
-    if (!row) return { new: 0, saved: 0, total: 0 };
-    return { new: row.fresh, saved: row.saved, total: row.total };
+    const rows = this.db.prepare<[], { status: JobStatus; count: number }>(
+      "SELECT status, COUNT(*) AS count FROM jobs WHERE verdict = 'accepted' GROUP BY status",
+    ).all();
+    const byStatus = Object.fromEntries(Object.values(JobStatus).map((s) => [s, 0])) as Record<JobStatus, number>;
+    let total = 0;
+    for (const row of rows) {
+      byStatus[row.status] = row.count;
+      total += row.count;
+    }
+    return { new: byStatus[JobStatus.New], saved: byStatus[JobStatus.Saved], total, byStatus };
   }
 
   private buildWhere(query: JobQuery): { where: string; params: Array<string | number> } {

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   source           TEXT    NOT NULL,
   fingerprint      TEXT    NOT NULL,
   title            TEXT,
+  role             TEXT,
   company          TEXT,
   author           TEXT,
   text             TEXT    NOT NULL,
@@ -47,6 +48,8 @@ CREATE TABLE IF NOT EXISTS runs (
   fetched     INTEGER NOT NULL DEFAULT 0,
   accepted    INTEGER NOT NULL DEFAULT 0,
   rejected    INTEGER NOT NULL DEFAULT 0,
-  error       TEXT
+  error       TEXT,
+  -- Sin CHECK a propósito: ver ensureColumn() en database.ts.
+  failure     TEXT
 );
 `;

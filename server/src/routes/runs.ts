@@ -3,6 +3,7 @@ import type { RunsRepository } from '../db/runs.repository.js';
 import type { Runner } from '../runner.js';
 import { RunRefusedError } from '../runner.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
+import { SCHEDULE_TIMEZONE } from '../scheduler/timing.js';
 import { optionalInteger, stringParams, type Result } from './parse.js';
 
 const DEFAULT_LIMIT = 20;
@@ -12,6 +13,7 @@ interface RunRoutesDeps {
   runs: RunsRepository;
   runner: Runner;
   scheduler: Scheduler;
+  hours: readonly number[];
 }
 
 function parseRunsLimit(raw: unknown): Result<number> {
@@ -19,6 +21,9 @@ function parseRunsLimit(raw: unknown): Result<number> {
 }
 
 export function registerRunRoutes(app: FastifyInstance, deps: RunRoutesDeps): void {
+  /** Cuándo busca, para que la interfaz no tenga que suponerlo. */
+  app.get('/api/schedule', () => ({ hours: deps.hours, timezone: SCHEDULE_TIMEZONE }));
+
   app.get('/api/runs', (request, reply) => {
     const limit = parseRunsLimit(request.query);
     if ('error' in limit) return reply.code(400).send({ error: limit.error });

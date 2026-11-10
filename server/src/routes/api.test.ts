@@ -5,9 +5,11 @@ import { join } from 'node:path';
 import { after, before, describe, it } from 'node:test';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.js';
+import { BrowserPool } from '../browser/session.js';
 import { openDatabase, type Db } from '../db/database.js';
 import { JobsRepository, type NewJob } from '../db/jobs.repository.js';
 import { RunsRepository } from '../db/runs.repository.js';
+import { Mailer } from '../notify/mailer.js';
 import { PROFILE } from '../profile/profile.js';
 import { Runner } from '../runner.js';
 import { LastPassStore, Scheduler } from '../scheduler/scheduler.js';
@@ -18,6 +20,7 @@ function newJob(overrides: Partial<NewJob>): NewJob {
     source: 'linkedin',
     fingerprint: 'fp-accepted',
     title: null,
+    role: null,
     company: null,
     author: 'Ana Pérez',
     text: 'Buscamos desarrollador TypeScript remoto desde Venezuela',
@@ -50,13 +53,14 @@ describe('API HTTP', () => {
     const runs = new RunsRepository(db);
     jobs.insert(newJob({}));
     jobs.insert(newJob({ fingerprint: 'fp-rejected', verdict: JobVerdict.Rejected, rejectionReason: 'presencial', contactEmail: null }));
-    const runner = new Runner({ sources: [], jobs, runs, judge: null, profile: PROFILE });
+    const runner = new Runner({ sources: [], jobs, runs, judge: null, profile: PROFILE, mailer: new Mailer(null), dashboardUrl: 'http://localhost/' });
     const scheduler = new Scheduler({
       hours: [9, 13, 18],
       store: new LastPassStore(join(dir, 'last-pass.json')),
       runner,
     });
-    app = await buildApp({ jobs, runs, runner, scheduler, webDist: null });
+    const pool = new BrowserPool(join(dir, 'profiles'), true);
+    app = await buildApp({ jobs, runs, runner, scheduler, pool, sources: [], scheduleHours: [9, 13, 18], gmailAccount: null, webDist: null });
   });
 
   after(async () => {
@@ -82,7 +86,7 @@ describe('API HTTP', () => {
   it('GET /api/jobs sin resultados es 200 con lista vacía', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/jobs?source=otra-fuente' });
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(res.json(), { items: [], total: 0 });
+    assert.deepEqual(res.json(), { items: [], total: 0, bySeniority: { regular: 0, junior: 0 } });
   });
 
   it('GET /api/jobs con un filtro inválido es 400', async () => {
@@ -112,7 +116,26 @@ describe('API HTTP', () => {
   it('GET /api/stats cuenta las aceptadas y lleva la última pasada', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/stats' });
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(res.json(), { new: 0, saved: 1, total: 1, lastRun: null });
+    assert.deepEqual(res.json(), {
+      new: 0, saved: 1, total: 1, lastRun: null,
+      byStatus: { new: 0, seen: 0, saved: 1, dismissed: 0 },
+    });
+  });
+
+  it('GET /api/jobs dice cuántas hay en CADA pestaña, no solo en la abierta', async () => {
+    // El bug: el menú decía "1 nueva" y la lista salía vacía porque la única
+    // oferta era junior y vivía en la otra pestaña.
+    const res = await app.inject({ method: 'GET', url: '/api/jobs?seniority=junior' });
+    assert.equal(res.statusCode, 200);
+    const body = res.json<{ items: unknown[]; total: number; bySeniority: Record<string, number> }>();
+    assert.equal(body.items.length, 0, 'no hay ninguna junior');
+    assert.deepEqual(body.bySeniority, { regular: 1, junior: 0 }, 'pero sí una en la otra pestaña');
+  });
+
+  it('GET /api/schedule dice las horas y la zona, para que la UI no las invente', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/schedule' });
+    assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.json(), { hours: [9, 13, 18], timezone: 'hora de Venezuela' });
   });
 
   it('GET /api/runs valida el límite', async () => {
@@ -132,6 +155,6 @@ describe('API HTTP', () => {
     assert.equal(first.json<{ trigger?: string; status: string }>().status, 'running');
     const second = await app.inject({ method: 'POST', url: '/api/runs' });
     assert.equal(second.statusCode, 409);
-    assert.match(second.json<{ error: string }>().error, /manual por hora|en curso/);
+    assert.match(second.json<{ error: string }>().error, /espera \d+ min|en curso/);
   });
 });
