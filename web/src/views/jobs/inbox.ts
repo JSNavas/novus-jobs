@@ -11,8 +11,7 @@ import { JobStatus } from '../../types';
  * (Vistas), te interesa (Guardadas) o no (Descartadas).
  */
 export interface InboxView {
-  /** `null` en "Todas": sin filtro de estado. */
-  status: JobStatus | null;
+  status: JobStatus;
   path: string;
   title: string;
   /** Qué significa esta lista, en una línea bajo el título. */
@@ -51,14 +50,19 @@ export const INBOX_VIEWS: readonly InboxView[] = [
     subtitle: 'Las que apartaste. No se borran: puedes devolverlas a nuevas',
     empty: 'Aquí van las que descartas. No se borran: puedes devolverlas a nuevas.',
   },
-  {
-    status: null,
-    path: '/todas',
-    title: 'Todas',
-    subtitle: 'Todas las ofertas que pasan tus reglas de perfil, en cualquier estado',
-    empty: 'Todavía no hay ninguna oferta guardada.',
-  },
 ];
+
+/**
+ * Dónde se enseña el número.
+ *
+ * Solo en Nuevas y Guardadas, que son las dos listas sobre las que se actúa:
+ * cuántas quedan por mirar y cuántas hay que trabajar. "Vistas" y
+ * "Descartadas" son el archivo — su número no cambia ninguna decisión, y un
+ * contador que nadie usa es ruido que compite con los que sí importan.
+ */
+export function showsCount(view: InboxView): boolean {
+  return view.status === JobStatus.New || view.status === JobStatus.Saved;
+}
 
 export function viewByPath(pathname: string): InboxView {
   return INBOX_VIEWS.find((v) => v.path === pathname) ?? INBOX_VIEWS[0]!;

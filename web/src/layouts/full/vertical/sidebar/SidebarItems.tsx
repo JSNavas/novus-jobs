@@ -1,13 +1,13 @@
 import { List, ListItemButton, ListItemIcon, ListItemText, ListSubheader } from '@mui/material';
 import {
-  IconArchive, IconBookmark, IconEye, IconInbox, IconLayoutList, type Icon as TablerIcon,
+  IconArchive, IconBookmark, IconEye, IconInbox, type Icon as TablerIcon,
 } from '@tabler/icons-react';
 import { NavLink } from 'react-router';
 import { getStats, type Stats } from '../../../../api/client';
 import { AppChip } from '../../../../components/ui';
 import { useEffect, useState } from 'react';
 import { JobStatus } from '../../../../types';
-import { INBOX_VIEWS } from '../../../../views/jobs/inbox';
+import { INBOX_VIEWS, showsCount } from '../../../../views/jobs/inbox';
 
 /**
  * El menú ES el mapa de la bandeja: una entrada por estado, con su contador.
@@ -22,7 +22,6 @@ const ICONS: Record<string, TablerIcon> = {
   '/vistas': IconEye,
   '/guardadas': IconBookmark,
   '/descartadas': IconArchive,
-  '/todas': IconLayoutList,
 };
 
 /** Cada cuánto se refrescan los contadores. El mismo ritmo que el dashboard. */
@@ -49,16 +48,16 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
     return () => { cancelled = true; clearInterval(timer); };
   }, []);
 
-  const countOf = (status: JobStatus | null): number | null => {
-    if (!stats) return null;
-    return status ? stats.byStatus[status] : stats.total;
+  const countOf = (view: (typeof INBOX_VIEWS)[number]): number | null => {
+    if (!stats || !showsCount(view)) return null;
+    return stats.byStatus[view.status];
   };
 
   return (
     <List sx={{ px: 2 }} subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>Ofertas</ListSubheader>}>
       {INBOX_VIEWS.map((view) => {
         const Icon = ICONS[view.path] ?? IconInbox;
-        const count = countOf(view.status);
+        const count = countOf(view);
         return (
           <ListItemButton
             key={view.path}

@@ -147,14 +147,23 @@ export class JobsRepository {
     return counts;
   }
 
-  /**
-   * El resumen de la bandeja. Se cuenta por estado en una sola consulta y se
-   * rellenan los estados sin ninguna oferta: un contador que desaparece cuando
-   * vale cero hace dudar de si la lista está vacía o rota.
+/**
+   * El resumen de la bandeja.
+   *
+   * ⚠️ LAS JUNIOR NO CUENTAN. Llegan como extra —por si quiere pasárselas a
+   * alguien— y no son trabajo suyo pendiente. Metiéndolas en el contador, el
+   * menú decía "2 nuevas" cuando solo una era para él: un número que no
+   * corresponde con lo que hay que hacer deja de servir para decidir si vale
+   * la pena abrir el dashboard, que es lo único que ese número tiene que hacer.
+   *
+   * Se rellenan los estados sin ninguna oferta: un contador que desaparece
+   * cuando vale cero hace dudar de si la lista está vacía o rota.
    */
   stats(): JobStats {
     const rows = this.db.prepare<[], { status: JobStatus; count: number }>(
-      "SELECT status, COUNT(*) AS count FROM jobs WHERE verdict = 'accepted' GROUP BY status",
+      `SELECT status, COUNT(*) AS count FROM jobs
+       WHERE verdict = '${JobVerdict.Accepted}' AND seniority = '${JobSeniority.Regular}'
+       GROUP BY status`,
     ).all();
     const byStatus = Object.fromEntries(Object.values(JobStatus).map((s) => [s, 0])) as Record<JobStatus, number>;
     let total = 0;

@@ -28,7 +28,8 @@ const StatsRow = ({ stats }: StatsRowProps) => {
   const tiles = [
     { label: 'Nuevas', value: String(stats.new) },
     { label: 'Guardadas', value: String(stats.saved) },
-    { label: 'Total aceptadas', value: String(stats.total) },
+    // 'Para ti' y no 'aceptadas': las junior quedan fuera del recuento.
+    { label: 'Total para ti', value: String(stats.total) },
     { label: 'Última búsqueda', value: lastRunText(stats.lastRun) },
   ];
 

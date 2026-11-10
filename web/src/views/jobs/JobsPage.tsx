@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
 import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
-import { ApiError, startRun, updateJobStatus, type JobQuery } from '../../api/client';
+import { startRun, updateJobStatus, type JobQuery } from '../../api/client';
 import { AppAlert, AppChip, AppSnackbar, AppTabs, PageContainer } from '../../components/ui';
 import { findEnumValue } from '../../enumValue';
 import { jobSeniorityLabel } from '../../labels';
@@ -70,11 +70,11 @@ const JobsPage = () => {
       setNotice({ message: 'Búsqueda iniciada. Las ofertas nuevas aparecerán al terminar.', severity: 'success' });
       reload();
     } catch (cause: unknown) {
-      const conflict = cause instanceof ApiError && cause.status === 409;
-      setNotice({
-        message: conflict ? `Ya hay una búsqueda en curso: ${errorMessage(cause)}` : errorMessage(cause),
-        severity: 'error',
-      });
+      // El servidor ya dice el motivo exacto —el tope del día, los minutos que
+      // faltan, la sesión caída— y cada uno pide una acción distinta. Ponerle
+      // delante "Ya hay una búsqueda en curso" a todos los 409 contradecía al
+      // mensaje que venía detrás.
+      setNotice({ message: errorMessage(cause), severity: 'error' });
     } finally {
       setStarting(false);
     }

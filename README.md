@@ -106,15 +106,18 @@ Pruebas: `cd server && npm test`.
 
 El menú lateral es la bandeja, una lista por estado y con su contador:
 
-| Lista | Qué hay | Cómo llega |
-|---|---|---|
-| **Nuevas** | recién encontradas, sin mirar | las pone la búsqueda |
-| **Vistas** | leídas, sin decidir | «Marcar como vista» |
-| **Guardadas** | te interesan, vas a postularte | «Guardar» |
-| **Descartadas** | apartadas | «Descartar» |
-| **Todas** | cualquier estado | — |
+| Lista | Qué hay | Cómo llega | ¿Lleva contador? |
+|---|---|---|---|
+| **Nuevas** | recién encontradas, sin mirar | las pone la búsqueda | sí |
+| **Vistas** | leídas, sin decidir | «Marcar como vista» | no |
+| **Guardadas** | te interesan, vas a postularte | «Guardar» | sí |
+| **Descartadas** | apartadas | «Descartar» | no |
 
-Nada se borra nunca: descartar es archivar. Las pestañas **Para Ti** y **Extras (Junior)** separan lo que te corresponde de lo junior, que llega aparte por si quieres pasárselo a alguien.
+Nada se borra nunca: descartar es archivar.
+
+El contador solo está donde se actúa —cuántas quedan por mirar y cuántas hay que trabajar—. Vistas y Descartadas son el archivo: su número no cambia ninguna decisión, y un contador que nadie usa compite con los que sí importan.
+
+Las pestañas **Para Ti** y **Extras (Junior)** separan lo tuyo de lo junior. **Las junior no entran en ningún contador**: llegan como extra, por si quieres pasárselas a alguien, y no son trabajo tuyo pendiente. Un número que no corresponde con lo que hay que hacer deja de servir para decidir si vale la pena abrir el dashboard, que es lo único que ese número tiene que hacer.
 
 Cada oferta trae lo que se puede hacer con ella: **Redactar en Gmail** (abre tu cuenta con el puesto en el asunto y tu plantilla escrita, para que revises y envíes), ver la publicación o el perfil de quien la puso, y copiarla para compartirla. En las junior no aparece el envío de CV.
 

@@ -135,6 +135,19 @@ Modelo por defecto `gemini-3.5-flash-lite` y no el `3.1` de ARTIO, porque el 3.1
 
 Medición real: 25 publicaciones = ~5.100 tokens por pasada; 3 pasadas al día = ~90 llamadas al mes.
 
+### Rev. 6b — La bandeja, afinada
+
+A petición del usuario tras usarla:
+
+- **Fuera «Todas»**: las cuatro listas por estado cubren todo, así que era una quinta entrada que no añadía nada. `/todas` redirige a Nuevas en vez de dar error.
+- **Contador solo en Nuevas y Guardadas** (`showsCount` en `views/jobs/inbox.ts`): son las listas sobre las que se actúa.
+- **Las junior no cuentan** (`JobsRepository.stats`): el menú decía "2 nuevas" cuando solo una era para él. Siguen apareciendo en su pestaña. El recuadro «Total aceptadas» pasa a «Total para ti», porque llamarlo aceptadas ya sería mentir.
+
+Dos fallos del aviso flotante encontrados al probar el tope diario:
+
+- Cualquier 409 se mostraba con el prefijo "Ya hay una búsqueda en curso", pero ese código cubre todos los rechazos: el tope del día, los minutos que faltan, la sesión caída. El prefijo contradecía al motivo real que venía detrás. El servidor ya dice la verdad; se muestra tal cual.
+- `severity` caía por defecto a `'success'` cuando el mensaje pasaba a `null` al cerrar. Un `Snackbar` sigue pintando su contenido mientras se desvanece, así que el aviso **rojo de error se volvía verde al irse**: parecía que, tras decirte que no se podía buscar, algo había salido bien. `AppSnackbar` recuerda ahora lo último que enseñó y lo mantiene durante la salida.
+
 ### GAPs que quedan
 - **El criterio se afinó con 23 publicaciones de un día.** Cada oferta que no sirva es una regla que falta.
 - **El enlace permanente del post** no siempre se consigue. Se intenta primero el `urn:li:activity:` del DOM (cero interacción) y se recurre al menú «⋯». Sin ninguno, la oferta apunta a su enlace externo o al perfil del autor, y el botón lo dice.
