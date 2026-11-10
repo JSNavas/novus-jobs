@@ -13,6 +13,8 @@ export interface PassRunner {
 
 /** Una búsqueda manual por hora: el botón no puede multiplicar el ritmo que LinkedIn ve hoy con ARTIO. */
 const MANUAL_MIN_INTERVAL_MS = 60 * 60_000;
+/** Una pasada manual vacía o fallida no cuenta como lectura del feed: se puede reintentar antes. */
+const MANUAL_RETRY_AFTER_EMPTY_MS = 10 * 60_000;
 
 export class RunRefusedError extends Error {}
 
@@ -44,8 +46,9 @@ export class Runner implements PassRunner {
 
   startManual(): RunInfo {
     if (this.busy) throw new RunRefusedError('ya hay una búsqueda en curso');
-    const last = this.deps.runs.lastManualStartedAt();
-    if (last && this.clock().getTime() - Date.parse(last) < MANUAL_MIN_INTERVAL_MS) {
+    const last = this.deps.runs.lastManual();
+    const minInterval = last?.readPosts ? MANUAL_MIN_INTERVAL_MS : MANUAL_RETRY_AFTER_EMPTY_MS;
+    if (last && this.clock().getTime() - Date.parse(last.startedAt) < minInterval) {
       throw new RunRefusedError('solo se permite una búsqueda manual por hora');
     }
     return this.launch(RunTrigger.Manual);

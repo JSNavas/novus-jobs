@@ -66,12 +66,12 @@ export class RunsRepository {
     return result.changes;
   }
 
-  /** La última búsqueda manual iniciada, para aplicar el límite de una por hora. */
-  lastManualStartedAt(): string | null {
-    const row = this.db.prepare<[string], { started_at: string }>(
-      'SELECT started_at FROM runs WHERE trigger = ? ORDER BY id DESC LIMIT 1',
+  /** La última búsqueda manual iniciada, con si leyó publicaciones, para aplicar el límite. */
+  lastManual(): { startedAt: string; readPosts: boolean } | null {
+    const row = this.db.prepare<[string], { started_at: string; fetched: number }>(
+      'SELECT started_at, fetched FROM runs WHERE trigger = ? ORDER BY id DESC LIMIT 1',
     ).get(RunTrigger.Manual);
-    return row?.started_at ?? null;
+    return row ? { startedAt: row.started_at, readPosts: row.fetched > 0 } : null;
   }
 
   latest(): RunInfo | null {
