@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router';
 import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
 import { ApiError, startRun, updateJobStatus, type JobQuery } from '../../api/client';
 import { AppAlert, AppChip, AppSnackbar, AppTabs, PageContainer } from '../../components/ui';
@@ -6,7 +7,10 @@ import { findEnumValue } from '../../enumValue';
 import { jobSeniorityLabel } from '../../labels';
 import { JobSeniority, JobStatus, type Job } from '../../types';
 import JobCard from './JobCard';
+import { viewByPath } from './inbox';
+import { nextSearchSentence } from './scheduleText';
 import JobFilters, { type FilterValues } from './JobFilters';
+import LastRunAlert from './LastRunAlert';
 import StatsRow from './StatsRow';
 import { useDashboardData } from './useDashboardData';
 
@@ -15,18 +19,34 @@ interface Notice {
   severity: 'success' | 'error';
 }
 
-const seniorityTabs = Object.values(JobSeniority).map((seniority) => ({
-  value: seniority,
-  label: jobSeniorityLabel[seniority],
-}));
+/**
+ * Las pestañas llevan su número.
+ *
+ * Sin él, el menú podía decir "1 nueva" y la pestaña abierta salir vacía: las
+ * dos cosas eran ciertas —la única oferta era junior y estaba en la otra— pero
+ * juntas parecían un error. El número dice de un vistazo dónde está.
+ */
+const seniorityTabs = (counts: Record<JobSeniority, number> | undefined) =>
+  Object.values(JobSeniority).map((seniority) => ({
+    value: seniority,
+    label: counts ? `${jobSeniorityLabel[seniority]} (${counts[seniority]})` : jobSeniorityLabel[seniority],
+  }));
+
+/** La otra pestaña, para poder mandar allí cuando esta está vacía y aquella no. */
+const otherSeniority = (current: JobSeniority): JobSeniority =>
+  current === JobSeniority.Regular ? JobSeniority.Junior : JobSeniority.Regular;
 
 const newCountText = (count: number): string => (count === 1 ? '1 oferta nueva' : `${count} ofertas nuevas`);
 
 const errorMessage = (cause: unknown): string => (cause instanceof Error ? cause.message : 'Error desconocido');
 
 const JobsPage = () => {
+  // Qué lista se está mirando lo dice la URL, no un estado interno: así el
+  // enlace del menú, el botón de atrás y un enlace compartido llevan al mismo
+  // sitio, y el correo puede apuntar directo a /guardadas el día que haga falta.
+  const view = viewByPath(useLocation().pathname);
   const [seniority, setSeniority] = useState<JobSeniority>(JobSeniority.Regular);
-  const [filters, setFilters] = useState<FilterValues>({ status: '', q: '', hasApply: false });
+  const [filters, setFilters] = useState<FilterValues>({ q: '', hasApply: false });
   const [starting, setStarting] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
@@ -34,14 +54,14 @@ const JobsPage = () => {
   const query = useMemo<JobQuery>(
     () => ({
       seniority,
-      status: filters.status || undefined,
+      status: view.status ?? undefined,
       q: filters.q.trim() || undefined,
       hasApply: filters.hasApply ? true : undefined,
     }),
-    [seniority, filters],
+    [seniority, filters, view],
   );
 
-  const { page, stats, error, reload } = useDashboardData(query);
+  const { page, stats, schedule, settings, error, reload } = useDashboardData(query);
 
   const handleStartRun = async () => {
     setStarting(true);
@@ -72,6 +92,24 @@ const JobsPage = () => {
     }
   };
 
+  /**
+   * Qué decir cuando la lista sale vacía. Nunca "no hay nada" a secas si lo que
+   * pasa es que está en la otra pestaña: ese mensaje contradice al contador y
+   * hace dudar de todo lo demás.
+   */
+  const emptyMessage = (): string => {
+    if (filters.q || filters.hasApply) return 'No hay ofertas con estos filtros.';
+    const elsewhere = page?.bySeniority[otherSeniority(seniority)] ?? 0;
+    if (elsewhere > 0) {
+      const label = jobSeniorityLabel[otherSeniority(seniority)];
+      return elsewhere === 1
+        ? `Aquí no hay ninguna, pero tienes 1 en «${label}».`
+        : `Aquí no hay ninguna, pero tienes ${elsewhere} en «${label}».`;
+    }
+    const next = view.status === JobStatus.New ? nextSearchSentence(schedule) : '';
+    return [view.empty, next].filter(Boolean).join(' ');
+  };
+
   const searchButton = (
     <Button variant="contained" onClick={handleStartRun} disabled={starting}>
       Buscar ahora
@@ -80,18 +118,19 @@ const JobsPage = () => {
 
   return (
     <PageContainer
-      title="Ofertas de empleo"
-      subtitle="Ofertas de LinkedIn que pasan tus reglas de perfil"
+      title={view.title}
+      subtitle={view.subtitle}
       action={searchButton}
     >
       <Stack direction="row" spacing={1} alignItems="center" mb={2}>
         {stats ? <AppChip label={newCountText(stats.new)} tone="success" /> : null}
       </Stack>
 
+      {stats ? <LastRunAlert lastRun={stats.lastRun} /> : null}
       {stats ? <StatsRow stats={stats} /> : null}
 
       <AppTabs
-        tabs={seniorityTabs}
+        tabs={seniorityTabs(page?.bySeniority)}
         value={seniority}
         onChange={(value) => setSeniority(findEnumValue(Object.values(JobSeniority), value) ?? JobSeniority.Regular)}
       />
@@ -107,7 +146,10 @@ const JobsPage = () => {
 
       {page && page.items.length === 0 ? (
         <Typography color="textSecondary" py={4} textAlign="center">
-          No hay ofertas con estos filtros.
+          {/* El vacío de cada lista dice algo distinto: "no hay nada nuevo" y
+              "todavía no has guardado ninguna" son dos situaciones y una sola
+              frase genérica las confundiría. */}
+          {emptyMessage()}
         </Typography>
       ) : null}
 
@@ -117,6 +159,7 @@ const JobsPage = () => {
             key={job.id}
             job={job}
             busy={updatingId === job.id}
+            settings={settings}
             onStatusChange={(status) => handleStatusChange(job, status)}
           />
         ))}

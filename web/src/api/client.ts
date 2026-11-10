@@ -21,13 +21,22 @@ export interface JobQuery {
 export interface JobsPage {
   items: Job[];
   total: number;
+  /** Cuántas hay en cada pestaña con los mismos filtros, ignorando la elegida. */
+  bySeniority: Record<JobSeniority, number>;
 }
 
 export interface Stats {
   new: number;
   saved: number;
   total: number;
+  /** Cuántas hay en cada estado: lo que enseña el menú lateral. */
+  byStatus: Record<JobStatus, number>;
   lastRun: RunInfo | null;
+}
+
+export interface Schedule {
+  hours: number[];
+  timezone: string;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -64,4 +73,19 @@ export function getStats(): Promise<Stats> {
 
 export function startRun(): Promise<RunInfo> {
   return request<RunInfo>('/runs', { method: 'POST' });
+}
+
+export interface Settings {
+  /** La cuenta desde la que él se postula. No tiene que ver con los avisos. */
+  gmailAccount: string | null;
+}
+
+/** Desde qué cuenta escribe él sus candidaturas. */
+export function getSettings(): Promise<Settings> {
+  return request<Settings>('/settings');
+}
+
+/** Cuándo busca el servidor. Lo dice él: las horas son configurables. */
+export function getSchedule(): Promise<Schedule> {
+  return request<Schedule>('/schedule');
 }

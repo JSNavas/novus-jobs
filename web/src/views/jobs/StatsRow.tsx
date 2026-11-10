@@ -8,9 +8,20 @@ interface StatsRowProps {
   stats: Stats;
 }
 
+/**
+ * La última búsqueda dice CUÁNTO LEYÓ, no cuántas aceptó.
+ *
+ * Decía "3 aceptadas" junto a un recuadro de "Total aceptadas: 2", y las dos
+ * cifras eran ciertas: la pasada aceptó tres en su momento y después el
+ * criterio cambió y una dejó de encajar. Pero en pantalla, una al lado de la
+ * otra, solo parecían un error. Las publicaciones leídas son un hecho de la
+ * pasada que no caduca; cuántas encajan es algo vivo y ya lo dice su propio
+ * recuadro.
+ */
 const lastRunText = (lastRun: RunInfo | null): string => {
   if (!lastRun) return 'Sin búsquedas todavía';
-  return `${formatDateTime(lastRun.startedAt)} · ${lastRun.accepted} aceptadas`;
+  const read = lastRun.fetched === 1 ? '1 publicación leída' : `${lastRun.fetched} publicaciones leídas`;
+  return `${formatDateTime(lastRun.startedAt)} · ${read}`;
 };
 
 const StatsRow = ({ stats }: StatsRowProps) => {

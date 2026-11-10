@@ -1,4 +1,4 @@
-import { JobLocation, JobSeniority, JobStatus } from './types';
+import { JobLocation, JobSeniority, JobStatus, RunFailure } from './types';
 
 export const jobStatusLabel: Record<JobStatus, string> = {
   [JobStatus.New]: 'Nueva',
@@ -18,4 +18,28 @@ export const jobLocationLabel: Record<JobLocation, string> = {
   [JobLocation.OtherCountry]: 'remoto desde otro país',
   [JobLocation.Onsite]: 'presencial',
   [JobLocation.Unknown]: 'no dice desde dónde se puede trabajar',
+};
+
+/**
+ * Lo que se le dice al señor cuando una pasada falla.
+ *
+ * El motivo importa más que el mensaje técnico: una sesión caducada es una
+ * acción suya de treinta segundos, y hasta ahora se escondía detrás de un
+ * "el feed no devolvió publicaciones" que mandaba a revisar selectores.
+ */
+export const runFailureLabel: Record<RunFailure, string> = {
+  [RunFailure.LoginRequired]: 'Hay que iniciar sesión otra vez',
+  [RunFailure.ProfileBusy]: 'El navegador estaba ocupado',
+  [RunFailure.Layout]: 'La plataforma cambió su maquetado',
+  [RunFailure.Other]: 'La última búsqueda falló',
+};
+
+export const runFailureAdvice: Record<RunFailure, string> = {
+  [RunFailure.LoginRequired]:
+    'La plataforma pidió entrar. En el servidor: `npm run login -- linkedin`, inicia sesión y cierra la ventana. Las búsquedas se reanudan solas.',
+  [RunFailure.ProfileBusy]:
+    'Otra ventana de Chromium tenía el perfil abierto. Ciérrala y vuelve a buscar: se puede reintentar en unos minutos.',
+  [RunFailure.Layout]:
+    'La sesión está bien, pero no se encontró ninguna publicación. Hay una captura en los logs del servidor.',
+  [RunFailure.Other]: 'Mira el detalle debajo y los logs del servidor.',
 };

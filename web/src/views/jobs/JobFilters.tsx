@@ -1,10 +1,11 @@
-import { Checkbox, FormControlLabel, MenuItem, Stack, TextField } from '@mui/material';
-import { findEnumValue } from '../../enumValue';
-import { jobStatusLabel } from '../../labels';
-import { JobStatus } from '../../types';
+import { Checkbox, FormControlLabel, Stack, TextField } from '@mui/material';
 
+/**
+ * El estado YA NO está aquí: lo elige el menú lateral, que es donde se ve.
+ * Tenerlo en los dos sitios dejaría dos mandos para lo mismo y, en cuanto
+ * discreparan, el usuario no sabría cuál manda.
+ */
 export interface FilterValues {
-  status: JobStatus | '';
   q: string;
   hasApply: boolean;
 }
@@ -23,21 +24,6 @@ const JobFilters = ({ values, onChange }: JobFiltersProps) => (
       onChange={(event) => onChange({ ...values, q: event.target.value })}
       sx={{ minWidth: 240 }}
     />
-    <TextField
-      select
-      size="small"
-      label="Estado"
-      value={values.status}
-      onChange={(event) => onChange({ ...values, status: findEnumValue(Object.values(JobStatus), event.target.value) ?? '' })}
-      sx={{ minWidth: 180 }}
-    >
-      <MenuItem value="">Todas</MenuItem>
-      {Object.values(JobStatus).map((status) => (
-        <MenuItem key={status} value={status}>
-          {jobStatusLabel[status]}
-        </MenuItem>
-      ))}
-    </TextField>
     <FormControlLabel
       control={
         <Checkbox

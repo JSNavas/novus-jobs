@@ -34,11 +34,21 @@ export enum JobLocation {
   Unknown = 'unknown',
 }
 
+/** Espejo de `RunFailure` del servidor: por qué se cayó la última pasada. */
+export enum RunFailure {
+  LoginRequired = 'login_required',
+  ProfileBusy = 'profile_busy',
+  Layout = 'layout',
+  Other = 'other',
+}
+
 export interface Job {
   id: number;
   source: string;
   fingerprint: string;
   title: string | null;
+  /** El puesto a secas, sin tecnologías ni apostillas. Es el asunto del correo. */
+  role: string | null;
   company: string | null;
   author: string | null;
   text: string;
@@ -69,4 +79,5 @@ export interface RunInfo {
   accepted: number;
   rejected: number;
   error: string | null;
+  failure: RunFailure | null;
 }

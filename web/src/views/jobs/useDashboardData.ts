@@ -1,10 +1,23 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getStats, listJobs, type JobQuery, type JobsPage, type Stats } from '../../api/client';
+import { getSchedule, getSettings, getStats, listJobs, type JobQuery, type JobsPage, type Schedule, type Settings, type Stats } from '../../api/client';
+
+const POLL_INTERVAL_MS = 15_000;
 
 export function useDashboardData(query: JobQuery) {
   const [page, setPage] = useState<JobsPage | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Las horas de búsqueda no cambian mientras la página está abierta: se piden
+  // una vez y no entran en el sondeo.
+  const [schedule, setSchedule] = useState<Schedule | null>(null);
+  const [settings, setSettings] = useState<Settings | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getSchedule().then((next) => { if (!cancelled) setSchedule(next); }).catch(() => undefined);
+    getSettings().then((next) => { if (!cancelled) setSettings(next); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
   const [revision, setRevision] = useState(0);
 
   useEffect(() => {
@@ -26,7 +39,14 @@ export function useDashboardData(query: JobQuery) {
     };
   }, [query, revision]);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (document.visibilityState === 'visible') setRevision((value) => value + 1);
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, []);
+
   const reload = useCallback(() => setRevision((value) => value + 1), []);
 
-  return { page, stats, error, reload };
+  return { page, stats, schedule, settings, error, reload };
 }
