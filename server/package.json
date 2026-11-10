@@ -18,8 +18,8 @@
     "service:restart": "node dist/service/launchd.js restart"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^1.8.0",
     "@fastify/static": "^10.1.10",
+    "@google/genai": "^1.33.0",
     "better-sqlite3": "^13.0.3",
     "fastify": "^5.12.8",
     "playwright": "^1.65.0"

@@ -2,14 +2,14 @@ import type { JobsRepository, NewJob } from './db/jobs.repository.js';
 import type { RunOutcome } from './db/runs.repository.js';
 import { decideShipping, fingerprint, locationLabel, storedText, type CandidateProfile, type Offer, type Verdict } from './filters/decide.js';
 import { companyName, offerTitle, roleOnly, stripAuthorHeaders } from './filters/headline.js';
-import type { ClaudeJudge, JudgeVerdict } from './filters/judge.js';
+import type { LlmJudge, JudgeVerdict } from './filters/judge.js';
 import { classifyFailure, failureMessage, worstFailure } from './sources/failure.js';
 import type { JobSource, RawPost } from './sources/types.js';
 import { JobSeniority, JudgeStatus, JobVerdict, type RunFailure } from './types.js';
 
 interface PipelineDeps {
   jobs: JobsRepository;
-  judge: ClaudeJudge | null;
+  judge: LlmJudge | null;
   profile: CandidateProfile;
 }
 

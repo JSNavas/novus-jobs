@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenAI } from '@google/genai';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildApp } from './app.js';
@@ -8,7 +8,7 @@ import { legacyLinkedinProfileDir, loadConfig } from './config.js';
 import { openDatabase } from './db/database.js';
 import { JobsRepository } from './db/jobs.repository.js';
 import { RunsRepository } from './db/runs.repository.js';
-import { ClaudeJudge } from './filters/judge.js';
+import { LlmJudge } from './filters/judge.js';
 import { PROFILE } from './profile/profile.js';
 import { Mailer } from './notify/mailer.js';
 import { Runner } from './runner.js';
@@ -34,10 +34,12 @@ async function main(): Promise<void> {
 
   const sources = buildSources(config, pool);
   console.log(`[arranque] fuentes activas: ${sources.map((s) => s.label).join(', ') || 'ninguna'}`);
-  const judge = config.anthropicApiKey
-    ? new ClaudeJudge(new Anthropic({ apiKey: config.anthropicApiKey }), config.anthropicModel)
+  const judge = config.geminiApiKey
+    ? new LlmJudge(new GoogleGenAI({ apiKey: config.geminiApiKey }), config.judgeModel)
     : null;
-  if (!judge) console.log('[arranque] sin ANTHROPIC_API_KEY: el juez LLM queda desactivado y mandan las reglas');
+  console.log(judge
+    ? `[arranque] juez LLM activo (${config.judgeModel})`
+    : '[arranque] sin GEMINI_API_KEY: el juez LLM queda desactivado y mandan las reglas');
 
   const mailer = new Mailer(config.mail);
   console.log(config.mail

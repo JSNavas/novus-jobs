@@ -1,4 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
+import type { GoogleGenAI } from '@google/genai';
 import type { Config } from '../config.js';
 import type { CandidateProfile, Offer } from './decide.js';
 
@@ -126,9 +126,35 @@ function instruction(profile: CandidateProfile): string {
   ].join('\n');
 }
 
-export class ClaudeJudge {
+/**
+ * ═══ GEMINI, Y NO OTRO ═══
+ *
+ * Porque es el que ya usa ARTIO para juzgar estas mismas ofertas
+ * (`job-judge.service.ts`, `gemini-3.1-flash-lite`), con la clave que el señor
+ * ya tiene y ya paga. Este proyecto arrancó pidiendo una clave de Anthropic
+ * que no tenía, así que el juez nació apagado y las reglas quedaron solas —que
+ * es justo lo que el juez existe para evitar.
+ *
+ * El criterio para elegir proveedor aquí no es cuál es mejor: es cuál ya está
+ * en casa. Una cuenta nueva y una factura nueva por un segundo par de ojos no
+ * se justifican cuando el primero ya está pagado.
+ */
+/**
+ * UN reintento, y solo ante un fallo pasajero del proveedor.
+ *
+ * Medido en real: un 503 "high demand" de Google tumbaba el juicio de la
+ * pasada entera. Es un error que se arregla solo en segundos, y perder el
+ * segundo par de ojos por eso es tonto. Lo que NO se reintenta es una
+ * respuesta mal formada: eso no mejora repitiendo, y encima gastaría el
+ * presupuesto de la capa gratuita.
+ */
+const RETRIES = 1;
+const RETRY_DELAY_MS = 4_000;
+const TRANSIENT = /\b(429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|high demand|overloaded|timeout|ETIMEDOUT|ECONNRESET/i;
+
+export class LlmJudge {
   constructor(
-    private readonly client: Anthropic,
+    private readonly client: GoogleGenAI,
     private readonly model: string,
   ) {}
 
@@ -151,18 +177,34 @@ export class ClaudeJudge {
     const posts = batch
       .map((o, i) => `### PUBLICACIÓN ${i}\n${o.text.slice(0, MAX_CHARS_PER_POST)}`)
       .join('\n\n');
-    try {
-      const message = await this.client.messages.create({
-        model: this.model,
-        max_tokens: 4096,
-        messages: [{ role: 'user', content: `${instruction(profile)}\n\n${posts}` }],
-      });
-      const reply = message.content.map((b) => (b.type === 'text' ? b.text : '')).join('');
-      const array = firstJsonArray(reply);
-      if (!array) return null;
-      return array.flatMap((item) => parseJudgeItem(item, offset) ?? []);
-    } catch {
-      return null;
+    for (let attempt = 0; attempt <= RETRIES; attempt++) {
+      try {
+        const response = await this.client.models.generateContent({
+          model: this.model,
+          contents: `${instruction(profile)}\n\n${posts}`,
+        });
+        const array = firstJsonArray(response.text ?? '');
+        if (array) return array.flatMap((item) => parseJudgeItem(item, offset) ?? []);
+        // Respondió, pero no con el JSON pedido. Reintentar no suele arreglarlo.
+        console.warn('[juez] la respuesta no traía un array JSON; mandan las reglas');
+        return null;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        // ═══ EL MOTIVO NO SE TIRA ═══
+        // Este `catch` se tragaba el error entero y devolvía `null`. La pasada
+        // seguía con las reglas —que es lo correcto— pero nadie sabía nunca por
+        // qué el juez no había opinado. Se comprobó en real: era un 503 de
+        // Google por saturación, cosa que se arregla sola y que, en silencio,
+        // parecía un juez roto.
+        if (attempt < RETRIES && TRANSIENT.test(message)) {
+          console.warn(`[juez] fallo pasajero (${message.slice(0, 80)}): reintento en ${RETRY_DELAY_MS / 1000}s`);
+          await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+          continue;
+        }
+        console.warn(`[juez] no pudo juzgar (${message.slice(0, 160)}); mandan las reglas`);
+        return null;
+      }
     }
+    return null;
   }
 }

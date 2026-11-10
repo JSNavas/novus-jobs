@@ -85,8 +85,8 @@ Variables de entorno (`server/.env`, todas opcionales):
 | `MAIL_FROM` | — | Remitente (dominio verificado en Resend) |
 | `MAIL_TO` | — | A quién se avisa |
 | `DASHBOARD_URL` | `http://127.0.0.1:<PORT>/` | El enlace que lleva el correo |
-| `ANTHROPIC_API_KEY` | — | Activa el juez LLM. Sin clave mandan solo las reglas |
-| `ANTHROPIC_MODEL` | `claude-haiku-5-5` | Modelo del juez |
+| `GEMINI_API_KEY` | — | Activa el juez LLM (Google AI Studio, capa gratuita). Sin clave mandan solo las reglas |
+| `JUDGE_MODEL` | `gemini-3.5-flash-lite` | Modelo del juez |
 | `DATA_DIR` | `server/data` | Base de datos, marca de pasada y logs |
 
 Servicio de macOS (arranca al iniciar sesión y se relanza si cae):
@@ -142,6 +142,14 @@ Se manda un correo **solo cuando hay ofertas nuevas que encajan**. Un correo de 
 El correo es el **aviso**, no la oferta: dice cuántas llegaron y una línea de cada una, y lleva al dashboard, que es donde se actúa.
 
 También avisa cuando la búsqueda **se para** (sesión caducada, perfil ocupado, maquetado cambiado), y ese es el correo más importante: una sesión caída no se nota sola, porque el dashboard sigue enseñando lo de ayer mientras pasan los días sin buscar nada. Se manda **una vez por racha**: si la pasada anterior ya falló por lo mismo, no se repite.
+
+## El juez
+
+Las reglas miran letras; el juez mira significado. Es el segundo par de ojos y **solo puede descartar** lo que las reglas dejaron pasar: nunca rescata lo que ellas tumban por un motivo duro (presencial, país restringido, inglés, tecnología que no maneja). Ahí mandan las reglas, y es deliberado.
+
+Lo que atrapa es lo que ninguna expresión regular puede: *"esto es una base de talentos, no una vacante"*. Eso mismo, literal, en la primera pasada con el juez encendido.
+
+Va por **Gemini en la capa gratuita de Google AI Studio**, el mismo proveedor que ya usa ARTIO para esta tarea. Una pasada de 25 publicaciones son ~5.100 tokens y hay 3 pasadas al día: unas 90 llamadas al mes, muy por debajo del límite gratuito. Si el proveedor falla se reintenta una vez y, si vuelve a fallar, mandan las reglas y queda escrito el motivo en el log — un juez que no contesta no puede dejarte sin ofertas.
 
 ## Afinar el criterio
 

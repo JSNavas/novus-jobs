@@ -27,8 +27,12 @@ export interface Config {
   browserProfilesRoot: string;
   browserHeadless: boolean;
   linkedinFeedUrl: string;
-  anthropicApiKey: string | null;
-  anthropicModel: string;
+  /**
+   * El juez LLM: Gemini, la misma clave y el mismo modelo que ya usa ARTIO.
+   * Sin clave, mandan solo las reglas.
+   */
+  geminiApiKey: string | null;
+  judgeModel: string;
   /**
    * Resend, las mismas credenciales que ya usa ARTIO: no se añade ni una
    * cuenta ni una factura. `null` si falta cualquiera de las tres piezas —sin
@@ -64,7 +68,16 @@ const SERVER_ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const DEFAULT_SCHEDULE_HOURS = '9,13,18';
 const DEFAULT_SOURCES = 'linkedin';
 const DEFAULT_FEED_URL = 'https://www.linkedin.com/feed/';
-const DEFAULT_JUDGE_MODEL = 'claude-haiku-5-5';
+/**
+ * El modelo del juez. `flash-lite` porque la tarea es clasificar texto corto
+ * contra un criterio explícito, no razonar: el barato acierta igual y la capa
+ * gratuita da de sobra para tres pasadas al día.
+ *
+ * Se fija el 3.5 y no el 3.1 que usa ARTIO porque el 3.1 llevaba horas
+ * devolviendo 503 por saturación, y un juez que no contesta es un juez
+ * apagado. Se cambia con JUDGE_MODEL sin tocar código.
+ */
+const DEFAULT_JUDGE_MODEL = 'gemini-3.5-flash-lite';
 const HOME_DIR = join(homedir(), '.novus-jobs');
 
 function optional(name: string): string | null {
@@ -104,8 +117,8 @@ export function loadConfig(): Config {
     browserProfilesRoot: optional('BROWSER_PROFILES_DIR') ?? join(HOME_DIR, 'browser-profiles'),
     browserHeadless: optional('BROWSER_HEADLESS') !== 'false',
     linkedinFeedUrl: optional('LINKEDIN_FEED_URL') ?? DEFAULT_FEED_URL,
-    anthropicApiKey: optional('ANTHROPIC_API_KEY'),
-    anthropicModel: optional('ANTHROPIC_MODEL') ?? DEFAULT_JUDGE_MODEL,
+    geminiApiKey: optional('GEMINI_API_KEY'),
+    judgeModel: optional('JUDGE_MODEL') ?? DEFAULT_JUDGE_MODEL,
     mail: mailConfig(),
     dashboardUrl: optional('DASHBOARD_URL') ?? `http://127.0.0.1:${parsePort(optional('PORT'))}/`,
     gmailAccount: optional('GMAIL_ACCOUNT'),

@@ -1,7 +1,7 @@
 import type { JobsRepository, NewJob } from './db/jobs.repository.js';
 import type { RunsRepository } from './db/runs.repository.js';
 import type { CandidateProfile } from './filters/decide.js';
-import type { ClaudeJudge } from './filters/judge.js';
+import type { LlmJudge } from './filters/judge.js';
 import { failureMail, offersMail } from './notify/digest.js';
 import type { Mailer } from './notify/mailer.js';
 import { runPasses, type SourceFailure } from './pipeline.js';
@@ -79,7 +79,7 @@ interface RunnerDeps {
   sources: readonly JobSource[];
   jobs: JobsRepository;
   runs: RunsRepository;
-  judge: ClaudeJudge | null;
+  judge: LlmJudge | null;
   profile: CandidateProfile;
   mailer: Mailer;
   dashboardUrl: string;

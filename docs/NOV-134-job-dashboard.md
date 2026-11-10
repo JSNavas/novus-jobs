@@ -120,9 +120,22 @@ Bandeja por estado con ruta y contador propios; pestañas con recuento (un conta
 
 `sources/registry.ts` es el único sitio que conoce las plataformas. Añadir una = una clase `JobSource` + una línea. Dos reglas: un solo navegador por perfil (pedido al pool) y fuentes en serie, nunca en paralelo.
 
-### GAPs que quedan
+### El juez: de Anthropic a Gemini
 
-- **El juez LLM está apagado**: sin `ANTHROPIC_API_KEY` mandan solo las reglas.
+El proyecto nació pidiendo `ANTHROPIC_API_KEY`, una clave que el usuario no tenía, así que el juez estuvo apagado desde el principio y las reglas quedaron solas — justo lo que el juez existe para evitar. ARTIO juzga estas mismas ofertas con Gemini (`job-judge.service.ts`, `GEMINI_API_KEY`), que el usuario ya usa. Se cambió el proveedor conservando el contrato: `LlmJudge` sustituye a `ClaudeJudge`, `@google/genai` a `@anthropic-ai/sdk`.
+
+El criterio para elegir proveedor no fue cuál es mejor, sino cuál ya está en casa y en capa gratuita.
+
+Dos fallos del juez encontrados al probarlo en real:
+
+- El `catch` se tragaba el error entero y devolvía `null`. La pasada seguía con las reglas —correcto— pero nadie sabía por qué el juez no opinaba. Era un 503 de Google por saturación. Ahora se registra.
+- No había reintento. Un 503 pasajero costaba el juicio de la pasada entera. Ahora se reintenta una vez, y solo ante errores transitorios: una respuesta mal formada no mejora repitiendo y gastaría presupuesto.
+
+Modelo por defecto `gemini-3.5-flash-lite` y no el `3.1` de ARTIO, porque el 3.1 llevaba horas devolviendo 503. Configurable con `JUDGE_MODEL`.
+
+Medición real: 25 publicaciones = ~5.100 tokens por pasada; 3 pasadas al día = ~90 llamadas al mes.
+
+### GAPs que quedan
 - **El criterio se afinó con 23 publicaciones de un día.** Cada oferta que no sirva es una regla que falta.
 - **El enlace permanente del post** no siempre se consigue. Se intenta primero el `urn:li:activity:` del DOM (cero interacción) y se recurre al menú «⋯». Sin ninguno, la oferta apunta a su enlace externo o al perfil del autor, y el botón lo dice.
 - **`npm test` usaba `dist/**/*.test.js` sin comillas**: `sh` lo expandía a un solo nivel y `dist/runner.test.js` nunca se ejecutó. Al arreglarlo aparecieron fallos reales en esos tests (el reloj de las pasadas lo ponía el sistema y no el runner). Corregido; `runs.start()` recibe el instante.

@@ -163,7 +163,11 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
                 Redactar en Gmail
               </Button>
             ) : null}
-            {job.url ? (
+            {/* Si el enlace de la publicación ES el de postulación, un segundo
+                botón al mismo sitio solo hace dudar de cuál es cuál. Pasa a
+                menudo: el `lnkd.in` que lleva a la oferta es también el único
+                enlace que trae el post. */}
+            {job.url && job.url !== job.applyUrl ? (
               <Button variant="outlined" component="a" href={job.url} target="_blank" rel="noopener noreferrer">
                 {linkLabel(job.url)}
               </Button>
