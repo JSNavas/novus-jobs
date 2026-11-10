@@ -89,6 +89,10 @@ export class LinkedInSource implements JobSource {
     }
     const context = await chromium.launchPersistentContext(this.config.linkedinProfileDir, {
       headless: this.config.linkedinHeadless,
+      viewport: { width: 1440, height: 900 },
+      // Sin locale es-ES LinkedIn sirve el feed en inglés y "Publicación en el feed" no aparece.
+      locale: 'es-ES',
+      args: ['--disable-blink-features=AutomationControlled'],
     });
     // Sin el permiso no hay permalinks, pero la pasada sigue con el enlace externo.
     await context.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: 'https://www.linkedin.com' })
