@@ -7,7 +7,7 @@ import { isOneOf, optionalBoolean, optionalEnum, optionalInteger, stringParams, 
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
 
-export interface JobRoutesDeps {
+interface JobRoutesDeps {
   jobs: JobsRepository;
   runs: RunsRepository;
 }

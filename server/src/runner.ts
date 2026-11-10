@@ -16,7 +16,7 @@ const MANUAL_MIN_INTERVAL_MS = 60 * 60_000;
 
 export class RunRefusedError extends Error {}
 
-export interface RunnerDeps {
+interface RunnerDeps {
   sources: readonly JobSource[];
   jobs: JobsRepository;
   runs: RunsRepository;

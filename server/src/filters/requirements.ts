@@ -4,7 +4,7 @@ import { escapeRegex } from './text-match.js';
  * ¿Exige inglés? 'desirable' (plus, "inglés deseable") no descarta: aparece en
  * casi todas las ofertas de LATAM y tratarlo como exigencia perdería las buenas.
  */
-export type EnglishRequirement = 'required' | 'desirable' | 'none';
+type EnglishRequirement = 'required' | 'desirable' | 'none';
 
 const ENGLISH_MENTION = /ingl[ée]s|english|biling[üu]e|bilingual/i;
 const BILINGUAL = /\bbiling[üu]e\b|\bbilingual\b/i;

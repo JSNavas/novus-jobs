@@ -5,7 +5,7 @@ import type { ClaudeJudge, JudgeVerdict } from './filters/judge.js';
 import type { JobSource, RawPost } from './sources/types.js';
 import { JobSeniority, JudgeStatus, JobVerdict } from './types.js';
 
-export interface PipelineDeps {
+interface PipelineDeps {
   jobs: JobsRepository;
   judge: ClaudeJudge | null;
   profile: CandidateProfile;

@@ -78,7 +78,7 @@ function hasNonTechnicalHybrid(t: string): boolean {
 }
 
 /** ¿Hay que ir a una oficina de verdad? Una sola mención de "presencial" basta para descartar. */
-export function requiresOnsite(text: string): boolean {
+function requiresOnsite(text: string): boolean {
   const t = text.toLowerCase();
   if (REMOTE_OR_HYBRID.test(t)) return false;
   const hardOnsite = /presencial|on-?site/i.test(t);

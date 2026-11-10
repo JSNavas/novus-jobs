@@ -8,7 +8,7 @@ import { optionalInteger, stringParams, type Result } from './parse.js';
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
 
-export interface RunRoutesDeps {
+interface RunRoutesDeps {
   runs: RunsRepository;
   runner: Runner;
   scheduler: Scheduler;

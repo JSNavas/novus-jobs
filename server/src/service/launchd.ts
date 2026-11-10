@@ -8,9 +8,9 @@ import { loadConfig } from '../config.js';
  * Servicio de usuario de macOS (launchd). Mismo patrón que el instalador de
  * Clauxy: RunAtLoad + KeepAlive, y launchd relanza el proceso si cae. Solo macOS.
  */
-export const LABEL = 'com.novus.job-dashboard';
+const LABEL = 'com.novus.job-dashboard';
 
-export interface PlistInput {
+interface PlistInput {
   label: string;
   nodePath: string;
   entryPath: string;

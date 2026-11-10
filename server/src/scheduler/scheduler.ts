@@ -30,7 +30,7 @@ export class LastPassStore {
   }
 }
 
-export interface SchedulerOptions {
+interface SchedulerOptions {
   hours: readonly number[];
   store: LastPassStore;
   runner: PassRunner;

@@ -14,7 +14,7 @@ export interface JobQuery {
   offset: number;
 }
 
-export interface JobStats {
+interface JobStats {
   new: number;
   saved: number;
   total: number;

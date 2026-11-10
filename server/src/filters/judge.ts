@@ -7,8 +7,8 @@ import type { CandidateProfile, Offer } from './decide.js';
  * dejaron pasar, y solo con uno de estos motivos. Un motivo fuera de la lista
  * se trata como "sin descarte": el modelo no puede inventarse un veto.
  */
-export const JUDGE_REJECTIONS = ['onsite', 'other-country', 'english', 'technology', 'venezuelan-employer'] as const;
-export type JudgeRejection = (typeof JUDGE_REJECTIONS)[number];
+const JUDGE_REJECTIONS = ['onsite', 'other-country', 'english', 'technology', 'venezuelan-employer'] as const;
+type JudgeRejection = (typeof JUDGE_REJECTIONS)[number];
 
 export interface JudgeVerdict {
   index: number;
@@ -27,7 +27,7 @@ const MAX_CHARS_PER_POST = 1800;
  * balanceados fuera de cadenas. No se recorta del primer `[` al último `]`: un
  * modelo que devuelve dos arrays rompería ese recorte.
  */
-export function firstJsonArray(text: string): unknown[] | null {
+function firstJsonArray(text: string): unknown[] | null {
   const start = text.indexOf('[');
   if (start < 0) return null;
   let depth = 0;
@@ -54,7 +54,7 @@ function isJudgeRejection(value: unknown): value is JudgeRejection {
 }
 
 /** Valida un elemento de la respuesta. Lo que no encaja se descarta, no se adivina. */
-export function parseJudgeItem(item: unknown, offset: number): JudgeVerdict | null {
+function parseJudgeItem(item: unknown, offset: number): JudgeVerdict | null {
   if (typeof item !== 'object' || item === null) return null;
   const fields: Record<string, unknown> = Object.fromEntries(Object.entries(item));
   const { i, esOferta, descarte, motivo, esJunior, esAgregador } = fields;
@@ -95,7 +95,7 @@ function instruction(profile: CandidateProfile): string {
     '   "english"           → EXIGEN inglés por escrito.',
     '   "technology"        → EXIGEN algo que no sabe (de la lista de arriba).',
     '   "venezuelan-employer" → la contrata una empresa de Venezuela.',
-    '   null                → TODO LO DEMÁS.',
+    '   null                → EL RESTO DE CASOS.',
     '',
     '   Si no está en esa lista, es null. Que no diga si es remoto NO es un descarte.',
     '   Ante la duda, null: perder una oferta buena cuesta más que leer una de más.',

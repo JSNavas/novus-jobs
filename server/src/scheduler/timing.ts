@@ -1,7 +1,7 @@
 /** Hora de Venezuela: UTC-4 fijo, sin horario de verano. */
 const VET_OFFSET_MS = 4 * 60 * 60 * 1000;
 
-export interface PassSlot {
+interface PassSlot {
   date: string;
   hour: number;
   recovered: boolean;
