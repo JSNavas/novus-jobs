@@ -1,5 +1,5 @@
 import { lstatSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { chromium, type BrowserContext, type Page } from 'playwright';
 import type { Config } from '../config.js';
 import type { JobSource, PermalinkSelector, RawPost } from './types.js';
@@ -51,7 +51,9 @@ export class LinkedInSource implements JobSource {
       await page.goto(this.config.linkedinFeedUrl, { waitUntil: 'domcontentloaded', timeout: NAVIGATION_TIMEOUT_MS });
       await page.waitForTimeout(SETTLE_MS);
       await scrollFeed(page);
-      const posts = (await collectPosts(page)).map(toRawPost);
+      const snapshots = await collectPosts(page);
+      if (snapshots.length === 0) await this.failEmptyPass(page);
+      const posts = snapshots.map(toRawPost);
       for (const index of new Set(selectPermalinks(posts))) {
         const post = posts[index];
         const permalink = await copyPermalink(page, index);
@@ -62,6 +64,14 @@ export class LinkedInSource implements JobSource {
       await page.close().catch(() => undefined);
       this.scheduleIdleClose();
     }
+  }
+
+  private async failEmptyPass(page: Page): Promise<never> {
+    const logsDir = join(dirname(this.config.linkedinProfileDir), 'logs');
+    const screenshot = join(logsDir, 'empty-pass.png');
+    await page.screenshot({ path: screenshot }).catch(() => undefined);
+    const title = await page.title().catch(() => '');
+    throw new Error(`el feed no devolvió publicaciones (url: ${page.url()}, título: "${title}"); captura en ${screenshot}`);
   }
 
   async close(): Promise<void> {
