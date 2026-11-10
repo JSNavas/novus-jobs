@@ -38,7 +38,7 @@ function parseHours(raw: string): number[] {
 }
 
 function parsePort(raw: string | null): number {
-  if (raw === null) return 3000;
+  if (raw === null) return 47831;
   const port = Number(raw);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error(`PORT inválido: "${raw}"`);
   return port;

@@ -13,7 +13,7 @@ Dashboard de búsqueda de empleo que revisa LinkedIn por cron (réplica del patr
 cd server
 npm ci
 npm run build
-npm start                      # http://127.0.0.1:3000 (PORT)
+npm start                      # http://127.0.0.1:47831 (PORT)
 ```
 
 Primera vez: iniciar sesión en LinkedIn una sola vez con una ventana visible. La sesión queda en `server/data/linkedin-profile/`.
@@ -26,7 +26,7 @@ Variables de entorno (`server/.env`, todas opcionales):
 
 | Variable | Por defecto | Para qué |
 |---|---|---|
-| `PORT` | `3000` | Puerto de la API y de la UI |
+| `PORT` | `47831` | Puerto de la API y de la UI |
 | `SCHEDULE_HOURS` | `9,13,18` | Franjas de pasada, hora de Venezuela (UTC-4) |
 | `SCHEDULER_ENABLED` | `true` | `false` apaga las pasadas automáticas |
 | `JOB_SOURCES` | `linkedin` | Fuentes activas, separadas por comas |
