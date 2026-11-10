@@ -112,6 +112,16 @@ const CONTENT_MARKS: Array<string | RegExp> = [
   /te\s+comparto\s+(?:sitios|lugares|plataformas|portales|p[áa]ginas|webs?|tips?|consejos|recursos|herramientas|mi\b|lo\s+que|c[óo]mo)/i,
   'mi stack de trabajo', 'por qué migré', 'mi experiencia con', 'lo que aprendí',
   'sígueme para', 'síguelo para', 'comparto contigo',
+  // ═══ VENDER FORMACIÓN NO ES CONTRATAR ═══
+  // Un anuncio de curso habla de tecnologías, dice "necesitas conocer X" y
+  // suena a requisitos. Las marcas son específicas a propósito: una oferta de
+  // trabajo sí puede decir "ofrecemos formación continua", y eso no la
+  // convierte en un curso.
+  'a tu formación', 'tu formación', 'incorporar a tu', 'suma a tu perfil',
+  'curso de', 'nuestro curso', 'el curso', 'masterclass', 'webinar',
+  'bootcamp', 'inscríbete', 'inscribite', 'inscripciones', 'cupos',
+  'clase gratuita', 'taller gratuito', 'capacitación online', 'certifícate',
+  'aprende a', 'aprendé a', 'te enseño', 'te explico', 'guía completa',
 ];
 const OFFER_SIGNALS = [
   'buscamos', 'estamos buscando', 'se busca', 'búsqueda de', 'busqueda de',
@@ -120,8 +130,24 @@ const OFFER_SIGNALS = [
   'aplicar a', 'envía tu cv', 'envia tu cv', 'enviar cv', 'mándame tu cv', 'tu cv',
   'hoja de vida', 'we are hiring', "we're hiring", 'hiring', 'join our team',
   'apply now', 'job opening', 'open position', 'estamos sumando', 'sumate', 'súmate',
-  'incorporar', 'seleccionamos', 'reclutamiento', 'posición abierta', 'puesto de',
+  // "incorporar" a secas era demasiado débil: un anuncio de curso que decía
+  // "herramientas que vale la pena incorporar a tu formación" entraba como
+  // oferta. Lo que indica contratación es incorporar a un EQUIPO.
+  'incorporar a nuestro', 'incorporar a su equipo', 'incorporarse a', 'incorporación',
+  'seleccionamos', 'reclutamiento', 'posición abierta', 'puesto de',
   'perfil buscado', 'ofrecemos', 'salario', 'modalidad de trabajo', 'jornada',
+  // ═══ EL MOTIVO TAMBIÉN TIENE QUE SER VERDAD ═══
+  //
+  // Sin estas, una oferta escrita en inglés o de otro rubro se descartaba con
+  // "no es una oferta de trabajo", que es falso: SÍ lo era, solo que no era
+  // para él. El veredicto acertaba y el motivo mentía, y un motivo que miente
+  // hace imposible auditar el criterio — que es justo para lo que se guardan
+  // los descartes.
+  'responsabilidades', 'funciones del puesto', 'perfil requerido', 'experiencia mínima',
+  'experiencia minima', 'horario:', 'beneficios:', 'contratación', 'contratacion',
+  'we are looking for', "we're looking for", 'skills we', 'looking for your next',
+  'talent network', 'job opportunit', 'career opportunit', 'now hiring', 'position available',
+  'client project', 'send your cv', 'send your resume',
 ];
 
 /**

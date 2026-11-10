@@ -84,8 +84,8 @@ function rejectByLocation(ctx: Context): Verdict | null {
 }
 
 /** Los vetos por tecnología e idioma se juzgan sobre el anuncio sin la firma de quien lo publica. */
-function rejectByVetoes(ctx: Context, ad: string): Verdict | null {
-  const unknownTech = hasSeveralOpenings(ad) ? null : unknownRequiredTech(ad);
+function rejectByVetoes(ctx: Context, ad: string, cannotDo: readonly string[]): Verdict | null {
+  const unknownTech = hasSeveralOpenings(ad) ? null : unknownRequiredTech(ad, cannotDo);
   if (unknownTech) return reject(ctx, `exigen ${unknownTech.trim()}, que no sabe`);
   if (englishRequirement(ad) === 'required') return reject(ctx, 'exigen inglés avanzado');
   if (isVenezuelanEmployer(ctx.text)) return reject(ctx, 'la contrata una empresa venezolana');
@@ -123,7 +123,7 @@ function judgeStack(ctx: Context): Verdict | null {
  */
 export function decideShipping(offer: Offer, profile: CandidateProfile): Verdict {
   const ctx = buildContext(offer.text, profile.stack);
-  const early = rejectNonOffer(ctx) ?? rejectByLocation(ctx) ?? rejectByVetoes(ctx, adBody(offer.text));
+  const early = rejectNonOffer(ctx) ?? rejectByLocation(ctx) ?? rejectByVetoes(ctx, adBody(offer.text), profile.cannotDo);
   if (early) return early;
   const core = judgeCore(ctx, profile.core);
   if (core) return core;

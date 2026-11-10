@@ -13,17 +13,56 @@ const RESTRICTED_COUNTRIES = [
   'alemania', 'germany', 'francia', 'france', 'italia', 'italy', 'polonia', 'poland', 'india',
 ];
 
-/** Formas de decir "solo si vives aquí". */
+/**
+ * Formas de decir "solo si vives aquí".
+ *
+ * "Exclusiva para" estaba de menos, y costó una oferta mandada por error: un
+ * anuncio decía "Modalidad: 100 % remoto" y tres líneas después "📍 Vacante
+ * exclusiva para Colombia". El remoto era cierto; lo que no era cierto es que
+ * le sirviera. Un "100% remoto" NO significa "desde donde vivas" cuando el
+ * propio anuncio acota el país en otra línea.
+ */
 const RESTRICTION_MARKS = [
   'solo para', 'sólo para', 'only for', 'must be based in', 'must reside', 'residentes en',
   'residents of', 'based in', 'located in', 'ubicados en', 'radicados en', 'que vivan en',
   'authorized to work in', 'work authorization', 'visa', 'no sponsorship',
+  'exclusiva para', 'exclusivo para', 'exclusivamente para', 'únicamente para', 'unicamente para',
+  'solo residentes', 'sólo residentes', 'debes residir', 'debe residir', 'residir en',
+  'con residencia en', 'nacionalidad', 'aplica solo', 'aplica únicamente', 'open to candidates in',
 ];
 
-/** Formas de decir "desde donde sea". */
-const GLOBAL_MARKS = [
+/**
+ * Una etiqueta de sitio seguida de un país ES una restricción, aunque no lleve
+ * ninguna de las frases de arriba: "📍 Ubicación: Argentina" no necesita decir
+ * "solo para" para significarlo.
+ */
+const PLACE_LABEL = /(?:ubicaci[óo]n|localizaci[óo]n|cobertura|pa[íi]s|sede|vacante|residencia|location|country)\s*:?\s*[^.\n]{0,24}/i;
+
+/**
+ * Decir "desde donde sea" es una MODALIDAD: afirma que no importa dónde vivas.
+ * Estas marcas sí pueden más que una ciudad nombrada en el anuncio.
+ */
+const ANYWHERE_MARKS = [
   'remoto global', 'remote global', 'fully remote', '100% remoto', '100% remote',
   'worldwide', 'work from anywhere', 'anywhere in the world', 'desde cualquier lugar',
+];
+
+/**
+ * ⚠️ "LATAM" ES UNA REGIÓN, NO UNA MODALIDAD. Y confundir las dos dejaba pasar
+ * ofertas de un país concreto.
+ *
+ * Medido con una oferta real: "Backend Engineer · Node.js · Buenos Aires" …
+ * "para dos fintechs del ecosistema en LatAm". En todo el anuncio no aparece la
+ * palabra "remoto" ni una vez — el puesto es en Buenos Aires y "LatAm" describe
+ * dónde operan las empresas, no desde dónde se puede trabajar. Pero al estar
+ * "latam" en la misma lista que "100% remoto", contaba como "desde donde sea",
+ * anulaba la regla de ciudad y la oferta llegaba al dashboard.
+ *
+ * Una región sola no dice nada de la modalidad: solo abre la puerta cuando el
+ * anuncio ADEMÁS dice que es remoto ("remoto para LATAM", que sí le sirve
+ * porque Venezuela está dentro).
+ */
+const REGION_MARKS = [
   'latam', 'latinoamérica', 'latinoamerica', 'latin america', 'américa latina', 'america latina',
 ];
 
@@ -91,10 +130,21 @@ function nearRemote(t: string, first: string, second: string): boolean {
   return !!match && !NOT_A_RESTRICTION.test(match[1] ?? '');
 }
 
+function labelledWithCountry(t: string, country: string): boolean {
+  const match = new RegExp(PLACE_LABEL.source + escapeForCountry(country), 'i').exec(t);
+  return !!match;
+}
+
+/** El país puede llevar tilde o espacios; nada más hay que escapar aquí. */
+function escapeForCountry(country: string): string {
+  return country.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function restrictsToOtherCountry(t: string): boolean {
   const country = RESTRICTED_COUNTRIES.find((c) => wordIn(t, c));
   if (!country) return false;
   return RESTRICTION_MARKS.some((m) => t.includes(m))
+    || labelledWithCountry(t, country)
     || nearRemote(t, REMOTE, country)
     || nearRemote(t, country, REMOTE);
 }
@@ -113,10 +163,17 @@ export function classifyLocation(text: string): JobLocation {
   if (restrictsToOtherCountry(t)) return JobLocation.OtherCountry;
   // Una lista de tres o más países es el alcance de contratación: si Venezuela no está, no está.
   if (RESTRICTED_COUNTRIES.filter((c) => wordIn(t, c)).length >= 3) return JobLocation.OtherCountry;
-  const remoteOrGlobal = REMOTE_RE.test(t) || GLOBAL_MARKS.some((m) => t.includes(m));
-  if (LATAM_CITIES.some((c) => wordIn(t, c)) && !remoteOrGlobal) return JobLocation.OtherCountry;
-  if (GLOBAL_MARKS.some((m) => t.includes(m))) return JobLocation.Global;
+
+  // ¿El anuncio AFIRMA que se trabaja a distancia? Solo eso permite perdonar
+  // una ciudad nombrada: "100% remoto, oficinas en Bogotá" sí le sirve.
+  const saysRemote = REMOTE_RE.test(t) || ANYWHERE_MARKS.some((m) => t.includes(m));
+  if (LATAM_CITIES.some((c) => wordIn(t, c)) && !saysRemote) return JobLocation.OtherCountry;
+  if (ANYWHERE_MARKS.some((m) => t.includes(m))) return JobLocation.Global;
+  // "Remoto para LATAM" sí le vale: Venezuela está dentro de la región.
+  if (REGION_MARKS.some((m) => t.includes(m)) && REMOTE_RE.test(t)) return JobLocation.Global;
   if (REMOTE_RE.test(t)) return JobLocation.Global;
+  // Una región a secas no dice desde dónde se trabaja: se manda marcada como
+  // "por confirmar" en vez de darla por buena o tirarla.
   return JobLocation.Unknown;
 }
 
