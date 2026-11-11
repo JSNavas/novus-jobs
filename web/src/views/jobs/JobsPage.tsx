@@ -130,7 +130,7 @@ const JobsPage = () => {
       action={searchButton}
     >
       <Stack direction="row" spacing={1} alignItems="center" mb={2}>
-        {stats ? <AppChip label={newCountText(stats.new)} tone="success" /> : null}
+        {stats ? <AppChip label={newCountText(stats.new)} tone={stats.new > 0 ? 'success' : 'neutral'} /> : null}
       </Stack>
 
       {stats ? <LastRunAlert lastRun={stats.lastRun} /> : null}
