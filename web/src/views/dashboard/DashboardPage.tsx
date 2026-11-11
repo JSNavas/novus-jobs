@@ -4,25 +4,25 @@ import {
   Box, CircularProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography,
 } from '@mui/material';
 import { getStats, listRuns, PAGE_SIZE, type Stats } from '../../api/client';
-import { AppAlert, AppChip, AppPagination, BlankCard, PageContainer } from '../../components/ui';
+import { AppAlert, AppPagination, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { formatDateTime } from '../../format';
 import { RunStatus, type RunInfo } from '../../types';
+import { runStatusLabel, runStatusTone } from './runStatus';
 
 const POLL_INTERVAL_MS = 15_000;
 
 /**
- * LA PÁGINA QUE FALTABA: qué ha hecho el buscador y dónde está cada oferta.
+ * The page that was missing: what the searcher did and where each offer is.
  *
- * Antes la primera pantalla era la bandeja de «Nuevas», y con el filtro
- * haciendo bien su trabajo esa bandeja sale vacía casi siempre. El resultado
- * era una aplicación que parecía rota: cero ofertas, cero información, y nada
- * que explicara que detrás había setenta publicaciones leídas y descartadas
- * con su motivo. El trabajo invisible hay que enseñarlo, porque es la única
- * prueba de que el sistema está vivo cuando no hay nada que enseñar.
+ * The first screen used to be the "Nuevas" inbox, and with the filter doing
+ * its job that inbox is almost always empty. The result looked broken: zero
+ * offers, zero information, and nothing explaining that behind it were seventy
+ * postings read and discarded with their reason. Invisible work has to be shown,
+ * because it is the only proof the system is alive when there is nothing to show.
  *
- * Todo número de aquí es pulsable y lleva a las ofertas que lo forman. Un
- * contador que no se puede abrir obliga a creérselo, y lo que hay detrás —qué
- * descartó y por qué— es justo lo que hay que poder auditar.
+ * Every number here is clickable and leads to the offers behind it. A counter
+ * that cannot be opened forces you to take it on trust, and what sits behind it
+ * (what was discarded and why) is exactly what has to be auditable.
  */
 
 interface Tile {
@@ -31,6 +31,8 @@ interface Tile {
   hint: string;
   to: string;
   tone: 'success' | 'neutral';
+  /** What the filter set aside unseen: shown muted with a dashed border. */
+  audit?: boolean;
 }
 
 const tilesOf = (stats: Stats): Tile[] => [
@@ -68,19 +70,14 @@ const tilesOf = (stats: Stats): Tile[] => [
     hint: 'No encajaban: mira el motivo',
     to: '/rechazadas',
     tone: 'neutral',
+    audit: true,
   },
 ];
 
-const runStatusTone = (run: RunInfo): 'success' | 'error' | 'neutral' => {
-  if (run.status === RunStatus.Error) return 'error';
-  if (run.status === RunStatus.Running) return 'neutral';
-  return 'success';
-};
-
-const runStatusLabel = (run: RunInfo): string => {
-  if (run.status === RunStatus.Error) return 'Falló';
-  if (run.status === RunStatus.Running) return 'En curso';
-  return 'Correcta';
+/** A failed search is visible at a glance: red band on the left and a tinted background. */
+const failedRowSx = {
+  bgcolor: 'error.light',
+  '& > td:first-of-type': { borderLeft: 3, borderColor: 'error.main' },
 };
 
 const DashboardPage = () => {
@@ -134,17 +131,17 @@ const DashboardPage = () => {
           }}
         >
           {tilesOf(stats).map((tile) => (
-            <BlankCard key={tile.label}>
+            <BlankCard key={tile.label} dashed={tile.audit}>
               <Box
                 p={2.5}
                 onClick={() => void navigate(tile.to)}
                 sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' }, borderRadius: 1 }}
               >
-                <Typography variant="subtitle2" color="textSecondary">{tile.label}</Typography>
-                <Typography variant="h4" mt={0.5} color={tile.tone === 'success' && tile.value > 0 ? 'success.main' : 'textPrimary'}>
+                <Typography variant="overline" component="div" color="textSecondary">{tile.label}</Typography>
+                <Typography variant="metric" component="div" mt={1.5} color={tile.tone === 'success' && tile.value > 0 ? 'success.main' : 'textPrimary'}>
                   {tile.value}
                 </Typography>
-                <Typography variant="caption" color="textSecondary">{tile.hint}</Typography>
+                <Typography variant="caption" component="div" color="textSecondary" mt={1}>{tile.hint}</Typography>
               </Box>
             </BlankCard>
           ))}
@@ -173,17 +170,18 @@ const DashboardPage = () => {
                 key={run.id}
                 hover
                 onClick={() => void navigate(`/busquedas/${run.id}`)}
-                sx={{ cursor: 'pointer' }}
+                sx={{ cursor: 'pointer', ...(run.status === RunStatus.Error ? failedRowSx : undefined) }}
               >
-                <TableCell>{formatDateTime(run.startedAt)}</TableCell>
+                <TableCell>
+                  <Typography variant="mono" component="span">{formatDateTime(run.startedAt)}</Typography>
+                </TableCell>
                 <TableCell align="right">{run.fetched}</TableCell>
                 <TableCell align="right">{run.accepted}</TableCell>
                 <TableCell align="right">{run.rejected}</TableCell>
                 <TableCell>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <AppChip label={runStatusLabel(run)} tone={runStatusTone(run)} />
-                    {/* El motivo del fallo, recortado: el detalle entero está
-                        en la página de la búsqueda. */}
+                    <AppStatusPilot label={runStatusLabel(run)} tone={runStatusTone(run)} />
+                    {/* Failure reason, truncated: the full detail lives on the search page. */}
                     {run.error ? (
                       <Typography variant="caption" color="textSecondary" noWrap sx={{ maxWidth: 320 }}>
                         {run.error}

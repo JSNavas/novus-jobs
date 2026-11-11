@@ -82,6 +82,7 @@ Tarjeta sin cabecera. Es el contenedor de cada elemento de una lista (por ejempl
 
 - Props:
   - `children: ReactNode`.
+  - `dashed?: boolean`: borde discontinuo. Marca lo que es auditoría y no trabajo pendiente. Por defecto `false`.
 - Ejemplo:
   ```tsx
   <BlankCard>
@@ -89,6 +90,19 @@ Tarjeta sin cabecera. Es el contenedor de cada elemento de una lista (por ejempl
   </BlankCard>
   ```
 - No hacer: no poner padding extra dentro de la tarjeta sin necesidad. Pon el padding en el contenido.
+
+## AppStatusPilot
+
+Luz de estado: un punto de color y, si se pasa, el texto al lado. El texto es el que se lee sin color.
+
+- Props:
+  - `tone: 'success' | 'error' | 'neutral'`: correcto, fallo o en curso/sin intención.
+  - `label?: string`: si falta, solo se ve el punto (para espacios estrechos, como el menú).
+- Ejemplo:
+  ```tsx
+  <AppStatusPilot tone="error" label="Falló" />
+  ```
+- No hacer: no usarlo para decorar. El rojo es solo para fallo; un estado sin color claro es `neutral`.
 
 ## DashboardCard
 

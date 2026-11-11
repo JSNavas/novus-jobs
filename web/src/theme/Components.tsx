@@ -24,6 +24,14 @@ const components = (theme: Theme): ThemeOptions['components'] => {
         '#root': {
           height: '100%',
         },
+        '::selection': {
+          backgroundColor: theme.palette.primary.dark,
+          color: theme.palette.primary.contrastText,
+        },
+        '*:focus-visible': {
+          outline: `1px solid ${theme.palette.primary.main}`,
+          outlineOffset: 2,
+        },
         "*[dir='rtl'] .buyNowImg": {
           transform: 'scaleX(-1)',
         },
@@ -148,37 +156,37 @@ const components = (theme: Theme): ThemeOptions['components'] => {
         colorPrimary: {
           '&:hover': {
             backgroundColor: theme.palette.primary.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         colorSecondary: {
           '&:hover': {
             backgroundColor: theme.palette.secondary.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         colorSuccess: {
           '&:hover': {
             backgroundColor: theme.palette.success.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         colorError: {
           '&:hover': {
             backgroundColor: theme.palette.error.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         colorWarning: {
           '&:hover': {
             backgroundColor: theme.palette.warning.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         colorInfo: {
           '&:hover': {
             backgroundColor: theme.palette.info.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
       },
@@ -200,78 +208,78 @@ const components = (theme: Theme): ThemeOptions['components'] => {
           backgroundColor: theme.palette.primary.light,
           '&:hover': {
             backgroundColor: theme.palette.primary.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         textSecondary: {
           backgroundColor: theme.palette.secondary.light,
           '&:hover': {
             backgroundColor: theme.palette.secondary.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         textSuccess: {
           backgroundColor: theme.palette.success.light,
           '&:hover': {
             backgroundColor: theme.palette.success.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         textError: {
           backgroundColor: theme.palette.error.light,
           '&:hover': {
             backgroundColor: theme.palette.error.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         textInfo: {
           backgroundColor: theme.palette.info.light,
           '&:hover': {
             backgroundColor: theme.palette.info.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         textWarning: {
           backgroundColor: theme.palette.warning.light,
           '&:hover': {
             backgroundColor: theme.palette.warning.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         outlinedPrimary: {
           '&:hover': {
             backgroundColor: theme.palette.primary.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         outlinedSecondary: {
           '&:hover': {
             backgroundColor: theme.palette.secondary.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         outlinedError: {
           '&:hover': {
             backgroundColor: theme.palette.error.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         outlinedSuccess: {
           '&:hover': {
             backgroundColor: theme.palette.success.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         outlinedInfo: {
           '&:hover': {
             backgroundColor: theme.palette.info.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
         outlinedWarning: {
           '&:hover': {
             backgroundColor: theme.palette.warning.main,
-            color: 'white',
+            color: theme.palette.background.default,
           },
         },
       },
@@ -306,6 +314,12 @@ const components = (theme: Theme): ThemeOptions['components'] => {
       styleOverrides: {
         root: {
           borderBottom: `1px solid ${theme.palette.divider}`,
+          fontVariantNumeric: 'tabular-nums',
+        },
+        head: {
+          ...theme.typography.overline,
+          color: theme.palette.text.secondary,
+          textTransform: 'uppercase',
         },
       },
     },
@@ -339,22 +353,23 @@ const components = (theme: Theme): ThemeOptions['components'] => {
         root: {
           fontWeight: 600,
           fontSize: '0.75rem',
+          borderRadius: theme.shape.borderRadius,
         },
       },
     },
     MuiAlert: {
       styleOverrides: {
         filledSuccess: {
-          color: 'white',
+          color: theme.palette.background.default,
         },
         filledInfo: {
-          color: 'white',
+          color: theme.palette.background.default,
         },
         filledError: {
-          color: 'white',
+          color: theme.palette.background.default,
         },
         filledWarning: {
-          color: 'white',
+          color: theme.palette.background.default,
         },
         standardSuccess: {
           backgroundColor: theme.palette.success.light,
@@ -434,8 +449,7 @@ const components = (theme: Theme): ThemeOptions['components'] => {
     MuiPopover: {
       styleOverrides: {
         paper: {
-          boxShadow:
-            'rgb(145 158 171 / 30%) 0px 0px 2px 0px, rgb(145 158 171 / 12%) 0px 12px 24px -4px',
+          border: `1px solid ${theme.palette.divider}`,
         },
       },
     },

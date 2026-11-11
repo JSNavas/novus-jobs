@@ -2,6 +2,7 @@ export { default as AppAlert } from './AppAlert';
 export { default as AppChip, type AppChipTone } from './AppChip';
 export { default as AppDialog } from './AppDialog';
 export { default as AppPagination } from './AppPagination';
+export { default as AppStatusPilot, type AppStatusTone } from './AppStatusPilot';
 export { default as AppSnackbar } from './AppSnackbar';
 export { default as AppTabs, type AppTab } from './AppTabs';
 export { default as BlankCard } from './BlankCard';

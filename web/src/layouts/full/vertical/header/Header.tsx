@@ -6,12 +6,16 @@ interface HeaderProps {
 }
 
 const Header = ({ onMenuClick }: HeaderProps) => (
-  <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-    <Toolbar>
+  <AppBar
+    position="sticky"
+    elevation={0}
+    sx={{ bgcolor: 'background.default', color: 'text.primary', borderBottom: 1, borderColor: 'divider' }}
+  >
+    <Toolbar variant="dense">
       <IconButton aria-label="Abrir menú" onClick={onMenuClick} sx={{ mr: 1, display: { lg: 'none' } }}>
         <IconMenu2 size="20" />
       </IconButton>
-      <Typography variant="h6" color="textSecondary">
+      <Typography variant="overline" color="textSecondary">
         Ofertas de empleo
       </Typography>
     </Toolbar>

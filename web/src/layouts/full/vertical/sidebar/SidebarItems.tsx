@@ -5,18 +5,19 @@ import {
 } from '@tabler/icons-react';
 import { NavLink } from 'react-router';
 import { getStats, type Stats } from '../../../../api/client';
-import { AppChip } from '../../../../components/ui';
+import { AppChip, AppStatusPilot } from '../../../../components/ui';
 import { useEffect, useState } from 'react';
 import { JobStatus } from '../../../../types';
+import { runStatusLabel, runStatusTone } from '../../../../views/dashboard/runStatus';
 import { INBOX_VIEWS, showsCount } from '../../../../views/jobs/inbox';
 
 /**
- * El menú ES el mapa de la bandeja: una entrada por estado, con su contador.
+ * The menu IS the inbox map: one entry per status, each with its counter.
  *
- * Antes había una sola entrada y los estados vivían en un desplegable de
- * filtros. Eso obliga a recordar que el filtro existe para volver a ver lo que
- * guardaste, y una lista que no se ve desde el menú es una lista que no se
- * visita. El contador al lado responde "¿tengo algo ahí?" sin entrar.
+ * It used to be a single entry with the statuses hidden in a filter dropdown.
+ * That forces you to remember the filter exists in order to revisit what you
+ * saved, and a list that is not visible from the menu is a list nobody visits.
+ * The counter beside each entry answers "do I have anything there?" without entering it.
  */
 const ICONS: Record<string, TablerIcon> = {
   '/nuevas': IconInbox,
@@ -25,7 +26,7 @@ const ICONS: Record<string, TablerIcon> = {
   '/descartadas': IconArchive,
 };
 
-/** Cada cuánto se refrescan los contadores. El mismo ritmo que el dashboard. */
+/** How often the counters refresh. Same cadence as the dashboard. */
 const POLL_INTERVAL_MS = 15_000;
 
 interface SidebarItemsProps {
@@ -56,9 +57,9 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
 
   return (
     <>
-      {/* El dashboard va FUERA del grupo "Ofertas" y primero: no es una lista
-          de ofertas, es el resumen de lo que ha hecho el buscador, y es la
-          respuesta a "no tengo información" cuando la bandeja está vacía. */}
+      {/* The dashboard sits OUTSIDE the "Ofertas" group and comes first: it is not
+          a list of offers, it is the summary of what the searcher did, and the
+          answer to "I have no information" when the inbox is empty. */}
       <List sx={{ px: 2 }}>
         <ListItemButton
           component={NavLink}
@@ -71,6 +72,9 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
             <IconLayoutDashboard size="20" stroke={1.5} />
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
+          {stats?.lastRun ? (
+            <AppStatusPilot tone={runStatusTone(stats.lastRun)} srLabel={runStatusLabel(stats.lastRun)} />
+          ) : null}
         </ListItemButton>
       </List>
 
@@ -99,8 +103,8 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
       })}
     </List>
 
-      {/* El archivo del filtro. Separado de la bandeja porque no es trabajo
-          pendiente: es lo que se mira cuando sospechas que tiró algo bueno. */}
+      {/* The filter's archive. Kept apart from the inbox because it is not pending
+          work: it is what you check when you suspect it discarded something good. */}
       <List sx={{ px: 2 }} subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>Auditoría</ListSubheader>}>
         <ListItemButton
           component={NavLink}
