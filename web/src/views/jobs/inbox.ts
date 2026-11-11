@@ -23,7 +23,7 @@ export interface InboxView {
 export const INBOX_VIEWS: readonly InboxView[] = [
   {
     status: JobStatus.New,
-    path: '/',
+    path: '/nuevas',
     title: 'Nuevas',
     subtitle: 'Ofertas recién encontradas que todavía no has mirado',
     // Sin las horas escritas a mano: las pone la página con lo que diga la API.
@@ -64,6 +64,10 @@ export function showsCount(view: InboxView): boolean {
   return view.status === JobStatus.New || view.status === JobStatus.Saved;
 }
 
+/**
+ * La raíz ya no es la bandeja: es el dashboard. «Nuevas» vive en `/nuevas`.
+ * Quien llegue a `/` con un enlace viejo lo redirige el router, no esto.
+ */
 export function viewByPath(pathname: string): InboxView {
   return INBOX_VIEWS.find((v) => v.path === pathname) ?? INBOX_VIEWS[0]!;
 }

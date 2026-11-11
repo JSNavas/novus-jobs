@@ -6,7 +6,8 @@ import type { Scheduler } from '../scheduler/scheduler.js';
 import { SCHEDULE_TIMEZONE } from '../scheduler/timing.js';
 import { optionalInteger, stringParams, type Result } from './parse.js';
 
-const DEFAULT_LIMIT = 20;
+/** Diez por página en todas partes: es lo que se lee sin desplazarse. */
+const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 100;
 
 interface RunRoutesDeps {
@@ -16,8 +17,13 @@ interface RunRoutesDeps {
   hours: readonly number[];
 }
 
-function parseRunsLimit(raw: unknown): Result<number> {
-  return optionalInteger(stringParams(raw).limit, DEFAULT_LIMIT, 1, MAX_LIMIT, 'limit');
+function parseRunsPage(raw: unknown): Result<{ limit: number; offset: number }> {
+  const params = stringParams(raw);
+  const limit = optionalInteger(params.limit, DEFAULT_LIMIT, 1, MAX_LIMIT, 'limit');
+  if ('error' in limit) return limit;
+  const offset = optionalInteger(params.offset, 0, 0, Number.MAX_SAFE_INTEGER, 'offset');
+  if ('error' in offset) return offset;
+  return { value: { limit: limit.value, offset: offset.value } };
 }
 
 export function registerRunRoutes(app: FastifyInstance, deps: RunRoutesDeps): void {
@@ -25,9 +31,16 @@ export function registerRunRoutes(app: FastifyInstance, deps: RunRoutesDeps): vo
   app.get('/api/schedule', () => ({ hours: deps.hours, timezone: SCHEDULE_TIMEZONE }));
 
   app.get('/api/runs', (request, reply) => {
-    const limit = parseRunsLimit(request.query);
-    if ('error' in limit) return reply.code(400).send({ error: limit.error });
-    return reply.send(deps.runs.list(limit.value));
+    const page = parseRunsPage(request.query);
+    if ('error' in page) return reply.code(400).send({ error: page.error });
+    return reply.send(deps.runs.list(page.value.limit, page.value.offset));
+  });
+
+  /** Una pasada suelta: el dashboard la abre para enseñar lo que encontró. */
+  app.get<{ Params: { id: string } }>('/api/runs/:id', (request, reply) => {
+    const run = deps.runs.find(Number(request.params.id));
+    if (!run) return reply.code(404).send({ error: 'pasada no encontrada' });
+    return reply.send(run);
   });
 
   app.post('/api/runs', (_request, reply) => {

@@ -4,7 +4,18 @@ import type { RunsRepository } from '../db/runs.repository.js';
 import { JobSeniority, JobStatus, JobVerdict } from '../types.js';
 import { isOneOf, optionalBoolean, optionalEnum, optionalInteger, stringParams, type Result } from './parse.js';
 
-const DEFAULT_LIMIT = 50;
+/**
+ * `verdict=todas` pide las dos: lo aceptado y lo que el filtro tiró.
+ *
+ * Sin esta palabra no había forma de VER los descartes desde la interfaz, solo
+ * su número. Y un descarte que no se puede leer no se puede auditar: una oferta
+ * buena tirada por error se quedaría invisible para siempre, que es justo lo
+ * que guardar los descartes venía a evitar.
+ */
+const ALL_VERDICTS = 'todas';
+
+/** La misma página que el resto: se pide solo lo que se va a enseñar. */
+const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 200;
 
 interface JobRoutesDeps {
@@ -16,7 +27,10 @@ function parseJobQuery(raw: unknown): Result<JobQuery> {
   const params = stringParams(raw);
   const status = optionalEnum(params.status, Object.values(JobStatus), 'status');
   if ('error' in status) return status;
-  const verdict = optionalEnum(params.verdict, Object.values(JobVerdict), 'verdict');
+  const wantsAll = params.verdict === ALL_VERDICTS;
+  const verdict = wantsAll
+    ? ({ value: null } as Result<JobVerdict | null>)
+    : optionalEnum(params.verdict, Object.values(JobVerdict), 'verdict');
   if ('error' in verdict) return verdict;
   const seniority = optionalEnum(params.seniority, Object.values(JobSeniority), 'seniority');
   if ('error' in seniority) return seniority;
@@ -26,10 +40,14 @@ function parseJobQuery(raw: unknown): Result<JobQuery> {
   if ('error' in limit) return limit;
   const offset = optionalInteger(params.offset, 0, 0, Number.MAX_SAFE_INTEGER, 'offset');
   if ('error' in offset) return offset;
+  const runId = optionalInteger(params.runId, 0, 0, Number.MAX_SAFE_INTEGER, 'runId');
+  if ('error' in runId) return runId;
   return {
     value: {
       status: status.value,
-      verdict: verdict.value ?? JobVerdict.Accepted,
+      // Por defecto manda la bandeja: lo aceptado. Los descartes se piden.
+      verdict: wantsAll ? null : verdict.value ?? JobVerdict.Accepted,
+      runId: params.runId ? runId.value : null,
       seniority: seniority.value,
       source: params.source || null,
       search: params.q || null,

@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
 import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
-import { startRun, updateJobStatus, type JobQuery } from '../../api/client';
-import { AppAlert, AppChip, AppSnackbar, AppTabs, PageContainer } from '../../components/ui';
+import { PAGE_SIZE, startRun, updateJobStatus, type JobQuery } from '../../api/client';
+import { AppAlert, AppChip, AppPagination, AppSnackbar, AppTabs, PageContainer } from '../../components/ui';
 import { findEnumValue } from '../../enumValue';
 import { jobSeniorityLabel } from '../../labels';
 import { JobSeniority, JobStatus, type Job } from '../../types';
@@ -50,6 +50,11 @@ const JobsPage = () => {
   const [starting, setStarting] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
+  const [pageNumber, setPageNumber] = useState(1);
+
+  // Cambiar de lista, de pestaña o de filtro vuelve a la primera página:
+  // seguir en la tres de una lista que ahora tiene una deja la pantalla vacía.
+  useEffect(() => { setPageNumber(1); }, [seniority, filters, view]);
 
   const query = useMemo<JobQuery>(
     () => ({
@@ -57,8 +62,10 @@ const JobsPage = () => {
       status: view.status ?? undefined,
       q: filters.q.trim() || undefined,
       hasApply: filters.hasApply ? true : undefined,
+      limit: PAGE_SIZE,
+      offset: (pageNumber - 1) * PAGE_SIZE,
     }),
-    [seniority, filters, view],
+    [seniority, filters, view, pageNumber],
   );
 
   const { page, stats, schedule, settings, error, reload } = useDashboardData(query);
@@ -164,6 +171,16 @@ const JobsPage = () => {
           />
         ))}
       </Stack>
+
+      {page ? (
+        <AppPagination
+          page={pageNumber}
+          pageSize={PAGE_SIZE}
+          total={page.total}
+          onChange={setPageNumber}
+          noun="ofertas"
+        />
+      ) : null}
 
       <AppSnackbar
         message={notice?.message ?? null}

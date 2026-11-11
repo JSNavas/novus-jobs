@@ -11,6 +11,8 @@ interface PipelineDeps {
   jobs: JobsRepository;
   judge: LlmJudge | null;
   profile: CandidateProfile;
+  /** La pasada en curso. Queda grabada en cada oferta para poder volver a ella. */
+  runId: number;
 }
 
 export interface SourceFailure {
@@ -80,7 +82,7 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
     const ruleVerdict = decideShipping(offer, deps.profile);
     const judgment = judged.get(fingerprint(offer.text));
     const verdict = applyJudgment(ruleVerdict, judgment);
-    const job = toNewJob(source.name, offer, ruleVerdict, verdict, judgment ? JudgeStatus.Judged : JudgeStatus.Skipped);
+    const job = toNewJob(source.name, offer, ruleVerdict, verdict, judgment ? JudgeStatus.Judged : JudgeStatus.Skipped, deps.runId);
     if (!deps.jobs.insert(job)) continue;
     if (verdict.accepted) {
       outcome.accepted++;
@@ -139,6 +141,7 @@ function toNewJob(
   rules: Verdict,
   verdict: Verdict,
   judgeStatus: JudgeStatus,
+  runId: number,
 ): NewJob {
   // El anuncio SIN la firma de quien publica: de ahí salen el título y la
   // empresa, y es también lo que se guarda para leer. Con la cabecera delante,
@@ -166,5 +169,6 @@ function toNewJob(
     applyUrl: verdict.applyUrl,
     contactEmail: verdict.contactEmail,
     postedAt: null,
+    runId,
   };
 }

@@ -1,11 +1,15 @@
 import { JobLocation, JobSeniority, JobStatus, JobVerdict, JudgeStatus, type Job } from '../types.js';
 import type { Db } from './database.js';
 
-export type NewJob = Omit<Job, 'id' | 'status' | 'foundAt'> & { foundAt?: string };
+export type NewJob = Omit<Job, 'id' | 'status' | 'foundAt' | 'runId'>
+  & { foundAt?: string; runId?: number | null };
 
 export interface JobQuery {
   status: JobStatus | null;
-  verdict: JobVerdict;
+  /** `null` = las dos: lo aceptado Y lo que el filtro descartó. */
+  verdict: JobVerdict | null;
+  /** Solo las de una pasada concreta. Es lo que hace pulsable el dashboard. */
+  runId: number | null;
   seniority: JobSeniority | null;
   source: string | null;
   search: string | null;
@@ -18,6 +22,8 @@ interface JobStats {
   new: number;
   saved: number;
   total: number;
+  /** Cuántas descartó el filtro, en total. Sin esto el dashboard no cuadra. */
+  rejected: number;
   /** Cuántas hay en cada estado. El menú lateral las enseña como contador. */
   byStatus: Record<JobStatus, number>;
 }
@@ -46,11 +52,12 @@ interface JobRow {
   status: JobStatus;
   found_at: string;
   posted_at: string | null;
+  run_id: number | null;
 }
 
 const JOB_COLUMNS = `id, source, fingerprint, title, role, company, author, text, url, location, location_kind,
   verdict, rejection_reason, seniority, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
-  judge_status, status, found_at, posted_at`;
+  judge_status, status, found_at, posted_at, run_id`;
 
 function toJob(row: JobRow): Job {
   return {
@@ -77,6 +84,7 @@ function toJob(row: JobRow): Job {
     applyUrl: row.apply_url,
     contactEmail: row.contact_email,
     isUncertain: row.is_uncertain === 1,
+    runId: row.run_id,
   };
 }
 
@@ -88,10 +96,10 @@ export class JobsRepository {
     const result = this.db.prepare(`
       INSERT OR IGNORE INTO jobs (source, fingerprint, title, role, company, author, text, url, location, location_kind,
         verdict, rejection_reason, seniority, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
-        judge_status, status, found_at, posted_at)
+        judge_status, status, found_at, posted_at, run_id)
       VALUES (@source, @fingerprint, @title, @role, @company, @author, @text, @url, @location, @locationKind,
         @verdict, @rejectionReason, @seniority, @isAggregator, @isUncertain, @stackMatch, @applyUrl, @contactEmail,
-        @judgeStatus, @status, @foundAt, @postedAt)
+        @judgeStatus, @status, @foundAt, @postedAt, @runId)
     `).run({
       ...job,
       isAggregator: job.isAggregator ? 1 : 0,
@@ -99,6 +107,7 @@ export class JobsRepository {
       stackMatch: JSON.stringify(job.stackMatch),
       status: JobStatus.New,
       foundAt: job.foundAt ?? new Date().toISOString(),
+      runId: job.runId ?? null,
     });
     return result.changes > 0;
   }
@@ -171,12 +180,17 @@ export class JobsRepository {
       byStatus[row.status] = row.count;
       total += row.count;
     }
-    return { new: byStatus[JobStatus.New], saved: byStatus[JobStatus.Saved], total, byStatus };
+    const rejected = this.db.prepare<[], { count: number }>(
+      `SELECT COUNT(*) AS count FROM jobs WHERE verdict = '${JobVerdict.Rejected}'`,
+    ).get()?.count ?? 0;
+    return { new: byStatus[JobStatus.New], saved: byStatus[JobStatus.Saved], total, rejected, byStatus };
   }
 
   private buildWhere(query: JobQuery): { where: string; params: Array<string | number> } {
-    const clauses = ['verdict = ?'];
-    const params: Array<string | number> = [query.verdict];
+    const clauses: string[] = [];
+    const params: Array<string | number> = [];
+    if (query.verdict) { clauses.push('verdict = ?'); params.push(query.verdict); }
+    if (query.runId !== null) { clauses.push('run_id = ?'); params.push(query.runId); }
     if (query.status) { clauses.push('status = ?'); params.push(query.status); }
     if (query.seniority) { clauses.push('seniority = ?'); params.push(query.seniority); }
     if (query.source) { clauses.push('source = ?'); params.push(query.source); }
@@ -187,6 +201,8 @@ export class JobsRepository {
     if (query.hasApply !== null) {
       clauses.push(query.hasApply ? '(apply_url IS NOT NULL OR contact_email IS NOT NULL)' : '(apply_url IS NULL AND contact_email IS NULL)');
     }
-    return { where: `WHERE ${clauses.join(' AND ')}`, params };
+    // Sin ninguna condición no se escribe `WHERE`: "WHERE" a secas es un error
+    // de sintaxis, y pedir la lista entera es una consulta legítima.
+    return { where: clauses.length ? `WHERE ${clauses.join(' AND ')}` : '', params };
   }
 }

@@ -212,6 +212,7 @@ export class Runner implements PassRunner {
         jobs: this.deps.jobs,
         judge: this.deps.judge,
         profile: this.deps.profile,
+        runId: id,
       });
       const note = describe(result.failures);
 

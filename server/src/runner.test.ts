@@ -126,7 +126,7 @@ describe('Runner — suelo de las búsquedas manuales', () => {
     pastManual(null);
     const r = runner();
     r.startScheduled();
-    assert.equal(runs.list(10).filter((x) => x.id === 2).length, 1);
+    assert.equal(runs.list(10).items.filter((x) => x.id === 2).length, 1);
   });
 
   /* ═══ LOS LÍMITES QUE PROTEGEN LA CUENTA ═══
@@ -166,9 +166,9 @@ describe('Runner — suelo de las búsquedas manuales', () => {
 
   it('el techo diario también para al planificador', () => {
     for (let i = 0; i < 8; i++) pastRun(null, RunTrigger.Scheduled);
-    const before = runs.list(50).length;
+    const before = runs.list(50).items.length;
     runner().startScheduled();
-    assert.equal(runs.list(50).length, before, 'no debería haber lanzado nada');
+    assert.equal(runs.list(50).items.length, before, 'no debería haber lanzado nada');
   });
 
   it('el presupuesto se cuenta por día de Venezuela, no por día UTC', () => {

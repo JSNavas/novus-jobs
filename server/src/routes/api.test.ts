@@ -51,8 +51,12 @@ describe('API HTTP', () => {
     db = openDatabase(dir);
     const jobs = new JobsRepository(db);
     const runs = new RunsRepository(db);
-    jobs.insert(newJob({}));
-    jobs.insert(newJob({ fingerprint: 'fp-rejected', verdict: JobVerdict.Rejected, rejectionReason: 'presencial', contactEmail: null }));
+    jobs.insert(newJob({ runId: 1 }));
+    jobs.insert(newJob({
+      fingerprint: 'fp-rejected', verdict: JobVerdict.Rejected, rejectionReason: 'presencial',
+      contactEmail: null, runId: 1,
+    }));
+    jobs.insert(newJob({ fingerprint: 'fp-otra-pasada', runId: 2 }));
     const runner = new Runner({ sources: [], jobs, runs, judge: null, profile: PROFILE, mailer: new Mailer(null), dashboardUrl: 'http://localhost/' });
     const scheduler = new Scheduler({
       hours: [9, 13, 18],
@@ -79,8 +83,44 @@ describe('API HTTP', () => {
     const res = await app.inject({ method: 'GET', url: '/api/jobs' });
     assert.equal(res.statusCode, 200);
     const body = res.json<{ items: Array<{ verdict: string }>; total: number }>();
+    assert.equal(body.total, 2);
+    assert.ok(body.items.every((item) => item.verdict === 'accepted'));
+  });
+
+  it('GET /api/jobs?verdict=todas trae también lo que descartó el filtro', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/jobs?verdict=todas' });
+    assert.equal(res.statusCode, 200);
+    const body = res.json<{ items: Array<{ verdict: string }>; total: number }>();
+    assert.equal(body.total, 3);
+    assert.ok(body.items.some((item) => item.verdict === 'rejected'));
+  });
+
+  it('GET /api/jobs?runId acota a lo que encontró esa pasada', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/jobs?runId=2&verdict=todas' });
+    assert.equal(res.statusCode, 200);
+    const body = res.json<{ items: Array<{ fingerprint: string }>; total: number }>();
     assert.equal(body.total, 1);
-    assert.equal(body.items[0]?.verdict, 'accepted');
+    assert.equal(body.items[0]?.fingerprint, 'fp-otra-pasada');
+  });
+
+  it('GET /api/runs devuelve una página con su total, no la lista entera', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/runs?limit=10&offset=0' });
+    assert.equal(res.statusCode, 200);
+    const body = res.json<{ items: unknown[]; total: number }>();
+    assert.ok(Array.isArray(body.items), 'la página viene en items');
+    assert.equal(typeof body.total, 'number', 'y el total, para que el paginador no mienta');
+  });
+
+  it('GET /api/jobs pagina de diez en diez por defecto', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/jobs?verdict=todas' });
+    assert.equal(res.statusCode, 200);
+    const body = res.json<{ items: unknown[]; total: number }>();
+    assert.ok(body.items.length <= 10, 'nunca más de diez por página');
+  });
+
+  it('GET /api/runs/:id devuelve la pasada o 404', async () => {
+    const missing = await app.inject({ method: 'GET', url: '/api/runs/999' });
+    assert.equal(missing.statusCode, 404);
   });
 
   it('GET /api/jobs sin resultados es 200 con lista vacía', async () => {
@@ -117,8 +157,8 @@ describe('API HTTP', () => {
     const res = await app.inject({ method: 'GET', url: '/api/stats' });
     assert.equal(res.statusCode, 200);
     assert.deepEqual(res.json(), {
-      new: 0, saved: 1, total: 1, lastRun: null,
-      byStatus: { new: 0, seen: 0, saved: 1, dismissed: 0 },
+      new: 1, saved: 1, total: 2, rejected: 1, lastRun: null,
+      byStatus: { new: 1, seen: 0, saved: 1, dismissed: 0 },
     });
   });
 
@@ -129,7 +169,7 @@ describe('API HTTP', () => {
     assert.equal(res.statusCode, 200);
     const body = res.json<{ items: unknown[]; total: number; bySeniority: Record<string, number> }>();
     assert.equal(body.items.length, 0, 'no hay ninguna junior');
-    assert.deepEqual(body.bySeniority, { regular: 1, junior: 0 }, 'pero sí una en la otra pestaña');
+    assert.deepEqual(body.bySeniority, { regular: 2, junior: 0 }, 'pero sí las de la otra pestaña');
   });
 
   it('GET /api/schedule dice las horas y la zona, para que la UI no las invente', async () => {

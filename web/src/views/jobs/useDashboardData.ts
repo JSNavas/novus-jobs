@@ -3,6 +3,11 @@ import { getSchedule, getSettings, getStats, listJobs, type JobQuery, type JobsP
 
 const POLL_INTERVAL_MS = 15_000;
 
+/**
+ * `page` entra aparte de `query` para que cambiar de página no reinicie nada
+ * más, y para que cambiar un filtro pueda devolver a la primera sin pelearse
+ * con este efecto.
+ */
 export function useDashboardData(query: JobQuery) {
   const [page, setPage] = useState<JobsPage | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);

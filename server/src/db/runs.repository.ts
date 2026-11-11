@@ -133,7 +133,18 @@ export class RunsRepository {
     return row ? toRun(row) : null;
   }
 
-  list(limit: number): RunInfo[] {
-    return this.db.prepare<[number], RunRow>('SELECT * FROM runs ORDER BY id DESC LIMIT ?').all(limit).map(toRun);
+  /**
+   * Una PÁGINA del historial, con el total para poder pintar el paginador.
+   *
+   * El total se consulta aparte y no se deduce de lo devuelto: con 9 filas en
+   * una página de 10 no se sabe si hay más detrás, y la única forma de que el
+   * paginador no mienta es preguntarlo.
+   */
+  list(limit: number, offset = 0): { items: RunInfo[]; total: number } {
+    const total = this.db.prepare<[], { count: number }>('SELECT COUNT(*) AS count FROM runs').get()?.count ?? 0;
+    const rows = this.db.prepare<[number, number], RunRow>(
+      'SELECT * FROM runs ORDER BY id DESC LIMIT ? OFFSET ?',
+    ).all(limit, offset);
+    return { items: rows.map(toRun), total };
   }
 }

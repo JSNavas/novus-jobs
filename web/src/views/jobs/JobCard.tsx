@@ -3,7 +3,7 @@ import { Box, Button, Stack, Typography } from '@mui/material';
 import { AppAlert, AppChip, BlankCard } from '../../components/ui';
 import { formatDateTime } from '../../format';
 import { jobLocationLabel, jobStatusLabel } from '../../labels';
-import { JobLocation, JobStatus, type Job } from '../../types';
+import { JobLocation, JobStatus, JobVerdict, type Job } from '../../types';
 import type { Settings } from '../../api/client';
 import { gmailComposeUrl, shouldOfferApplication } from './apply';
 
@@ -127,9 +127,19 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
           </Box>
           <Stack direction="row" spacing={1}>
             {job.isUncertain ? <AppChip label="Por confirmar" tone="warning" /> : null}
+            {job.verdict === JobVerdict.Rejected ? <AppChip label="Descartada por el filtro" tone="error" /> : null}
             <AppChip label={jobStatusLabel[job.status]} />
           </Stack>
         </Stack>
+
+        {/* EL MOTIVO DEL DESCARTE, A LA VISTA.
+            Se guardaba desde el principio y no se enseñaba en ninguna parte,
+            así que auditarlo exigía abrir la base de datos. Un criterio que no
+            se puede leer no se puede corregir, y el único error que importa de
+            verdad —una oferta buena tirada— solo se ve aquí. */}
+        {job.rejectionReason ? (
+          <AppAlert severity="warning">Descartada: {job.rejectionReason}</AppAlert>
+        ) : null}
 
         <Typography variant="body2">Publicado por {job.author ?? 'autor desconocido'}</Typography>
         {job.stackMatch.length > 0 ? (

@@ -1,6 +1,7 @@
 import { List, ListItemButton, ListItemIcon, ListItemText, ListSubheader } from '@mui/material';
 import {
-  IconArchive, IconBookmark, IconEye, IconInbox, type Icon as TablerIcon,
+  IconArchive, IconBookmark, IconEye, IconFilterOff, IconInbox, IconLayoutDashboard,
+  type Icon as TablerIcon,
 } from '@tabler/icons-react';
 import { NavLink } from 'react-router';
 import { getStats, type Stats } from '../../../../api/client';
@@ -18,7 +19,7 @@ import { INBOX_VIEWS, showsCount } from '../../../../views/jobs/inbox';
  * visita. El contador al lado responde "¿tengo algo ahí?" sin entrar.
  */
 const ICONS: Record<string, TablerIcon> = {
-  '/': IconInbox,
+  '/nuevas': IconInbox,
   '/vistas': IconEye,
   '/guardadas': IconBookmark,
   '/descartadas': IconArchive,
@@ -54,6 +55,25 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
   };
 
   return (
+    <>
+      {/* El dashboard va FUERA del grupo "Ofertas" y primero: no es una lista
+          de ofertas, es el resumen de lo que ha hecho el buscador, y es la
+          respuesta a "no tengo información" cuando la bandeja está vacía. */}
+      <List sx={{ px: 2 }}>
+        <ListItemButton
+          component={NavLink}
+          to="/"
+          end
+          onClick={onNavigate}
+          sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
+        >
+          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+            <IconLayoutDashboard size="20" stroke={1.5} />
+          </ListItemIcon>
+          <ListItemText primary="Dashboard" />
+        </ListItemButton>
+      </List>
+
     <List sx={{ px: 2 }} subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>Ofertas</ListSubheader>}>
       {INBOX_VIEWS.map((view) => {
         const Icon = ICONS[view.path] ?? IconInbox;
@@ -78,6 +98,25 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
         );
       })}
     </List>
+
+      {/* El archivo del filtro. Separado de la bandeja porque no es trabajo
+          pendiente: es lo que se mira cuando sospechas que tiró algo bueno. */}
+      <List sx={{ px: 2 }} subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>Auditoría</ListSubheader>}>
+        <ListItemButton
+          component={NavLink}
+          to="/rechazadas"
+          end
+          onClick={onNavigate}
+          sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
+        >
+          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+            <IconFilterOff size="20" stroke={1.5} />
+          </ListItemIcon>
+          <ListItemText primary="Descartadas por el filtro" />
+          {stats?.rejected ? <AppChip label={String(stats.rejected)} tone="neutral" /> : null}
+        </ListItemButton>
+      </List>
+    </>
   );
 };
 

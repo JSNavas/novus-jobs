@@ -67,6 +67,8 @@ export interface Job {
   applyUrl: string | null;
   contactEmail: string | null;
   isUncertain: boolean;
+  /** La pasada que la encontró. `null` en lo guardado antes de registrarlo. */
+  runId: number | null;
 }
 
 export interface RunInfo {

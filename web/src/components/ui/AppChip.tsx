@@ -1,6 +1,6 @@
 import { Chip } from '@mui/material';
 
-export type AppChipTone = 'success' | 'warning' | 'neutral';
+export type AppChipTone = 'success' | 'warning' | 'error' | 'neutral';
 
 interface AppChipProps {
   label: string;
@@ -10,6 +10,7 @@ interface AppChipProps {
 const toneColor = {
   success: 'success',
   warning: 'warning',
+  error: 'error',
   neutral: 'default',
 } as const;
 

@@ -29,7 +29,7 @@ Es una réplica deliberada del patrón de [A.R.T.I.O](../A.R.T.I.O), que lleva m
 ## Estructura
 
 - `server/` — backend: pasadas programadas, reglas de filtrado, avisos y API.
-- `web/` — frontend: la bandeja de ofertas.
+- `web/` — frontend: el dashboard y la bandeja de ofertas.
 - `docs/` — la nota de la tarea que originó el proyecto.
 
 ## Servidor
@@ -102,9 +102,27 @@ Los logs están en `server/data/logs/server.log`.
 
 Pruebas: `cd server && npm test`.
 
+## El dashboard
+
+Es la página de inicio, y existe porque la aplicación parecía rota cuando funcionaba bien. Con el filtro haciendo su trabajo, la bandeja de «Nuevas» sale vacía casi siempre: la primera pantalla era un cero sin explicación, sin rastro de que detrás había setenta publicaciones leídas y descartadas con su motivo. **El trabajo invisible hay que enseñarlo, porque es la única prueba de que el sistema está vivo cuando no hay nada que enseñar.**
+
+Arriba, cinco contadores: Nuevas, Vistas, Guardadas, Descartadas por ti y **Descartadas por el filtro**. Debajo, el historial de **búsquedas** con lo que leyó cada una, cuántas encajaron, cuántas descartó y si falló, con el motivo.
+
+**Todo es pulsable y lleva a las ofertas que forman el número.** Un contador que no se puede abrir obliga a creérselo, y lo que hay detrás —qué descartó y por qué— es justo lo que hay que poder auditar. Pulsando una búsqueda se ven sus ofertas, aceptadas y descartadas juntas: separarlas escondería la mitad del trabajo, y el criterio solo se juzga leyendo seguidas la que pasó y la que no.
+
+Para poder volver a una búsqueda, cada oferta guarda de cuál salió (`jobs.run_id`). Lo guardado antes de que existiera esa columna se rellenó deduciendo la búsqueda por la hora: sin eso, el historial enseñaría «28 leídas» y al pulsarlo no habría nada, que es peor que no poder pulsar — parece que las ofertas se perdieron.
+
+### Descartadas por el filtro
+
+La pantalla de auditoría del criterio, fuera del menú de la bandeja porque no es trabajo pendiente. Guardar los descartes no sirve de nada si no hay dónde leerlos: **una oferta buena descartada por error es la que nunca sabrías que existió**, y hasta que existió esta pantalla el motivo estaba en la base de datos y en ningún sitio más. Cada tarjeta lo dice en su cabecera («exigen c#, que no sabe», «remoto restringido a otro país»).
+
+### Paginación
+
+Todas las listas van **de diez en diez, paginadas en el servidor**: cada página es una petición con `limit` y `offset`, y el navegador nunca recibe setenta ofertas para enseñar diez. El total se consulta aparte y no se deduce de lo devuelto, porque con nueve filas en una página de diez no se sabe si hay más detrás y el paginador acabaría mintiendo. Con una sola página el control desaparece: algo que siempre dice «1» y no lleva a ninguna parte es ruido que compite con lo que sí se puede pulsar.
+
 ## La bandeja
 
-El menú lateral es la bandeja, una lista por estado y con su contador:
+«Nuevas» vive en `/nuevas`: la raíz es el dashboard. El menú lateral es la bandeja, una lista por estado y con su contador:
 
 | Lista | Qué hay | Cómo llega | ¿Lleva contador? |
 |---|---|---|---|
