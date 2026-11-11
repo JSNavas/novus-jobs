@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { PassRunner } from '../runner.js';
 import type { JobSource } from '../sources/types.js';
+import type { SourceSchedules } from '../sources/schedules.js';
 import { currentSlot, shouldRunPass, toVet, type LastPass } from './timing.js';
 
 /**
@@ -67,9 +68,16 @@ function asLastPass(value: unknown): LastPass | undefined {
 }
 
 interface SchedulerOptions {
-  /** Las franjas de `SCHEDULE_HOURS`, para las fuentes que van por franjas. */
+  /** Las franjas de `SCHEDULE_HOURS`: el defecto de quien no tenga horario propio. */
   hours: readonly number[];
   sources: readonly JobSource[];
+  /**
+   * El horario vivo de cada fuente, leído de la base en cada tick.
+   *
+   * Se consulta cada vez y no se guarda: cambiar el ritmo en Integraciones
+   * tiene que notarse en el tick siguiente, no al reiniciar el servicio.
+   */
+  schedules: SourceSchedules;
   store: LastPassStore;
   runner: PassRunner;
   clock?: () => Date;
@@ -102,10 +110,10 @@ export class Scheduler {
     this.interval = setInterval(() => this.tick(), TICK_MS);
     this.startupTimer = setTimeout(() => this.tick(), STARTUP_DELAY_MS);
     for (const source of this.options.sources) {
-      const schedule = source.policy.schedule;
+      const schedule = this.options.schedules.of(source);
       const when = schedule.kind === 'every-minutes'
         ? `cada ${schedule.minutes} min`
-        : `a las ${this.options.hours.join(', ')} (VET)`;
+        : `a las ${this.hoursOf(source).join(', ')} (VET)`;
       console.log(`[scheduler] ${source.name}: ${when}`);
     }
   }
@@ -162,13 +170,13 @@ export class Scheduler {
     const due: string[] = [];
 
     for (const source of this.options.sources) {
-      const schedule = source.policy.schedule;
+      const schedule = this.options.schedules.of(source);
       if (schedule.kind === 'every-minutes') {
         const last = this.options.runner.lastPassAt(source.name);
         if (last === null || now - last >= schedule.minutes * 60_000) due.push(source.name);
         continue;
       }
-      const slot = shouldRunPass(vet, this.options.hours, this.options.store.read(source.name));
+      const slot = shouldRunPass(vet, this.hoursOf(source), this.options.store.read(source.name));
       if (!slot) continue;
       this.options.store.write(source.name, { date: slot.date, hour: slot.hour });
       if (slot.recovered) console.log(`[scheduler] ${source.name}: recuperando la franja de las ${slot.hour}:00 (VET)`);
@@ -186,10 +194,17 @@ export class Scheduler {
    * última fila de `runs`, que la búsqueda manual acaba de escribir.
    */
   markCurrentSlot(): void {
-    const slot = currentSlot(toVet(this.clock()), this.options.hours);
-    if (!slot) return;
     for (const source of this.options.sources) {
-      if (source.policy.schedule.kind === 'configured-hours') this.options.store.write(source.name, slot);
+      if (this.options.schedules.of(source).kind !== 'configured-hours') continue;
+      const slot = currentSlot(toVet(this.clock()), this.hoursOf(source));
+      if (slot) this.options.store.write(source.name, slot);
     }
+  }
+
+  /** Las franjas de esta fuente: las suyas si las eligió, y si no las del `.env`. */
+  private hoursOf(source: JobSource): readonly number[] {
+    const schedule = this.options.schedules.of(source);
+    if (schedule.kind !== 'configured-hours') return [];
+    return schedule.hours ?? this.options.hours;
   }
 }

@@ -5,6 +5,7 @@ import RejectedPage from '../views/dashboard/RejectedPage';
 import RunPage from '../views/dashboard/RunPage';
 import { INBOX_VIEWS } from '../views/jobs/inbox';
 import FocusPage from '../views/focus/FocusPage';
+import IntegrationsPage from '../views/integrations/IntegrationsPage';
 import JobsPage from '../views/jobs/JobsPage';
 import SettingsPage from '../views/settings/SettingsPage';
 
@@ -23,6 +24,10 @@ const router = createBrowserRouter([
       { path: 'rechazadas', element: <RejectedPage /> },
       { path: 'busquedas/:id', element: <RunPage /> },
       { path: 'enfoque', element: <FocusPage /> },
+      // Una sola página para la lista y para cada integración: lo que cambia
+      // es cuántas tarjetas se pintan, y eso lo dice la URL.
+      { path: 'integraciones', element: <IntegrationsPage /> },
+      { path: 'integraciones/:name', element: <IntegrationsPage /> },
       { path: 'configuracion', element: <SettingsPage /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],

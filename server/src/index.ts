@@ -16,6 +16,7 @@ import { Mailer } from './notify/mailer.js';
 import { Runner } from './runner.js';
 import { LastPassStore, Scheduler } from './scheduler/scheduler.js';
 import { LINKEDIN_PROFILE_ID } from './sources/linkedin.source.js';
+import { SourceSchedules } from './sources/schedules.js';
 import { buildSources } from './sources/registry.js';
 
 async function main(): Promise<void> {
@@ -54,9 +55,11 @@ async function main(): Promise<void> {
     maxAgeDays: () => readMaxAgeMonths(settings) * 30, jobs, runs, judge, profile: PROFILE,
     mailer, dashboardUrl: config.dashboardUrl,
   });
+  const schedules = new SourceSchedules(settings, config.scheduleHours);
   const scheduler = new Scheduler({
     hours: config.scheduleHours,
     sources,
+    schedules,
     store: new LastPassStore(join(config.dataDir, 'last-pass.json')),
     runner,
   });
@@ -71,6 +74,7 @@ async function main(): Promise<void> {
     pool,
     sources,
     scheduleHours: config.scheduleHours,
+    schedules,
     gmailAccount: config.gmailAccount,
     webDist: existsSync(config.webDist) ? config.webDist : null,
   });

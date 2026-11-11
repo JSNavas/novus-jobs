@@ -62,7 +62,9 @@ export function shouldRunPass(vet: Date, hours: readonly number[], last?: LastPa
 /** Lo que el planificador sabe de una fuente para decir cuándo le toca. */
 export interface NextRunSource {
   readonly name: string;
-  readonly schedule: { readonly kind: 'configured-hours' } | { readonly kind: 'every-minutes'; readonly minutes: number };
+  readonly schedule:
+    | { readonly kind: 'configured-hours'; readonly hours?: readonly number[] }
+    | { readonly kind: 'every-minutes'; readonly minutes: number };
 }
 
 /** La franja siguiente a `now`, en milisegundos absolutos. */
@@ -100,7 +102,7 @@ export function nextRunAt(
       candidates.push(Math.max(due, now.getTime()));
       continue;
     }
-    const slot = nextSlotAt(now, hours);
+    const slot = nextSlotAt(now, source.schedule.hours ?? hours);
     if (slot !== null) candidates.push(slot);
   }
   return candidates.length ? Math.min(...candidates) : null;

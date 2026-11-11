@@ -190,3 +190,40 @@ export function updateSettings(changes: { motivationTemplate?: string; maxAgeMon
 export function getSchedule(): Promise<Schedule> {
   return request<Schedule>('/schedule');
 }
+
+/**
+ * UNA INTEGRACIÓN, TAL CUAL LA MONTÓ EL SERVIDOR.
+ *
+ * La lista la decide `JOB_SOURCES`, no la interfaz: enchufar una plataforma
+ * nueva la hace aparecer en el menú sin tocar una línea de React. Y el
+ * `kind` del horario es lo único que la pantalla necesita saber para pintar
+ * el editor que toque: franjas de hora o cada cuántos minutos.
+ */
+export type IntegrationSchedule =
+  | { kind: 'configured-hours'; hours: number[] }
+  | { kind: 'every-minutes'; minutes: number };
+
+export interface Integration {
+  name: string;
+  label: string;
+  needsLogin: boolean;
+  schedule: IntegrationSchedule;
+  timezone: string;
+  lastRunAt: string | null;
+  nextAt: string | null;
+}
+
+export function listIntegrations(): Promise<Integration[]> {
+  return request<Integration[]>('/integrations');
+}
+
+export function updateIntegrationSchedule(
+  name: string,
+  schedule: { minutes: number } | { hours: number[] },
+): Promise<Integration> {
+  return request<Integration>(`/integrations/${name}/schedule`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(schedule),
+  });
+}

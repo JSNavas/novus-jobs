@@ -4,6 +4,7 @@ import type { Runner } from '../runner.js';
 import { RunRefusedError } from '../runner.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
 import { nextRunAt, SCHEDULE_TIMEZONE } from '../scheduler/timing.js';
+import type { SourceSchedules } from '../sources/schedules.js';
 import type { JobSource } from '../sources/types.js';
 import { optionalInteger, stringParams, type Result } from './parse.js';
 
@@ -17,6 +18,7 @@ interface RunRoutesDeps {
   scheduler: Scheduler;
   hours: readonly number[];
   sources: readonly JobSource[];
+  schedules: SourceSchedules;
 }
 
 function parseRunsPage(raw: unknown): Result<{ limit: number; offset: number }> {
@@ -40,7 +42,7 @@ export function registerRunRoutes(app: FastifyInstance, deps: RunRoutesDeps): vo
     const next = nextRunAt(
       new Date(),
       deps.hours,
-      deps.sources.map((source) => ({ name: source.name, schedule: source.policy.schedule })),
+      deps.sources.map((source) => ({ name: source.name, schedule: deps.schedules.of(source) })),
       (source) => deps.runner.lastPassAt(source),
     );
     return {

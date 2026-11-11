@@ -12,9 +12,11 @@ import { JobVerdict } from './types.js';
 import { registerFocusRoute } from './routes/focus.js';
 import { registerSettingsRoute } from './routes/settings.js';
 import { registerJobRoutes } from './routes/jobs.js';
+import { registerIntegrationRoutes } from './routes/integrations.js';
 import { registerRunRoutes } from './routes/runs.js';
 import type { Runner } from './runner.js';
 import type { Scheduler } from './scheduler/scheduler.js';
+import type { SourceSchedules } from './sources/schedules.js';
 import type { JobSource } from './sources/types.js';
 
 export interface AppDeps {
@@ -25,6 +27,7 @@ export interface AppDeps {
   pool: BrowserPool;
   sources: readonly JobSource[];
   scheduleHours: readonly number[];
+  schedules: SourceSchedules;
   gmailAccount: string | null;
   settings: SettingsRepository;
   profile: CandidateProfile;
@@ -50,7 +53,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   ).newCount ?? 0;
 
   registerJobRoutes(app, { jobs: deps.jobs, runs: deps.runs, focusNew });
-  registerRunRoutes(app, { runs: deps.runs, runner: deps.runner, scheduler: deps.scheduler, hours: deps.scheduleHours, sources: deps.sources });
+  registerRunRoutes(app, { runs: deps.runs, runner: deps.runner, scheduler: deps.scheduler, hours: deps.scheduleHours, sources: deps.sources, schedules: deps.schedules });
+  registerIntegrationRoutes(app, { sources: deps.sources, schedules: deps.schedules, runner: deps.runner, hours: deps.scheduleHours });
   registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler });
   registerSettingsRoute(app, { gmailAccount: deps.gmailAccount, settings: deps.settings });
   registerFocusRoute(app, { jobs: deps.jobs, profile: deps.profile, settings: deps.settings });

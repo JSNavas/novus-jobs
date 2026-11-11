@@ -6,7 +6,15 @@ import { afterEach, beforeEach, describe, it } from 'node:test';
 import type { PassRunner } from '../runner.js';
 import { OPEN_API_POLICY, WATCHED_ACCOUNT_POLICY } from '../sources/policy.js';
 import type { JobSource } from '../sources/types.js';
+import { SourceSchedules } from '../sources/schedules.js';
 import { LastPassStore, Scheduler } from './scheduler.js';
+
+/** Ajustes en memoria: al planificador solo le hace falta leer el horario. */
+class FakeSettings {
+  private readonly values = new Map<string, string>();
+  get(key: string): string | null { return this.values.get(key) ?? null; }
+  set(key: string, value: string): void { this.values.set(key, value); }
+}
 
 class FakeRunner implements PassRunner {
   busy = false;
@@ -53,8 +61,12 @@ describe('Scheduler', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  function schedulerAt(iso: string, sources: readonly JobSource[] = [LINKEDIN]): Scheduler {
-    return new Scheduler({ hours: [9, 13, 18], sources, store, runner, clock: () => new Date(iso) });
+  function schedulerAt(
+    iso: string,
+    sources: readonly JobSource[] = [LINKEDIN],
+    schedules = new SourceSchedules(new FakeSettings(), [9, 13, 18]),
+  ): Scheduler {
+    return new Scheduler({ hours: [9, 13, 18], sources, store, runner, schedules, clock: () => new Date(iso) });
   }
 
   it('lanza una pasada en la franja y deja la marca en disco', () => {
@@ -105,7 +117,10 @@ describe('Scheduler', () => {
 
   it('la pausa caduca sola: un login abandonado no apaga las pasadas para siempre', () => {
     let clock = new Date('2026-11-10T17:20:00Z');
-    const scheduler = new Scheduler({ hours: [9, 13, 18], sources: [LINKEDIN], store, runner, clock: () => clock });
+    const scheduler = new Scheduler({
+      hours: [9, 13, 18], sources: [LINKEDIN], store, runner, clock: () => clock,
+      schedules: new SourceSchedules(new FakeSettings(), [9, 13, 18]),
+    });
     scheduler.pauseForLogin();
     assert.equal(scheduler.isPaused(), true);
     clock = new Date('2026-11-10T17:50:00Z'); // media hora después
@@ -129,15 +144,33 @@ describe('Scheduler', () => {
     assert.deepEqual(runner.launched, [['getonbrd']]);
   });
 
-  it('la de intervalo no se repite antes de sus 30 min, y sí después', () => {
+  it('la de intervalo no se repite antes de su hora, y sí después', () => {
     const now = Date.parse('2026-11-10T19:00:00Z');
-    runner.last.set('getonbrd', now - 20 * 60_000);
+    runner.last.set('getonbrd', now - 40 * 60_000);
     schedulerAt('2026-11-10T19:00:00Z', [GETONBRD]).tick();
-    assert.equal(runner.scheduled, 0, 'a los 20 min todavía no');
+    assert.equal(runner.scheduled, 0, 'a los 40 min todavía no');
 
-    runner.last.set('getonbrd', now - 31 * 60_000);
+    runner.last.set('getonbrd', now - 61 * 60_000);
     schedulerAt('2026-11-10T19:00:00Z', [GETONBRD]).tick();
     assert.deepEqual(runner.launched, [['getonbrd']]);
+  });
+
+  it('EL HORARIO GUARDADO MANDA: 15 min elegidos en Integraciones ganan al defecto de 1 h', () => {
+    const settings = new FakeSettings();
+    const schedules = new SourceSchedules(settings, [9, 13, 18]);
+    schedules.save(GETONBRD, { kind: 'every-minutes', minutes: 15 });
+    const now = Date.parse('2026-11-10T19:00:00Z');
+    runner.last.set('getonbrd', now - 20 * 60_000);
+    schedulerAt('2026-11-10T19:00:00Z', [GETONBRD], schedules).tick();
+    assert.deepEqual(runner.launched, [['getonbrd']], 'con el defecto de 1 h no habría tocado');
+  });
+
+  it('las franjas guardadas de LinkedIn sustituyen a las del .env', () => {
+    const schedules = new SourceSchedules(new FakeSettings(), [9, 13, 18]);
+    schedules.save(LINKEDIN, { kind: 'configured-hours', hours: [7] });
+    // 11:20 UTC = 7:20 am VET: franja propia, que con las del .env no existiría.
+    schedulerAt('2026-11-10T11:20:00Z', [LINKEDIN], schedules).tick();
+    assert.deepEqual(store.read('linkedin'), { date: '2026-11-10', hour: 7 });
   });
 
   it('en una franja coinciden las dos y se lanzan en el mismo disparo', () => {

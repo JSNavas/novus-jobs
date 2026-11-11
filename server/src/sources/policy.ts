@@ -34,8 +34,11 @@ export interface SourcePolicy {
 }
 
 export type SourceSchedule =
-  /** En las franjas de `SCHEDULE_HOURS` (9, 13 y 18, hora de Venezuela). */
-  | { readonly kind: 'configured-hours' }
+  /**
+   * En franjas de hora en punto. Sin `hours`, las de `SCHEDULE_HOURS`; con
+   * ellas, las que el señor eligió en Integraciones y están guardadas.
+   */
+  | { readonly kind: 'configured-hours'; readonly hours?: readonly number[] }
   /** Cada N minutos, sin franjas. */
   | { readonly kind: 'every-minutes'; readonly minutes: number };
 
@@ -84,13 +87,13 @@ export const WATCHED_ACCOUNT_POLICY: SourcePolicy = {
  * endpoint que ellos publican sin autenticación. Aquí el único motivo para
  * limitar el ritmo es no ser un mal vecino de su servidor.
  *
- * Una por minuto a mano y una cada media hora en automático es menos tráfico
- * del que hace una persona con la página abierta, y son ~48 peticiones al día
+ * Una por minuto a mano y una cada hora en automático es menos tráfico
+ * del que hace una persona con la página abierta, y son ~24 peticiones al día
  * contra un endpoint de búsqueda. Sin presupuesto diario ni techo: no hay nada
  * que se gaste.
  */
 export const OPEN_API_POLICY: SourcePolicy = {
-  schedule: { kind: 'every-minutes', minutes: 30 },
+  schedule: { kind: 'every-minutes', minutes: 60 },
   manualDailyBudget: null,
   manualMinIntervalMs: 60_000,
   minGapAfterAnyPassMs: 0,

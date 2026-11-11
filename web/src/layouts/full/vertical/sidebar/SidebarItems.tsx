@@ -1,10 +1,11 @@
 import { List, ListItemButton, ListItemIcon, ListItemText, ListSubheader } from '@mui/material';
 import {
-  IconArchive, IconBookmark, IconEye, IconFilterOff, IconInbox, IconLayoutDashboard, IconSettings, IconTargetArrow,
+  IconArchive, IconBookmark, IconEye, IconFilterOff, IconInbox, IconLayoutDashboard, IconPlug, IconSettings,
+  IconTargetArrow,
   type Icon as TablerIcon,
 } from '@tabler/icons-react';
 import { NavLink } from 'react-router';
-import { getStats, type Stats } from '../../../../api/client';
+import { getStats, listIntegrations, type Integration, type Stats } from '../../../../api/client';
 import { AppChip, AppStatusPilot } from '../../../../components/ui';
 import { useEffect, useState } from 'react';
 import { JobStatus } from '../../../../types';
@@ -36,6 +37,14 @@ interface SidebarItemsProps {
 
 const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
   const [stats, setStats] = useState<Stats | null>(null);
+  /**
+   * El menú NO sabe qué plataformas hay: se las pregunta al servidor.
+   *
+   * Es la misma regla que en el resto del proyecto —solo `JOB_SOURCES` conoce
+   * el catálogo— llevada hasta la navegación. Enchufar InfoJobs mañana le pone
+   * su entrada aquí sin que nadie edite este fichero.
+   */
+  const [integrations, setIntegrations] = useState<Integration[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,6 +52,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
       // Un contador que no carga no es motivo para romper la navegación: el
       // menú tiene que seguir funcionando aunque la API no conteste.
       getStats().then((next) => { if (!cancelled) setStats(next); }).catch(() => undefined);
+      listIntegrations().then((next) => { if (!cancelled) setIntegrations(next); }).catch(() => undefined);
     };
     load();
     const timer = setInterval(() => {
@@ -145,6 +155,38 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
           {stats?.focusNew ? <AppChip label={String(stats.focusNew)} tone="success" /> : null}
         </ListItemButton>
       </List>
+
+      {/* INTEGRACIONES: una entrada por plataforma montada, con su horario.
+          Van juntas y aparte de Configuración porque lo que se ajusta aquí no
+          es cómo se comporta la aplicación, sino el trato con un tercero. */}
+      {integrations.length ? (
+        <List
+          sx={{ px: 2 }}
+          subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>Integraciones</ListSubheader>}
+        >
+          {integrations.map((integration) => (
+            <ListItemButton
+              key={integration.name}
+              component={NavLink}
+              to={`/integraciones/${integration.name}`}
+              end
+              onClick={onNavigate}
+              sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
+            >
+              <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+                <IconPlug size="20" stroke={1.5} />
+              </ListItemIcon>
+              <ListItemText
+                primary={integration.label}
+                secondary={integration.schedule.kind === 'every-minutes'
+                  ? `cada ${integration.schedule.minutes} min`
+                  : `${integration.schedule.hours.length} franja(s)`}
+                secondaryTypographyProps={{ variant: 'caption' }}
+              />
+            </ListItemButton>
+          ))}
+        </List>
+      ) : null}
 
       <List sx={{ px: 2 }}>
         <ListItemButton
