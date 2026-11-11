@@ -952,3 +952,61 @@ una lista cuesta más que un tema de menos — es lo primero que hace dudar del
 resto.
 
 De 44 temas a 39, y los que quedan se leen de una pasada.
+
+---
+
+## Rev. 20 — Revisión completa del Enfoque · 2026-11-11
+
+Repaso pedido por él con la pantalla delante. Se auditó el JSON real, no la
+impresión visual. Tres defectos, dos graves:
+
+### 1. La misma frase, cuatro veces
+
+«Soltura con JavaScript/TypeScript (idealmente Next.js/React) y bases de datos
+SQL» aparecía bajo **TypeScript, React, JavaScript y Next.js**. En total, nueve
+frases repetidas en la página.
+
+Un anuncio que nombra cuatro tecnologías en una línea es un hecho; contarlo
+cuatro veces no informa, estorba — parece que la página se repite y uno deja de
+leerla.
+
+Ahora cada frase se enseña una sola vez. El reparto se hace **después de
+ordenar**, así que la frase compartida se la queda el tema más pedido, que es
+el que más se lee. De 9 repetidas a 4, y esas cuatro son temas que no tienen
+ninguna otra frase.
+
+### 2. Una fila muda
+
+«Machine learning» salía con 3 vacantes y **cero ejemplos**: lo piden en prosa,
+no en viñetas, y la extracción solo miraba viñetas. Un número suelto que nadie
+puede interpretar no es un dato. Ahora, si no hay viñeta, se recorta la oración
+donde se menciona; y si todas sus frases se las llevaron otros temas, repite
+una antes que quedarse muda.
+
+### 3. El mismo número escrito tres veces
+
+Cada fila decía «9 de 15», «60% de las vacantes» y dibujaba una barra. Se
+queda el dato exacto y la barra —que es lo que deja comparar 39 filas sin leer
+ninguna— y se va el porcentaje escrito.
+
+La introducción pasa de un párrafo denso a dos frases cortas: se lee una vez
+para saber de dónde sale el número, y luego se mira la lista.
+
+### Estado tras la revisión
+
+| | |
+|---|---|
+| Temas | 39 |
+| Filas sin ejemplo | **0** |
+| Frases distintas en la página | 98 |
+| Frases repetidas | 4 (sin alternativa) |
+| Tests | 189 |
+
+### Lo que NO se tocó, y por qué
+
+- **La lista no se agrupa por área** aunque cada tema tenga una. Agruparla
+  rompería el orden por demanda, que es el valor de la página: lo primero que
+  se ve tiene que ser lo que más piden, no la categoría a la que pertenece.
+- **39 filas son muchas para una pantalla**, pero cortarlas sería decidir por
+  él dónde deja de importar. Scroll es barato; una lista truncada esconde
+  justo lo que empieza a aparecer, que es para lo que existe esto.

@@ -86,6 +86,66 @@ Requisitos:
     assert.equal(focus.topics.find((t) => t.name === 'Node.js')?.known, true);
   });
 
+  it('EL CASO REAL: una frase que vale para varios temas se enseña UNA vez', () => {
+    // Pasó de verdad: «Soltura con JavaScript/TypeScript (idealmente
+    // Next.js/React) y bases de datos SQL» salía bajo cuatro temas. Leída
+    // cuatro veces, una frase deja de informar y empieza a estorbar.
+    const compartida = '- Soltura con JavaScript, TypeScript y React en proyectos de producción.';
+    const texto = `Requisitos:
+${compartida}
+- Experiencia desarrollando interfaces con React y sus patrones habituales.
+- Experiencia sólida escribiendo TypeScript con tipado estricto.
+- Conocimientos de JavaScript moderno y sus novedades recientes.`;
+    const focus = buildFocus([job(texto, 1), job(texto, 2)], PROFILE);
+
+    const todas = focus.topics.flatMap((t) => t.examples);
+    assert.equal(
+      todas.filter((e) => e === compartida.slice(2)).length,
+      1,
+      'cada tema tiene frases propias: la compartida se enseña una sola vez',
+    );
+  });
+
+  it('pero antes de quedarse muda, una fila repite frase', () => {
+    // Si TODAS sus frases se las llevaron otros temas, repetir una es mejor
+    // que enseñar un número suelto que nadie puede interpretar.
+    const unica = '- Soltura con JavaScript, TypeScript y React en proyectos de producción.';
+    const focus = buildFocus([job(`Requisitos:\n${unica}`, 1), job(`Requisitos:\n${unica}`, 2)], PROFILE);
+
+    assert.ok(
+      focus.topics.every((t) => t.examples.length > 0),
+      'ninguna fila se queda sin una sola frase',
+    );
+  });
+
+  it('la frase se la queda el tema MÁS pedido, que es el que más se lee', () => {
+    const compartida = '- Experiencia con TypeScript y con Elasticsearch en producción diaria.';
+    const soloTs = '- Experiencia sólida con TypeScript en servicios backend reales.';
+    const focus = buildFocus([
+      job(`Requisitos:\n${compartida}`, 1),
+      job(`Requisitos:\n${compartida}`, 2),
+      job(`Requisitos:\n${soloTs}`, 3),
+    ], PROFILE);
+
+    const ts = focus.topics.find((t) => t.name === 'TypeScript');
+    const elastic = focus.topics.find((t) => t.name === 'Elasticsearch');
+    assert.equal(ts?.vacancies, 3);
+    assert.equal(elastic?.vacancies, 2);
+    assert.ok(ts?.examples.includes(compartida.slice(2)), 'TypeScript sale en 3 vacantes: se la queda');
+    assert.ok(!elastic?.examples.includes(compartida.slice(2)) || elastic.examples.length === 1);
+  });
+
+  it('ningún tema se queda mudo: con un número y sin frase no se entiende', () => {
+    // «Machine learning» salía con 3 vacantes y cero ejemplos, porque lo
+    // pedían en prosa y no en una viñeta.
+    const enProsa = 'Buscamos a alguien con experiencia en machine learning aplicado a producto real.';
+    const focus = buildFocus([job(enProsa, 1), job(enProsa, 2)], PROFILE);
+
+    const ml = focus.topics.find((t) => t.name === 'Machine learning');
+    assert.ok(ml, 'dos vacantes lo piden');
+    assert.ok(ml.examples.length > 0, 'una fila sin una sola frase no se entiende');
+  });
+
   it('ordena por cuántas vacantes lo piden', () => {
     const focus = buildFocus(
       [job(CON_TERRAFORM, 1), job(OTRA_CON_TERRAFORM, 2), job(`Requisitos:\n- Docker y contenedores en producción diaria.`, 3)],

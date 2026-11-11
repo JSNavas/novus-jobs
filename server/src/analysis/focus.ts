@@ -105,6 +105,21 @@ function mentions(text: string, topic: Topic): boolean {
 }
 
 /**
+ * El último recurso cuando el tema no aparece en ninguna viñeta: la oración
+ * del anuncio donde se menciona. Una fila con un número y sin una sola frase
+ * no se entiende — pasaba con «Machine learning», que se pedía en prosa.
+ */
+function sentenceWith(jobs: readonly Job[], topic: Topic): string | null {
+  for (const job of jobs) {
+    const sentences = job.text.split(/(?<=[.!?])\s+|\n/).map((x) => x.trim());
+    const hit = sentences.find((x) =>
+      x.length >= MIN_EXAMPLE_CHARS && x.length <= MAX_EXAMPLE_CHARS && mentions(x, topic));
+    if (hit) return hit;
+  }
+  return null;
+}
+
+/**
  * El enfoque a partir de las vacantes aceptadas.
  *
  * Función pura: recibe las ofertas y devuelve la lista. Así se puede probar
@@ -124,35 +139,60 @@ export function buildFocus(all: readonly Job[], profile: CandidateProfile, now =
 
   const lines = jobs.map((job) => requirementLines(job.text));
 
-  const topics = TOPICS.flatMap((topic): FocusTopic[] => {
-    const hits = jobs.filter((job) => mentions(job.text, topic));
-    if (hits.length < MIN_VACANCIES) return [];
-
-    // Las frases se buscan en las vacantes donde el tema aparece, y se
-    // esquivan las repetidas: la misma consultora publica cincuenta anuncios
-    // calcados, y tres ejemplos idénticos no enseñan nada.
-    const examples: string[] = [];
-    for (const [index, job] of jobs.entries()) {
-      if (examples.length >= MAX_EXAMPLES) break;
-      if (!mentions(job.text, topic)) continue;
-      const line = lines[index]!.find((l) => mentions(l, topic) && !examples.includes(l));
-      if (line) examples.push(line);
-    }
-
-    return [{
-      name: topic.name,
-      area: topic.area,
-      vacancies: hits.length,
-      share: Math.round((hits.length / analysed) * 100),
-      known: isKnown(topic, profile),
-      examples,
-    }];
+  const found = TOPICS.flatMap((topic) => {
+    const vacancies = jobs.filter((job) => mentions(job.text, topic)).length;
+    return vacancies >= MIN_VACANCIES ? [{ topic, vacancies }] : [];
   });
 
-  // Lo más pedido primero, y a igualdad por nombre. Sin desempatar por lo que
-  // él sabe: la lista no se parte por eso. El stack ya hizo de filtro al
-  // decidir qué vacantes entran; volver a ordenar por él sería filtrar dos
-  // veces por lo mismo.
-  topics.sort((a, b) => b.vacancies - a.vacancies || a.name.localeCompare(b.name));
+  // Se ordena ANTES de repartir las frases, y no es un detalle: la frase que
+  // vale para dos temas se la queda el más pedido, que es el que más gente va
+  // a leer.
+  found.sort((a, b) => b.vacancies - a.vacancies || a.topic.name.localeCompare(b.topic.name));
+
+  /*
+   * ═══ CADA FRASE, EN UN SOLO SITIO ═══
+   *
+   * Medido sobre la pantalla real: nueve frases salían repetidas en varios
+   * temas, y «Soltura con JavaScript/TypeScript (idealmente Next.js/React) y
+   * bases de datos SQL» aparecía CUATRO veces —bajo TypeScript, React,
+   * JavaScript y Next.js—. Leída cuatro veces, una frase deja de informar y
+   * empieza a estorbar: parece que la página se repite, y uno deja de leerla.
+   *
+   * Un anuncio que nombra cuatro tecnologías en una línea es un hecho; lo que
+   * no hace falta es contarlo cuatro veces.
+   */
+  const used = new Set<string>();
+
+  const topics = found.map(({ topic, vacancies }): FocusTopic => {
+    const mine = jobs.flatMap((job, index) => (mentions(job.text, topic) ? lines[index]! : []))
+      .filter((line) => mentions(line, topic));
+
+    const examples: string[] = [];
+    for (const line of mine) {
+      if (examples.length >= MAX_EXAMPLES) break;
+      if (used.has(line) || examples.includes(line)) continue;
+      examples.push(line);
+      used.add(line);
+    }
+    // Antes que dejar la fila muda: si TODAS sus frases se las llevaron otros
+    // temas, se repite una. Un tema sin una sola frase no se entiende.
+    if (!examples.length && mine.length) examples.push(mine[0]!);
+    // Y si no hay viñetas que lo nombren —lo pide en prosa, no en una lista—
+    // se recorta la oración donde aparece. Vale menos, pero dice algo.
+    if (!examples.length) {
+      const sentence = sentenceWith(jobs, topic);
+      if (sentence) examples.push(sentence);
+    }
+
+    return {
+      name: topic.name,
+      area: topic.area,
+      vacancies,
+      share: Math.round((vacancies / analysed) * 100),
+      known: isKnown(topic, profile),
+      examples,
+    };
+  });
+
   return { analysed, windowDays: WINDOW_DAYS, topics };
 }

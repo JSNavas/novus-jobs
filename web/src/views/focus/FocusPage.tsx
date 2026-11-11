@@ -16,8 +16,10 @@ const TopicRow = ({ topic, total }: { topic: FocusTopic; total: number }) => (
   <Box>
     <Stack direction="row" spacing={1} alignItems="baseline" flexWrap="wrap" useFlexGap>
       <Typography variant="subtitle1">{topic.name}</Typography>
+      {/* El mismo número estaba escrito tres veces: «9 de 15», «60% de las
+          vacantes» y la barra. Se queda el dato exacto y la barra, que es lo
+          que deja comparar 39 filas de un vistazo sin leer ninguna. */}
       <AppChip label={`${topic.vacancies} de ${total}`} tone={topic.vacancies >= total / 3 ? 'success' : 'neutral'} />
-      <Typography variant="caption" color="textSecondary">{topic.share}% de las vacantes</Typography>
     </Stack>
     <LinearProgress variant="determinate" value={topic.share} sx={{ my: 0.75, height: 6, borderRadius: 3 }} />
     {topic.examples.map((example) => (
@@ -56,13 +58,18 @@ const FocusPage = () => {
 
         {focus && focus.analysed > 0 ? (
           <>
-            <Typography variant="body2" color="textSecondary">
-              Sobre <strong>{focus.analysed} vacantes aceptadas</strong> de los últimos{' '}
-              <strong>{Math.round(focus.windowDays / 30)} meses</strong>. Solo cuenta lo aceptado: las
-              descartadas piden C# o inglés avanzado, y contarlas convertiría esto en una lista de lo
-              que no quieres hacer. Cada tema cuenta <strong>una vez por vacante</strong>, no por
-              menciones.
-            </Typography>
+            {/* Dos frases cortas y no un párrafo: esto se lee una vez, para
+                saber de dónde sale el número, y luego se mira la lista. */}
+            <Stack spacing={0.5}>
+              <Typography variant="body2" color="textSecondary">
+                Sobre <strong>{focus.analysed} vacantes aceptadas</strong> de los últimos{' '}
+                <strong>{Math.round(focus.windowDays / 30)} meses</strong>, contando cada tema una vez
+                por vacante.
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Las frases son de los anuncios, tal cual las escribieron.
+              </Typography>
+            </Stack>
 
             {/* UNA SOLA LISTA. Estuvo partida en «para estudiar» y «lo que ya
                 tienes», y la división sobraba: el stack ya hizo de filtro al
