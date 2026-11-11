@@ -1,15 +1,15 @@
 import { Box, Drawer, Typography } from '@mui/material';
 import SidebarItems from './SidebarItems';
 
-const drawerWidth = 270;
+const drawerWidth = 220;
 
-const paperSx = { width: drawerWidth, boxSizing: 'border-box', border: 0, boxShadow: 1 };
+const paperSx = { width: drawerWidth, boxSizing: 'border-box', borderRight: 1, borderColor: 'divider' };
 
 const SidebarContent = ({ onNavigate }: { onNavigate: () => void }) => (
   <>
-    <Box px={3} py={2}>
-      <Typography variant="h5" color="primary" fontWeight={700}>
-        Novus Jobs
+    <Box px={2.5} py={2.5}>
+      <Typography variant="mono" color="primary" fontWeight={700}>
+        NOVUS·JOBS
       </Typography>
     </Box>
     <SidebarItems onNavigate={onNavigate} />
