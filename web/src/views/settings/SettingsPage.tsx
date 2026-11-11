@@ -27,12 +27,14 @@ const SettingsPage = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
+  const [months, setMonths] = useState('');
 
   useEffect(() => {
     getSettings()
       .then((loaded) => {
         setSettings(loaded);
         setTemplate(loaded.motivationTemplate);
+        setMonths(String(loaded.maxAgeMonths));
       })
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
   }, []);
@@ -41,9 +43,27 @@ const SettingsPage = () => {
     setSaving(true);
     setError(null);
     try {
-      const updated = await updateSettings(template);
+      const updated = await updateSettings({ motivationTemplate: template });
       setSettings(updated);
       setTemplate(updated.motivationTemplate);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const badMonths = !Number.isInteger(Number(months)) || Number(months) < 1 || Number(months) > 24;
+
+  const saveMonths = async (): Promise<void> => {
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await updateSettings({ maxAgeMonths: Number(months) });
+      setSettings(updated);
+      setMonths(String(updated.maxAgeMonths));
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
     } catch (cause) {
@@ -126,6 +146,40 @@ const SettingsPage = () => {
                 Volver a la de fábrica
               </Button>
             </Stack>
+          </Stack>
+        </BlankCard>
+
+        {/* EL FILTRO DE LA BÚSQUEDA, no el de la pantalla de Enfoque. Esto
+            decide qué se guarda; la ventana con la que se analiza lo ya
+            guardado se elige en la propia página de Enfoque. */}
+        <BlankCard>
+          <Stack spacing={2} p={3}>
+            <Box>
+              <Typography variant="h5">Antigüedad máxima de las vacantes</Typography>
+              <Typography variant="body2" color="textSecondary">
+                Una vacante publicada hace más de esto no entra. Con 969 postulaciones acumuladas,
+                escribirle a una oferta de hace un año es tirar el tiempo — y entierra la de ayer.
+              </Typography>
+            </Box>
+            <TextField
+              type="number"
+              label="Meses"
+              value={months}
+              onChange={(event) => setMonths(event.target.value)}
+              disabled={settings === null || saving}
+              error={badMonths}
+              helperText={badMonths ? 'Entre 1 y 24 meses' : 'Se aplica desde la siguiente búsqueda.'}
+              sx={{ maxWidth: 200 }}
+            />
+            <Box>
+              <Button
+                variant="contained"
+                disabled={saving || badMonths || settings === null || Number(months) === settings.maxAgeMonths}
+                onClick={() => void saveMonths()}
+              >
+                Guardar antigüedad
+              </Button>
+            </Box>
           </Stack>
         </BlankCard>
 

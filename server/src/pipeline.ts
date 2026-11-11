@@ -8,6 +8,8 @@ import type { JobSource, PostMetrics, RawPost } from './sources/types.js';
 import { JobLocation, JobSeniority, JudgeStatus, JobVerdict, type RunFailure } from './types.js';
 
 interface PipelineDeps {
+  /** El tope de antigüedad para entrar, en días. Lo elige él en Configuración. */
+  maxAgeDays: number;
   jobs: JobsRepository;
   judge: LlmJudge | null;
   profile: CandidateProfile;
@@ -89,7 +91,7 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
   // gastados en una respuesta que se va a ignorar.
   const judgeable = fresh.filter((o) => {
     const days = ageInDays(metricsOf.get(fingerprint(o.text))?.postedAt ?? null, now);
-    return days === null || days <= MAX_AGE_DAYS;
+    return days === null || days <= deps.maxAgeDays;
   });
   const judged = await judgeOffers(judgeable, deps);
 
@@ -99,7 +101,7 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
     const metrics = metricsOf.get(fingerprint(offer.text)) ?? null;
     const ruleVerdict = decideShipping(offer, deps.profile);
     const judgment = judged.get(fingerprint(offer.text));
-    const verdict = rejectIfStale(applyJudgment(ruleVerdict, judgment), metrics, now);
+    const verdict = rejectIfStale(applyJudgment(ruleVerdict, judgment), metrics, now, deps.maxAgeDays);
     const job = toNewJob(
       source.name,
       offer,
@@ -144,8 +146,8 @@ function toOffer(post: RawPost): Offer {
  * postulaciones. Escribirle a eso es tirar el tiempo — y peor, entierra la
  * vacante de ayer entre veinte de hace medio año.
  *
- * Tres meses, que es lo que pidió el señor. El corte va APARTE de las reglas y
- * DESPUÉS del juez, y las dos cosas son deliberadas:
+ * El tope lo pone él en Configuración (tres meses de fábrica). El corte va
+ * APARTE de las reglas y DESPUÉS del juez, y las dos cosas son deliberadas:
  *
  *   · aparte, porque `decideShipping` solo ve el texto del anuncio, y la fecha
  *     de publicación no está ahí: viaja en `RawPost.metrics`.
@@ -156,7 +158,6 @@ function toOffer(post: RawPost): Offer {
  * Una oferta SIN fecha no se descarta: LinkedIn no la publica, y tirar todo lo
  * que no trae fecha sería apagar esa fuente entera.
  * ═══════════════════════════════════════════════════════════════════════════ */
-const MAX_AGE_DAYS = 90;
 const DAY_MS = 24 * 60 * 60_000;
 
 function ageInDays(postedAt: string | null, now: number): number | null {
@@ -165,14 +166,14 @@ function ageInDays(postedAt: string | null, now: number): number | null {
   return Number.isNaN(published) ? null : Math.floor((now - published) / DAY_MS);
 }
 
-function rejectIfStale(verdict: Verdict, metrics: PostMetrics | null, now: number): Verdict {
+function rejectIfStale(verdict: Verdict, metrics: PostMetrics | null, now: number, maxAgeDays: number): Verdict {
   const days = ageInDays(metrics?.postedAt ?? null, now);
-  if (days === null || days <= MAX_AGE_DAYS) return verdict;
+  if (days === null || days <= maxAgeDays) return verdict;
   return {
     ...verdict,
     accepted: false,
     uncertain: false,
-    reason: `publicada hace ${Math.floor(days / 30)} meses; el tope son 3`,
+    reason: `publicada hace ${Math.floor(days / 30)} meses; el tope son ${Math.round(maxAgeDays / 30)}`,
     rejectedBy: 'stale',
   };
 }

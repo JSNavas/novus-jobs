@@ -66,6 +66,7 @@ describe('Runner — suelo de las búsquedas manuales', () => {
   function runner(sources: readonly JobSource[] = [LINKEDIN]): Runner {
     return new Runner({
       sources,
+      maxAgeDays: () => 90,
       jobs: new JobsRepository(db),
       runs,
       judge: null,

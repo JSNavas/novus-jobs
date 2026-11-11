@@ -20,7 +20,13 @@ export interface FocusRoutesDeps {
 const MAX_JOBS = 500;
 
 export function registerFocusRoute(app: FastifyInstance, deps: FocusRoutesDeps): void {
-  app.get('/api/focus', () => {
+  /** Entre un mes y dos años. Fuera de ahí manda la de fábrica, sin romperse. */
+  const windowDays = (raw: unknown): number | undefined => {
+    const months = Number(raw);
+    return Number.isInteger(months) && months >= 1 && months <= 24 ? months * 30 : undefined;
+  };
+
+  app.get('/api/focus', (request) => {
     const page = deps.jobs.list({
       status: null,
       verdict: JobVerdict.Accepted,
@@ -32,6 +38,7 @@ export function registerFocusRoute(app: FastifyInstance, deps: FocusRoutesDeps):
       limit: MAX_JOBS,
       offset: 0,
     });
-    return buildFocus(page.items, deps.profile);
+    const months = (request.query as { months?: unknown } | undefined)?.months;
+    return buildFocus(page.items, deps.profile, { windowDays: windowDays(months) });
   });
 }

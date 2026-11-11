@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, LinearProgress, Stack, Typography } from '@mui/material';
+import { Box, LinearProgress, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import { getFocus, type Focus, type FocusTopic } from '../../api/client';
 import { AppAlert, AppChip, BlankCard, PageContainer } from '../../components/ui';
 
@@ -30,15 +30,24 @@ const TopicRow = ({ topic, total }: { topic: FocusTopic; total: number }) => (
   </Box>
 );
 
+/**
+ * La ventana vive AQUÍ y no en Configuración, y la diferencia importa: esto no
+ * cambia qué se guarda —de eso se encarga el filtro de la búsqueda— sino con
+ * cuánto pasado se mira lo ya guardado. Es una lente, y las lentes se cambian
+ * mirando.
+ */
+const WINDOWS = [3, 6, 12, 24];
+
 const FocusPage = () => {
   const [focus, setFocus] = useState<Focus | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [months, setMonths] = useState(6);
 
   useEffect(() => {
-    getFocus()
+    getFocus(months)
       .then(setFocus)
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
-  }, []);
+  }, [months]);
 
   return (
     <PageContainer
@@ -60,15 +69,28 @@ const FocusPage = () => {
           <>
             {/* Dos frases cortas y no un párrafo: esto se lee una vez, para
                 saber de dónde sale el número, y luego se mira la lista. */}
-            <Stack spacing={0.5}>
-              <Typography variant="body2" color="textSecondary">
-                Sobre <strong>{focus.analysed} vacantes aceptadas</strong> de los últimos{' '}
-                <strong>{Math.round(focus.windowDays / 30)} meses</strong>, contando cada tema una vez
-                por vacante.
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Las frases son de los anuncios, tal cual las escribieron.
-              </Typography>
+            <Stack direction="row" spacing={2} alignItems="flex-start" justifyContent="space-between" flexWrap="wrap" useFlexGap>
+              <Stack spacing={0.5}>
+                <Typography variant="body2" color="textSecondary">
+                  Sobre <strong>{focus.analysed} vacantes aceptadas</strong>, contando cada tema una
+                  vez por vacante.
+                </Typography>
+                <Typography variant="body2" color="textSecondary">
+                  Las frases son de los anuncios, tal cual las escribieron.
+                </Typography>
+              </Stack>
+              <TextField
+                select
+                size="small"
+                label="Ventana"
+                value={months}
+                onChange={(event) => setMonths(Number(event.target.value))}
+                sx={{ minWidth: 160 }}
+              >
+                {WINDOWS.map((option) => (
+                  <MenuItem key={option} value={option}>{`Últimos ${option} meses`}</MenuItem>
+                ))}
+              </TextField>
             </Stack>
 
             {/* UNA SOLA LISTA. Estuvo partida en «para estudiar» y «lo que ya
@@ -84,6 +106,39 @@ const FocusPage = () => {
                   : <Typography variant="body2">Nada se repite en dos vacantes todavía.</Typography>}
               </Stack>
             </BlankCard>
+            {/* ═══ LO QUE NADIE CLASIFICÓ ═══
+                El catálogo de temas es la fuerza y el agujero de esta página:
+                lo que no está en él no se detecta por mucho que lo pidan. Esto
+                lo cierra por el otro lado, buscando cualquier palabra que se
+                repita y no tengamos. Va aparte y no mezclado con los temas
+                porque lo de arriba está curado y esto es materia prima. */}
+            {focus.emerging.length ? (
+              <BlankCard>
+                <Stack spacing={2} p={3}>
+                  <Box>
+                    <Typography variant="h5">Apareciendo</Typography>
+                    <Typography variant="body2" color="textSecondary">
+                      Palabras que se repiten en los requisitos y que todavía no se miden arriba. Esto
+                      sale solo, sin que nadie las haya previsto: si algo nuevo empieza a pedirse,
+                      asoma aquí primero.
+                    </Typography>
+                  </Box>
+                  {focus.emerging.map((item) => (
+                    <Box key={item.term}>
+                      <Stack direction="row" spacing={1} alignItems="baseline">
+                        <Typography variant="subtitle1">{item.term}</Typography>
+                        <AppChip label={`${item.vacancies} de ${focus.analysed}`} tone="neutral" />
+                      </Stack>
+                      {item.example ? (
+                        <Typography variant="body2" color="textSecondary" sx={{ pl: 1.5, borderLeft: 2, borderColor: 'divider' }}>
+                          {item.example}
+                        </Typography>
+                      ) : null}
+                    </Box>
+                  ))}
+                </Stack>
+              </BlankCard>
+            ) : null}
           </>
         ) : null}
       </Stack>

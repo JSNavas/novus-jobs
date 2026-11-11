@@ -71,7 +71,7 @@ describe('API HTTP', () => {
       contactEmail: null, runId: 1,
     }));
     jobs.insert(newJob({ fingerprint: 'fp-otra-pasada', runId: 2 }));
-    const runner = new Runner({ sources: [FAKE_SOURCE], jobs, runs, judge: null, profile: PROFILE, mailer: new Mailer(null), dashboardUrl: 'http://localhost/' });
+    const runner = new Runner({ sources: [FAKE_SOURCE], maxAgeDays: () => 90, jobs, runs, judge: null, profile: PROFILE, mailer: new Mailer(null), dashboardUrl: 'http://localhost/' });
     const scheduler = new Scheduler({
       hours: [9, 13, 18],
       sources: [],

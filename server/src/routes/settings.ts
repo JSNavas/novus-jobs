@@ -1,6 +1,9 @@
 import type { FastifyInstance } from 'fastify';
-import { MOTIVATION_TEMPLATE_KEY, type SettingsRepository } from '../db/settings.repository.js';
-import { DEFAULT_MOTIVATION_TEMPLATE, MAX_MOTIVATION_CHARS } from '../profile/motivation.js';
+import { MAX_AGE_MONTHS_KEY, MOTIVATION_TEMPLATE_KEY, type SettingsRepository } from '../db/settings.repository.js';
+import {
+  DEFAULT_MAX_AGE_MONTHS, DEFAULT_MOTIVATION_TEMPLATE, MAX_MAX_AGE_MONTHS, MAX_MOTIVATION_CHARS,
+  MIN_MAX_AGE_MONTHS,
+} from '../profile/motivation.js';
 
 /**
  * Lo que la interfaz necesita saber para montar una candidatura.
@@ -32,6 +35,7 @@ export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutes
     gmailAccount: deps.gmailAccount,
     motivationTemplate: motivationTemplate(),
     defaultMotivationTemplate: DEFAULT_MOTIVATION_TEMPLATE,
+    maxAgeMonths: readMaxAgeMonths(deps.settings),
   }));
 
   /**
@@ -43,7 +47,23 @@ export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutes
    * vacío no es un error: significa «vuelve a la de por defecto».
    */
   app.put('/api/settings', (request, reply) => {
-    const body = request.body as { motivationTemplate?: unknown } | undefined;
+    const body = request.body as { motivationTemplate?: unknown; maxAgeMonths?: unknown } | undefined;
+
+    // La antigüedad va por separado: se puede cambiar una cosa sin mandar la
+    // otra, que es como la pantalla las edita.
+    if (body?.maxAgeMonths !== undefined) {
+      const months = Number(body.maxAgeMonths);
+      if (!Number.isInteger(months) || months < MIN_MAX_AGE_MONTHS || months > MAX_MAX_AGE_MONTHS) {
+        return reply.code(400).send({
+          error: `la antigüedad tiene que ser un número entero entre ${MIN_MAX_AGE_MONTHS} y ${MAX_MAX_AGE_MONTHS} meses`,
+        });
+      }
+      deps.settings.set(MAX_AGE_MONTHS_KEY, String(months));
+      if (body.motivationTemplate === undefined) {
+        return { maxAgeMonths: months, motivationTemplate: motivationTemplate() };
+      }
+    }
+
     const value = body?.motivationTemplate;
     if (typeof value !== 'string') {
       return reply.code(400).send({ error: 'falta motivationTemplate, y tiene que ser texto' });
@@ -52,7 +72,7 @@ export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutes
     const template = value.trim();
     if (!template) {
       deps.settings.set(MOTIVATION_TEMPLATE_KEY, DEFAULT_MOTIVATION_TEMPLATE);
-      return { motivationTemplate: DEFAULT_MOTIVATION_TEMPLATE };
+      return { motivationTemplate: DEFAULT_MOTIVATION_TEMPLATE, maxAgeMonths: readMaxAgeMonths(deps.settings) };
     }
     if (template.length < MIN_MOTIVATION_CHARS) {
       return reply.code(400).send({
@@ -65,6 +85,19 @@ export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutes
       });
     }
     deps.settings.set(MOTIVATION_TEMPLATE_KEY, template);
-    return { motivationTemplate: template };
+    return { motivationTemplate: template, maxAgeMonths: readMaxAgeMonths(deps.settings) };
   });
+}
+
+/**
+ * El tope guardado, o el de fábrica.
+ *
+ * Lo usa también el runner en cada pasada: así, cambiarlo en la pantalla surte
+ * efecto en la siguiente búsqueda sin reiniciar el servicio.
+ */
+export function readMaxAgeMonths(settings: SettingsRepository): number {
+  const stored = Number(settings.get(MAX_AGE_MONTHS_KEY));
+  return Number.isInteger(stored) && stored >= MIN_MAX_AGE_MONTHS && stored <= MAX_MAX_AGE_MONTHS
+    ? stored
+    : DEFAULT_MAX_AGE_MONTHS;
 }

@@ -123,16 +123,24 @@ export interface FocusTopic {
   examples: string[];
 }
 
+/** Lo que se repite en los anuncios y el catálogo todavía no tiene. */
+export interface EmergingTerm {
+  term: string;
+  vacancies: number;
+  example: string | null;
+}
+
 export interface Focus {
   analysed: number;
   /** El tamaño de la ventana en días: la pantalla no se lo inventa. */
   windowDays: number;
   topics: FocusTopic[];
+  emerging: EmergingTerm[];
 }
 
 /** Qué piden en común las vacantes aceptadas. Se calcula al vuelo. */
-export function getFocus(): Promise<Focus> {
-  return request<Focus>('/focus');
+export function getFocus(months?: number): Promise<Focus> {
+  return request<Focus>(months ? `/focus?months=${months}` : '/focus');
 }
 
 export interface Settings {
@@ -142,6 +150,8 @@ export interface Settings {
   motivationTemplate: string;
   /** La de fábrica, para poder volver a ella desde la pantalla. */
   defaultMotivationTemplate: string;
+  /** Antigüedad máxima de una vacante para ENTRAR. El filtro de la búsqueda. */
+  maxAgeMonths: number;
 }
 
 /** Desde qué cuenta escribe él, y con qué párrafo se postula. */
@@ -150,11 +160,11 @@ export function getSettings(): Promise<Settings> {
 }
 
 /** Guarda la plantilla. Con el texto vacío el servidor restituye la de fábrica. */
-export function updateSettings(motivationTemplate: string): Promise<Settings> {
+export function updateSettings(changes: { motivationTemplate?: string; maxAgeMonths?: number }): Promise<Settings> {
   return request<Settings>('/settings', {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ motivationTemplate }),
+    body: JSON.stringify(changes),
   });
 }
 

@@ -155,3 +155,62 @@ ${compartida}
     assert.deepEqual(counts, [...counts].sort((a, b) => b - a));
   });
 });
+
+/**
+ * EL DETECTOR AUTOMÁTICO cierra el único agujero real del Enfoque: lo que no
+ * está en el catálogo no se detecta por mucho que lo pidan. Lo que hay que
+ * fijar aquí es que no proponga basura, porque una lista de hallazgos con
+ * ruido se deja de mirar a la segunda vez.
+ */
+describe('findEmerging — lo que se repite y nadie clasificó', () => {
+  const conTerraform = (n: number) => job(`Requisitos:
+- Experiencia con Snowflake para el almacén de datos de la compañía.
+- Conocimiento de Temporal para orquestar flujos de trabajo duraderos.`, n);
+
+  it('encuentra una tecnología que el catálogo no tiene', () => {
+    const focus = buildFocus([conTerraform(1), conTerraform(2)], PROFILE);
+    const terminos = focus.emerging.map((e) => e.term);
+
+    assert.ok(terminos.includes('Snowflake'), 'se repite en dos vacantes y no está en el catálogo');
+    assert.ok(terminos.includes('Temporal'));
+  });
+
+  it('NO propone trozos de lo que el catálogo ya cuenta', () => {
+    // Salía «CI», «CD», «IA» y «Cloud»: son partes de «CI/CD», «IA
+    // generativa» y «Google Cloud». Descubrir media palabra que ya tienes no
+    // es descubrir nada, y entierra lo que sí es nuevo.
+    const texto = `Requisitos:
+- Experiencia con Docker y pipelines de CI/CD mediante GitHub Actions.
+- Trabajo con Google Cloud y despliegues de IA generativa en producción.`;
+    const focus = buildFocus([job(texto, 1), job(texto, 2)], PROFILE);
+    const terminos = focus.emerging.map((e) => e.term.toLowerCase());
+
+    for (const trozo of ['ci', 'cd', 'ia', 'cloud', 'google', 'docker']) {
+      assert.ok(!terminos.includes(trozo), `"${trozo}" ya está contado arriba`);
+    }
+  });
+
+  it('el nombre de la empresa NO es una tecnología emergente', () => {
+    // Una consultora con cincuenta vacantes publicadas sería, si no, «la
+    // tecnología más demandada del mercado».
+    const texto = 'Requisitos:\n- Experiencia trabajando con Acme en proyectos de larga duración.';
+    const uno = { ...job(texto, 1), author: 'Acme', company: 'Acme' };
+    const dos = { ...job(texto, 2), author: 'Acme', company: 'Acme' };
+    const focus = buildFocus([uno, dos], PROFILE);
+
+    assert.ok(!focus.emerging.some((e) => e.term.toLowerCase() === 'acme'));
+  });
+
+  it('una palabra en UNA sola vacante no asoma: sería una empresa, no una tendencia', () => {
+    const focus = buildFocus([conTerraform(1), job('Requisitos:\n- Otra cosa cualquiera sin tecnologías.', 2)], PROFILE);
+    assert.deepEqual(focus.emerging, []);
+  });
+
+  it('la ventana se puede estrechar, y entonces entran menos vacantes', () => {
+    const viejo = { ...conTerraform(1), postedAt: new Date(Date.now() - 200 * 24 * 60 * 60_000).toISOString() };
+    const nuevo = { ...conTerraform(2), postedAt: new Date().toISOString() };
+
+    assert.equal(buildFocus([viejo, nuevo], PROFILE, { windowDays: 365 }).analysed, 2);
+    assert.equal(buildFocus([viejo, nuevo], PROFILE, { windowDays: 90 }).analysed, 1);
+  });
+});

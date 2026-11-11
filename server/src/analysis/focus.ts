@@ -1,6 +1,7 @@
 import type { CandidateProfile } from '../filters/decide.js';
 import { matchStack } from '../filters/offer.js';
 import type { Job } from '../types.js';
+import { findEmerging, type EmergingTerm } from './emerging.js';
 import { TOPICS, type Topic, type TopicArea } from './topics.js';
 
 /**
@@ -44,6 +45,8 @@ export interface Focus {
   /** El tamaño de la ventana, para que la pantalla no lo invente. */
   windowDays: number;
   topics: FocusTopic[];
+  /** Lo que se repite y el catálogo todavía no tiene. Ver `emerging.ts`. */
+  emerging: EmergingTerm[];
 }
 
 /** Con una sola vacante no hay patrón, hay una empresa. Lo dijo él: «2 o 3». */
@@ -62,7 +65,7 @@ const MIN_VACANCIES = 2;
  * que él quiere ver es justo lo contrario: que algo EMPIEZA a pedirse, como la
  * IA, con tiempo para reaccionar antes de que sea un requisito en todas.
  */
-const WINDOW_DAYS = 180;
+export const DEFAULT_WINDOW_DAYS = 180;
 const DAY_MS = 24 * 60 * 60_000;
 /**
  * CUATRO frases, no dos.
@@ -125,7 +128,13 @@ function sentenceWith(jobs: readonly Job[], topic: Topic): string | null {
  * Función pura: recibe las ofertas y devuelve la lista. Así se puede probar
  * con cuatro anuncios inventados sin levantar nada.
  */
-export function buildFocus(all: readonly Job[], profile: CandidateProfile, now = Date.now()): Focus {
+export function buildFocus(
+  all: readonly Job[],
+  profile: CandidateProfile,
+  options: { now?: number; windowDays?: number } = {},
+): Focus {
+  const now = options.now ?? Date.now();
+  const WINDOW_DAYS = options.windowDays ?? DEFAULT_WINDOW_DAYS;
   // Por fecha de publicación, y si no la hay por cuándo se encontró: una
   // oferta de LinkedIn sin fecha es de la pasada que la leyó, y esa sí se sabe.
   const since = now - WINDOW_DAYS * DAY_MS;
@@ -135,7 +144,7 @@ export function buildFocus(all: readonly Job[], profile: CandidateProfile, now =
   });
 
   const analysed = jobs.length;
-  if (!analysed) return { analysed: 0, windowDays: WINDOW_DAYS, topics: [] };
+  if (!analysed) return { analysed: 0, windowDays: WINDOW_DAYS, topics: [], emerging: [] };
 
   const lines = jobs.map((job) => requirementLines(job.text));
 
@@ -194,5 +203,5 @@ export function buildFocus(all: readonly Job[], profile: CandidateProfile, now =
     };
   });
 
-  return { analysed, windowDays: WINDOW_DAYS, topics };
+  return { analysed, windowDays: WINDOW_DAYS, topics, emerging: findEmerging(jobs) };
 }

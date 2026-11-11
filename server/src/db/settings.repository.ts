@@ -27,3 +27,12 @@ export class SettingsRepository {
 }
 
 export const MOTIVATION_TEMPLATE_KEY = 'motivationTemplate';
+
+/**
+ * La antigüedad máxima de una vacante PARA ENTRAR, en meses.
+ *
+ * Es el filtro de la búsqueda, no el de la pantalla de Enfoque: lo que esto
+ * decide es qué se guarda, y por eso vive en Configuración. La ventana con la
+ * que se analiza lo ya guardado se elige en la propia página de Enfoque.
+ */
+export const MAX_AGE_MONTHS_KEY = 'vacancyMaxAgeMonths';

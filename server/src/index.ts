@@ -8,6 +8,7 @@ import { legacyLinkedinProfileDir, loadConfig } from './config.js';
 import { openDatabase } from './db/database.js';
 import { JobsRepository } from './db/jobs.repository.js';
 import { RunsRepository } from './db/runs.repository.js';
+import { readMaxAgeMonths } from './routes/settings.js';
 import { SettingsRepository } from './db/settings.repository.js';
 import { LlmJudge } from './filters/judge.js';
 import { PROFILE } from './profile/profile.js';
@@ -47,8 +48,10 @@ async function main(): Promise<void> {
     ? `[arranque] avisos por correo a ${config.mail.to}`
     : '[arranque] sin RESEND_API_KEY / MAIL_FROM / MAIL_TO: no se mandan correos');
 
+  const settings = new SettingsRepository(db);
   const runner = new Runner({
-    sources, jobs, runs, judge, profile: PROFILE,
+    sources,
+    maxAgeDays: () => readMaxAgeMonths(settings) * 30, jobs, runs, judge, profile: PROFILE,
     mailer, dashboardUrl: config.dashboardUrl,
   });
   const scheduler = new Scheduler({
@@ -59,7 +62,7 @@ async function main(): Promise<void> {
   });
 
   const app = await buildApp({
-    settings: new SettingsRepository(db),
+    settings,
     profile: PROFILE,
     jobs,
     runs,

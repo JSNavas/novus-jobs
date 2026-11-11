@@ -35,6 +35,8 @@ export class RunRefusedError extends Error {}
 
 interface RunnerDeps {
   sources: readonly JobSource[];
+  /** El tope de antigüedad, en días. Es una función porque se puede cambiar en caliente. */
+  maxAgeDays: () => number;
   jobs: JobsRepository;
   runs: RunsRepository;
   judge: LlmJudge | null;
@@ -237,6 +239,9 @@ export class Runner implements PassRunner {
   private async execute(id: number, source: JobSource): Promise<void> {
     try {
       const result = await runPasses([source], {
+        // Se lee EN CADA PASADA, no al arrancar: si él cambia el tope en
+        // Configuración, la siguiente búsqueda ya lo respeta sin reiniciar nada.
+        maxAgeDays: this.deps.maxAgeDays(),
         jobs: this.deps.jobs,
         judge: this.deps.judge,
         profile: this.deps.profile,

@@ -137,7 +137,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
   });
 
   function run(texts: readonly string[], judge: LlmJudge | null) {
-    return runPasses([fakeSource(texts)], { jobs, judge, profile: PROFILE, runId: 1 });
+    return runPasses([fakeSource(texts)], { jobs, judge, profile: PROFILE, runId: 1, maxAgeDays: 90 });
   }
 
   it('EL CASO REAL: rescata una oferta que la regla de ubicación había descartado', async () => {
@@ -232,7 +232,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
 
   it('guarda cuándo la publicaron ellos y cuánta gente se postuló', async () => {
     const source = fakeSourceWithMetrics([BUENA], 298);
-    await runPasses([source], { jobs, judge: null, profile: PROFILE, runId: 1 });
+    await runPasses([source], { jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90 });
 
     const stored = jobs.list({
       status: null, verdict: null, runId: null, seniority: null,
@@ -247,8 +247,8 @@ describe('pipeline — el juez cruzado con las reglas', () => {
   it('EL CASO REAL: una segunda pasada actualiza las postulaciones sin duplicar la oferta', async () => {
     // 298 el lunes y 310 el martes. Si el número viviera en el texto, la huella
     // cambiaría y la misma vacante entraría otra vez como nueva.
-    await runPasses([fakeSourceWithMetrics([BUENA], 298)], { jobs, judge: null, profile: PROFILE, runId: 1 });
-    await runPasses([fakeSourceWithMetrics([BUENA], 310)], { jobs, judge: null, profile: PROFILE, runId: 2 });
+    await runPasses([fakeSourceWithMetrics([BUENA], 298)], { jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90 });
+    await runPasses([fakeSourceWithMetrics([BUENA], 310)], { jobs, judge: null, profile: PROFILE, runId: 2, maxAgeDays: 90 });
 
     const stored = jobs.list({
       status: null, verdict: null, runId: null, seniority: null,
@@ -259,14 +259,14 @@ describe('pipeline — el juez cruzado con las reglas', () => {
   });
 
   it('refrescar los números NO toca el estado que él le puso a la oferta', async () => {
-    await runPasses([fakeSourceWithMetrics([BUENA], 298)], { jobs, judge: null, profile: PROFILE, runId: 1 });
+    await runPasses([fakeSourceWithMetrics([BUENA], 298)], { jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90 });
     const stored = jobs.list({
       status: null, verdict: null, runId: null, seniority: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     jobs.updateStatus(stored.items[0]!.id, JobStatus.Saved);
 
-    await runPasses([fakeSourceWithMetrics([BUENA], 310)], { jobs, judge: null, profile: PROFILE, runId: 2 });
+    await runPasses([fakeSourceWithMetrics([BUENA], 310)], { jobs, judge: null, profile: PROFILE, runId: 2, maxAgeDays: 90 });
 
     const after = jobs.findById(stored.items[0]!.id);
     assert.equal(after?.status, JobStatus.Saved, 'la guardó él; una lectura posterior no la devuelve a nuevas');
@@ -289,7 +289,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
 
   it('EL CASO REAL: una vacante de hace ocho meses no entra, por buena que sea', async () => {
     const result = await runPasses([fakeSourceAged([BUENA], 240)], {
-      jobs, judge: null, profile: PROFILE, runId: 1,
+      jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90,
     });
 
     assert.equal(result.outcome.accepted, 0);
@@ -302,7 +302,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
 
   it('justo dentro del tope sí entra: el corte son tres meses, no dos', async () => {
     const result = await runPasses([fakeSourceAged([BUENA], 80)], {
-      jobs, judge: null, profile: PROFILE, runId: 1,
+      jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90,
     });
     assert.equal(result.outcome.accepted, 1);
   });
@@ -310,7 +310,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
   it('NI EL JUEZ rescata una vacante vieja: una fecha no se opina', async () => {
     const { judge } = fakeJudge(() => ({ isOffer: true, rejection: null }));
     const result = await runPasses([fakeSourceAged([BUENA], 200)], {
-      jobs, judge, profile: PROFILE, runId: 1,
+      jobs, judge, profile: PROFILE, runId: 1, maxAgeDays: 90,
     });
     assert.equal(result.outcome.accepted, 0, 'el juez dijo que sirve, pero sigue siendo de hace medio año');
   });
@@ -323,8 +323,8 @@ describe('pipeline — el juez cruzado con las reglas', () => {
   it('la lista sale por fecha de publicación, no por cuándo la leímos', async () => {
     // Las dos se leen en la misma pasada: si se ordenara por `found_at`, el
     // orden lo decidiría el azar del recorrido.
-    await runPasses([fakeSourceAged([BUENA], 60)], { jobs, judge: null, profile: PROFILE, runId: 1 });
-    await runPasses([fakeSourceAged([OTRA_BUENA], 5)], { jobs, judge: null, profile: PROFILE, runId: 1 });
+    await runPasses([fakeSourceAged([BUENA], 60)], { jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90 });
+    await runPasses([fakeSourceAged([OTRA_BUENA], 5)], { jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90 });
 
     const stored = jobs.list({
       status: null, verdict: null, runId: null, seniority: null,

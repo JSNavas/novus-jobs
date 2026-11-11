@@ -37,3 +37,18 @@ export const DEFAULT_MOTIVATION_TEMPLATE =
  * rechaza, que es el peor momento posible.
  */
 export const MAX_MOTIVATION_CHARS = 1000;
+
+/**
+ * El tope de antigüedad de una vacante para ENTRAR, en meses.
+ *
+ * Tres de fábrica, que es lo que él pidió al verlo: de 27 ofertas aceptadas,
+ * 14 llevaban más de dos meses publicadas y la primera era de hace un año con
+ * 969 postulaciones. Se cambia en Configuración.
+ *
+ * Los topes del tope: menos de uno dejaría entrar casi nada, y más de dos
+ * años es no tener tope. Se validan al guardar porque un número absurdo aquí
+ * no se nota hasta la siguiente búsqueda, cuando ya no entró nada.
+ */
+export const DEFAULT_MAX_AGE_MONTHS = 3;
+export const MIN_MAX_AGE_MONTHS = 1;
+export const MAX_MAX_AGE_MONTHS = 24;

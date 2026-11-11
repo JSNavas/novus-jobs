@@ -1010,3 +1010,60 @@ para saber de dónde sale el número, y luego se mira la lista.
 - **39 filas son muchas para una pantalla**, pero cortarlas sería decidir por
   él dónde deja de importar. Scroll es barato; una lista truncada esconde
   justo lo que empieza a aparecer, que es para lo que existe esto.
+
+---
+
+## Rev. 21 — Dos controles distintos, y el detector automático · 2026-11-11
+
+### Dos números que parecían uno
+
+Estaban los dos escritos en el código y eran cosas distintas. Él las separó:
+
+| | Dónde se cambia | Qué decide |
+|---|---|---|
+| **3 meses** | Configuración | Qué vacantes ENTRAN. Filtro de la búsqueda. |
+| **6 meses** | la propia página de Enfoque | Con cuánto pasado se MIRA lo ya guardado. |
+
+El primero cambia los datos; el segundo es una lente, y las lentes se cambian
+mirando. El tope se lee **en cada pasada** (`maxAgeDays: () => …`), así que
+cambiarlo surte efecto en la siguiente búsqueda sin reiniciar el servicio.
+
+### El detector automático: «Apareciendo»
+
+El catálogo de temas era la fuerza del Enfoque y su único agujero real: **lo
+que no está en él no se detecta por mucho que lo pidan**. Si mañana seis
+vacantes exigen Rust o Temporal, la pantalla callaba.
+
+`analysis/emerging.ts` lo cierra por el otro lado: en vez de buscar lo que
+conocemos, busca **cualquier palabra técnica que se repita en varias vacantes
+y que el catálogo no tenga**. No necesita que nadie la haya previsto, y por eso
+esto es lo que hace que el Enfoque crezca solo.
+
+Cómo distingue una tecnología de una palabra cualquiera, por orden de
+importancia:
+
+1. **Que se repita en dos vacantes o más.** Es el filtro de verdad: una
+   palabra rara sale una vez; una tecnología que están pidiendo, muchas.
+2. **Forma de tecnología**: empieza por mayúscula (Terraform), son siglas
+   (ETL) o lleva símbolo o número (C++, S3, k6).
+3. **Se ignora la primera palabra de cada línea.** En español una mayúscula
+   ahí no es un nombre propio, es el principio de la frase.
+4. **Fuera los nombres de las empresas.** Sin esto, una consultora con
+   cincuenta vacantes sería «la tecnología más demandada del mercado».
+5. **Fuera cada palabra de cada alias del catálogo.** Primera medición: proponía
+   «CI», «CD», «IA», «Cloud» y «Arquitectura» — trozos de «CI/CD», «IA
+   generativa», «Google Cloud» y «arquitectura limpia». Descubrir media
+   palabra que ya tienes no descubre nada y entierra lo que sí es nuevo.
+
+Tras los cinco filtros, sobre sus 15 vacantes queda **un** hallazgo: *Apache*,
+en 2 vacantes. Es la señal correcta — no hay nada más que no estemos midiendo.
+
+Va en su propia sección y no mezclado con los temas: arriba está curado, esto
+es materia prima.
+
+### GAP
+
+El detector solo mira palabras sueltas. «Server Components» o «event sourcing»
+—dos palabras— no los propondrá. Los n-gramas multiplican el ruido, y con el
+corpus de hoy no compensaba; si algún día la lista de hallazgos se queda corta,
+ese es el siguiente paso.
