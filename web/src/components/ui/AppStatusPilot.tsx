@@ -5,6 +5,8 @@ export type AppStatusTone = 'success' | 'error' | 'neutral';
 interface AppStatusPilotProps {
   tone: AppStatusTone;
   label?: string;
+  /** Accessible name when the pilot is a bare dot without visible text. */
+  srLabel?: string;
 }
 
 const pilotColor = {
@@ -14,13 +16,15 @@ const pilotColor = {
 } as const;
 
 /*
- * El piloto es una luz, no el mensaje: el texto va al lado y es el que se lee
- * sin color. Por eso el fallo lleva también el rótulo en rojo y en negrita.
+ * The pilot is a light, not the message: the text sits beside it and is what
+ * gets read without color. That is why failure also gets its label in red and bold.
  */
-const AppStatusPilot = ({ tone, label }: AppStatusPilotProps) => {
+const AppStatusPilot = ({ tone, label, srLabel }: AppStatusPilotProps) => {
   const light = (
     <Box
       component="span"
+      role={label ? undefined : 'img'}
+      aria-label={label ? undefined : srLabel}
       sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: pilotColor[tone], flexShrink: 0 }}
     />
   );
