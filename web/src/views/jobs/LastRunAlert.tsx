@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import { AppAlert } from '../../components/ui';
 import { runFailureAdvice, runFailureLabel } from '../../labels';
-import { RunFailure, RunStatus, type RunInfo } from '../../types';
+import { RunStatus, type RunInfo } from '../../types';
 
 interface LastRunAlertProps {
   lastRun: RunInfo | null;
@@ -22,13 +22,12 @@ interface LastRunAlertProps {
 const LastRunAlert = ({ lastRun }: LastRunAlertProps) => {
   if (!lastRun?.failure) return null;
   const failed = lastRun.status === RunStatus.Error;
-  const urgent = lastRun.failure === RunFailure.LoginRequired;
 
   return (
     <Box mb={2}>
       <AppAlert severity={failed ? 'error' : 'warning'}>
         <Typography variant="subtitle2" component="span" fontWeight={600}>
-          {urgent ? runFailureLabel[RunFailure.LoginRequired] : runFailureLabel[lastRun.failure]}
+          {runFailureLabel[lastRun.failure]}
         </Typography>
         {' — '}
         {runFailureAdvice[lastRun.failure]}
