@@ -1,7 +1,48 @@
+import type { CSSProperties } from 'react';
 import type { TypographyVariantsOptions } from '@mui/material/styles';
 
+/*
+ * Sin fuentes externas: el stack es el del sistema, para que la herramienta
+ * funcione offline. El mono lo usan las cifras, los ids y las fechas.
+ */
+const sansFamily = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+const monoFamily = 'ui-monospace, SFMono-Regular, Menlo, monospace';
+
+declare module '@mui/material/styles' {
+  interface TypographyVariants {
+    metric: CSSProperties;
+    mono: CSSProperties;
+  }
+
+  interface TypographyVariantsOptions {
+    metric?: CSSProperties;
+    mono?: CSSProperties;
+  }
+}
+
+declare module '@mui/material/Typography' {
+  interface TypographyPropsVariantOverrides {
+    metric: true;
+    mono: true;
+  }
+}
+
 const typography: TypographyVariantsOptions = {
-  fontFamily: "'Plus Jakarta Sans', sans-serif;",
+  fontFamily: sansFamily,
+  metric: {
+    fontFamily: monoFamily,
+    fontWeight: 500,
+    fontSize: '2rem',
+    lineHeight: 1,
+    fontVariantNumeric: 'tabular-nums',
+  },
+  mono: {
+    fontFamily: monoFamily,
+    fontWeight: 400,
+    fontSize: '0.8125rem',
+    lineHeight: '1.25rem',
+    fontVariantNumeric: 'tabular-nums',
+  },
   h1: {
     fontWeight: 600,
     fontSize: '2.25rem',
@@ -32,8 +73,15 @@ const typography: TypographyVariantsOptions = {
     fontSize: '1rem',
     lineHeight: '1.2rem',
   },
+  overline: {
+    fontFamily: monoFamily,
+    fontSize: '0.6875rem',
+    fontWeight: 500,
+    letterSpacing: '0.08em',
+    lineHeight: '1rem',
+  },
   button: {
-    textTransform: 'capitalize',
+    textTransform: 'none',
     fontWeight: 400,
   },
   body1: {

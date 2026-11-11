@@ -1,62 +1,70 @@
-const lightPalette = {
+const INK = '#0A0C0E';
+
+/*
+ * Solo tres colores saturados: verde (correcto), ámbar (aviso) y rojo (fallo).
+ * El cian apagado es el único acento y sirve para foco, enlaces y selección.
+ * Los grises escalonan las superficies de fondo a tarjeta.
+ */
+const darkPalette = {
   primary: {
-    main: '#5D87FF',
-    light: '#ECF2FF',
-    dark: '#4570EA',
-    contrastText: '#ffffff',
+    main: '#7FB8C4',
+    light: 'rgba(127,184,196,0.12)',
+    dark: '#5F9AA8',
+    contrastText: INK,
   },
   secondary: {
-    main: '#49BEFF',
-    light: '#E8F7FF',
-    dark: '#23afdb',
-    contrastText: '#ffffff',
+    main: '#8A96A3',
+    light: 'rgba(138,150,163,0.12)',
+    dark: '#6B7785',
+    contrastText: INK,
   },
   success: {
-    main: '#13DEB9',
-    light: '#E6FFFA',
-    dark: '#02b3a9',
-    contrastText: '#ffffff',
+    main: '#5BE38F',
+    light: 'rgba(91,227,143,0.12)',
+    dark: '#3FBF73',
+    contrastText: INK,
   },
   info: {
-    main: '#539BFF',
-    light: '#EBF3FE',
-    dark: '#1682d4',
-    contrastText: '#ffffff',
+    main: '#7FB8C4',
+    light: 'rgba(127,184,196,0.12)',
+    dark: '#5F9AA8',
+    contrastText: INK,
   },
   error: {
-    main: '#FA896B',
-    light: '#FDEDE8',
-    dark: '#f3704d',
-    contrastText: '#ffffff',
+    main: '#FF5C5C',
+    light: 'rgba(255,92,92,0.14)',
+    dark: '#D94646',
+    contrastText: INK,
   },
   warning: {
-    main: '#FFAE1F',
-    light: '#FEF5E5',
-    dark: '#ae8e59',
-    contrastText: '#ffffff',
+    main: '#E9A23B',
+    light: 'rgba(233,162,59,0.12)',
+    dark: '#C7852A',
+    contrastText: INK,
   },
   grey: {
-    100: '#F2F6FA',
-    200: '#EAEFF4',
-    300: '#DFE5EF',
-    400: '#7C8FAC',
-    500: '#5A6A85',
-    600: '#2A3547',
+    100: '#101417',
+    200: '#161B1F',
+    300: '#222930',
+    400: '#3A444E',
+    500: '#8A96A3',
+    600: '#C9D1D9',
   },
   text: {
-    primary: '#2A3547',
-    secondary: '#5A6A85',
+    primary: '#D5DCE3',
+    secondary: '#8A96A3',
   },
   action: {
-    disabledBackground: 'rgba(73,82,88,0.12)',
-    hoverOpacity: 0.02,
-    hover: '#f6f9fc',
+    hover: 'rgba(213,220,227,0.05)',
+    selected: 'rgba(127,184,196,0.12)',
+    disabledBackground: 'rgba(213,220,227,0.08)',
+    hoverOpacity: 0.05,
   },
-  divider: '#ebf1f6',
+  divider: '#232A31',
   background: {
-    default: '#f6f9fc',
-    paper: '#ffffff',
+    default: INK,
+    paper: '#12161A',
   },
 };
 
-export { lightPalette };
+export { darkPalette };

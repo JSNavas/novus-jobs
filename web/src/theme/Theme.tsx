@@ -2,11 +2,11 @@ import { createTheme } from '@mui/material/styles';
 import components from './Components';
 import typography from './Typography';
 import { shadows } from './Shadows';
-import { lightPalette } from './DefaultColors';
+import { darkPalette } from './DefaultColors';
 
 const baseTheme = createTheme({
-  palette: { mode: 'light', ...lightPalette },
-  shape: { borderRadius: 7 },
+  palette: { mode: 'dark', ...darkPalette },
+  shape: { borderRadius: 3 },
   shadows,
   typography,
 });
