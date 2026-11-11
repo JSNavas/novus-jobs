@@ -25,7 +25,13 @@ const BlankCard = ({ children, dashed = false, onClick }: BlankCardProps) => (
       position: 'relative',
       overflow: 'hidden',
       borderStyle: dashed ? 'dashed' : 'solid',
-      ...(onClick ? { cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } } : {}),
+      ...(onClick
+        ? {
+          cursor: 'pointer',
+          transition: 'background-color .15s, border-color .15s',
+          '&:hover': { backgroundColor: 'grey.300', borderColor: 'grey.400' },
+        }
+        : {}),
     }}
   >
     {children}
