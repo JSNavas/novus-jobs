@@ -2,10 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { Box, Typography } from '@mui/material';
 import { ALL_VERDICTS, getRun, type JobQuery } from '../../api/client';
-import { AppAlert, BlankCard, PageContainer } from '../../components/ui';
+import { AppAlert, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { formatDateTime } from '../../format';
 import { RunStatus, type RunInfo } from '../../types';
 import JobList from '../jobs/JobList';
+import { runStatusLabel, runStatusTone } from './runStatus';
 
 /**
  * TODO lo que encontró una búsqueda, aceptado y descartado junto.
@@ -45,11 +46,15 @@ const RunPage = () => {
       title={run ? `Búsqueda del ${formatDateTime(run.startedAt)}` : 'Búsqueda'}
       subtitle={run ? summary(run) : 'Cargando…'}
       breadcrumbs={[{ title: 'Dashboard', to: '/' }, { title: `Búsqueda ${runId}` }]}
+      action={run ? <AppStatusPilot label={runStatusLabel(run)} tone={runStatusTone(run)} /> : null}
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
 
       {run?.status === RunStatus.Error && run.error ? (
-        <AppAlert severity="error">{run.error}</AppAlert>
+        <AppAlert severity="error">
+          <Typography variant="body2" fontWeight={600} component="div">Falló la búsqueda</Typography>
+          <Typography variant="caption" component="div" sx={{ opacity: 0.8 }}>{run.error}</Typography>
+        </AppAlert>
       ) : null}
 
       {/* Una búsqueda que leyó cosas y no guardó ninguna no está rota: eran
@@ -65,9 +70,11 @@ const RunPage = () => {
         </BlankCard>
       ) : null}
 
-      <Box mt={2}>
-        <JobList query={query} empty="Esta búsqueda no guardó ninguna oferta nueva." />
-      </Box>
+      <Typography variant="h6" mt={3} mb={1}>Ofertas de esta búsqueda</Typography>
+      <Typography variant="body2" color="textSecondary" mb={2}>
+        Aceptadas y descartadas juntas. Cada tarjeta dice en qué lado cayó y por qué.
+      </Typography>
+      <JobList query={query} empty="Esta búsqueda no guardó ninguna oferta nueva." />
     </PageContainer>
   );
 };
