@@ -109,8 +109,30 @@ export const TOPICS: readonly Topic[] = [
   topic('practicas', 'Documentación técnica', 'Swagger', 'OpenAPI', 'documentar'),
   topic('practicas', 'Refactorización y deuda técnica', 'refactor', 'deuda técnica', 'código limpio', 'clean code'),
 
-  // ─── IA, que es lo que está entrando en todas partes
-  topic('practicas', 'IA aplicada al desarrollo', 'Copilot', 'Cursor', 'asistentes de IA', 'LLM', 'RAG', 'embeddings'),
+  /* ─── IA, DESGLOSADA Y NO EN UN SOLO SACO ───────────────────────────────
+   * Estuvo como un único tema, «IA aplicada al desarrollo», que mezclaba
+   * escribir código con Copilot —una herramienta— con montar un RAG en
+   * producción —un oficio—. Salía 5 de 18 y no decía NADA accionable: no se
+   * podía saber si piden usar IA o construirla.
+   *
+   * Desglosado sobre las mismas 18 vacantes: RAG en 6, agentes en 5, LLM en 5.
+   * RAG sube al tercer puesto de toda la lista y antes no se veía.
+   *
+   * MCP va aquí aunque hoy esté en CERO vacantes, y es el motivo de que el
+   * Enfoque exista: el día que empiece a pedirse, aparece solo. Un tema que no
+   * está en el catálogo no se detecta por mucho que lo pidan. */
+  topic('practicas', 'RAG y bases vectoriales', 'RAG', 'embeddings', 'base vectorial', 'bases vectoriales',
+    'búsqueda semántica', 'pgvector', 'Pinecone', 'Qdrant', 'Weaviate', 'Chroma'),
+  topic('practicas', 'LLMs', 'LLM', 'modelos de lenguaje', 'OpenAI', 'GPT', 'Anthropic', 'Claude', 'Gemini'),
+  topic('practicas', 'Agentes de IA', 'agentes', 'multiagente', 'agentic', 'tool calling', 'function calling',
+    'LangChain', 'LlamaIndex', 'CrewAI'),
+  topic('practicas', 'MCP', 'Model Context Protocol'),
+  topic('practicas', 'Prompt engineering', 'prompt', 'prompts', 'prompting'),
+  topic('practicas', 'Asistentes de código', 'Copilot', 'Cursor', 'Claude Code', 'asistentes de IA',
+    'asistentes de programación'),
+  topic('practicas', 'Machine learning', 'aprendizaje automático', 'TensorFlow', 'PyTorch', 'scikit-learn',
+    'modelos predictivos', 'MLOps'),
+  topic('practicas', 'IA en el producto', 'inteligencia artificial', 'IA generativa', 'GenAI'),
 
   // ─── Equipo e idioma
   topic('equipo', 'Inglés', 'English', 'inglés avanzado', 'inglés conversacional'),

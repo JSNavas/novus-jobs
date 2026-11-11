@@ -794,3 +794,47 @@ La frase que él citó aparece bajo «Programación asíncrona», en 5 vacantes.
 No se guarda: se calcula al vuelo en cada visita. Con doscientas ofertas tarda
 milisegundos, y un cálculo guardado envejece sin avisar. Si algún día la base
 crece a miles, esto es lo primero que habrá que cachear.
+
+---
+
+## Rev. 16 — Ventana de seis meses, e IA desglosada · 2026-11-11
+
+### La ventana
+
+El tope de tres meses del pipeline se aplica **al entrar**: una vacante
+aceptada hoy se seguiría contando dentro de un año, cuando ya no exista. Sin
+ventana, el Enfoque acabaría mezclando lo que se pide ahora con lo que se pedía
+la temporada pasada, y eso en una lista de estudio es peor que no tenerla.
+
+**Seis meses**, y es decisión suya con un motivo explícito: una ventana corta
+reacciona rápido pero tiembla —con pocas vacantes, dos anuncios mueven un tema
+diez puntos— y lo que él quiere ver es que algo EMPIEZA a pedirse, con tiempo
+para reaccionar antes de que sea un requisito en todas.
+
+La pantalla dice el tamaño de la ventana (`windowDays`) en vez de que el texto
+lo dé por sabido. Efecto inmediato: de 18 vacantes se pasó a 15 — las tres que
+él tenía guardadas son de enero y de noviembre del año pasado.
+
+### La IA estaba, pero en un saco
+
+Había UN tema, «IA aplicada al desarrollo», que mezclaba escribir código con
+Copilot —una herramienta— con montar un RAG en producción —un oficio—. Salía
+5 de 18 y no decía nada accionable. Él preguntó por qué no veía RAG ni MCP: la
+respuesta es que estaban dentro de esa etiqueta, sin nombre propio.
+
+Desglosado en ocho temas sobre las mismas vacantes:
+
+| | Vacantes | |
+|---|---|---|
+| LLMs | 6 | 40% |
+| Agentes de IA | 5 | 33% |
+| RAG y bases vectoriales | 5 | 33% |
+| Prompt engineering, Asistentes de código, Machine learning | 2-3 | |
+| **MCP** | **0** | — |
+
+RAG y LLMs entran directamente al top 10 y antes no se veían.
+
+**MCP se deja en el catálogo con cero vacantes a propósito**, y es la mejor
+explicación de para qué sirve esto: el día que empiece a pedirse aparece solo.
+Un tema que no está en el catálogo no se detecta por mucho que lo pidan — ese
+es el límite real del Enfoque, no la ventana.

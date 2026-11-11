@@ -49,14 +49,16 @@ const FocusPage = () => {
 
         {focus && focus.analysed === 0 ? (
           <AppAlert severity="info">
-            Todavía no hay ofertas aceptadas que analizar. Esto se llena solo con las búsquedas.
+            Todavía no hay ofertas aceptadas de los últimos meses que analizar. Esto se llena solo
+            con las búsquedas.
           </AppAlert>
         ) : null}
 
         {focus && focus.analysed > 0 ? (
           <>
             <Typography variant="body2" color="textSecondary">
-              Sobre <strong>{focus.analysed} vacantes aceptadas</strong>. Solo cuenta lo aceptado: las
+              Sobre <strong>{focus.analysed} vacantes aceptadas</strong> de los últimos{' '}
+              <strong>{Math.round(focus.windowDays / 30)} meses</strong>. Solo cuenta lo aceptado: las
               descartadas piden C# o inglés avanzado, y contarlas convertiría esto en una lista de lo
               que no quieres hacer. Cada tema cuenta <strong>una vez por vacante</strong>, no por
               menciones.

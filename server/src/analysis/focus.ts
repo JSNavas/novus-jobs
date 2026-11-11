@@ -39,13 +39,31 @@ export interface FocusTopic {
 }
 
 export interface Focus {
-  /** Cuántas vacantes aceptadas se analizaron. */
+  /** Cuántas vacantes aceptadas se analizaron, ya dentro de la ventana. */
   analysed: number;
+  /** El tamaño de la ventana, para que la pantalla no lo invente. */
+  windowDays: number;
   topics: FocusTopic[];
 }
 
 /** Con una sola vacante no hay patrón, hay una empresa. Lo dijo él: «2 o 3». */
 const MIN_VACANCIES = 2;
+
+/**
+ * SEIS MESES, y la ventana importa tanto como la cuenta.
+ *
+ * El tope de tres meses del pipeline se aplica AL ENTRAR: una vacante aceptada
+ * hoy se seguiría contando dentro de un año, cuando ya no exista. Sin ventana,
+ * la lista acabaría mezclando lo que se pide ahora con lo que se pedía la
+ * temporada pasada, y eso en una lista de estudio es peor que no tenerla.
+ *
+ * Seis y no tres, y es decisión suya: una ventana corta reacciona rápido pero
+ * tiembla —con pocas vacantes, dos anuncios mueven un tema diez puntos—, y lo
+ * que él quiere ver es justo lo contrario: que algo EMPIEZA a pedirse, como la
+ * IA, con tiempo para reaccionar antes de que sea un requisito en todas.
+ */
+const WINDOW_DAYS = 180;
+const DAY_MS = 24 * 60 * 60_000;
 /** Dos frases bastan para entender qué piden; más es una pared de texto. */
 const MAX_EXAMPLES = 2;
 /** Una línea más larga que esto no es un requisito: es un párrafo. */
@@ -85,9 +103,17 @@ function mentions(text: string, topic: Topic): boolean {
  * Función pura: recibe las ofertas y devuelve la lista. Así se puede probar
  * con cuatro anuncios inventados sin levantar nada.
  */
-export function buildFocus(jobs: readonly Job[], profile: CandidateProfile): Focus {
+export function buildFocus(all: readonly Job[], profile: CandidateProfile, now = Date.now()): Focus {
+  // Por fecha de publicación, y si no la hay por cuándo se encontró: una
+  // oferta de LinkedIn sin fecha es de la pasada que la leyó, y esa sí se sabe.
+  const since = now - WINDOW_DAYS * DAY_MS;
+  const jobs = all.filter((job) => {
+    const when = Date.parse(job.postedAt ?? job.foundAt);
+    return Number.isNaN(when) ? true : when >= since;
+  });
+
   const analysed = jobs.length;
-  if (!analysed) return { analysed: 0, topics: [] };
+  if (!analysed) return { analysed: 0, windowDays: WINDOW_DAYS, topics: [] };
 
   const lines = jobs.map((job) => requirementLines(job.text));
 
@@ -121,5 +147,5 @@ export function buildFocus(jobs: readonly Job[], profile: CandidateProfile): Foc
   // decidir qué vacantes entran; volver a ordenar por él sería filtrar dos
   // veces por lo mismo.
   topics.sort((a, b) => b.vacancies - a.vacancies || a.name.localeCompare(b.name));
-  return { analysed, topics };
+  return { analysed, windowDays: WINDOW_DAYS, topics };
 }

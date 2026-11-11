@@ -125,6 +125,8 @@ export interface FocusTopic {
 
 export interface Focus {
   analysed: number;
+  /** El tamaño de la ventana en días: la pantalla no se lo inventa. */
+  windowDays: number;
   topics: FocusTopic[];
 }
 
