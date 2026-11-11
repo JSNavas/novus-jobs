@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router';
-import FullLayout from '../layouts/full/FullLayout';
+import OnboardingGate from '../views/onboarding/OnboardingGate';
+import WelcomePage from '../views/onboarding/WelcomePage';
 import DashboardPage from '../views/dashboard/DashboardPage';
 import RejectedPage from '../views/dashboard/RejectedPage';
 import RunPage from '../views/dashboard/RunPage';
@@ -10,9 +11,13 @@ import JobsPage from '../views/jobs/JobsPage';
 import SettingsPage from '../views/settings/SettingsPage';
 
 const router = createBrowserRouter([
+  // La bienvenida va FUERA del marco: sin barra lateral ni cabecera, porque
+  // todavía no hay nada que navegar.
+  { path: '/bienvenida', element: <WelcomePage /> },
   {
     path: '/',
-    element: <FullLayout />,
+    // El marco solo se pinta con el alta hecha; si falta, se redirige.
+    element: <OnboardingGate />,
     children: [
       // La raíz es el dashboard: con el filtro haciendo su trabajo, la bandeja
       // de nuevas sale vacía casi siempre, y abrir en una pantalla vacía hace

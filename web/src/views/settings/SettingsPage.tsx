@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link as RouterLink } from 'react-router';
 import { Box, Button, Stack, TextField, Typography } from '@mui/material';
 import { getSettings, updateSettings, type Settings } from '../../api/client';
 import { AppAlert, BlankCard, PageContainer } from '../../components/ui';
@@ -180,6 +181,21 @@ const SettingsPage = () => {
                 Guardar antigüedad
               </Button>
             </Box>
+          </Stack>
+        </BlankCard>
+
+        <BlankCard>
+          <Stack spacing={1.5} p={3} alignItems="flex-start">
+            <Typography variant="h5">Tu perfil</Typography>
+            <Typography variant="body2" color="textSecondary">
+              Tu stack, tu núcleo, los vetos, el inglés y desde dónde buscas. Es lo que decide qué
+              oferta te llega y qué se descarta, y se edita en la misma pantalla del alta: así no
+              hay dos formularios que puedan decir cosas distintas. Los cambios se aplican en la
+              siguiente búsqueda, sin reiniciar nada.
+            </Typography>
+            <Button variant="outlined" component={RouterLink} to="/bienvenida?editar=1">
+              Editar mi perfil
+            </Button>
           </Stack>
         </BlankCard>
 

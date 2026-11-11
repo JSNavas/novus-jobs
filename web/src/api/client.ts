@@ -241,3 +241,94 @@ export function updateIntegrationSchedule(
     body: JSON.stringify(schedule),
   });
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * EL ALTA
+ *
+ * Lo que el servidor sabe del candidato y lo que la pantalla de bienvenida
+ * necesita para rellenarse sola. El catálogo —países, niveles, ecosistemas—
+ * viene del servidor y no se duplica aquí: las reglas del filtro se escriben
+ * una vez, y una lista de países repetida en React se queda desfasada sola.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+export type EnglishLevel = 'none' | 'a1' | 'a2' | 'b1' | 'b2' | 'c1' | 'c2' | 'native';
+
+export interface CandidateProfile {
+  stack: string[];
+  core: string[];
+  cannotDo: string[];
+  english: { level: EnglishLevel; filter: boolean };
+  geo: { country: string; city: string | null; excludeLocalEmployers: boolean };
+  modality: { remoteGlobal: boolean; remoteHomeCountry: boolean; hybrid: boolean; onsite: boolean };
+}
+
+export interface OnboardingState {
+  completed: boolean;
+  profile: CandidateProfile;
+  catalogue: {
+    countries: { code: string; label: string }[];
+    englishLevels: EnglishLevel[];
+    ecosystems: { id: string; label: string }[];
+  };
+  /** Si hay clave de Gemini: sin ella no se ofrece leer el CV con el modelo. */
+  canEnhance: boolean;
+  acceptedFiles: string[];
+}
+
+export interface CvReading {
+  stack: string[];
+  core: string[];
+  suggestedVetoes: { ecosystem: string; label: string; technologies: string[] }[];
+  english: EnglishLevel | null;
+  country: string | null;
+  city: string | null;
+  years: number | null;
+  /** Si se reconoció algo: con `false`, el formulario se rellena a mano. */
+  foundInCv: boolean;
+  /** Si pasó por el modelo. La pantalla lo dice, para que nadie se sorprenda. */
+  enhanced: boolean;
+}
+
+export function getOnboarding(): Promise<OnboardingState> {
+  return request<OnboardingState>('/onboarding');
+}
+
+/**
+ * Sube el CV. `enhance` manda además el texto a Gemini, y solo se pasa cuando
+ * el usuario lo pide con el aviso delante: por defecto el CV no sale de su
+ * máquina, que es la razón de ser de todo esto.
+ */
+export async function readCv(file: File, enhance: boolean): Promise<CvReading> {
+  const form = new FormData();
+  form.append('file', file);
+  // Sin `Content-Type` a mano: el navegador tiene que poner el boundary.
+  const response = await fetch(`/api/onboarding/cv?enhance=${enhance ? 'true' : 'false'}`, {
+    method: 'POST',
+    body: form,
+  });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => ({}))) as { error?: string };
+    throw new ApiError(response.status, body.error ?? `Error ${response.status}`);
+  }
+  return (await response.json()) as CvReading;
+}
+
+/** Guarda un paso. Lo que no se manda no se toca. */
+export function saveOnboardingStep(changes: {
+  stack?: string[];
+  core?: string[];
+  cannotDo?: string[];
+  vetoEcosystems?: string[];
+  english?: { level: EnglishLevel; filter: boolean };
+  geo?: { country: string; city: string | null; excludeLocalEmployers: boolean };
+  modality?: CandidateProfile['modality'];
+}): Promise<{ profile: CandidateProfile; completed: boolean }> {
+  return request('/onboarding/profile', {
+    method: 'PUT',
+    body: JSON.stringify(changes),
+  });
+}
+
+export function completeOnboarding(): Promise<{ completed: boolean; profile: CandidateProfile }> {
+  return request('/onboarding/complete', { method: 'POST' });
+}
