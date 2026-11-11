@@ -32,15 +32,6 @@ const components = (theme: Theme): ThemeOptions['components'] => {
           outline: `1px solid ${theme.palette.primary.main}`,
           outlineOffset: 2,
         },
-        "*[dir='rtl'] .buyNowImg": {
-          transform: 'scaleX(-1)',
-        },
-        '.border-none': {
-          border: '0px',
-          td: {
-            border: '0px',
-          },
-        },
         '.btn-xs': {
           minWidth: '30px !important',
           width: '30px',
@@ -48,64 +39,17 @@ const components = (theme: Theme): ThemeOptions['components'] => {
           borderRadius: '6px !important',
           padding: '0px !important',
         },
-        '.hover-text-primary:hover .text-hover': {
-          color: theme.palette.primary.main,
-        },
-        '.hoverCard:hover': {
-          scale: '1.01',
-          transition: ' 0.1s ease-in',
-        },
-        '.signup-bg': {
-          position: 'absolute',
-          top: 0,
-          right: 0,
-          height: '100%',
-        },
         '.MuiBox-root': {
           borderRadius: theme.shape.borderRadius,
         },
         '.MuiCardHeader-action': {
           alignSelf: 'center !important',
         },
-        '.emoji-picker-react .emoji-scroll-wrapper': {
-          overflowX: 'hidden',
-        },
-        '.scrollbar-container': {
-          borderRight: '0 !important',
-        },
-        '.theme-timeline .MuiTimelineOppositeContent-root': {
-          minWidth: '90px',
-        },
         '.MuiAlert-root .MuiAlert-icon': {
           color: 'inherit!important',
         },
-        '.MuiTimelineConnector-root': {
-          width: '1px !important',
-        },
         ' .simplebar-scrollbar:before': {
           background: `${theme.palette.grey[300]} !important`,
-        },
-        '@keyframes gradient': {
-          '0%': {
-            backgroundPosition: '0% 50%',
-          },
-          '50%': {
-            backgroundPosition: ' 100% 50%',
-          },
-          '100% ': {
-            backgroundPosition: ' 0% 50%',
-          },
-        },
-        '@keyframes slide': {
-          '0%': {
-            transform: 'translate3d(0, 0, 0)',
-          },
-          '100% ': {
-            transform: 'translate3d(-2086px, 0, 0)',
-          },
-        },
-        '.rounded-bars .apexcharts-bar-series.apexcharts-plot-series .apexcharts-series path': {
-          clipPath: 'inset(0 0 5% 0 round 20px)',
         },
       },
     },
@@ -116,19 +60,9 @@ const components = (theme: Theme): ThemeOptions['components'] => {
         },
       },
     },
-    MuiAccordion: {
-      styleOverrides: {
-        root: {
-          ':before': {
-            backgroundColor: theme.palette.grey[100],
-          },
-        },
-      },
-    },
     MuiPaper: {
       styleOverrides: {
         root: {
-          // border: `1px solid ${theme.palette.divider}`,
           backgroundImage: 'none',
         },
       },
@@ -409,8 +343,7 @@ const components = (theme: Theme): ThemeOptions['components'] => {
       styleOverrides: {
         root: {
           '& .MuiOutlinedInput-notchedOutline': {
-            borderColor:
-              theme.palette.mode === 'dark' ? theme.palette.grey[200] : theme.palette.grey[300],
+            borderColor: theme.palette.grey[200],
           },
           '&.Mui-focused .MuiOutlinedInput-notchedOutline, &:hover .MuiOutlinedInput-notchedOutline': {
             borderColor: theme.palette.primary.main,

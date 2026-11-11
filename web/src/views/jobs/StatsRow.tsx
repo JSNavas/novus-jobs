@@ -1,12 +1,13 @@
 import { Box, Typography } from '@mui/material';
 import { BlankCard } from '../../components/ui';
 import { formatDateTime } from '../../format';
-import type { RunInfo } from '../../types';
 import type { Stats } from '../../api/client';
 
 interface StatsRowProps {
   stats: Stats;
 }
+
+const readText = (count: number): string => (count === 1 ? '1 publicación leída' : `${count} publicaciones leídas`);
 
 /**
  * La última búsqueda dice CUÁNTO LEYÓ, no cuántas aceptó.
@@ -18,35 +19,57 @@ interface StatsRowProps {
  * pasada que no caduca; cuántas encajan es algo vivo y ya lo dice su propio
  * recuadro.
  */
-const lastRunText = (lastRun: RunInfo | null): string => {
-  if (!lastRun) return 'Sin búsquedas todavía';
-  const read = lastRun.fetched === 1 ? '1 publicación leída' : `${lastRun.fetched} publicaciones leídas`;
-  return `${formatDateTime(lastRun.startedAt)} · ${read}`;
-};
-
 const StatsRow = ({ stats }: StatsRowProps) => {
-  const tiles = [
-    { label: 'Nuevas', value: String(stats.new) },
-    { label: 'Guardadas', value: String(stats.saved) },
+  const counters = [
+    { label: 'Nuevas', value: stats.new, hint: 'Sin mirar todavía', positive: true },
+    { label: 'Guardadas', value: stats.saved, hint: 'Para postularte', positive: false },
     // 'Para ti' y no 'aceptadas': las junior quedan fuera del recuento.
-    { label: 'Total para ti', value: String(stats.total) },
-    { label: 'Última búsqueda', value: lastRunText(stats.lastRun) },
+    { label: 'Total para ti', value: stats.total, hint: 'Sin las junior', positive: false },
   ];
 
   return (
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(4, 1fr)' }, gap: 2, mb: 3 }}>
-      {tiles.map((tile) => (
-        <BlankCard key={tile.label}>
+      {counters.map((counter) => (
+        <BlankCard key={counter.label}>
           <Box p={2.5}>
-            <Typography variant="subtitle2" color="textSecondary">
-              {tile.label}
+            <Typography variant="overline" component="div" color="textSecondary">
+              {counter.label}
             </Typography>
-            <Typography variant="h5" mt={0.5}>
-              {tile.value}
+            <Typography
+              variant="metric"
+              component="div"
+              mt={1.5}
+              color={counter.positive && counter.value > 0 ? 'success.main' : 'textPrimary'}
+            >
+              {counter.value}
+            </Typography>
+            <Typography variant="caption" component="div" color="textSecondary" mt={1}>
+              {counter.hint}
             </Typography>
           </Box>
         </BlankCard>
       ))}
+      <BlankCard>
+        <Box p={2.5}>
+          <Typography variant="overline" component="div" color="textSecondary">
+            Última búsqueda
+          </Typography>
+          {stats.lastRun ? (
+            <>
+              <Typography variant="mono" component="div" mt={1.5}>
+                {formatDateTime(stats.lastRun.startedAt)}
+              </Typography>
+              <Typography variant="caption" component="div" color="textSecondary" mt={1}>
+                {readText(stats.lastRun.fetched)}
+              </Typography>
+            </>
+          ) : (
+            <Typography variant="body1" component="div" color="textSecondary" mt={1.5}>
+              Sin búsquedas todavía
+            </Typography>
+          )}
+        </Box>
+      </BlankCard>
     </Box>
   );
 };

@@ -27,6 +27,7 @@ const JobFilters = ({ values, onChange }: JobFiltersProps) => (
     <FormControlLabel
       control={
         <Checkbox
+          size="small"
           checked={values.hasApply}
           onChange={(event) => onChange({ ...values, hasApply: event.target.checked })}
         />

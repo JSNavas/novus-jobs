@@ -199,7 +199,8 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
           <AppAlert severity="warning">VÍA AGREGADOR — no la publica quien contrata</AppAlert>
         ) : null}
 
-        <Box
+        <Typography
+          variant="mono"
           component="pre"
           ref={textRef}
           sx={{
@@ -207,15 +208,13 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
             p: 2,
             borderRadius: 1,
             bgcolor: 'grey.100',
-            fontFamily: 'monospace',
-            fontSize: 13,
             whiteSpace: 'pre-wrap',
             maxHeight: expanded ? 'none' : COLLAPSED_HEIGHT,
             overflow: 'hidden',
           }}
         >
           {job.text}
-        </Box>
+        </Typography>
         {overflows ? (
           <Button variant="text" onClick={() => setExpanded((value) => !value)} sx={{ alignSelf: 'flex-start' }}>
             {expanded ? 'Ver menos' : 'Ver más'}
