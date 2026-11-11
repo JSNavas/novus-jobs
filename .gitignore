@@ -1,5 +1,20 @@
 node_modules/
 dist/
+
+# Los datos del usuario: su base, su CV, sus logs y sus sesiones. Nada de esto
+# se puede regenerar y nada de esto es de nadie más.
 data/
+cv/
 .env
+
+# El ejemplo SÍ se publica: es la documentación de la configuración, y algunos
+# gitignore globales esconden todo lo que empiece por `.env`.
+!.env.example
+!server/.env.example
+
+# Salidas de herramientas locales, que llevan rutas de la máquina de cada uno.
 .paperclip/
+graphify-out/
+*.log
+
+.DS_Store
