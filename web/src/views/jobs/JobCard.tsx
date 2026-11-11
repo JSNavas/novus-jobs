@@ -3,9 +3,9 @@ import { Box, Button, Stack, Typography } from '@mui/material';
 import { AppAlert, AppChip, BlankCard } from '../../components/ui';
 import { formatDateTime } from '../../format';
 import { jobLocationLabel, jobSourceLabel, jobStatusLabel } from '../../labels';
-import { JobLocation, JobStatus, JobVerdict, type Job } from '../../types';
+import { JobLocation, JobSeniority, JobStatus, JobVerdict, type Job } from '../../types';
 import type { Settings } from '../../api/client';
-import { gmailComposeUrl, shouldOfferApplication } from './apply';
+import { gmailComposeUrl, motivationLetter, shouldOfferApplication } from './apply';
 import RejectionBadge from './RejectionBadge';
 
 interface JobCardProps {
@@ -71,6 +71,7 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
   // y abrir el cliente queda como opción secundaria.
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
+  const [lettered, setLettered] = useState(false);
 
   /**
    * Lo que se le pasa a otra persona: el enlace si lo hay, y si no el texto de
@@ -85,6 +86,21 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
       setTimeout(() => setShared(false), COPIED_FEEDBACK_MS);
     } catch {
       setShared(false);
+    }
+  };
+
+  /**
+   * El «¿por qué te interesa trabajar aquí?» de la postulación, ya adaptado a
+   * esta oferta. Se copia en vez de abrirse en un cuadro: el destino es un
+   * formulario en otra pestaña, y lo único que hace falta ahí es pegar.
+   */
+  const copyLetter = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(motivationLetter(job));
+      setLettered(true);
+      setTimeout(() => setLettered(false), COPIED_FEEDBACK_MS);
+    } catch {
+      setLettered(false);
     }
   };
 
@@ -156,8 +172,9 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
             compartir vivían en bloques distintos con estilos distintos, y
             "Copiar para compartir" acababa solo en una línea propia, colgando
             del resto. Las acciones de la oferta van juntas y jerarquizadas: la
-            principal rellena, las de apoyo con borde. Lo de abajo es otra cosa
-            —mover la oferta por la bandeja— y por eso sigue aparte. */}
+            principal rellena, las de apoyo con borde, y las de bandeja al
+            final. Debajo del anuncio solo queda "Ver más", que es lo único
+            que habla del texto y no de la oferta. */}
         <Stack spacing={1}>
           {contactLine ? <Typography variant="body2">{contactLine}</Typography> : null}
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
@@ -188,6 +205,13 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
             ) : null}
             {/* Para pasarle la oferta a alguien: muchas publicaciones lo piden
                 expresamente ("si conocés a alguien, pasale esta publicación"). */}
+            {/* Solo donde se va a usar: él no se postula a las junior, así que
+                ofrecerle la carta ahí es ofrecerle algo que no va a pegar. */}
+            {job.seniority !== JobSeniority.Junior ? (
+              <Button variant="outlined" onClick={() => void copyLetter()}>
+                {lettered ? '✓ Copiada' : 'Copiar motivación'}
+              </Button>
+            ) : null}
             <Button variant="outlined" onClick={() => void share()}>
               {shared ? '✓ Copiado' : 'Copiar para compartir'}
             </Button>
@@ -196,6 +220,22 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
                 {copied ? '✓ Copiado' : 'Copiar correo'}
               </Button>
             ) : null}
+            {/* Mover la oferta por la bandeja va en la MISMA fila. Estaba
+                aparte, abajo del todo, separando "qué hago con la oferta" de
+                "dónde la guardo": dos sitios distintos obligaban a recorrer la
+                tarjeta entera para una acción de un clic. Van al final de la
+                fila y con el peso visual más bajo, que es lo que mantiene la
+                jerarquía sin partirla en dos bloques. */}
+            {actions.map((action) => (
+              <Button
+                key={action.status}
+                variant={action.variant}
+                disabled={busy}
+                onClick={() => onStatusChange(action.status)}
+              >
+                {action.label}
+              </Button>
+            ))}
           </Stack>
         </Stack>
 
@@ -225,18 +265,6 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
           </Button>
         ) : null}
 
-        <Stack direction="row" spacing={1} flexWrap="wrap">
-          {actions.map((action) => (
-            <Button
-              key={action.status}
-              variant={action.variant}
-              disabled={busy}
-              onClick={() => onStatusChange(action.status)}
-            >
-              {action.label}
-            </Button>
-          ))}
-        </Stack>
       </Stack>
     </BlankCard>
   );

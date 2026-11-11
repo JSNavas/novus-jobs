@@ -511,3 +511,48 @@ venezolano—, pero eso cambia el texto y con él la huella sha1 que deduplica:
 las 187 vacantes volverían a entrar como nuevas una vez, duplicando las 27 que
 ya están guardadas y repitiendo el correo. No compensa por un prefijo. `role`
 ya sale limpio («Developer Full-Stack»).
+
+---
+
+## Rev. 11 — La motivación de cada postulación, y una sola fila de botones · 2026-11-11
+
+### El «¿por qué te interesa trabajar aquí?»
+
+Get on Board lo pide en cada postulación, entre 50 y 1000 caracteres. Escribirlo
+a mano cada vez es lo que hace que se acabe pegando siempre el mismo párrafo
+genérico. `motivationLetter(job)` (`web/src/views/jobs/apply.ts`) lo arma con
+los datos de ESA oferta, y un botón «Copiar motivación» lo deja en el
+portapapeles.
+
+La plantilla es la suya, con dos cambios de fondo que conviene no deshacer:
+
+1. **Empieza por lo que aporta, no por lo que busca.** «Busco una empresa donde
+   explotar mi potencial» habla de él; quien lee quiere saber qué recibe. Dice
+   lo mismo, en el orden que le sirve.
+2. **Nombra la coincidencia real de tecnologías** (hasta cuatro, de
+   `stackMatch`). Es la única frase que no se puede escribir de antemano, y por
+   eso es la que demuestra que leyó el anuncio.
+
+El nombre del empleador sale de `company`, y si falta de `author` **solo cuando
+la fuente es Get on Board**, porque allí la API entrega la empresa. En LinkedIn
+`author` es la persona que publicó: «me interesa trabajar en María Pérez» sería
+peor que no nombrar a nadie, así que sin nombre la carta abre con «Me interesa
+esta oportunidad». Medido sobre ofertas reales: 586–597 caracteres.
+
+No se ofrece en las junior: él no se postula a esas.
+
+### Todos los botones en una fila
+
+Las acciones de bandeja (vista / guardar / descartar) vivían en un bloque
+aparte al final de la tarjeta, separadas de las de la oferta. La Rev. 5 lo
+justificaba como jerarquía —«mover la oferta por la bandeja es otra cosa»— pero
+en uso obligaba a recorrer la tarjeta entera para una acción de un clic. Ahora
+van al final de la misma fila, con el peso visual más bajo. Debajo del anuncio
+solo queda «Ver más», que es lo único que habla del texto y no de la oferta.
+
+### GAP
+
+`web/` no tiene runner de tests, así que `motivationLetter` se verificó
+ejecutando su lógica contra las ofertas reales de la API, no con un test
+automático. Si el front llega a tener tests, esta función es la primera
+candidata: es pura y tiene cuatro ramas (con/sin rol, con/sin empresa).
