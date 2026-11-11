@@ -7,7 +7,7 @@ import { openDatabase, type Db } from './database.js';
 import { MOTIVATION_TEMPLATE_KEY, SettingsRepository } from './settings.repository.js';
 
 /**
- * Los ajustes que cambia el señor desde el dashboard. Lo que de verdad hay que
+ * Los ajustes que cambia el usuario desde el dashboard. Lo que de verdad hay que
  * fijar aquí es que guardar dos veces la misma clave ACTUALICE: con un INSERT a
  * secas, la segunda vez reventaría por clave duplicada — y eso solo se
  * descubriría al corregir una frase por segunda vez, que es lo normal.

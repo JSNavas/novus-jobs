@@ -58,7 +58,8 @@ Open <http://127.0.0.1:47831>. The first run sends you to the setup wizard.
 
 Two separate things, split by whether a restart should be needed to change them.
 
-**In the app** — your profile (stack, English, location, arrangements), the
+**In the app** — your profile (stack, English, location, time zone,
+arrangements), the
 motivation paragraph, how old a posting can be, which platforms are on and how
 often each runs. All stored in the database, all applied on the next search,
 none of it needing a restart. Correcting a typo in a sentence should never
@@ -227,6 +228,13 @@ A platform that needs a browser could not find one. Run that command.
 The platform logged you out. Run `npm run login -- <platform>` again. The app
 refuses to retry that platform until you do — hammering a login page is exactly
 what gets an account flagged.
+
+**The times are wrong**
+Your time zone is part of your profile, picked during setup and editable in
+Settings → Edit my profile. Search slots are hours on that clock, the daily
+read budget resets at that midnight, and the dashboard formats every date with
+it. It defaults to the machine's own zone, which is only wrong if the server
+runs somewhere you do not.
 
 **Nothing is being searched**
 Three things to check, in order: the setup wizard is finished (unfinished, the

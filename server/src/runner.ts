@@ -5,7 +5,7 @@ import type { LlmJudge } from './filters/judge.js';
 import { failureMail, offersMail } from './notify/digest.js';
 import type { Mailer } from './notify/mailer.js';
 import { runPasses, type SourceFailure } from './pipeline.js';
-import { vetDayStart } from './scheduler/timing.js';
+import { localDayStart } from './scheduler/timing.js';
 import type { JobSource } from './sources/types.js';
 import { RunFailure, RunStatus, RunTrigger, type RunInfo } from './types.js';
 
@@ -50,6 +50,12 @@ interface RunnerDeps {
   /** Si esta plataforma está encendida en Integraciones. Se pregunta en cada pasada. */
   enabled: (source: string) => boolean;
   /**
+   * La zona horaria del usuario, de su perfil. El presupuesto diario de
+   * lecturas se corta a SU medianoche: con la de UTC, a quien vive al oeste se
+   * le reiniciaría el contador a media tarde.
+   */
+  timeZone: () => string;
+  /**
    * Si el alta está completa. Sin perfil no hay nada que coincidir y la pasada
    * descartaría cuanto llegue: se niega antes de gastar una lectura de su
    * cuenta en un resultado que ya se sabe.
@@ -87,7 +93,7 @@ export class Runner implements PassRunner {
       console.log('[runner] alta sin terminar: la búsqueda automática espera a que haya perfil');
       return;
     }
-    const dayStart = vetDayStart(this.clock()).toISOString();
+    const dayStart = localDayStart(this.clock(), this.deps.timeZone()).toISOString();
     const due = this.sourcesNamed(names).filter((source) => {
       const ceiling = source.policy.maxPassesPerDay;
       if (ceiling === null) return true;
@@ -111,7 +117,7 @@ export class Runner implements PassRunner {
    * Pregunta plataforma por plataforma, y lanza las que puedan. Antes era todo
    * o nada: el presupuesto de LinkedIn, ya gastado, bloqueaba también a Get on
    * Board, que no tiene nada que gastar. Si NINGUNA puede, se niega con el
-   * motivo de la primera — el del señor, no el del código.
+   * motivo de la primera — el del usuario, no el del código.
    */
   startManual(): RunInfo {
     if (this.busy) throw new RunRefusedError('ya hay una búsqueda en curso');
@@ -149,7 +155,7 @@ export class Runner implements PassRunner {
     }
 
     const now = this.clock().getTime();
-    const dayStart = vetDayStart(this.clock()).toISOString();
+    const dayStart = localDayStart(this.clock(), this.deps.timeZone()).toISOString();
 
     // Presupuesto del día. Se cuenta solo lo que llegó a tocar la plataforma.
     if (policy.manualDailyBudget !== null) {

@@ -258,7 +258,7 @@ export interface CandidateProfile {
   core: string[];
   cannotDo: string[];
   english: { level: EnglishLevel; filter: boolean };
-  geo: { country: string; city: string | null; excludeLocalEmployers: boolean };
+  geo: { country: string; city: string | null; timezone: string; excludeLocalEmployers: boolean };
   modality: { remoteGlobal: boolean; remoteHomeCountry: boolean; hybrid: boolean; onsite: boolean };
 }
 
@@ -320,7 +320,7 @@ export function saveOnboardingStep(changes: {
   cannotDo?: string[];
   vetoEcosystems?: string[];
   english?: { level: EnglishLevel; filter: boolean };
-  geo?: { country: string; city: string | null; excludeLocalEmployers: boolean };
+  geo?: CandidateProfile['geo'];
   modality?: CandidateProfile['modality'];
 }): Promise<{ profile: CandidateProfile; completed: boolean }> {
   return request('/onboarding/profile', {

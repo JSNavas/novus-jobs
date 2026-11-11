@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { companyName, jobTitle, offerTitle, stripAuthorHeaders } from './headline.js';
 
-/** Literal del feed del señor, 2026-11-10. La cabecera tiene tres líneas. */
+/** Literal del feed del usuario, 2026-11-10. La cabecera tiene tres líneas. */
 const CON_CABECERA = [
   'Gloria Luz Gaviria Ramírez',
   '• 2o',

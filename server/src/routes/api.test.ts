@@ -77,19 +77,19 @@ describe('API HTTP', () => {
     const settings = new SettingsRepository(db);
     const schedules = new SourceSchedules(settings, [9, 13, 18]);
     const toggles = new SourceToggles(settings, [FAKE_SOURCE.name]);
-    const runner = new Runner({ sources: [FAKE_SOURCE], maxAgeDays: () => 90, jobs, runs, judge: null, profile: () => PROFILE, onboarded: () => true, enabled: () => true, mailer: new Mailer(null), dashboardUrl: 'http://localhost/' });
+    const runner = new Runner({ sources: [FAKE_SOURCE], maxAgeDays: () => 90, jobs, runs, judge: null, profile: () => PROFILE, onboarded: () => true, enabled: () => true, timeZone: () => 'America/Caracas', mailer: new Mailer(null), dashboardUrl: 'http://localhost/' });
     const scheduler = new Scheduler({
       hours: [9, 13, 18],
       sources: [],
       store: new LastPassStore(join(dir, 'last-pass.json')),
       runner,
-      enabled: () => true,
+      enabled: () => true, timeZone: () => 'America/Caracas',
       schedules,
     });
     const pool = new BrowserPool(join(dir, 'profiles'), true);
     app = await buildApp({
       jobs, runs, runner, scheduler, pool, sources: [], scheduleHours: [9, 13, 18], schedules,
-      gmailAccount: null, settings, profile: () => PROFILE, toggles, webDist: null,
+      gmailAccount: null, settings, profile: () => PROFILE, toggles, webDist: null, timeZone: () => 'America/Caracas',
       dataDir: dir, enhancer: null, profiles: new ProfileRepository(settings),
     });
   });
@@ -253,7 +253,9 @@ describe('API HTTP', () => {
     const res = await app.inject({ method: 'GET', url: '/api/schedule' });
     assert.equal(res.statusCode, 200);
     // Sin fuentes montadas no hay próxima lectura que anunciar.
-    assert.deepEqual(res.json(), { hours: [9, 13, 18], timezone: 'hora de Venezuela', nextAt: null });
+    // La zona ya no es un texto fijo: es la del perfil, en nombre IANA, para
+    // que la interfaz pueda formatear con ella y no solo enseñarla.
+    assert.deepEqual(res.json(), { hours: [9, 13, 18], timezone: 'America/Caracas', nextAt: null });
   });
 
   it('GET /api/runs valida el límite', async () => {

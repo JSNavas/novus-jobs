@@ -76,6 +76,7 @@ describe('Runner — suelo de las búsquedas manuales', () => {
       profile: () => PROFILE,
       onboarded: () => gates.onboarded ?? true,
       enabled: gates.enabled ?? (() => true),
+      timeZone: () => 'America/Caracas',
       mailer: new Mailer(null),
       dashboardUrl: 'http://localhost/',
       clock: () => now,
@@ -166,7 +167,7 @@ describe('Runner — suelo de las búsquedas manuales', () => {
    * una forma distinta de parecer un robot. */
 
   it('la pasada automática NO bloquea el botón: el suelo manual es lo único que cuenta', () => {
-    // Hubo un tope de 20 min tras cualquier lectura. Lo quitó el señor el
+    // Hubo un tope de 20 min tras cualquier lectura. Lo quitó el usuario el
     // 2026-11-11: con una hora entre manuales ya no se encadenan dos cargas
     // por insistir, y lo que hacía en la práctica era negarle el botón.
     pastRun(null, RunTrigger.Scheduled);
@@ -248,7 +249,7 @@ describe('Runner — suelo de las búsquedas manuales', () => {
 
   it('el techo del día se cuenta por día de Venezuela, no por día UTC', () => {
     // A las 20:00 UTC son las 16:00 en Venezuela: sigue siendo el mismo día y
-    // el contador NO se ha reiniciado. Con el corte en UTC, la tarde del señor
+    // el contador NO se ha reiniciado. Con el corte en UTC, la tarde del usuario
     // tendría techo doble.
     now = new Date('2026-11-10T20:00:00.000Z');
     for (let i = 0; i < 20; i++) pastRun(null, RunTrigger.Scheduled);
@@ -289,6 +290,7 @@ describe('Runner — cuándo se niega a buscar', () => {
       profile: () => PROFILE,
       onboarded: () => gates.onboarded ?? true,
       enabled: gates.enabled ?? (() => true),
+      timeZone: () => 'America/Caracas',
       mailer: new Mailer(null),
       dashboardUrl: 'http://localhost/',
     });

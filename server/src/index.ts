@@ -17,6 +17,7 @@ import { ProfileRepository } from './profile/profile.repository.js';
 import { Mailer } from './notify/mailer.js';
 import { Runner } from './runner.js';
 import { LastPassStore, Scheduler } from './scheduler/scheduler.js';
+import { systemTimeZone } from './scheduler/timing.js';
 import { LINKEDIN_PROFILE_ID } from './sources/linkedin.source.js';
 import { SourceSchedules } from './sources/schedules.js';
 import { buildSources } from './sources/registry.js';
@@ -35,7 +36,7 @@ async function main(): Promise<void> {
   // fuentes: es lo que garantiza que el ritmo que ve cada plataforma no dependa
   // de cuántas haya activas.
   const pool = new BrowserPool(config.browserProfilesRoot, config.browserHeadless);
-  // La sesión que el señor ya tenía, cuando el perfil vivía dentro del repo.
+  // La sesión que el usuario ya tenía, cuando el perfil vivía dentro del repo.
   migrateProfile(legacyLinkedinProfileDir(config), pool.session(LINKEDIN_PROFILE_ID).dir);
 
   // Todas las conocidas: cuáles corren lo dice el interruptor de cada una, que
@@ -64,12 +65,15 @@ async function main(): Promise<void> {
   // entra en la siguiente pasada sin reiniciar el servicio.
   const profile = (): CandidateProfile => profiles.get();
   const onboarded = (): boolean => profiles.isOnboarded();
+  // La zona del perfil manda; vacía, la de la máquina. Las franjas son horas de
+  // SU reloj, y el presupuesto del día se corta a SU medianoche.
+  const timeZone = (): string => profile().geo.timezone || systemTimeZone();
   console.log(onboarded()
-    ? `[arranque] perfil cargado: ${profile().core.length} tecnologías de núcleo, inglés ${profile().english.level.toUpperCase()}`
+    ? `[arranque] perfil cargado: ${profile().core.length} tecnologías de núcleo, inglés ${profile().english.level.toUpperCase()}, zona ${timeZone()}`
     : '[arranque] sin alta: abre el dashboard y completa tu perfil para que empiecen las búsquedas');
   const runner = new Runner({
     sources,
-    maxAgeDays: () => readMaxAgeMonths(settings) * 30, jobs, runs, judge, profile, onboarded, enabled,
+    maxAgeDays: () => readMaxAgeMonths(settings) * 30, jobs, runs, judge, profile, onboarded, enabled, timeZone,
     mailer, dashboardUrl: config.dashboardUrl,
   });
   const schedules = new SourceSchedules(settings, config.scheduleHours);
@@ -80,6 +84,7 @@ async function main(): Promise<void> {
     store: new LastPassStore(join(config.dataDir, 'last-pass.json')),
     runner,
     enabled,
+    timeZone,
   });
 
   const app = await buildApp({
@@ -96,6 +101,7 @@ async function main(): Promise<void> {
     gmailAccount: config.gmailAccount,
     toggles,
     dataDir: config.dataDir,
+    timeZone,
     enhancer,
     profiles,
     webDist: existsSync(config.webDist) ? config.webDist : null,

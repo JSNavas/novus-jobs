@@ -31,7 +31,7 @@ describe('decideShipping', () => {
   });
 
   /**
-   * LA OFERTA QUE SE COLÓ. Texto real del feed del 2026-11-10, el que el señor
+   * LA OFERTA QUE SE COLÓ. Texto real del feed del 2026-11-10, el que el usuario
    * señaló: encaja de sobra por Node/React/TypeScript y aun así no le sirve,
    * porque pide tres años de C++ que no tiene. Y, de propina, un inglés B2
    * marcado como excluyente.
@@ -65,7 +65,7 @@ describe('decideShipping', () => {
     assert.equal(verdict.reason, 'exigen inglés B2 y tiene B1');
   });
 
-  it('Symfony NO se veta: el CV dice que lo trabajó en ePayco', () => {
+  it('Symfony NO se veta: está en el stack del perfil de ejemplo', () => {
     const verdict = decideShipping({
       text: 'Buscamos desarrollador backend PHP con Symfony y Laravel. 100% remoto desde Venezuela. Enviar CV a rrhh@example.com',
       url: null,

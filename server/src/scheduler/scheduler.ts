@@ -3,7 +3,7 @@ import { dirname } from 'node:path';
 import type { PassRunner } from '../runner.js';
 import type { JobSource } from '../sources/types.js';
 import type { SourceSchedules } from '../sources/schedules.js';
-import { currentSlot, shouldRunPass, toVet, type LastPass } from './timing.js';
+import { currentSlot, shouldRunPass, toLocalTime, type LastPass } from './timing.js';
 
 /**
  * Cada cuánto se MIRA si toca. No es cada cuánto se lee.
@@ -80,13 +80,15 @@ interface SchedulerOptions {
   schedules: SourceSchedules;
   /** Si una plataforma está encendida. Se pregunta en cada tick, no al arrancar. */
   enabled: (source: string) => boolean;
+  /** La zona del usuario: las franjas son horas de SU reloj, no de UTC. */
+  timeZone: () => string;
   store: LastPassStore;
   runner: PassRunner;
   clock?: () => Date;
 }
 
 /**
- * Cuánto se pausan las pasadas mientras el señor inicia sesión a mano.
+ * Cuánto se pausan las pasadas mientras el usuario inicia sesión a mano.
  *
  * Es un techo, no una espera: el login avisa al terminar y la pausa se levanta
  * sola. El techo está para que un login que se abandone a medias —o un script
@@ -95,7 +97,7 @@ interface SchedulerOptions {
 const LOGIN_PAUSE_MS = 15 * 60_000;
 
 /**
- * Ritmo de ARTIO: tick cada 10 minutos que solo comprueba si toca, sin leer
+ * Tick cada 10 minutos que solo comprueba si toca, sin leer
  * nada. Un tick ocupado no marca la franja, así que se reintenta en el siguiente.
  */
 export class Scheduler {
@@ -134,9 +136,9 @@ export class Scheduler {
   /**
    * Pausa las pasadas mientras hay una ventana de login abierta.
    *
-   * Sin esto, el login y la pasada se pelean por el perfil: el señor abre la
+   * Sin esto, el login y la pasada se pelean por el perfil: el usuario abre la
    * ventana, llega la franja de las 13:00, la pasada intenta arrancar su
-   * Chromium sobre el mismo perfil y falla — o peor, el señor cierra el login y
+   * Chromium sobre el mismo perfil y falla — o peor, el usuario cierra el login y
    * la pasada se queda con una sesión a medio guardar.
    *
    * La franja NO se marca: si tocaba mirar y no se pudo, se recupera en el tick
@@ -171,7 +173,7 @@ export class Scheduler {
     if (this.isPaused()) return;
     if (this.options.runner.isBusy()) return;
 
-    const vet = toVet(this.clock());
+    const local = toLocalTime(this.clock(), this.options.timeZone());
     const now = this.clock().getTime();
     const due: string[] = [];
 
@@ -185,7 +187,7 @@ export class Scheduler {
         if (last === null || now - last >= schedule.minutes * 60_000) due.push(source.name);
         continue;
       }
-      const slot = shouldRunPass(vet, this.hoursOf(source), this.options.store.read(source.name));
+      const slot = shouldRunPass(local, this.hoursOf(source), this.options.store.read(source.name));
       if (!slot) continue;
       this.options.store.write(source.name, { date: slot.date, hour: slot.hour });
       if (slot.recovered) console.log(`[scheduler] ${source.name}: recuperando la franja de las ${slot.hour}:00 (VET)`);
@@ -206,7 +208,7 @@ export class Scheduler {
     for (const source of this.options.sources) {
       if (!this.options.enabled(source.name)) continue;
       if (this.options.schedules.of(source).kind !== 'configured-hours') continue;
-      const slot = currentSlot(toVet(this.clock()), this.hoursOf(source));
+      const slot = currentSlot(toLocalTime(this.clock(), this.options.timeZone()), this.hoursOf(source));
       if (slot) this.options.store.write(source.name, slot);
     }
   }

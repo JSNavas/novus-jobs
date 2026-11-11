@@ -45,6 +45,8 @@ export interface AppDeps {
   settings: SettingsRepository;
   /** Se lee en cada petición: el perfil cambia desde Configuración sin reiniciar. */
   profile: () => CandidateProfile;
+  /** La zona horaria efectiva: la que el usuario eligió, o la de la máquina. */
+  timeZone: () => string;
   /** Carpeta con la UI compilada. Si no existe, el servidor solo sirve la API. */
   webDist: string | null;
 }
@@ -70,10 +72,13 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   ).newCount ?? 0;
 
   registerJobRoutes(app, { jobs: deps.jobs, runs: deps.runs, focusNew });
-  registerRunRoutes(app, { runs: deps.runs, runner: deps.runner, scheduler: deps.scheduler, hours: deps.scheduleHours, sources: deps.sources, schedules: deps.schedules });
+  registerRunRoutes(app, {
+    runs: deps.runs, runner: deps.runner, scheduler: deps.scheduler,
+    hours: deps.scheduleHours, sources: deps.sources, schedules: deps.schedules, timeZone: deps.timeZone,
+  });
   registerIntegrationRoutes(app, {
     sources: deps.sources, schedules: deps.schedules, runner: deps.runner,
-    hours: deps.scheduleHours, toggles: deps.toggles,
+    hours: deps.scheduleHours, toggles: deps.toggles, timeZone: deps.timeZone,
   });
   registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler });
   registerSettingsRoute(app, { gmailAccount: deps.gmailAccount, settings: deps.settings });

@@ -148,16 +148,23 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
     }
 
     if (body.geo !== undefined) {
-      const geo = body.geo as { country?: unknown; city?: unknown; excludeLocalEmployers?: unknown };
+      const geo = body.geo as {
+        country?: unknown; city?: unknown; timezone?: unknown; excludeLocalEmployers?: unknown;
+      };
       const code = typeof geo?.country === 'string' ? geo.country.trim().toUpperCase() : '';
       if (code && !COUNTRIES.some((c) => c.code === code)) {
         return reply.code(400).send({
           error: `no conozco el país "${code}". Deja el campo vacío si el tuyo no está: sin país no se aplica ninguna regla de país, que es mejor que aplicar la equivocada`,
         });
       }
+      const zone = typeof geo?.timezone === 'string' ? geo.timezone.trim() : '';
+      if (zone && !isKnownTimeZone(zone)) {
+        return reply.code(400).send({ error: `no conozco la zona horaria "${zone}"` });
+      }
       changes.geo = {
         country: code,
         city: typeof geo?.city === 'string' && geo.city.trim() ? geo.city.trim() : null,
+        timezone: zone,
         excludeLocalEmployers: geo?.excludeLocalEmployers === true,
       };
     }
@@ -208,6 +215,16 @@ function saveCv(dataDir: string, filename: string, bytes: Buffer): void {
   const extension = filename.toLowerCase().match(/\.[a-z]+$/)?.[0] ?? '.pdf';
   // Permisos 600: vale lo mismo que la cookie de sesión, y por el mismo motivo.
   writeFileSync(join(dir, `cv${extension}`), bytes, { mode: 0o600 });
+}
+
+/** Lo valida el propio runtime: la lista de zonas la trae `Intl`, no nosotros. */
+function isKnownTimeZone(name: string): boolean {
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: name });
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function describeError(error: unknown): string {

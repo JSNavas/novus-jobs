@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import type { Runner } from '../runner.js';
-import { nextRunAt, SCHEDULE_TIMEZONE } from '../scheduler/timing.js';
+import { nextRunAt } from '../scheduler/timing.js';
 import {
   MAX_INTERVAL_MINUTES, MIN_INTERVAL_MINUTES, type SourceSchedules,
 } from '../sources/schedules.js';
@@ -12,6 +12,8 @@ interface IntegrationRoutesDeps {
   schedules: SourceSchedules;
   runner: Runner;
   hours: readonly number[];
+  /** La zona del usuario, para decir a qué hora de SU reloj toca la siguiente. */
+  timeZone: () => string;
   toggles: SourceToggles;
 }
 
@@ -31,6 +33,7 @@ export function registerIntegrationRoutes(app: FastifyInstance, deps: Integratio
       deps.hours,
       [{ name: source.name, schedule }],
       (name) => deps.runner.lastPassAt(name),
+      deps.timeZone(),
     );
     const last = deps.runner.lastPassAt(source.name);
     return {
@@ -43,7 +46,7 @@ export function registerIntegrationRoutes(app: FastifyInstance, deps: Integratio
       schedule: schedule.kind === 'every-minutes'
         ? { kind: 'every-minutes' as const, minutes: schedule.minutes }
         : { kind: 'configured-hours' as const, hours: [...deps.schedules.hoursOf(source)] },
-      timezone: SCHEDULE_TIMEZONE,
+      timezone: deps.timeZone(),
       lastRunAt: last === null ? null : new Date(last).toISOString(),
       nextAt: next === null ? null : new Date(next).toISOString(),
     };

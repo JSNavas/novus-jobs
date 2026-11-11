@@ -8,7 +8,7 @@ import { BrowserPool } from './session.js';
 /**
  * EL CASO REAL, el del 2026-11-10: LinkedIn entregó `li_at` como cookie DE
  * SESIÓN —sin fecha de caducidad— y Chromium, correctamente, no la escribió en
- * el perfil. El señor iniciaba sesión, veía su feed, cerraba, y la siguiente
+ * el perfil. El usuario iniciaba sesión, veía su feed, cerraba, y la siguiente
  * pasada caía en `/uas/login`.
  *
  * Por eso la cookie de estos tests NO lleva `expires`: si el arreglo solo

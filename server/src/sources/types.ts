@@ -40,7 +40,7 @@ export type PermalinkSelector = (posts: readonly RawPost[]) => number[];
 
 /**
  * La plataforma nos pide entrar. No es un fallo técnico y NO se reintenta: nada
- * va a cambiar hasta que el señor inicie sesión a mano, y repetir la pasada
+ * va a cambiar hasta que el usuario inicie sesión a mano, y repetir la pasada
  * cada diez minutos contra una pantalla de login es justo lo que acaba con una
  * cuenta marcada.
  */

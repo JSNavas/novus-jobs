@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router';
 import { Box, CircularProgress } from '@mui/material';
 import { getOnboarding } from '../../api/client';
+import { setDisplayTimeZone } from '../../format';
 import FullLayout from '../../layouts/full/FullLayout';
 
 /**
@@ -22,7 +23,13 @@ const OnboardingGate = () => {
 
   useEffect(() => {
     getOnboarding()
-      .then((state) => setNeedsOnboarding(!state.completed))
+      .then((state) => {
+        // La misma respuesta que decide si hay que mandar al alta trae la zona
+        // del perfil: se aprovecha, y así no hay una petición extra solo para
+        // saber en qué hora pintar las fechas.
+        setDisplayTimeZone(state.profile.geo.timezone);
+        setNeedsOnboarding(!state.completed);
+      })
       .catch(() => setNeedsOnboarding(false));
   }, []);
 

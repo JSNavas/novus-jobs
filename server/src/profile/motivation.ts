@@ -2,7 +2,7 @@
  * ═══ EL «¿POR QUÉ TE INTERESA TRABAJAR AQUÍ?» ═══
  *
  * Get on Board lo pide en cada postulación (entre 50 y 1000 caracteres). Este
- * es el texto por defecto; el señor lo cambia desde Configuración y lo suyo
+ * es el texto por defecto; el usuario lo cambia desde Configuración y lo suyo
  * manda — esto solo es lo que hay el primer día, o si lo deja en blanco.
  *
  * Son SUS palabras. Si algún día hay que tocarlo, se le pregunta: un párrafo

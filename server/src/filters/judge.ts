@@ -140,8 +140,8 @@ function instruction(profile: CandidateProfile): string {
 /**
  * ═══ GEMINI, Y NO OTRO ═══
  *
- * Porque es el que ya usa ARTIO para juzgar estas mismas ofertas
- * (`job-judge.service.ts`, `gemini-3.1-flash-lite`), con la clave que el señor
+ * Porque es el que se midió juzgando estas mismas ofertas
+ * (`job-judge.service.ts`, `gemini-3.1-flash-lite`), con la clave que el usuario
  * ya tiene y ya paga. Este proyecto arrancó pidiendo una clave de Anthropic
  * que no tenía, así que el juez nació apagado y las reglas quedaron solas —que
  * es justo lo que el juez existe para evitar.

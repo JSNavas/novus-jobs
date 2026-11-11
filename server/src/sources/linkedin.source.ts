@@ -18,8 +18,9 @@ interface PostSnapshot {
   activityUrn: string | null;
 }
 
-/* Valores copiados del ritmo de ARTIO (job-watch.service.ts / web-reader.service.ts):
- * LinkedIn tiene que ver exactamente el mismo patrón de navegación que ve hoy con ARTIO. */
+/* Valores medidos en un bot anterior del autor que lleva meses leyendo este
+ * mismo feed sin que la cuenta se resienta: LinkedIn tiene que ver exactamente
+ * ese patrón de navegación y no otro. */
 const SETTLE_MS = 4_000;
 const SCROLLS = 8;
 const SCROLL_PAUSE_MS = 2_500;
@@ -32,7 +33,7 @@ const LOGIN_URL = 'https://www.linkedin.com/login';
 
 /**
  * Lee el feed de LinkedIn con la sesión persistida. No hay API de empleo: es la
- * misma lectura que hace ARTIO, con el mismo ritmo y la misma huella.
+ * misma lectura de siempre, con el mismo ritmo y la misma huella.
  *
  * El navegador NO es suyo: lo pide al pool, que garantiza un solo Chromium por
  * perfil. Y lo que esta clase sí decide es cómo distinguir "la sesión se cayó"
@@ -134,13 +135,13 @@ export class LinkedInSource implements JobSource {
  *
  *  - El texto se NORMALIZA (ver `filters/normalize.ts`). Medio feed escribe con
  *    letras matemáticas Unicode para simular negrita, y sin esto los filtros no
- *    leen el texto que el señor ve, sino otro que solo se le parece.
+ *    leen el texto que el usuario ve, sino otro que solo se le parece.
  *  - Una tarjeta puede traer DOS publicaciones; se parten. Se devuelve además
  *    de qué elemento del DOM salió cada una, porque el enlace permanente se
  *    pide por ahí — y `-1` significa "esta vino mezclada, no pidas su enlace".
  *
  * Sin permalink, la publicación apunta a su primer enlace externo y, si no hay,
- * al perfil del autor (como ARTIO).
+ * al perfil propio.
  */
 function toRawPosts(snapshots: readonly PostSnapshot[]): { posts: RawPost[]; domIndex: number[] } {
   const posts: RawPost[] = [];
@@ -153,7 +154,7 @@ function toRawPosts(snapshots: readonly PostSnapshot[]): { posts: RawPost[]; dom
       posts.push({
         text: segment.text,
         author: snapshot.author,
-        // El orden es el que pidió el señor: la publicación primero, después el
+        // El orden es el que pidió el usuario: la publicación primero, después el
         // enlace de postulación, y en último caso el perfil de quien publica
         // para encontrarla a mano.
         url: permalink ?? snapshot.externalLinks[0] ?? snapshot.authorUrl,
@@ -212,7 +213,7 @@ async function collectPosts(page: Page): Promise<PostSnapshot[]> {
       // LinkedIn no publica un atributo "permalink", pero sí deja el URN de la
       // actividad suelto por el marcado. Si está, el enlace se construye con
       // él y NO hace falta abrir el menú "⋯" ni leer el portapapeles: dos clics
-      // menos por oferta sobre la cuenta del señor, que es lo irremplazable.
+      // menos por oferta sobre la cuenta del usuario, que es lo irremplazable.
       const urn = /urn:li:(?:activity|share|ugcPost):\d+/.exec(e.outerHTML)?.[0] ?? null;
       const text = (e.innerText || '').replace(POST_MARK, '').trim();
       const author = text.split('\n')

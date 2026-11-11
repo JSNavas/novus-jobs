@@ -1,14 +1,20 @@
 import type { CandidateProfile } from './types.js';
 
 /**
- * EL PERFIL DE EJEMPLO. No es el de nadie en producción: el de cada usuario
- * vive en la base de datos y lo rellena el alta (ver `profile.repository.ts`).
+ * EL PERFIL DE EJEMPLO: un desarrollador full-stack de JavaScript y PHP que
+ * busca desde Venezuela, con inglés B1.
+ *
+ * No es el de nadie en producción. El de cada usuario vive en su base de datos
+ * y lo rellena el alta (ver `profile.repository.ts`); aquí no hay nombre, ni
+ * correo, ni CV, ni nada que identifique a una persona: solo listas de
+ * tecnologías y un par de preferencias.
  *
  * Esto se queda por dos razones. La primera es que las pruebas necesitan UN
  * perfil realista contra el que medir las reglas, y uno inventado de tres
  * tecnologías no habría encontrado ninguno de los casos reales que hay escritos
- * en `filters/`. La segunda es que el formulario del alta propone este reparto
- * como ejemplo de qué va en cada lista.
+ * en `filters/` — varios de ellos dependen de que este perfil tenga inglés B1 y
+ * busque desde un país concreto. La segunda es que el reparto entre las tres
+ * listas se entiende mejor con un ejemplo lleno que con una descripción.
  *
  * Las tres listas de tecnología hacen cosas distintas:
  *
@@ -55,7 +61,7 @@ export const PROFILE: CandidateProfile = {
     'Python',
   ],
   /**
-   * Lo que NO sabe. El CV manda: no está Symfony (lo trabajó en ePayco), ni
+   * Lo que NO sabe. Manda lo que el CV demuestre: aquí no está Symfony, ni
    * Python (lo tiene), ni Redis ni SQL Server (los tiene).
    */
   cannotDo: [
@@ -84,6 +90,6 @@ export const PROFILE: CandidateProfile = {
     'Salesforce', 'SharePoint', 'Dynamics', 'SAP', 'ABAP', 'COBOL', 'Camunda',
   ],
   english: { level: 'b1', filter: true },
-  geo: { country: 'VE', city: null, excludeLocalEmployers: true },
+  geo: { country: 'VE', city: null, timezone: 'America/Caracas', excludeLocalEmployers: true },
   modality: { remoteGlobal: true, remoteHomeCountry: true, hybrid: false, onsite: false },
 };

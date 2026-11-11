@@ -15,7 +15,7 @@ describe('loginWallOf', () => {
   });
 
   it('el checkpoint gana al login aunque la URL lleve las dos palabras', () => {
-    // Es la distinción que decide qué tiene que hacer el señor: teclear un
+    // Es la distinción que decide qué tiene que hacer el usuario: teclear un
     // código no es lo mismo que volver a iniciar sesión.
     assert.equal(
       loginWallOf('https://www.linkedin.com/checkpoint/challenge/verify?loginSubmitSource=x'),

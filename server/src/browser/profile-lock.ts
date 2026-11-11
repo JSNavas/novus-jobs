@@ -19,7 +19,8 @@ import { join } from 'node:path';
  * del proceso (lanza ESRCH si no está, EPERM si está pero es de otro usuario —
  * y EPERM significa que existe, así que cuenta como ocupado).
  *
- * Esta función es la razón de que ARTIO lleve meses leyendo LinkedIn sin que
+ * Esta función es la razón de que el bot del que viene este patrón lleve meses
+ * leyendo LinkedIn sin que
  * nadie borre ficheros a mano.
  */
 export function profileLockHolder(profileDir: string): number | null {

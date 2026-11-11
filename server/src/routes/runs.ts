@@ -3,7 +3,7 @@ import type { RunsRepository } from '../db/runs.repository.js';
 import type { Runner } from '../runner.js';
 import { RunRefusedError } from '../runner.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
-import { nextRunAt, SCHEDULE_TIMEZONE } from '../scheduler/timing.js';
+import { nextRunAt } from '../scheduler/timing.js';
 import type { SourceSchedules } from '../sources/schedules.js';
 import type { JobSource } from '../sources/types.js';
 import { optionalInteger, stringParams, type Result } from './parse.js';
@@ -17,6 +17,8 @@ interface RunRoutesDeps {
   runner: Runner;
   scheduler: Scheduler;
   hours: readonly number[];
+  /** La zona del usuario, para decir a qué hora de SU reloj toca la siguiente. */
+  timeZone: () => string;
   sources: readonly JobSource[];
   schedules: SourceSchedules;
 }
@@ -44,10 +46,11 @@ export function registerRunRoutes(app: FastifyInstance, deps: RunRoutesDeps): vo
       deps.hours,
       deps.sources.map((source) => ({ name: source.name, schedule: deps.schedules.of(source) })),
       (source) => deps.runner.lastPassAt(source),
+      deps.timeZone(),
     );
     return {
       hours: deps.hours,
-      timezone: SCHEDULE_TIMEZONE,
+      timezone: deps.timeZone(),
       nextAt: next === null ? null : new Date(next).toISOString(),
     };
   });

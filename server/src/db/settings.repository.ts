@@ -1,7 +1,7 @@
 import type { Db } from './database.js';
 
 /**
- * Los ajustes que el señor cambia desde el dashboard.
+ * Los ajustes que el usuario cambia desde el dashboard.
  *
  * Clave y valor, no una columna por ajuste: el siguiente ajuste no debería
  * pedir una migración. Y en la BD y no en el `.env` porque el `.env` solo se

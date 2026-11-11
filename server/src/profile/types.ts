@@ -69,6 +69,19 @@ export interface GeoPreference {
   /** Su ciudad, si la dio: hace que un presencial o un híbrido local sí encajen. */
   city: string | null;
   /**
+   * Su zona horaria, en nombre IANA ("Europe/Madrid"). Vacío = la de la máquina.
+   *
+   * No es decoración: las franjas de búsqueda son horas de reloj —"a las 9, a
+   * la 1 y a las 6"— y una hora de reloj no significa nada sin decir de quién.
+   * Y el presupuesto diario de lecturas se corta a SU medianoche; con la de UTC,
+   * a quien vive en UTC-4 se le reiniciaría a las ocho de la tarde y la tarde
+   * tendría presupuesto doble.
+   *
+   * Se elige en el alta y no en el `.env` por lo mismo que todo lo demás del
+   * perfil: es del usuario, no de la instalación.
+   */
+  timezone: string;
+  /**
    * Si descartar a los empleadores de su propio país.
    *
    * Suena raro hasta que se mira el caso que lo motivó: quien busca sueldo en

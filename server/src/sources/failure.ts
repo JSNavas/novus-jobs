@@ -25,7 +25,7 @@ export function failureMessage(error: unknown): string {
 /**
  * Cuando varias plataformas fallan a la vez, ¿cuál se cuenta?
  *
- * La que el señor puede arreglar. Una sesión caducada es una acción concreta
+ * La que el usuario puede arreglar. Una sesión caducada es una acción concreta
  * suya; un timeout no es nada que él pueda hacer. Si el mensaje que llega al
  * dashboard fuera el del timeout, la sesión caída se quedaría escondida detrás.
  */

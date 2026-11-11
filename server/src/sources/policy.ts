@@ -36,7 +36,7 @@ export interface SourcePolicy {
 export type SourceSchedule =
   /**
    * En franjas de hora en punto. Sin `hours`, las de `SCHEDULE_HOURS`; con
-   * ellas, las que el señor eligió en Integraciones y están guardadas.
+   * ellas, las que el usuario eligió en Integraciones y están guardadas.
    */
   | { readonly kind: 'configured-hours'; readonly hours?: readonly number[] }
   /** Cada N minutos, sin franjas. */
@@ -49,14 +49,15 @@ export type SourceSchedule =
  * mide no es cuántas veces pulsas un botón, sino cuántas veces un navegador
  * automatizado carga tu feed, cada cuánto, y si ese patrón parece una persona.
  *
- * La referencia es ARTIO: tres pasadas al día, sin botón, y la cuenta lleva
+ * La referencia es un bot anterior del autor: tres pasadas al día, sin botón,
+ * y la cuenta lleva
  * meses sana. Aquí hay botón porque el dashboard lo pide, así que estos
  * límites existen para que tenerlo no cambie lo que LinkedIn ve.
  */
 export const WATCHED_ACCOUNT_POLICY: SourcePolicy = {
   schedule: { kind: 'configured-hours' },
   /*
-   * UN SOLO TOPE MANUAL: una hora entre búsquedas. Decisión del señor el
+   * UN SOLO TOPE MANUAL: una hora entre búsquedas. Decisión del usuario el
    * 2026-11-11, y es suya porque es su cuenta.
    *
    * Antes había tres topes manuales encima de este —presupuesto de 3 al día,

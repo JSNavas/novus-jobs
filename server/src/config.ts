@@ -21,20 +21,18 @@ export interface Config {
    * `rm -rf data`, un reinstall o mover la carpeta del proyecto se llevaban la
    * sesión por delante y había que volver a iniciarla. La sesión es lo único
    * aquí que no se puede regenerar — la base de datos sí — así que vive donde
-   * nada del ciclo de build la toque. Es lo que hace ARTIO con
-   * `~/.artio/browser-profile`.
+   * nada del ciclo de build la toque: un directorio propio bajo el `$HOME`.
    */
   browserProfilesRoot: string;
   browserHeadless: boolean;
   linkedinFeedUrl: string;
   /**
-   * El juez LLM: Gemini, la misma clave y el mismo modelo que ya usa ARTIO.
-   * Sin clave, mandan solo las reglas.
+   * El juez LLM: Gemini. Opcional — sin clave, mandan solo las reglas.
    */
   geminiApiKey: string | null;
   judgeModel: string;
   /**
-   * Resend, las mismas credenciales que ya usa ARTIO: no se añade ni una
+   * Resend. Las tres variables o ninguna: no se manda ni una
    * cuenta ni una factura. `null` si falta cualquiera de las tres piezas —sin
    * destinatario no hay correo, y a medias no sirve.
    */
@@ -78,7 +76,7 @@ const DEFAULT_FEED_URL = 'https://www.linkedin.com/feed/';
  * contra un criterio explícito, no razonar: el barato acierta igual y la capa
  * gratuita da de sobra para tres pasadas al día.
  *
- * Se fija el 3.5 y no el 3.1 que usa ARTIO porque el 3.1 llevaba horas
+ * Se fija el 3.5 y no el 3.1 porque el 3.1 llevaba horas
  * devolviendo 503 por saturación, y un juez que no contesta es un juez
  * apagado. Se cambia con JUDGE_MODEL sin tocar código.
  *

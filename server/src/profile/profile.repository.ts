@@ -65,6 +65,7 @@ function parseProfile(raw: string | null): CandidateProfile {
     geo: {
       country: text(record(stored.geo)?.country) ?? DEFAULT_PROFILE.geo.country,
       city: text(record(stored.geo)?.city),
+      timezone: timezone(record(stored.geo)?.timezone) ?? DEFAULT_PROFILE.geo.timezone,
       excludeLocalEmployers:
         bool(record(stored.geo)?.excludeLocalEmployers) ?? DEFAULT_PROFILE.geo.excludeLocalEmployers,
     },
@@ -106,6 +107,23 @@ function text(value: unknown): string | null {
 
 function bool(value: unknown): boolean | null {
   return typeof value === 'boolean' ? value : null;
+}
+
+/**
+ * Una zona que el runtime no conozca se tira: con un nombre inventado, `Intl`
+ * lanza y el planificador se caería en cada tick. Vacío significa "la de la
+ * máquina", que es un valor legítimo y el de por defecto.
+ */
+function timezone(value: unknown): string | null {
+  const name = text(value);
+  if (!name) return null;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: name });
+    return name;
+  } catch {
+    console.warn(`[perfil] zona horaria desconocida "${name}": se usa la de la máquina`);
+    return null;
+  }
 }
 
 function level(value: unknown): EnglishLevel | null {

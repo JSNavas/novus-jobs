@@ -30,7 +30,7 @@ Novus Jobs lee el feed en tu nombre, aplica tu criterio y te deja en el dashboar
 
 ### De dónde sale
 
-Es una réplica deliberada del patrón de A.R.T.I.O —un proyecto privado del autor—, que lleva meses leyendo ese mismo feed a diario sin que la cuenta se resienta: el ritmo de tres franjas, el scroll del contenedor interno, la lectura del DOM y el navegador único por perfil vienen de ahí. Lo que aquí se añadió —y ARTIO no necesitaba— está explicado en los comentarios del código, caso por caso.
+Es una réplica deliberada del patrón de un bot anterior del autor, que lleva meses leyendo ese mismo feed a diario sin que la cuenta se resienta: el ritmo de tres franjas, el scroll del contenedor interno, la lectura del DOM y el navegador único por perfil vienen de ahí. Lo que aquí se añadió está explicado en los comentarios del código, caso por caso.
 
 ## Las pantallas
 
@@ -97,7 +97,7 @@ Variables de entorno (`server/.env`, todas opcionales):
 | Variable | Por defecto | Para qué |
 |---|---|---|
 | `PORT` | `47831` | Puerto de la API y de la UI |
-| `SCHEDULE_HOURS` | `9,13,18` | Franjas de pasada, hora de Venezuela (UTC-4) |
+| `SCHEDULE_HOURS` | `9,13,18` | Franjas de pasada por defecto, en la zona horaria de tu perfil |
 | `SCHEDULER_ENABLED` | `true` | `false` apaga las pasadas automáticas |
 | `JOB_SOURCES` | `linkedin,getonbrd` | Qué plataformas vienen encendidas **el primer arranque**. Después manda el interruptor de Integraciones y esto se ignora |
 | `BROWSER_PROFILES_DIR` | `~/.novus-jobs/browser-profiles` | Dónde viven las sesiones del navegador |
@@ -187,7 +187,7 @@ Dos comportamientos que no se ven: si una oferta no coincide con ninguna tecnolo
 
 El texto se edita en **Configuración**, no en el código.
 
-Todo se refresca solo cada 15 segundos y las horas van en **hora de Venezuela**, con am/pm.
+Todo se refresca solo cada 15 segundos y las horas van en **tu zona horaria**, la que elegiste en el alta, con am/pm.
 
 ## Enfoque
 
@@ -229,7 +229,7 @@ Lo que se cambia sin tocar código ni reiniciar nada:
 
 | Ajuste | Qué decide |
 |---|---|
-| **Tu perfil** | tu stack, tu núcleo, tus vetos, tu inglés y desde dónde buscas: lo que decide qué oferta te llega. Se edita en la misma pantalla del alta, desde Configuración |
+| **Tu perfil** | tu stack, tu núcleo, tus vetos, tu inglés, desde dónde buscas y tu zona horaria: lo que decide qué oferta te llega. Se edita en la misma pantalla del alta, desde Configuración |
 | **Motivación** | el párrafo que copia cada oferta, con sus huecos |
 | **Antigüedad máxima** | cuántos meses puede tener una vacante para entrar (3 por defecto) |
 | **Plataformas** | cuáles están encendidas y a qué ritmo va cada una (en Integraciones) |
@@ -256,7 +256,7 @@ Si la sesión de LinkedIn se cayó, el botón **se niega para ella**: nada va a 
 
 ## Avisos por correo
 
-Vía Resend, con las mismas credenciales que ya usa ARTIO: ni cuenta ni factura nuevas.
+Vía Resend. Las tres variables de correo o ninguna: sin ellas no se manda nada y el dashboard es el único canal.
 
 Se manda un correo **solo cuando hay ofertas nuevas que encajan**. Un correo de "hoy no hay nada" tres veces al día enseña a no abrirlos, y entonces tampoco se abriría el día que llega la buena. El silencio significa que no había nada.
 
@@ -280,7 +280,7 @@ Un rescate entra marcado como **«por confirmar»**, no como oferta limpia; y si
 
 El modelo por defecto es `gemini-3.5-flash`, no el `-lite`: el `lite` es el más barato y por eso el más disputado, y una pasada perdió sus 19 juicios con un `503 high demand` con reintento incluido. Clasificar texto corto no pide más inteligencia; pide que conteste.
 
-Va por **Gemini en la capa gratuita de Google AI Studio**, el mismo proveedor que ya usa ARTIO para esta tarea. Se le manda casi toda la pasada (todo menos los descartes por stack): unas 2 llamadas por pasada en tandas de 20 publicaciones, con 3 pasadas al día, muy por debajo del límite gratuito. Si una tanda falla se reintenta y, si vuelve a fallar, **las demás tandas se conservan** y esas ofertas las deciden las reglas: antes un 503 pasajero en la segunda tanda borraba los veredictos de la primera y la pasada entera volvía a cero.
+Va por **Gemini en la capa gratuita de Google AI Studio**, que es gratis para este volumen. Se le manda casi toda la pasada (todo menos los descartes por stack): unas 2 llamadas por pasada en tandas de 20 publicaciones, con 3 pasadas al día, muy por debajo del límite gratuito. Si una tanda falla se reintenta y, si vuelve a fallar, **las demás tandas se conservan** y esas ofertas las deciden las reglas: antes un 503 pasajero en la segunda tanda borraba los veredictos de la primera y la pasada entera volvía a cero.
 
 ## Afinar el criterio
 
@@ -302,6 +302,7 @@ El filtro de inglés comparaba contra un B1 escrito dentro de las propias expres
 
 - **Inglés.** Se mide el nivel que *exige* el anuncio y se compara con el tuyo. El mismo «inglés B2 excluyente» descarta a quien tiene B1 y no a quien tiene C1. Y solo veta si pediste filtrar por idioma: apagado, lo ves igual, que es útil para medir cuánto te cierra.
 - **Ubicación.** Las listas de países, ciudades y monedas salen de `filters/countries.ts` y se derivan del país que elegiste: el tuyo encaja, los demás restringen. Sin país en el perfil no se aplica ninguna regla de país — sin saber desde dónde buscas, descartar una oferta sería tirarla por una suposición.
+- **Zona horaria.** Las franjas son horas de *tu* reloj y el presupuesto del día se corta a *tu* medianoche. Estaba fijada a UTC-4 en el código; ahora se elige en el alta, con horario de verano resuelto por `Intl` en vez de un desfase constante que acertaría media parte del año.
 - **Modalidad.** Remoto global, remoto en tu país, híbrido y presencial se encienden por separado. El híbrido dejó de ser «presencial» a secas porque son dos decisiones distintas: hay quien acepta ir dos días y no cinco.
 
 ## Añadir una plataforma
@@ -329,7 +330,7 @@ Cada una se enciende, se apaga y se le pone su propio ritmo desde Integraciones.
 | Ubicación y modalidad | se adivinan del texto | campos del JSON |
 | Qué pide | todo el feed | todas las vacantes remotas, sin palabra clave |
 
-Y una advertencia que vale para las dos: Get on Board **no** dice si contratan en Venezuela. `remote_zone` viene siempre `null` y el país de un remoto llega como `["Remote"]`, así que la elegibilidad sigue estando solo en la prosa. Las reglas y el juez hablan igual.
+Y una advertencia que vale para las dos: Get on Board **no** dice desde qué país se puede trabajar. `remote_zone` viene siempre `null` y el país de un remoto llega como `["Remote"]`, así que la elegibilidad geográfica sigue estando solo en la prosa del anuncio. Las reglas y el juez hablan igual.
 
 > **Por qué su API y no su MCP.** Get on Board publica un servidor MCP en `getonbrd.com/mcp`, y es la herramienta del **reclutador**: `search_talent` busca candidatos en su base de talento, y `list_jobs` lista las vacantes que publica *tu* empresa. No hay nada para buscar empleo ni para ver postulaciones. Lo que sí sirve es su API pública, que responde 200 sin credenciales.
 

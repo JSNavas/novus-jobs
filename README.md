@@ -84,8 +84,10 @@ Open **http://127.0.0.1:47831** and the setup wizard walks you through it:
    ecosystems you do not want to be offered.
 3. **English.** Your level, and whether postings demanding more than that should
    be hidden.
-4. **Where.** The country you work from, and which arrangements you accept —
-   fully remote, remote-in-your-country, hybrid, on-site.
+4. **Where.** The country you work from, your time zone, and which arrangements
+   you accept — fully remote, remote-in-your-country, hybrid, on-site. The time
+   zone matters: search slots are hours on *your* clock, and the dashboard
+   prints every date in it.
 5. **Platforms.** Which ones to turn on.
 
 Platforms that need a session need one login, once:

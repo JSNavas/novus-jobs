@@ -27,7 +27,7 @@ export const jobLocationLabel: Record<JobLocation, string> = {
 };
 
 /**
- * Lo que se le dice al señor cuando una pasada falla.
+ * Lo que se le dice al usuario cuando una pasada falla.
  *
  * El motivo importa más que el mensaje técnico: una sesión caducada es una
  * acción suya de treinta segundos, y hasta ahora se escondía detrás de un

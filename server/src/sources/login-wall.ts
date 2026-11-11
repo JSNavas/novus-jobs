@@ -11,7 +11,7 @@
  * feed y acabamos en `/login`, no hay ambigüedad posible por mucho HTML que
  * venga. El texto sí engaña — casi toda web tiene un botón de "iniciar sesión"
  * en la cabecera sin que haga ninguna falta entrar, y un falso positivo aquí
- * manda al señor a reautenticarse sin motivo, que es peor que no avisar.
+ * manda al usuario a reautenticarse sin motivo, que es peor que no avisar.
  *
  * Los patrones son genéricos a propósito: `/login`, `/signin`, `/authwall` y
  * `/checkpoint` los usan LinkedIn, InfoJobs, Glassdoor e Indeed por igual. Una
@@ -29,7 +29,7 @@ export enum LoginWall {
 const PATTERNS: ReadonlyArray<[RegExp, LoginWall]> = [
   // El checkpoint va PRIMERO: su URL suele llevar también "login" dentro, y
   // confundirlo con una sesión caducada manda a reautenticar cuando lo que hace
-  // falta es teclear un código. Son dos acciones distintas del señor.
+  // falta es teclear un código. Son dos acciones distintas del usuario.
   [/\/checkpoint\b|\/challenge\b|\/captcha\b|two[-_]?step/i, LoginWall.Checkpoint],
   [/\/authwall\b|\/guest\b|signup-wall/i, LoginWall.AuthWall],
   [/\/(login|signin|sign-in|iniciar-sesion|acceso|auth)(\/|\?|#|$)|\/uas\/login/i, LoginWall.Login],
@@ -50,7 +50,7 @@ export function loginWallOf(finalUrl: string): LoginWall | null {
   return null;
 }
 
-/** Qué tiene que hacer el señor, dicho en una frase y sin rodeos. */
+/** Qué tiene que hacer el usuario, dicho en una frase y sin rodeos. */
 export function loginWallAdvice(wall: LoginWall, source: string): string {
   switch (wall) {
     case LoginWall.Checkpoint:

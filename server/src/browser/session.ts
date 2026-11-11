@@ -31,7 +31,7 @@ function missingPlaywright(cause: unknown): Error {
 /**
  * Cuánto se queda vivo el navegador sin usarse. Arrancar Chromium cuesta
  * segundos; apagarlo tras cada lectura los pagaría en cada pasada. Es el mismo
- * número que usa ARTIO.
+ * número medido en el bot del que viene este patrón.
  */
 const IDLE_CLOSE_MS = 5 * 60_000;
 
@@ -54,7 +54,7 @@ const STATE_SNAPSHOT_MS = 5_000;
  *
  * Dos modos, nunca a la vez:
  *   - `context()`  headless, para leer. Es lo que corre tres veces al día.
- *   - `openWindow()` con ventana, para que el señor inicie sesión a mano.
+ *   - `openWindow()` con ventana, para que el usuario inicie sesión a mano.
  */
 export class BrowserSession {
   private ctx: BrowserContext | null = null;
@@ -132,7 +132,7 @@ export class BrowserSession {
   /**
    * ═══ POR QUÉ EL PERFIL NO BASTA ═══
    *
-   * Medido el 2026-11-10 con la cuenta del señor: inició sesión en la ventana,
+   * Medido el 2026-11-10 con la cuenta del usuario: inició sesión en la ventana,
    * vio su feed, cerró, y en el perfil quedaron `bcookie`, `bscookie`, `lidc` y
    * `__cf_bm` — pero NO `li_at`. La siguiente lectura, headless o con ventana,
    * caía en `/uas/login`. No es detección de bots ni un cierre a destiempo: es
@@ -218,7 +218,7 @@ export class BrowserSession {
   }
 
   /**
-   * Abre una ventana DE VERDAD y se queda ahí hasta que el señor la cierra.
+   * Abre una ventana DE VERDAD y se queda ahí hasta que el usuario la cierra.
    *
    * Dos cosas que no son adorno:
    *
@@ -231,7 +231,7 @@ export class BrowserSession {
    *    Esperar a que la URL llegue al feed y cerrar cinco segundos después es
    *    adivinar: la plataforma todavía está rotando cookies de sesión, y un
    *    cierre a destiempo guarda una sesión a medias que caduca en días. Cuando
-   *    el señor cierra la ventana, Chromium vuelca su cookie jar entero en un
+   *    el usuario cierra la ventana, Chromium vuelca su cookie jar entero en un
    *    cierre limpio. Además así un checkpoint de verificación no rompe nada:
    *    tarda lo que tarde.
    */

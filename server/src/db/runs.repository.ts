@@ -74,7 +74,7 @@ export class RunsRepository {
   /**
    * Cierra la pasada como buena. `note` existe para la pasada PARCIAL: una
    * plataforma entregó ofertas y otra se cayó. La pasada hizo su trabajo —por
-   * eso no es un error— pero el motivo no se tira, porque es lo que el señor
+   * eso no es un error— pero el motivo no se tira, porque es lo que el usuario
    * necesita ver para arreglar la que falló.
    */
   finish(id: number, outcome: RunOutcome, note: { message: string; failure: RunFailure } | null = null): void {
@@ -133,7 +133,7 @@ export class RunsRepository {
    * Las pasadas que DE VERDAD tocaron la plataforma desde un instante.
    *
    * Una que murió con el perfil ocupado no cuenta: ni se abrió el navegador, ni
-   * LinkedIn vio nada. Gastarle presupuesto al señor por una ventana que se
+   * LinkedIn vio nada. Gastarle presupuesto al usuario por una ventana que se
    * dejó abierta sería cobrarle algo que no consumió.
    *
    * Siempre por plataforma: cada una tiene su propio ritmo y su propio

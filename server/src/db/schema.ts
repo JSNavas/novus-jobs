@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS runs (
   failure     TEXT
 );
 
--- Lo que el señor puede cambiar sin tocar código ni reiniciar nada. Clave y
+-- Lo que el usuario puede cambiar sin tocar código ni reiniciar nada. Clave y
 -- valor, y no una columna por ajuste: añadir uno no debe pedir una migración.
 CREATE TABLE IF NOT EXISTS settings (
   key   TEXT PRIMARY KEY,

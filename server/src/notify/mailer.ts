@@ -1,7 +1,7 @@
 /**
- * Enviar correo. Lo único que sale de esta máquina hacia el señor.
+ * Enviar correo. Lo único que sale de esta máquina hacia el usuario.
  *
- * VÍA RESEND, y por HTTP a pelo, igual que ARTIO: ya hay cuenta y ya hay
+ * VÍA RESEND, y por HTTP a pelo, sin SDK: no hace falta cuenta ni
  * factura, así que no se añade ninguna de las dos. Y una llamada `fetch` evita
  * meter `nodemailer` y un cliente SMTP entero por mandar tres correos al día.
  *

@@ -5,7 +5,7 @@ import { looksLikeOffer } from './offer.js';
 
 describe('normalizeText', () => {
   it('convierte las letras matemáticas de LinkedIn en texto de verdad', () => {
-    // Literal del feed del señor, 2026-11-10.
+    // Literal del feed del usuario, 2026-11-10.
     const bold = '🚀 𝗦𝗶 𝗾𝘂𝗶𝗲𝗿𝗲𝘀 𝗮𝘃𝗮𝗻𝘇𝗮𝗿 𝗲𝗻 𝗶𝗻𝗴𝗲𝗻𝗶𝗲𝗿í𝗮 𝗱𝗲 𝗱𝗮𝘁𝗼𝘀';
     assert.equal(normalizeText(bold), '🚀 Si quieres avanzar en ingeniería de datos');
   });

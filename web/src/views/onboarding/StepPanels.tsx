@@ -247,6 +247,18 @@ export const EnglishStep = ({ state, draft, onChange }: PanelProps) => (
 
 /* ── Paso 4: dónde ───────────────────────────────────────────────────────── */
 
+/**
+ * Las zonas las enumera el propio navegador: mantener una lista a mano sería
+ * mantener una copia del tz database, y se queda vieja sola. Si el runtime es
+ * viejo y no la trae, se cae a la suya, que es la que acierta casi siempre.
+ */
+function timeZones(): string[] {
+  const supported = (Intl as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
+  const own = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  const all = supported ? supported('timeZone') : [own];
+  return all.includes(own) ? all : [own, ...all];
+}
+
 const MODALITIES: { key: keyof Draft['modality']; label: string; hint: string }[] = [
   { key: 'remoteGlobal', label: 'Remoto global', hint: 'Sin restricción de residencia, o para toda tu región.' },
   { key: 'remoteHomeCountry', label: 'Remoto en tu país', hint: 'Remoto, pero solo para quien vive donde tú.' },
@@ -281,6 +293,22 @@ export const PlaceStep = ({ state, draft, onChange }: PanelProps) => (
         sx={{ minWidth: 240 }}
       />
     </Stack>
+    <Box>
+      <Autocomplete
+        options={timeZones()}
+        value={draft.geo.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
+        onChange={(_event, value) => onChange({ ...draft, geo: { ...draft.geo, timezone: value ?? '' } })}
+        disableClearable
+        renderInput={(params) => <TextField {...params} size="small" label="Tu zona horaria" />}
+        sx={{ maxWidth: 420 }}
+      />
+      <Typography variant="caption" color="textSecondary" display="block" mt={1}>
+        Las franjas de búsqueda son horas de tu reloj —«a las 9, a la 1 y a las 6»— y el dashboard
+        pinta todas las fechas en esta zona. Viene puesta la de este ordenador; cámbiala si el
+        servidor corre en un sitio y tú vives en otro.
+      </Typography>
+    </Box>
+
     {!draft.geo.country ? (
       <AppAlert severity="info">
         Sin país no se aplica ninguna regla de ubicación: te llegarán también las ofertas

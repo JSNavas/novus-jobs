@@ -129,7 +129,7 @@ export function jobTitle(adText: string): string | null {
  * Lo que se enseña como título de la tarjeta. SIEMPRE devuelve algo.
  *
  * Si el anuncio no nombra el puesto, vale su primera línea con contenido: es lo
- * que el señor leería de todas formas al abrirla, y una tarjeta sin título no
+ * que el usuario leería de todas formas al abrirla, y una tarjeta sin título no
  * se puede ojear — que es justo para lo que sirve una lista de ofertas.
  */
 export function offerTitle(adText: string): string {

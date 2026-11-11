@@ -5,7 +5,7 @@ import { isProfileBusy } from './profile-lock.js';
 /**
  * Mueve un perfil de navegador de su sitio viejo al nuevo, UNA vez.
  *
- * Existe para no cobrarle al señor un login que ya hizo: el perfil de LinkedIn
+ * Existe para no cobrarle al usuario un login que ya hizo: el perfil de LinkedIn
  * vivía dentro de `server/data/` y ahora vive fuera del repo. Sin esto, el
  * primer arranque tras el cambio encontraría una carpeta vacía y pediría
  * iniciar sesión otra vez — y el objetivo entero de este trabajo es que iniciar

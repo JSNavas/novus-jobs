@@ -42,7 +42,7 @@ export enum JobLocation {
 /**
  * POR QUÉ se cayó una pasada, en una palabra que el código pueda mirar.
  *
- * El mensaje de error es para el señor; esto es para decidir si tiene sentido
+ * El mensaje de error es para el usuario; esto es para decidir si tiene sentido
  * reintentar. Son decisiones opuestas: con el perfil ocupado se reintenta
  * pronto porque basta con cerrar una ventana, y con la sesión caída NO se
  * reintenta nunca — nada va a cambiar hasta que él inicie sesión, y machacar

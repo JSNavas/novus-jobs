@@ -11,7 +11,7 @@ export type Db = Database.Database;
  * `CREATE TABLE IF NOT EXISTS` no toca una tabla que ya existe, así que una
  * columna nueva no llega nunca a las bases de datos ya creadas. Y una columna
  * añadida así NO lleva `CHECK`: el `CHECK` de un `CREATE TABLE` viejo se queda
- * congelado en la BD del señor, de modo que un valor nuevo del enum pasaría en
+ * congelado en la BD del usuario, de modo que un valor nuevo del enum pasaría en
  * una instalación nueva y fallaría en la suya. Los valores los valida el TS, que
  * es el mismo en las dos.
  */

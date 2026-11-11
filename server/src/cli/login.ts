@@ -10,7 +10,7 @@ import { buildSource, knownSourceNames, sourceDefinition } from '../sources/regi
  *
  * Es un script y no un botón del dashboard a propósito: iniciar sesión es
  * teclear una contraseña y, cada vez más, resolver una verificación. Eso no lo
- * hace un servidor en segundo plano, y menos sin que el señor lo vea.
+ * hace un servidor en segundo plano, y menos sin que el usuario lo vea.
  *
  * Lo que este script arregla respecto a la versión anterior:
  *
@@ -77,7 +77,7 @@ async function main(): Promise<void> {
     console.log(`${definition.label} no necesita iniciar sesión.`);
     return;
   }
-  // La sesión que el señor ya tenía, si viene de la versión que guardaba el
+  // La sesión que el usuario ya tenía, si viene de la versión que guardaba el
   // perfil dentro del repo.
   if (source.profileId === LINKEDIN_PROFILE_ID) {
     migrateProfile(legacyLinkedinProfileDir(config), pool.session(LINKEDIN_PROFILE_ID).dir);
