@@ -93,17 +93,28 @@ export const TOPICS: readonly Topic[] = [
   topic('nube', 'Observabilidad', 'monitoreo', 'monitorización', 'logging', 'Datadog', 'Grafana', 'Prometheus'),
 
   // ─── Arquitectura
-  topic('arquitectura', 'Arquitectura hexagonal', 'hexagonal', 'puertos y adaptadores', 'ports and adapters'),
-  topic('arquitectura', 'Domain Driven Design', 'DDD', 'diseño guiado por el dominio'),
+
   topic('arquitectura', 'Microservicios', 'microservicios', 'microservices'),
   topic('arquitectura', 'Arquitectura orientada a eventos', 'event-driven', 'orientada a eventos', 'SNS', 'SQS', 'EventBridge', 'Kafka', 'RabbitMQ', 'colas de mensajes'),
-  topic('arquitectura', 'Clean Architecture', 'arquitectura limpia', 'SOLID', 'inversión de dependencias'),
+  /*
+   * Hexagonal, DDD y SOLID eran tres filas, y en los anuncios vienen en la
+   * MISMA frase: «Arquitectura Hexagonal, puertos y adaptadores e inversión
+   * de dependencias». Tres filas que suben y bajan juntas no son tres datos:
+   * son uno repetido tres veces.
+   */
+  topic('arquitectura', 'Arquitectura limpia (hexagonal, DDD, SOLID)',
+    'arquitectura limpia', 'Clean Architecture', 'SOLID', 'inversión de dependencias',
+    'hexagonal', 'puertos y adaptadores', 'ports and adapters',
+    'DDD', 'Domain Driven Design', 'diseño guiado por el dominio'),
   topic('arquitectura', 'Escalabilidad y alta disponibilidad', 'alta disponibilidad', 'escalabilidad', 'performance'),
   topic('arquitectura', 'Seguridad', 'OWASP', 'buenas prácticas de seguridad'),
 
   // ─── Prácticas
-  topic('practicas', 'Testing automatizado', 'pruebas unitarias', 'unit testing', 'Jest', 'Vitest', 'TDD', 'pruebas de integración'),
-  topic('practicas', 'Pruebas end to end', 'E2E', 'Cypress', 'Playwright', 'Selenium'),
+  topic('practicas', 'Testing automatizado (unitarias, integración, E2E)',
+    'pruebas unitarias', 'unit testing', 'Jest', 'Vitest', 'TDD', 'pruebas de integración',
+    // Sin `end to end` suelto: en inglés es una muletilla («own the web app
+    // end to end») y colaba anuncios que no hablan de pruebas.
+    'pruebas automatizadas', 'E2E', 'Cypress', 'Playwright', 'Selenium', 'pytest'),
   topic('practicas', 'Code review', 'revisión de código', 'pull request'),
   topic('practicas', 'Git', 'control de versiones', 'GitFlow'),
   topic('practicas', 'Documentación técnica', 'Swagger', 'OpenAPI', 'documentar'),
@@ -155,9 +166,21 @@ export const TOPICS: readonly Topic[] = [
    * catálogo no se detecta por mucho que lo pidan. Si mañana tres empresas
    * exigen Linux —o macOS, que es lo que pasa cuando dan el equipo— aparece
    * solo, y a tiempo. */
-  topic('sistema', 'Linux', 'Ubuntu', 'Debian', 'Unix', 'servidor Linux', 'entorno Linux'),
-  topic('sistema', 'macOS', 'Mac OS', 'MacBook'),
-  topic('sistema', 'Windows', 'WSL', 'PowerShell'),
+  /*
+   * UNA fila, no tres. Lo que él quiere saber es si las vacantes exigen un
+   * sistema operativo concreto; CUÁL lo dice la frase del anuncio, que es
+   * donde se lee. Tres filas —Linux, macOS, Windows— obligan a recorrerlas
+   * para responder una sola pregunta.
+   *
+   * «Terminal y scripting» se queda APARTE y no se funde aquí: su alias más
+   * frecuente es `CLI`, que en estas vacantes aparece sobre todo como «AWS
+   * CLI». Metido dentro, «Sistema operativo» saldría en cinco vacantes por
+   * algo que no es un sistema operativo.
+   */
+  topic('sistema', 'Sistema operativo (Linux, macOS, Windows)',
+    'Linux', 'Ubuntu', 'Debian', 'Unix', 'servidor Linux', 'entorno Linux',
+    'macOS', 'Mac OS', 'MacBook',
+    'Windows', 'WSL', 'PowerShell'),
   topic('sistema', 'Terminal y scripting', 'bash', 'shell scripting', 'CLI', 'línea de comandos', 'zsh', 'scripting'),
 
   // ─── Equipo e idioma

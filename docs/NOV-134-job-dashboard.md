@@ -914,3 +914,41 @@ MCP ya no tiene fila propia. Si empieza a pedirse, aparecerá **dentro de los
 ejemplos** de «IA aplicada», no como un tema que sube solo — que era la gracia
 de tenerlo suelto. Es el precio de no tener ocho filas, y lo paga él a
 sabiendas. Si algún día quiere la alerta temprana, se le devuelve su fila.
+
+---
+
+## Rev. 19 — Una fila por idea, en todas partes · 2026-11-11
+
+Lo que él pidió para la IA vale igual en otros tres sitios, y lo señaló con el
+sistema operativo: «ahí veo macOS, Windows, Linux». La regla queda escrita:
+
+> **Una fila por pregunta que uno se hace. El detalle se lee en las frases.**
+
+Tres fusiones:
+
+| Antes | Ahora |
+|---|---|
+| Linux · macOS · Windows | **Sistema operativo (Linux, macOS, Windows)** |
+| Clean Architecture · Hexagonal · DDD | **Arquitectura limpia (hexagonal, DDD, SOLID)** |
+| Testing automatizado · Pruebas end to end | **Testing automatizado (unitarias, integración, E2E)** |
+
+La de arquitectura era la más clara: en los anuncios vienen en la MISMA frase
+—«Arquitectura Hexagonal, puertos y adaptadores e inversión de dependencias»—
+así que tres filas que suben y bajan juntas no son tres datos, son uno
+repetido tres veces.
+
+### Lo que NO se fusionó, y por qué
+
+**«Terminal y scripting» se queda fuera de «Sistema operativo».** Su alias más
+frecuente es `CLI`, que en estas vacantes aparece sobre todo como «AWS CLI».
+Fundido, «Sistema operativo» saldría en cinco vacantes por algo que no es un
+sistema operativo.
+
+### Un falso positivo cazado al medir
+
+Testing salía con el ejemplo «Own the web app **end to end**», que no habla de
+pruebas: en inglés es una muletilla. Se quitó ese alias. Un ejemplo absurdo en
+una lista cuesta más que un tema de menos — es lo primero que hace dudar del
+resto.
+
+De 44 temas a 39, y los que quedan se leen de una pasada.
