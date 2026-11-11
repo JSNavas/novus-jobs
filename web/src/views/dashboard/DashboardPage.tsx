@@ -4,9 +4,10 @@ import {
   Box, CircularProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography,
 } from '@mui/material';
 import { getStats, listRuns, PAGE_SIZE, type Stats } from '../../api/client';
-import { AppAlert, AppChip, AppPagination, BlankCard, PageContainer } from '../../components/ui';
+import { AppAlert, AppPagination, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { formatDateTime } from '../../format';
 import { RunStatus, type RunInfo } from '../../types';
+import { runStatusLabel, runStatusTone } from './runStatus';
 
 const POLL_INTERVAL_MS = 15_000;
 
@@ -31,6 +32,8 @@ interface Tile {
   hint: string;
   to: string;
   tone: 'success' | 'neutral';
+  /** Lo que apartó el filtro sin que nadie lo mirara: se enseña apagado y con borde discontinuo. */
+  audit?: boolean;
 }
 
 const tilesOf = (stats: Stats): Tile[] => [
@@ -68,19 +71,14 @@ const tilesOf = (stats: Stats): Tile[] => [
     hint: 'No encajaban: mira el motivo',
     to: '/rechazadas',
     tone: 'neutral',
+    audit: true,
   },
 ];
 
-const runStatusTone = (run: RunInfo): 'success' | 'error' | 'neutral' => {
-  if (run.status === RunStatus.Error) return 'error';
-  if (run.status === RunStatus.Running) return 'neutral';
-  return 'success';
-};
-
-const runStatusLabel = (run: RunInfo): string => {
-  if (run.status === RunStatus.Error) return 'Falló';
-  if (run.status === RunStatus.Running) return 'En curso';
-  return 'Correcta';
+/** Una búsqueda fallida se ve de un vistazo: banda roja a la izquierda y fondo teñido. */
+const failedRowSx = {
+  bgcolor: 'error.light',
+  '& > td:first-of-type': { borderLeft: 3, borderColor: 'error.main' },
 };
 
 const DashboardPage = () => {
@@ -134,17 +132,17 @@ const DashboardPage = () => {
           }}
         >
           {tilesOf(stats).map((tile) => (
-            <BlankCard key={tile.label}>
+            <BlankCard key={tile.label} dashed={tile.audit}>
               <Box
                 p={2.5}
                 onClick={() => void navigate(tile.to)}
                 sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' }, borderRadius: 1 }}
               >
-                <Typography variant="subtitle2" color="textSecondary">{tile.label}</Typography>
-                <Typography variant="h4" mt={0.5} color={tile.tone === 'success' && tile.value > 0 ? 'success.main' : 'textPrimary'}>
+                <Typography variant="overline" component="div" color="textSecondary">{tile.label}</Typography>
+                <Typography variant="metric" component="div" mt={1.5} color={tile.tone === 'success' && tile.value > 0 ? 'success.main' : 'textPrimary'}>
                   {tile.value}
                 </Typography>
-                <Typography variant="caption" color="textSecondary">{tile.hint}</Typography>
+                <Typography variant="caption" component="div" color="textSecondary" mt={1}>{tile.hint}</Typography>
               </Box>
             </BlankCard>
           ))}
@@ -173,15 +171,17 @@ const DashboardPage = () => {
                 key={run.id}
                 hover
                 onClick={() => void navigate(`/busquedas/${run.id}`)}
-                sx={{ cursor: 'pointer' }}
+                sx={{ cursor: 'pointer', ...(run.status === RunStatus.Error ? failedRowSx : undefined) }}
               >
-                <TableCell>{formatDateTime(run.startedAt)}</TableCell>
+                <TableCell>
+                  <Typography variant="mono" component="span">{formatDateTime(run.startedAt)}</Typography>
+                </TableCell>
                 <TableCell align="right">{run.fetched}</TableCell>
                 <TableCell align="right">{run.accepted}</TableCell>
                 <TableCell align="right">{run.rejected}</TableCell>
                 <TableCell>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <AppChip label={runStatusLabel(run)} tone={runStatusTone(run)} />
+                    <AppStatusPilot label={runStatusLabel(run)} tone={runStatusTone(run)} />
                     {/* El motivo del fallo, recortado: el detalle entero está
                         en la página de la búsqueda. */}
                     {run.error ? (

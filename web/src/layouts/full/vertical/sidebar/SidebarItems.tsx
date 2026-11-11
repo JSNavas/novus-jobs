@@ -5,9 +5,10 @@ import {
 } from '@tabler/icons-react';
 import { NavLink } from 'react-router';
 import { getStats, type Stats } from '../../../../api/client';
-import { AppChip } from '../../../../components/ui';
+import { AppChip, AppStatusPilot } from '../../../../components/ui';
 import { useEffect, useState } from 'react';
 import { JobStatus } from '../../../../types';
+import { runStatusTone } from '../../../../views/dashboard/runStatus';
 import { INBOX_VIEWS, showsCount } from '../../../../views/jobs/inbox';
 
 /**
@@ -71,6 +72,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
             <IconLayoutDashboard size="20" stroke={1.5} />
           </ListItemIcon>
           <ListItemText primary="Dashboard" />
+          {stats?.lastRun ? <AppStatusPilot tone={runStatusTone(stats.lastRun)} /> : null}
         </ListItemButton>
       </List>
 
