@@ -129,9 +129,24 @@ function opening(job: Job): string {
   return 'Me interesa esta oportunidad';
 }
 
+/**
+ * Quita lo que ya está dicho dentro de otra tecnología de la lista.
+ *
+ * `stackMatch` guarda cada coincidencia por separado, así que un anuncio con
+ * Node.js casa con «Node.js» y con «Node», y la carta salía diciendo
+ * «TypeScript, Node.js, Node y NestJS». Enumerar la misma tecnología dos veces
+ * en una frase que presume de leer el anuncio es justo lo contrario de lo que
+ * esa frase intenta demostrar.
+ */
+function withoutRedundant(stack: readonly string[]): string[] {
+  return stack.filter((tech) => !stack.some((other) =>
+    other !== tech && other.toLowerCase().includes(tech.toLowerCase()),
+  ));
+}
+
 /** Lo que de verdad coincide, dicho sin exagerar: «lo que uso a diario». */
 function stackSentence(job: Job): string {
-  const stack = job.stackMatch.slice(0, STACK_IN_LETTER);
+  const stack = withoutRedundant(job.stackMatch).slice(0, STACK_IN_LETTER);
   if (!stack.length) return '';
   const list = stack.length > 1
     ? `${stack.slice(0, -1).join(', ')} y ${stack[stack.length - 1]}`
@@ -139,9 +154,10 @@ function stackSentence(job: Job): string {
   return ` Vi que el puesto trabaja con ${list}, que es justo lo que uso a diario.`;
 }
 
+/** Suya, literal. La escribió él y no se reescribe. */
 const PITCH =
-  ' porque busco un equipo donde aportar todo lo que he construido en más de 9 años como ' +
-  'desarrollador de software, tanto en frontend como en backend.';
+  ' porque busco un equipo donde aportar toda la experiencia que he adquirido a lo largo de ' +
+  '9 años como desarrollador de software, tanto en frontend como en backend.';
 
 const CLOSING =
   ' Soy responsable y dedicado, me gusta trabajar en equipo y me adapto rápido a los entornos ' +
