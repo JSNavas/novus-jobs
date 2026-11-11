@@ -182,7 +182,7 @@ const CLOSING =
   ' Soy responsable y dedicado, me gusta trabajar en equipo y me adapto rápidamente a los nuevos ' +
   'entornos de trabajo. Me fascina aprender nuevas tecnologías, cómo integrarlas y cómo mejorar mi ' +
   'flujo de trabajo para que sea más rápido y productivo. Soy amante de las buenas prácticas y del ' +
-  'código escalable, y me mantengo en constante estudio para crecer cada día como desarrollador.';
+  'código escalable por lo que me mantengo en constante estudio para crecer cada día como desarrollador.';
 
 /**
  * El párrafo listo para pegar en la postulación.
