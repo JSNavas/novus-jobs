@@ -8,7 +8,7 @@ const paperSx = { width: drawerWidth, boxSizing: 'border-box', borderRight: 1, b
 const SidebarContent = ({ onNavigate }: { onNavigate: () => void }) => (
   <>
     <Box px={2.5} py={2.5}>
-      <Typography variant="mono" color="primary" fontWeight={700}>
+      <Typography variant="mono" color="primary">
         NOVUS·JOBS
       </Typography>
     </Box>
