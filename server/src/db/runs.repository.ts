@@ -97,11 +97,22 @@ export class RunsRepository {
     return row ? toRun(row) : null;
   }
 
-  /** Una pasada que quedó "running" es de un proceso muerto: se cierra al arrancar. */
+  /**
+   * Una pasada que quedó "running" es de un proceso muerto: se cierra al arrancar.
+   *
+   * La que no había leído nada todavía se BORRA en vez de cerrarse como error.
+   * No llegó a tocar la plataforma, así que no hay nada que auditar: un
+   * reinicio del servidor dejaba filas rojas de "falló" que solo contaban la
+   * vida del proceso, y el historial es de lo que hizo la búsqueda. Si ya
+   * había leído ofertas, la interrupción sí es un hecho y queda como error.
+   */
   failInterrupted(): number {
+    const dropped = this.db.prepare(
+      'DELETE FROM runs WHERE status = ? AND fetched = 0 AND accepted = 0 AND rejected = 0',
+    ).run(RunStatus.Running);
     const result = this.db.prepare("UPDATE runs SET finished_at = ?, status = ?, error = ?, failure = ? WHERE status = ?")
       .run(new Date().toISOString(), RunStatus.Error, "interrumpida: el servidor se reinició", RunFailure.Other, RunStatus.Running);
-    return result.changes;
+    return Number(dropped.changes) + Number(result.changes);
   }
 
   /**
