@@ -1,11 +1,11 @@
 import type { JobsRepository, NewJob } from './db/jobs.repository.js';
 import type { RunOutcome } from './db/runs.repository.js';
-import { decideShipping, fingerprint, locationLabel, storedText, type CandidateProfile, type Offer, type Verdict } from './filters/decide.js';
+import { decideShipping, fingerprint, locationLabel, storedText, type CandidateProfile, type Offer, type RejectedBy, type Verdict } from './filters/decide.js';
 import { companyName, offerTitle, roleOnly, stripAuthorHeaders } from './filters/headline.js';
 import type { LlmJudge, JudgeVerdict } from './filters/judge.js';
 import { classifyFailure, failureMessage, worstFailure } from './sources/failure.js';
 import type { JobSource, RawPost } from './sources/types.js';
-import { JobSeniority, JudgeStatus, JobVerdict, type RunFailure } from './types.js';
+import { JobLocation, JobSeniority, JudgeStatus, JobVerdict, type RunFailure } from './types.js';
 
 interface PipelineDeps {
   jobs: JobsRepository;
@@ -74,7 +74,7 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
   const posts = await source.fetch((list) => indicesToFetchPermalink(list, deps.profile, isFresh));
   const offers: Offer[] = posts.map(toOffer);
   const fresh = offers.filter((o) => isFresh(o.text));
-  const judged = await judgeAccepted(fresh, deps);
+  const judged = await judgeOffers(fresh, deps);
 
   const outcome: RunOutcome = { fetched: posts.length, accepted: 0, rejected: 0 };
   const stored: NewJob[] = [];
@@ -82,7 +82,7 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
     const ruleVerdict = decideShipping(offer, deps.profile);
     const judgment = judged.get(fingerprint(offer.text));
     const verdict = applyJudgment(ruleVerdict, judgment);
-    const job = toNewJob(source.name, offer, ruleVerdict, verdict, judgment ? JudgeStatus.Judged : JudgeStatus.Skipped, deps.runId);
+    const job = toNewJob(source.name, offer, verdict, judgment ? JudgeStatus.Judged : JudgeStatus.Skipped, deps.runId);
     if (!deps.jobs.insert(job)) continue;
     if (verdict.accepted) {
       outcome.accepted++;
@@ -107,11 +107,29 @@ function toOffer(post: RawPost): Offer {
 }
 
 /**
- * El juez solo ve lo que las reglas aceptaron y solo puede VETAR o afinar. Si
- * no hay clave o falla, el mapa sale vacío y mandan las reglas.
+ * Lo descartado por `stack` no se le manda al juez: no se le pregunta por el
+ * stack, así que no puede opinar, y mandarlo sería pagar tokens por una
+ * respuesta que `applyJudgment` va a ignorar de todas formas.
  */
-async function judgeAccepted(fresh: readonly Offer[], deps: PipelineDeps): Promise<Map<string, JudgeVerdict>> {
-  const candidates = fresh.filter((o) => decideShipping(o, deps.profile).accepted);
+function isJudgeable(rules: Verdict): boolean {
+  return rules.accepted || rules.rejectedBy !== 'stack';
+}
+
+/**
+ * Al juez se le manda lo que las reglas aceptaron Y lo que descartaron por algo
+ * que él sabe leer mejor.
+ *
+ * Antes solo veía lo aceptado, y eso hacía que un falso descarte de una regex
+ * fuera IRRECUPERABLE: la oferta se guardaba descartada con
+ * `judge_status = skipped` y nadie la volvía a mirar. Contado sobre el feed
+ * real: de 117 descartes, 114 nunca habían pasado por el juez, y de los 117
+ * solo 17 eran de `stack` — los otros 100 se tiraban sin segunda opinión
+ * pudiendo tenerla.
+ *
+ * Si no hay clave o falla todo, el mapa sale vacío y mandan las reglas.
+ */
+async function judgeOffers(fresh: readonly Offer[], deps: PipelineDeps): Promise<Map<string, JudgeVerdict>> {
+  const candidates = fresh.filter((o) => isJudgeable(decideShipping(o, deps.profile)));
   const verdicts = candidates.length && deps.judge
     ? await deps.judge.judge(candidates, deps.profile).catch(() => null)
     : null;
@@ -123,22 +141,58 @@ async function judgeAccepted(fresh: readonly Offer[], deps: PipelineDeps): Promi
   return byFingerprint;
 }
 
+/** De qué familia es un descarte del juez, para que el motivo guardado cuadre. */
+function rejectedByOf(judgment: JudgeVerdict): RejectedBy {
+  if (!judgment.isOffer) return 'not-offer';
+  return judgment.rejection === 'onsite' || judgment.rejection === 'other-country' ? 'location' : 'veto';
+}
+
+/**
+ * Las reglas y el juez se cruzan aquí. El juez puede:
+ *   - vetar lo que las reglas aceptaron (como siempre),
+ *   - y RESCATAR lo que las reglas descartaron, salvo por `stack`.
+ *
+ * Un rescate sale marcado como `uncertain`: va a la bandeja con el aviso de
+ * «por confirmar», no como una oferta limpia. Y si lo que se revocó fue la
+ * ubicación, la ubicación se baja a `Unknown`: la regla que afirmaba
+ * «presencial» es justo la que el juez acaba de tumbar, así que seguir
+ * mostrándola sería repetir el error con la etiqueta cambiada.
+ */
 function applyJudgment(rules: Verdict, judgment: JudgeVerdict | undefined): Verdict {
-  if (!judgment || !rules.accepted) return rules;
+  if (!judgment) return rules;
+
   if (!judgment.isOffer || judgment.rejection) {
-    return { ...rules, accepted: false, reason: `[IA] ${judgment.reason || judgment.rejection || 'no es una oferta'}` };
+    // Ya descartada por las reglas: se queda con su motivo, que es más concreto.
+    if (!rules.accepted) return rules;
+    return {
+      ...rules,
+      accepted: false,
+      reason: `[IA] ${judgment.reason || judgment.rejection || 'no es una oferta'}`,
+      rejectedBy: rejectedByOf(judgment),
+    };
   }
-  return {
+
+  const refined = {
     ...rules,
     seniority: judgment.junior ? JobSeniority.Junior : rules.seniority,
     aggregator: judgment.aggregator || rules.aggregator,
+  };
+  if (rules.accepted) return refined;
+  if (rules.rejectedBy === 'stack') return rules;
+
+  return {
+    ...refined,
+    accepted: true,
+    reason: null,
+    rejectedBy: null,
+    uncertain: true,
+    location: rules.rejectedBy === 'location' ? JobLocation.Unknown : rules.location,
   };
 }
 
 function toNewJob(
   source: string,
   offer: Offer,
-  rules: Verdict,
   verdict: Verdict,
   judgeStatus: JudgeStatus,
   runId: number,
@@ -157,8 +211,10 @@ function toNewJob(
     author: offer.author ?? null,
     text: storedText(ad),
     url: offer.url,
-    location: locationLabel(rules.location, rules.reason),
-    locationKind: rules.location,
+    // Del veredicto FINAL, no de las reglas: si el juez revocó un descarte por
+    // ubicación, la ubicación que afirmaba esa regla ya no vale.
+    location: locationLabel(verdict.location, verdict.reason),
+    locationKind: verdict.location,
     verdict: verdict.accepted ? JobVerdict.Accepted : JobVerdict.Rejected,
     rejectionReason: verdict.accepted ? null : verdict.reason,
     seniority: verdict.seniority,

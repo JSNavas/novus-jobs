@@ -10,9 +10,21 @@ export interface Offer {
   author?: string | null;
 }
 
+/**
+ * Qué familia de reglas descartó. Existe para que el juez IA pueda REVOCAR un
+ * descarte, pero solo de lo que se le pregunta: la instrucción le pide decidir
+ * si es una vacante, la ubicación, el idioma y la tecnología — nunca si el
+ * anuncio cubre el stack del candidato. Un descarte `stack` es, por tanto,
+ * definitivo: dejar que lo revoque sería dejar entrar «Encargado de atención a
+ * pacientes» porque el modelo confirma que sí, es una vacante remota de verdad.
+ */
+export type RejectedBy = 'not-offer' | 'location' | 'veto' | 'stack';
+
 export interface Verdict {
   accepted: boolean;
   reason: string | null;
+  /** `null` si está aceptada. Dice quién la descartó, no por qué. */
+  rejectedBy: RejectedBy | null;
   uncertain: boolean;
   seniority: JobSeniority;
   aggregator: boolean;
@@ -50,15 +62,15 @@ function buildContext(text: string, stack: readonly string[]): Context {
   };
 }
 
-function reject(ctx: Context, reason: string): Verdict {
-  return { accepted: false, reason, uncertain: false, ...publicFields(ctx) };
+function reject(ctx: Context, reason: string, by: RejectedBy): Verdict {
+  return { accepted: false, reason, rejectedBy: by, uncertain: false, ...publicFields(ctx) };
 }
 
 function accept(ctx: Context, uncertain: boolean): Verdict {
-  return { accepted: true, reason: null, uncertain, ...publicFields(ctx) };
+  return { accepted: true, reason: null, rejectedBy: null, uncertain, ...publicFields(ctx) };
 }
 
-function publicFields(ctx: Context): Omit<Verdict, 'accepted' | 'reason' | 'uncertain'> {
+function publicFields(ctx: Context): Omit<Verdict, 'accepted' | 'reason' | 'rejectedBy' | 'uncertain'> {
   return {
     seniority: ctx.seniority,
     aggregator: ctx.aggregator,
@@ -71,24 +83,24 @@ function publicFields(ctx: Context): Omit<Verdict, 'accepted' | 'reason' | 'unce
 
 /** Lo primero: ¿es siquiera una oferta de trabajo? */
 function rejectNonOffer(ctx: Context): Verdict | null {
-  if (isCandidateSelfPromotion(ctx.text)) return reject(ctx, 'no es una vacante: es alguien ofreciéndose como candidato');
-  if (!looksLikeOffer(ctx.text)) return reject(ctx, 'no es una oferta de trabajo (publicación técnica o de opinión)');
+  if (isCandidateSelfPromotion(ctx.text)) return reject(ctx, 'no es una vacante: es alguien ofreciéndose como candidato', 'not-offer');
+  if (!looksLikeOffer(ctx.text)) return reject(ctx, 'no es una oferta de trabajo (publicación técnica o de opinión)', 'not-offer');
   return null;
 }
 
 /** Descalificadores absolutos: un remoto de otro país o presencial no se rescatan con el stack. */
 function rejectByLocation(ctx: Context): Verdict | null {
-  if (ctx.location === JobLocation.OtherCountry) return reject(ctx, 'remoto restringido a otro país');
-  if (ctx.location === JobLocation.Onsite) return reject(ctx, 'presencial o híbrido fuera de Venezuela');
+  if (ctx.location === JobLocation.OtherCountry) return reject(ctx, 'remoto restringido a otro país', 'location');
+  if (ctx.location === JobLocation.Onsite) return reject(ctx, 'presencial o híbrido fuera de Venezuela', 'location');
   return null;
 }
 
 /** Los vetos por tecnología e idioma se juzgan sobre el anuncio sin la firma de quien lo publica. */
 function rejectByVetoes(ctx: Context, ad: string, cannotDo: readonly string[]): Verdict | null {
   const unknownTech = hasSeveralOpenings(ad) ? null : unknownRequiredTech(ad, cannotDo);
-  if (unknownTech) return reject(ctx, `exigen ${unknownTech.trim()}, que no sabe`);
-  if (englishRequirement(ad) === 'required') return reject(ctx, 'exigen inglés avanzado');
-  if (isVenezuelanEmployer(ctx.text)) return reject(ctx, 'la contrata una empresa venezolana');
+  if (unknownTech) return reject(ctx, `exigen ${unknownTech.trim()}, que no sabe`, 'veto');
+  if (englishRequirement(ad) === 'required') return reject(ctx, 'exigen inglés avanzado', 'veto');
+  if (isVenezuelanEmployer(ctx.text)) return reject(ctx, 'la contrata una empresa venezolana', 'veto');
   return null;
 }
 
@@ -100,20 +112,20 @@ function judgeCore(ctx: Context, core: readonly string[]): Verdict | null {
   if (!core.length) return null;
   const coreMatch = matchStack(ctx.text, core);
   if (coreMatch.length && isOtherEcosystem(ctx.text, coreMatch)) {
-    return reject(ctx, 'es de otro ecosistema (solo coincide en JavaScript, de refilón)');
+    return reject(ctx, 'es de otro ecosistema (solo coincide en JavaScript, de refilón)', 'stack');
   }
   if (coreMatch.length) return null;
   if (isOwnRole(ctx.text)) return accept(ctx, true);
   const reason = ctx.stackMatch.length
     ? `solo coincide en lo periférico (${ctx.stackMatch.join(', ')}), nada de su núcleo`
     : 'no menciona nada de su stack';
-  return reject(ctx, reason);
+  return reject(ctx, reason, 'stack');
 }
 
 function judgeStack(ctx: Context): Verdict | null {
   if (ctx.stackMatch.length) return null;
   if (isOwnRole(ctx.text)) return accept(ctx, true);
-  return reject(ctx, 'no menciona nada de su stack');
+  return reject(ctx, 'no menciona nada de su stack', 'stack');
 }
 
 /**
