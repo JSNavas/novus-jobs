@@ -157,10 +157,20 @@ function stackSentence(job: Job): string {
   const tail = stack.length > 1
     ? 'que son justo las tecnologías que vengo usando'
     : 'que es justo la tecnología que vengo usando';
-  return (
-    ` Vi que para la vacante requieren conocimientos en ${noun} ${list}, ${tail} desde hace más de ` +
-    '5 años y que uso a diario en mis proyectos personales.'
-  );
+  /*
+   * «desde hace varios años en los roles que he desempeñado anteriormente», y
+   * no «desde hace más de 5 años … en mis proyectos personales», que es como
+   * estaba. Dos motivos, y los dos importan:
+   *
+   *   · «proyectos personales» le resta. Dice que esas tecnologías las usa
+   *     fuera del trabajo, justo lo contrario de lo que quiere transmitir
+   *     alguien con 9 años de oficio.
+   *   · el número era FIJO y la lista CAMBIA en cada oferta. Hoy sale
+   *     TypeScript y es cierto; mañana le toca una que casa por AWS o Python y
+   *     la carta afirma cinco años que quizá no sean. Un texto que se arma solo
+   *     no puede llevar una cifra que nadie vuelve a comprobar.
+   */
+  return ` Vi que para la vacante requieren conocimientos en ${noun} ${list}, ${tail} desde hace varios años en los roles que he desempeñado anteriormente.`;
 }
 
 /** Suya, literal. La escribió él y no se reescribe (solo se le ponen los acentos). */
