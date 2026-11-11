@@ -30,7 +30,7 @@ export interface Topic {
 
 export type TopicArea =
   | 'lenguaje' | 'backend' | 'frontend' | 'datos' | 'nube'
-  | 'arquitectura' | 'practicas' | 'equipo';
+  | 'arquitectura' | 'practicas' | 'sistema' | 'equipo';
 
 /** `name` se añade solo a los alias: no hace falta repetirlo. */
 function topic(area: TopicArea, name: string, ...aliases: string[]): Topic {
@@ -149,6 +149,20 @@ export const TOPICS: readonly Topic[] = [
     'modelos predictivos', 'MLOps'),
   topic('practicas', 'IA en el producto', 'inteligencia artificial', 'IA generativa', 'GenAI'),
 
+  /* ─── SISTEMA OPERATIVO Y TERMINAL ──────────────────────────────────────
+   * Medido el 2026-11-11: UNA sola vacante lo menciona («Entorno de
+   * desarrollo Linux: configuración autónoma de stack local»), o sea por
+   * debajo del umbral de dos y hoy no sale en la lista.
+   *
+   * Se añade igual, y por el mismo motivo que MCP: un tema que no está en el
+   * catálogo no se detecta por mucho que lo pidan. Si mañana tres empresas
+   * exigen Linux —o macOS, que es lo que pasa cuando dan el equipo— aparece
+   * solo, y a tiempo. */
+  topic('sistema', 'Linux', 'Ubuntu', 'Debian', 'Unix', 'servidor Linux', 'entorno Linux'),
+  topic('sistema', 'macOS', 'Mac OS', 'MacBook'),
+  topic('sistema', 'Windows', 'WSL', 'PowerShell'),
+  topic('sistema', 'Terminal y scripting', 'bash', 'shell scripting', 'CLI', 'línea de comandos', 'zsh', 'scripting'),
+
   // ─── Equipo e idioma
   topic('equipo', 'Inglés', 'English', 'inglés avanzado', 'inglés conversacional'),
   topic('equipo', 'Metodologías ágiles', 'Scrum', 'Kanban', 'agile', 'ágil'),
@@ -164,5 +178,6 @@ export const AREA_LABELS: Record<TopicArea, string> = {
   nube: 'Nube e infraestructura',
   arquitectura: 'Arquitectura',
   practicas: 'Prácticas',
+  sistema: 'Sistema operativo y terminal',
   equipo: 'Equipo e idioma',
 };

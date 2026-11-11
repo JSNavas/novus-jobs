@@ -838,3 +838,38 @@ RAG y LLMs entran directamente al top 10 y antes no se veían.
 explicación de para qué sirve esto: el día que empiece a pedirse aparece solo.
 Un tema que no está en el catálogo no se detecta por mucho que lo pidan — ese
 es el límite real del Enfoque, no la ventana.
+
+---
+
+## Rev. 17 — Asistentes de código por su nombre, y sistema operativo · 2026-11-11
+
+### Las herramientas, nombradas en el título
+
+Preguntó si las vacantes piden Claude y Cursor. **Lo pedían**, pero el tema se
+llamaba «Asistentes de código» a secas y había que abrir los ejemplos para
+saberlo. Ahora se llama «Asistentes de código (Copilot, Cursor, Claude)»:
+cuando lo que se busca en una lista es un nombre propio, el nombre va en el
+título.
+
+Lo que hay de verdad en sus vacantes: una pide «herramientas de IA para
+desarrollo, tales como GitHub Copilot, ChatGPT, Claude, Cursor o similares» y
+otra dice «construyes **en Cursor** las soluciones ya diseñadas». Se añadieron
+Windsurf, Codex y «vibe coding».
+
+**Lovable queda fuera a propósito.** En la única vacante donde aparece va junto
+a WordPress y Webflow: es montar webs sin código, no asistir a quien programa.
+Contarlo aquí inflaría el tema con algo que no lo es.
+
+### Sistema operativo
+
+Cuatro temas nuevos en un área propia: Linux, macOS, Windows y «Terminal y
+scripting».
+
+Medido antes de escribirlos: **una sola vacante** menciona un sistema operativo
+(«Entorno de desarrollo Linux: configuración autónoma de stack local»), o sea
+por debajo del umbral de dos — hoy no sale ninguno en la lista, y eso es
+correcto.
+
+Se añaden igual por el mismo motivo que MCP: **un tema que no está en el
+catálogo no se detecta por mucho que lo pidan**. El coste de tenerlo esperando
+es cero; el de no tenerlo es enterarse tarde.
