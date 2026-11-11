@@ -3,6 +3,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import type { BrowserPool } from './browser/session.js';
 import type { JobsRepository } from './db/jobs.repository.js';
 import type { RunsRepository } from './db/runs.repository.js';
+import type { SettingsRepository } from './db/settings.repository.js';
 import { registerBrowserRoutes } from './routes/browser.js';
 import { registerSettingsRoute } from './routes/settings.js';
 import { registerJobRoutes } from './routes/jobs.js';
@@ -20,6 +21,7 @@ export interface AppDeps {
   sources: readonly JobSource[];
   scheduleHours: readonly number[];
   gmailAccount: string | null;
+  settings: SettingsRepository;
   /** Carpeta con la UI compilada. Si no existe, el servidor solo sirve la API. */
   webDist: string | null;
 }
@@ -30,7 +32,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   registerJobRoutes(app, { jobs: deps.jobs, runs: deps.runs });
   registerRunRoutes(app, { runs: deps.runs, runner: deps.runner, scheduler: deps.scheduler, hours: deps.scheduleHours });
   registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler });
-  registerSettingsRoute(app, deps.gmailAccount);
+  registerSettingsRoute(app, { gmailAccount: deps.gmailAccount, settings: deps.settings });
 
   if (deps.webDist) await app.register(fastifyStatic, { root: deps.webDist });
   app.setNotFoundHandler((request, reply) => {

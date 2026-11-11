@@ -556,3 +556,67 @@ solo queda «Ver más», que es lo único que habla del texto y no de la oferta.
 ejecutando su lógica contra las ofertas reales de la API, no con un test
 automático. Si el front llega a tener tests, esta función es la primera
 candidata: es pura y tiene cuatro ramas (con/sin rol, con/sin empresa).
+
+---
+
+## Rev. 12 — Configuración: la motivación se edita, no se despliega · 2026-11-11
+
+El párrafo de las postulaciones se corrigió **cinco veces en una tarde**, y
+cada corrección fue un cambio de código, un build y un reinicio del servicio.
+Una frase que no suena como él no es un error de programación: es algo que
+tiene que poder arreglar quien la escribe, en el momento en que la lee.
+
+### Dónde vive ahora
+
+- Tabla `settings (key, value)` en SQLite. Clave y valor, no una columna por
+  ajuste: el siguiente no debería pedir una migración.
+- En la BD y no en el `.env`, porque el `.env` solo se lee al arrancar —
+  cambiar ahí la plantilla obligaría a reiniciar el servicio para corregir una
+  coma.
+- `GET /api/settings` devuelve la guardada y también la de fábrica, para que la
+  pantalla pueda ofrecer «Volver a la de fábrica». `PUT /api/settings` la
+  guarda.
+- Pantalla `/configuracion`, última del menú y sin contador: se entra una vez a
+  dejar una frase como la quieres, no cada día.
+
+### Los huecos
+
+`{puesto}`, `{empresa}` y `{tecnologias}` se rellenan con los datos de cada
+oferta; son la diferencia entre un párrafo genérico y uno que demuestra que
+leyó el anuncio. Dos comportamientos que no son obvios y están escritos en la
+propia pantalla:
+
+- **Sin coincidencias de stack, la frase de `{tecnologias}` desaparece entera.**
+  Lo contrario es pegar «requieren conocimientos en las tecnologías , que son
+  justo las que vengo usando» en una postulación real.
+- **`{empresa}` dice «la empresa» cuando no se sabe quién contrata.** En Get on
+  Board la API entrega la empresa; en LinkedIn `author` es la persona que
+  publicó, y «me interesa trabajar en María Pérez» sería peor que no nombrar a
+  nadie.
+
+### Los largos se validan en el servidor
+
+50 y 1000 caracteres, que son los del formulario de Get on Board. Se validan en
+el `PUT` y no solo en la pantalla: descubrir el límite cuando el sitio rechaza
+el texto —con la postulación a medias— es el peor momento posible. Un texto
+vacío no es un error: significa «vuelve a la de fábrica».
+
+El tope final se vuelve a comprobar al RENDERIZAR, porque los huecos crecen al
+rellenarse: una plantilla de 1000 caracteres puede dar una carta de 1080. Si se
+pasa, cae la frase de las tecnologías, que es la única prescindible.
+
+### Y «Copiar para compartir» pasó a ser «Copiar enlace»
+
+Copiaba el título, el anuncio entero y la URL. Para pasarle una oferta a
+alguien por WhatsApp eso son cuarenta líneas de requisitos que ya están en la
+página a la que lleva el enlace: quien lo recibe no las lee y quien lo pega
+tiene que borrarlas. Ahora copia el enlace; si la oferta no tiene, el de
+postulación; y solo si no hay ninguno, el texto.
+
+### GAP
+
+La plantilla admite cualquier texto, así que puede guardarse una sin huecos
+—válida, pero el párrafo sería el mismo en todas las ofertas— o con un hueco
+mal escrito (`{empresas}`), que se pegaría literal. No se valida a propósito:
+la pantalla lista los tres huecos y el señor es quien escribe ahí. Si llegara a
+pasar, el sitio donde avisarlo es la propia pantalla, con una vista previa.

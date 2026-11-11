@@ -1,0 +1,29 @@
+import type { Db } from './database.js';
+
+/**
+ * Los ajustes que el señor cambia desde el dashboard.
+ *
+ * Clave y valor, no una columna por ajuste: el siguiente ajuste no debería
+ * pedir una migración. Y en la BD y no en el `.env` porque el `.env` solo se
+ * lee al arrancar — cambiar ahí la plantilla obligaría a reiniciar el
+ * servicio, que es justo lo que no puede pedírsele a quien solo quiere
+ * corregir una frase.
+ */
+export class SettingsRepository {
+  constructor(private readonly db: Db) {}
+
+  get(key: string): string | null {
+    const row = this.db.prepare<[string], { value: string }>(
+      'SELECT value FROM settings WHERE key = ?',
+    ).get(key);
+    return row?.value ?? null;
+  }
+
+  set(key: string, value: string): void {
+    this.db.prepare(
+      'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value',
+    ).run(key, value);
+  }
+}
+
+export const MOTIVATION_TEMPLATE_KEY = 'motivationTemplate';

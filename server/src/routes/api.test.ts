@@ -9,6 +9,7 @@ import { BrowserPool } from '../browser/session.js';
 import { openDatabase, type Db } from '../db/database.js';
 import { JobsRepository, type NewJob } from '../db/jobs.repository.js';
 import { RunsRepository } from '../db/runs.repository.js';
+import { SettingsRepository } from '../db/settings.repository.js';
 import { Mailer } from '../notify/mailer.js';
 import { WATCHED_ACCOUNT_POLICY } from '../sources/policy.js';
 import type { JobSource } from '../sources/types.js';
@@ -78,7 +79,10 @@ describe('API HTTP', () => {
       runner,
     });
     const pool = new BrowserPool(join(dir, 'profiles'), true);
-    app = await buildApp({ jobs, runs, runner, scheduler, pool, sources: [], scheduleHours: [9, 13, 18], gmailAccount: null, webDist: null });
+    app = await buildApp({
+      jobs, runs, runner, scheduler, pool, sources: [], scheduleHours: [9, 13, 18],
+      gmailAccount: null, settings: new SettingsRepository(db), webDist: null,
+    });
   });
 
   after(async () => {
@@ -184,6 +188,53 @@ describe('API HTTP', () => {
     const body = res.json<{ items: unknown[]; total: number; bySeniority: Record<string, number> }>();
     assert.equal(body.items.length, 0, 'no hay ninguna junior');
     assert.deepEqual(body.bySeniority, { regular: 2, junior: 0 }, 'pero sí las de la otra pestaña');
+  });
+
+  /* ═══ LA PLANTILLA DE LA MOTIVACIÓN ═══
+   * Se corrigió cinco veces en una tarde, y cada corrección era un despliegue.
+   * Ahora vive en la BD y se edita desde la pantalla, así que el contrato de
+   * esta ruta es lo único que separa "corregir una frase" de "tocar código". */
+
+  it('GET /api/settings trae la plantilla de fábrica cuando nunca se guardó ninguna', async () => {
+    const response = await app.inject({ method: 'GET', url: '/api/settings' });
+    const body = response.json() as { motivationTemplate: string; defaultMotivationTemplate: string };
+
+    assert.equal(response.statusCode, 200);
+    assert.match(body.motivationTemplate, /\{puesto\}/);
+    assert.match(body.motivationTemplate, /\{empresa\}/);
+    assert.match(body.motivationTemplate, /\{tecnologias\}/);
+    assert.equal(body.motivationTemplate, body.defaultMotivationTemplate);
+  });
+
+  it('PUT /api/settings guarda la plantilla y el GET siguiente la devuelve', async () => {
+    const mia = `Me interesa {puesto} en {empresa}. ${'Texto de prueba suficientemente largo. '.repeat(2)}`;
+    const put = await app.inject({ method: 'PUT', url: '/api/settings', payload: { motivationTemplate: mia } });
+    assert.equal(put.statusCode, 200);
+
+    const response = await app.inject({ method: 'GET', url: '/api/settings' });
+    assert.equal((response.json() as { motivationTemplate: string }).motivationTemplate, mia.trim());
+  });
+
+  it('un texto vacío NO borra la plantilla: restituye la de fábrica', async () => {
+    const put = await app.inject({ method: 'PUT', url: '/api/settings', payload: { motivationTemplate: '   ' } });
+    const body = put.json() as { motivationTemplate: string };
+
+    assert.equal(put.statusCode, 200);
+    assert.match(body.motivationTemplate, /\{puesto\}/, 'quedarse sin texto que pegar sería peor que no dejar borrar');
+  });
+
+  it('un texto más corto que el mínimo del formulario se rechaza con el número', async () => {
+    const put = await app.inject({ method: 'PUT', url: '/api/settings', payload: { motivationTemplate: 'muy corto' } });
+
+    assert.equal(put.statusCode, 400);
+    assert.match((put.json() as { error: string }).error, /al menos 50/);
+  });
+
+  it('un texto más largo que el máximo se rechaza aquí y no en Get on Board', async () => {
+    const put = await app.inject({ method: 'PUT', url: '/api/settings', payload: { motivationTemplate: 'x'.repeat(1001) } });
+
+    assert.equal(put.statusCode, 400);
+    assert.match((put.json() as { error: string }).error, /1000 como mucho/);
   });
 
   it('GET /api/schedule dice las horas y la zona, para que la UI no las invente', async () => {

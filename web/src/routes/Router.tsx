@@ -5,6 +5,7 @@ import RejectedPage from '../views/dashboard/RejectedPage';
 import RunPage from '../views/dashboard/RunPage';
 import { INBOX_VIEWS } from '../views/jobs/inbox';
 import JobsPage from '../views/jobs/JobsPage';
+import SettingsPage from '../views/settings/SettingsPage';
 
 const router = createBrowserRouter([
   {
@@ -20,6 +21,7 @@ const router = createBrowserRouter([
       ...INBOX_VIEWS.map((view) => ({ path: view.path.slice(1), element: <JobsPage /> })),
       { path: 'rechazadas', element: <RejectedPage /> },
       { path: 'busquedas/:id', element: <RunPage /> },
+      { path: 'configuracion', element: <SettingsPage /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

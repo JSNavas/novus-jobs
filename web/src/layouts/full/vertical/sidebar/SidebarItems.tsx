@@ -1,6 +1,6 @@
 import { List, ListItemButton, ListItemIcon, ListItemText, ListSubheader } from '@mui/material';
 import {
-  IconArchive, IconBookmark, IconEye, IconFilterOff, IconInbox, IconLayoutDashboard,
+  IconArchive, IconBookmark, IconEye, IconFilterOff, IconInbox, IconLayoutDashboard, IconSettings,
   type Icon as TablerIcon,
 } from '@tabler/icons-react';
 import { NavLink } from 'react-router';
@@ -122,6 +122,23 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
           </ListItemIcon>
           <ListItemText primary="Descartadas por el filtro" />
           {stats?.rejected ? <AppChip label={String(stats.rejected)} tone="neutral" /> : null}
+        </ListItemButton>
+      </List>
+
+      {/* Abajo del todo y sin contador: se entra una vez a dejar una frase como
+          la quieres, no cada día. */}
+      <List sx={{ px: 2 }}>
+        <ListItemButton
+          component={NavLink}
+          to="/configuracion"
+          end
+          onClick={onNavigate}
+          sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
+        >
+          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+            <IconSettings size="20" stroke={1.5} />
+          </ListItemIcon>
+          <ListItemText primary="Configuración" />
         </ListItemButton>
       </List>
     </>

@@ -83,21 +83,15 @@ export function gmailComposeUrl(job: Job, account: string | null): string {
 /* ═══════════════════════════════════════════════════════════════════════════
  * «¿POR QUÉ TE INTERESA TRABAJAR EN <EMPRESA>?»
  *
- * Get on Board pide ese texto en cada postulación, con un mínimo de 50
- * caracteres y un máximo de 1000. Escribirlo a mano en cada una es lo que hace
- * que se acabe pegando siempre el mismo párrafo genérico — y un párrafo
- * genérico se nota, sobre todo cuando el formulario de al lado ya dice que
- * otros candidatos pidieron entre $2.250 y $3.500.
+ * Get on Board lo pide en cada postulación, con un mínimo de 50 caracteres y
+ * un máximo de 1000. Escribirlo a mano en cada una es lo que hace que se acabe
+ * pegando siempre el mismo párrafo genérico — y un párrafo genérico se nota.
  *
- * Esto arma el párrafo CON LOS DATOS DE ESA OFERTA. Son sus palabras: la
- * plantilla es la suya, con los acentos puestos y dos cambios de fondo:
- *
- *   1. Empieza por lo que él APORTA y no por lo que busca. «Busco una empresa
- *      donde explotar mi potencial» habla de él; quien lee quiere saber qué
- *      recibe. Dice lo mismo, en el orden que le sirve.
- *   2. Nombra la coincidencia real de tecnologías. Es la única frase que no se
- *      puede escribir de antemano, y por eso es la que demuestra que leyó el
- *      anuncio.
+ * EL TEXTO YA NO VIVE AQUÍ. Está en la BD y se edita en Configuración: una
+ * frase que no le gusta se corrige en la pantalla, no en el código, y cada
+ * cambio de redacción no es un despliegue. Lo que queda aquí es RELLENAR SUS
+ * HUECOS con los datos de esa oferta, que es lo único que un texto guardado no
+ * puede saber.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 /** Cuántas tecnologías se nombran. Más de cuatro parece una lista pegada. */
@@ -110,23 +104,17 @@ const MAX_LETTER_CHARS = 1000;
  *
  * En Get on Board `author` es la empresa, porque la API la entrega. En
  * LinkedIn es la persona que publicó: escribir «me interesa trabajar en María
- * Pérez» sería peor que no nombrar a nadie. Cuando no se sabe, la carta
- * arranca sin nombre en vez de dejar un hueco que se pegue sin querer.
+ * Pérez» sería peor que no nombrar a nadie, así que ahí se dice «la empresa».
  */
-function employerName(job: Job): string | null {
+function employerName(job: Job): string {
   const company = job.company?.trim();
   if (company) return company;
   const author = job.author?.trim();
-  return job.source === 'getonbrd' && author ? author : null;
+  return job.source === 'getonbrd' && author ? author : 'la empresa';
 }
 
-function opening(job: Job): string {
-  const company = employerName(job);
-  const role = job.role?.trim();
-  if (role && company) return `Me interesa el puesto de ${role} en ${company}`;
-  if (company) return `Me interesa trabajar en ${company}`;
-  if (role) return `Me interesa el puesto de ${role}`;
-  return 'Me interesa esta oportunidad';
+function positionName(job: Job): string {
+  return job.role?.trim() || job.title?.trim() || 'la vacante';
 }
 
 /**
@@ -144,56 +132,50 @@ function withoutRedundant(stack: readonly string[]): string[] {
   ));
 }
 
-/** Lo que de verdad coincide, dicho sin exagerar: «lo que uso a diario». */
-function stackSentence(job: Job): string {
+function stackList(job: Job): string {
   const stack = withoutRedundant(job.stackMatch).slice(0, STACK_IN_LETTER);
   if (!stack.length) return '';
-  const list = stack.length > 1
-    ? `${stack.slice(0, -1).join(', ')} y ${stack[stack.length - 1]}`
-    : stack[0];
-  // Singular cuando solo coincide una: "en las tecnologías React" chirría, y
-  // un detalle así delata una plantilla rellenada por una máquina.
-  const noun = stack.length > 1 ? 'las tecnologías' : 'la tecnología';
-  const tail = stack.length > 1
-    ? 'que son justo las tecnologías que vengo usando'
-    : 'que es justo la tecnología que vengo usando';
-  /*
-   * «desde hace varios años en los roles que he desempeñado anteriormente», y
-   * no «desde hace más de 5 años … en mis proyectos personales», que es como
-   * estaba. Dos motivos, y los dos importan:
-   *
-   *   · «proyectos personales» le resta. Dice que esas tecnologías las usa
-   *     fuera del trabajo, justo lo contrario de lo que quiere transmitir
-   *     alguien con 9 años de oficio.
-   *   · el número era FIJO y la lista CAMBIA en cada oferta. Hoy sale
-   *     TypeScript y es cierto; mañana le toca una que casa por AWS o Python y
-   *     la carta afirma cinco años que quizá no sean. Un texto que se arma solo
-   *     no puede llevar una cifra que nadie vuelve a comprobar.
-   */
-  return ` Vi que para la vacante requieren conocimientos en ${noun} ${list}, ${tail} desde hace varios años en los roles que he desempeñado anteriormente.`;
+  if (stack.length === 1) return stack[0]!;
+  return `${stack.slice(0, -1).join(', ')} y ${stack[stack.length - 1]}`;
 }
 
-/** Suya, literal. La escribió él y no se reescribe (solo se le ponen los acentos). */
-const PITCH =
-  ' ya que es un rol donde puedo aportar toda la experiencia que he adquirido a lo largo de ' +
-  '9 años como desarrollador de software.';
+/**
+ * Tira las frases que mencionan un hueco que se quedó sin valor.
+ *
+ * Sin coincidencias de stack, «requieren conocimientos en las tecnologías ,
+ * que son justo las que vengo usando» es una frase rota pegada en una
+ * postulación real. Se va entera y el resto del párrafo sigue en pie, que es
+ * exactamente lo que hacía el texto cuando vivía en el código.
+ */
+function dropSentencesWith(template: string, placeholder: string): string {
+  return template
+    .split(/(?<=\.)\s+/)
+    .filter((sentence) => !sentence.includes(placeholder))
+    .join(' ')
+    .trim();
+}
 
-const CLOSING =
-  ' Soy responsable y dedicado, me gusta trabajar en equipo y me adapto rápidamente a los nuevos ' +
-  'entornos de trabajo. Me fascina aprender nuevas tecnologías, cómo integrarlas y cómo mejorar mi ' +
-  'flujo de trabajo para que sea más rápido y productivo. Soy amante de las buenas prácticas y del ' +
-  'código escalable por lo que me mantengo en constante estudio para crecer cada día como desarrollador.';
+/** `split`/`join` y no `replaceAll`: el target de TS de este proyecto es anterior. */
+function fill(template: string, job: Job, stack: string): string {
+  return template
+    .split('{puesto}').join(positionName(job))
+    .split('{empresa}').join(employerName(job))
+    .split('{tecnologias}').join(stack);
+}
 
 /**
- * El párrafo listo para pegar en la postulación.
+ * El párrafo listo para pegar, con los datos de esta oferta.
  *
  * Si se pasara del tope del formulario cae la frase de las tecnologías, que es
  * la única prescindible: un texto cortado a la mitad se ve peor que uno sin
- * ese detalle. Con el stack más largo posible se queda en ~700 caracteres, así
- * que el recorte es un seguro, no algo que vaya a pasar.
+ * ese detalle. El servidor ya valida el largo de la plantilla, pero los huecos
+ * crecen al rellenarse, así que el último control tiene que estar aquí.
  */
-export function motivationLetter(job: Job): string {
-  const full = `${opening(job)}${PITCH}${stackSentence(job)}${CLOSING}`;
-  if (full.length <= MAX_LETTER_CHARS) return full;
-  return `${opening(job)}${PITCH}${CLOSING}`;
+export function motivationLetter(job: Job, template: string): string {
+  const stack = stackList(job);
+  const base = stack ? template : dropSentencesWith(template, '{tecnologias}');
+  const letter = fill(base, job, stack);
+
+  if (letter.length <= MAX_LETTER_CHARS) return letter;
+  return fill(dropSentencesWith(template, '{tecnologias}'), job, '');
 }

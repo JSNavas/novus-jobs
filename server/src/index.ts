@@ -8,6 +8,7 @@ import { legacyLinkedinProfileDir, loadConfig } from './config.js';
 import { openDatabase } from './db/database.js';
 import { JobsRepository } from './db/jobs.repository.js';
 import { RunsRepository } from './db/runs.repository.js';
+import { SettingsRepository } from './db/settings.repository.js';
 import { LlmJudge } from './filters/judge.js';
 import { PROFILE } from './profile/profile.js';
 import { Mailer } from './notify/mailer.js';
@@ -58,6 +59,7 @@ async function main(): Promise<void> {
   });
 
   const app = await buildApp({
+    settings: new SettingsRepository(db),
     jobs,
     runs,
     runner,

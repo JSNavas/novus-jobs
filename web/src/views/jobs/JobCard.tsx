@@ -77,14 +77,20 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
   const [lettered, setLettered] = useState(false);
 
   /**
-   * Lo que se le pasa a otra persona: el enlace si lo hay, y si no el texto de
-   * la oferta con el enlace que tengamos. LinkedIn no siempre deja el enlace de
-   * la publicación, y quedarse sin poder compartir por eso sería absurdo.
+   * EL ENLACE, Y NADA MÁS.
+   *
+   * Copiaba el título, el anuncio entero y la URL. Para pasarle una oferta a
+   * alguien por WhatsApp eso son cuarenta líneas de requisitos que ya están en
+   * la página a la que lleva el enlace: quien lo recibe no las lee, y quien lo
+   * pega tiene que borrarlas. Si no hay enlace de publicación se usa el de
+   * postulación, y solo si no hay ninguno se recurre al texto, que es mejor que
+   * copiar el vacío.
    */
   const share = async (): Promise<void> => {
-    const parts = [job.title, job.text, job.url].filter(Boolean) as string[];
+    const link = job.url ?? job.applyUrl;
+    const payload = link ?? [job.title, job.text].filter(Boolean).join('\n\n');
     try {
-      await navigator.clipboard.writeText(parts.join('\n\n'));
+      await navigator.clipboard.writeText(payload);
       setShared(true);
       setTimeout(() => setShared(false), COPIED_FEEDBACK_MS);
     } catch {
@@ -99,7 +105,7 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
    */
   const copyLetter = async (): Promise<void> => {
     try {
-      await navigator.clipboard.writeText(motivationLetter(job));
+      await navigator.clipboard.writeText(motivationLetter(job, settings?.motivationTemplate ?? ''));
       setLettered(true);
       setTimeout(() => setLettered(false), COPIED_FEEDBACK_MS);
     } catch {
@@ -210,13 +216,16 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
                 expresamente ("si conocés a alguien, pasale esta publicación"). */}
             {/* Solo donde se va a usar: él no se postula a las junior, así que
                 ofrecerle la carta ahí es ofrecerle algo que no va a pegar. */}
-            {job.seniority !== JobSeniority.Junior ? (
+            {/* Sin plantilla cargada no hay nada que copiar: el botón espera
+                a que lleguen los ajustes en vez de dejar el portapapeles
+                vacío sin decir nada. */}
+            {job.seniority !== JobSeniority.Junior && settings?.motivationTemplate ? (
               <Button variant="outlined" onClick={() => void copyLetter()}>
                 {lettered ? '✓ Copiada' : 'Copiar motivación'}
               </Button>
             ) : null}
             <Button variant="outlined" onClick={() => void share()}>
-              {shared ? '✓ Copiado' : 'Copiar para compartir'}
+              {shared ? '✓ Copiado' : 'Copiar enlace'}
             </Button>
             {job.contactEmail ? (
               <Button variant="outlined" onClick={() => void copyEmail()}>

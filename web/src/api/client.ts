@@ -114,11 +114,24 @@ export function startRun(): Promise<RunInfo> {
 export interface Settings {
   /** La cuenta desde la que él se postula. No tiene que ver con los avisos. */
   gmailAccount: string | null;
+  /** El párrafo de motivación, con sus huecos. Se edita en Configuración. */
+  motivationTemplate: string;
+  /** La de fábrica, para poder volver a ella desde la pantalla. */
+  defaultMotivationTemplate: string;
 }
 
-/** Desde qué cuenta escribe él sus candidaturas. */
+/** Desde qué cuenta escribe él, y con qué párrafo se postula. */
 export function getSettings(): Promise<Settings> {
   return request<Settings>('/settings');
+}
+
+/** Guarda la plantilla. Con el texto vacío el servidor restituye la de fábrica. */
+export function updateSettings(motivationTemplate: string): Promise<Settings> {
+  return request<Settings>('/settings', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ motivationTemplate }),
+  });
 }
 
 /** Cuándo busca el servidor. Lo dice él: las horas son configurables. */
