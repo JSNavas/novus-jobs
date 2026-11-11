@@ -24,7 +24,11 @@ export interface FocusTopic {
   vacancies: number;
   /** Sobre el total analizado, redondeado. */
   share: number;
-  /** Si ya está en su perfil. Lo que NO lo está es la lista de estudio. */
+  /**
+   * Si está en su perfil. Ya no parte la lista —lo que se viene a ver aquí es
+   * qué piden las vacantes, lo sepa él o no— pero se sigue calculando: es un
+   * dato barato y la pantalla puede querer matizarlo algún día.
+   */
   known: boolean;
   /**
    * Frases reales de los anuncios, tal cual las escribieron. Es lo que él
@@ -112,8 +116,10 @@ export function buildFocus(jobs: readonly Job[], profile: CandidateProfile): Foc
     }];
   });
 
-  // Lo más pedido primero. A igualdad, lo que NO sabe antes que lo que ya
-  // sabe: la lista existe para estudiar, no para felicitarse.
-  topics.sort((a, b) => b.vacancies - a.vacancies || Number(a.known) - Number(b.known) || a.name.localeCompare(b.name));
+  // Lo más pedido primero, y a igualdad por nombre. Sin desempatar por lo que
+  // él sabe: la lista no se parte por eso. El stack ya hizo de filtro al
+  // decidir qué vacantes entran; volver a ordenar por él sería filtrar dos
+  // veces por lo mismo.
+  topics.sort((a, b) => b.vacancies - a.vacancies || a.name.localeCompare(b.name));
   return { analysed, topics };
 }

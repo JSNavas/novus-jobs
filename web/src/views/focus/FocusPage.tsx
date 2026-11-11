@@ -38,9 +38,6 @@ const FocusPage = () => {
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
   }, []);
 
-  const toStudy = focus?.topics.filter((t) => !t.known) ?? [];
-  const known = focus?.topics.filter((t) => t.known) ?? [];
-
   return (
     <PageContainer
       title="Enfoque"
@@ -65,34 +62,17 @@ const FocusPage = () => {
               menciones.
             </Typography>
 
+            {/* UNA SOLA LISTA. Estuvo partida en «para estudiar» y «lo que ya
+                tienes», y la división sobraba: el stack ya hizo de filtro al
+                decidir QUÉ VACANTES entran, así que separar otra vez por lo
+                que él sabe era filtrar dos veces por lo mismo. Lo que se viene
+                a ver aquí es qué piden los requisitos, lo sepa o no. */}
             <BlankCard>
               <Stack spacing={2.5} p={3}>
-                <Box>
-                  <Typography variant="h5">Para estudiar</Typography>
-                  {/* La honestidad del título importa: lo que esto sabe es que
-                      no está en su perfil, no que no lo sepa. Git sale aquí
-                      porque el perfil lista tecnologías, no prácticas. */}
-                  <Typography variant="body2" color="textSecondary">
-                    Lo que piden y no está en tu perfil. Puede que algo ya lo hagas: el perfil lista
-                    tecnologías, no prácticas — si es tu caso, añádelo ahí y dejará de salir aquí.
-                  </Typography>
-                </Box>
-                {toStudy.length
-                  ? toStudy.map((topic) => <TopicRow key={topic.name} topic={topic} total={focus.analysed} />)
+                <Typography variant="h5">Qué están pidiendo las vacantes</Typography>
+                {focus.topics.length
+                  ? focus.topics.map((topic) => <TopicRow key={topic.name} topic={topic} total={focus.analysed} />)
                   : <Typography variant="body2">Nada se repite en dos vacantes todavía.</Typography>}
-              </Stack>
-            </BlankCard>
-
-            <BlankCard>
-              <Stack spacing={2.5} p={3}>
-                <Box>
-                  <Typography variant="h5">Lo que ya tienes</Typography>
-                  <Typography variant="body2" color="textSecondary">
-                    Está en tu perfil y lo piden. Esto es lo que conviene tener fresco para una
-                    entrevista, y lo que vale la pena nombrar en la motivación.
-                  </Typography>
-                </Box>
-                {known.map((topic) => <TopicRow key={topic.name} topic={topic} total={focus.analysed} />)}
               </Stack>
             </BlankCard>
           </>

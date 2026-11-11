@@ -762,23 +762,30 @@ que piden Node.js: es ver que cuatro vacantes piden DynamoDB, que no sabe.
   beneficios hablan de otra cosa; sin ese corte, la lista se llena de
   «excelente ambiente laboral». Hay un test.
 
-### Lo que mide `known`, y lo que no
+### UNA sola lista (corrección del mismo día)
 
-`known` dice si el tema está **en su perfil**, no si lo sabe. Git y Code review
-salen en «para estudiar» porque `PROFILE.stack` lista tecnologías, no
-prácticas. La pantalla lo dice con todas las letras en vez de fingir que es un
-diagnóstico: «puede que algo ya lo hagas; si es tu caso, añádelo al perfil y
-dejará de salir aquí».
+Nació partida en «Para estudiar» y «Lo que ya tienes», y la división sobraba.
+Lo dijo él y tiene razón: **su stack ya hizo de filtro al decidir qué vacantes
+entran**, así que volver a separar por lo que sabe era filtrar dos veces por lo
+mismo. Lo que se viene a ver aquí es qué piden los requisitos, lo sepa o no.
+
+El campo `known` se sigue calculando —es barato— pero ya no parte la lista ni
+desempata el orden. Que apareciera «Git» en una sección titulada «para
+estudiar» era, además, un diagnóstico que el dato no sostenía: `PROFILE.stack`
+lista tecnologías, no prácticas.
 
 ### Primera medición, sobre 18 vacantes aceptadas
 
-| Para estudiar | | Ya en su perfil | |
-|---|---|---|---|
-| Escalabilidad y alta disponibilidad | 44% | TypeScript | 61% |
-| Observabilidad | 33% | AWS | 56% |
-| Programación asíncrona | 28% | APIs REST | 50% |
-| Clean Architecture / hexagonal | 22% | Docker, CI/CD | 44% |
-| DynamoDB | 22% | React | 44% |
+| Tema | Vacantes | |
+|---|---|---|
+| TypeScript | 11 | 61% |
+| AWS | 10 | 56% |
+| APIs REST · Node.js | 9 | 50% |
+| CI/CD · Docker · Escalabilidad · Git · React · Seguridad | 8 | 44% |
+| Microservicios | 7 | 39% |
+| Arquitectura orientada a eventos · Observabilidad | 6 | 33% |
+
+43 temas en total con al menos dos vacantes.
 
 La frase que él citó aparece bajo «Programación asíncrona», en 5 vacantes.
 
