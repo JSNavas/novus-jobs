@@ -18,7 +18,10 @@ interface JobCardProps {
 const statusActions: { status: JobStatus; label: string; variant: 'contained' | 'outlined' | 'text' }[] = [
   { status: JobStatus.New, label: 'Marcar como nueva', variant: 'text' },
   { status: JobStatus.Seen, label: 'Marcar como vista', variant: 'outlined' },
-  { status: JobStatus.Saved, label: 'Guardar', variant: 'contained' },
+  // Con borde como el resto, y no relleno. En su bloque de antes era la acción
+  // principal; en la fila común el relleno es de "Postularse", y dos botones
+  // rellenos compiten por el mismo sitio en la mirada.
+  { status: JobStatus.Saved, label: 'Guardar', variant: 'outlined' },
   { status: JobStatus.Dismissed, label: 'Descartar', variant: 'text' },
 ];
 
