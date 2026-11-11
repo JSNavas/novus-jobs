@@ -60,6 +60,7 @@ async function main(): Promise<void> {
 
   const app = await buildApp({
     settings: new SettingsRepository(db),
+    profile: PROFILE,
     jobs,
     runs,
     runner,

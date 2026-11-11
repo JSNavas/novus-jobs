@@ -726,3 +726,64 @@ lo que alguien decidió a mano. Si las quiere fuera, las saca él.
 - **«Esas deberían salir y no salen.»** De las cuatro de su captura, una **sí
   está** (Back-end NestJS de WiTi, aceptada). Las otras tres las descartaron
   sus propios vetos: dos exigen C# y la otra Shopify.
+
+---
+
+## Rev. 15 — Enfoque: qué estudiar, según lo que piden las vacantes · 2026-11-11
+
+Idea suya, y buena: si dos o tres vacantes piden lo mismo, eso es lo relevante
+y ahí hay que poner el esfuerzo. Pantalla `/enfoque`, endpoint `GET /api/focus`.
+
+### Por qué un catálogo escrito a mano y no contar palabras
+
+La frase que él señaló —«Experiencia aplicando tipado estricto, concurrencia y
+patrones asincrónicos»— **no se repite literal en ninguna otra vacante**. Cada
+empresa la escribe a su manera. Lo que se repite es el CONCEPTO, y un concepto
+no se detecta contando palabras: «experiencia», «conocimiento» y «sólidos»
+saldrían los primeros y no dirían nada.
+
+Así que `analysis/topics.ts` tiene ~60 temas con sus sinónimos, y se cuentan
+con `matchStack`, el mismo buscador con fronteras de palabra que ya usa el
+filtro. Es trabajo manual y se queda corto en lo que no esté en la lista, pero
+lo que devuelve es cierto — y una lista de estudio con ruido no se usa dos
+veces.
+
+**El catálogo va más allá de su stack a propósito.** Lo valioso no es confirmar
+que piden Node.js: es ver que cuatro vacantes piden DynamoDB, que no sabe.
+
+### Tres decisiones que sostienen el número
+
+- **Solo lo aceptado.** Las descartadas piden C#, SAP o inglés avanzado:
+  contarlas convertiría la lista en «aprende lo que no quieres hacer».
+- **Una vez por vacante, no por menciones.** Un anuncio que repite «AWS»
+  catorce veces en sus funciones no hace a AWS más demandado: hace a esa
+  empresa más repetitiva. Hay un test.
+- **Solo las viñetas del anuncio.** La presentación de la empresa y los
+  beneficios hablan de otra cosa; sin ese corte, la lista se llena de
+  «excelente ambiente laboral». Hay un test.
+
+### Lo que mide `known`, y lo que no
+
+`known` dice si el tema está **en su perfil**, no si lo sabe. Git y Code review
+salen en «para estudiar» porque `PROFILE.stack` lista tecnologías, no
+prácticas. La pantalla lo dice con todas las letras en vez de fingir que es un
+diagnóstico: «puede que algo ya lo hagas; si es tu caso, añádelo al perfil y
+dejará de salir aquí».
+
+### Primera medición, sobre 18 vacantes aceptadas
+
+| Para estudiar | | Ya en su perfil | |
+|---|---|---|---|
+| Escalabilidad y alta disponibilidad | 44% | TypeScript | 61% |
+| Observabilidad | 33% | AWS | 56% |
+| Programación asíncrona | 28% | APIs REST | 50% |
+| Clean Architecture / hexagonal | 22% | Docker, CI/CD | 44% |
+| DynamoDB | 22% | React | 44% |
+
+La frase que él citó aparece bajo «Programación asíncrona», en 5 vacantes.
+
+### GAP
+
+No se guarda: se calcula al vuelo en cada visita. Con doscientas ofertas tarda
+milisegundos, y un cálculo guardado envejece sin avisar. Si algún día la base
+crece a miles, esto es lo primero que habrá que cachear.

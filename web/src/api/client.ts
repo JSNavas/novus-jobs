@@ -111,6 +111,28 @@ export function startRun(): Promise<RunInfo> {
   return request<RunInfo>('/runs', { method: 'POST' });
 }
 
+export interface FocusTopic {
+  name: string;
+  area: string;
+  /** En cuántas vacantes aceptadas aparece. */
+  vacancies: number;
+  share: number;
+  /** Si ya está en su perfil. Lo que no lo está es la lista de estudio. */
+  known: boolean;
+  /** Frases reales de los anuncios, tal cual las escribieron. */
+  examples: string[];
+}
+
+export interface Focus {
+  analysed: number;
+  topics: FocusTopic[];
+}
+
+/** Qué piden en común las vacantes aceptadas. Se calcula al vuelo. */
+export function getFocus(): Promise<Focus> {
+  return request<Focus>('/focus');
+}
+
 export interface Settings {
   /** La cuenta desde la que él se postula. No tiene que ver con los avisos. */
   gmailAccount: string | null;

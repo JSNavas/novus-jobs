@@ -1,6 +1,6 @@
 import { List, ListItemButton, ListItemIcon, ListItemText, ListSubheader } from '@mui/material';
 import {
-  IconArchive, IconBookmark, IconEye, IconFilterOff, IconInbox, IconLayoutDashboard, IconSettings,
+  IconArchive, IconBookmark, IconEye, IconFilterOff, IconInbox, IconLayoutDashboard, IconSettings, IconTargetArrow,
   type Icon as TablerIcon,
 } from '@tabler/icons-react';
 import { NavLink } from 'react-router';
@@ -125,8 +125,23 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
         </ListItemButton>
       </List>
 
-      {/* Abajo del todo y sin contador: se entra una vez a dejar una frase como
-          la quieres, no cada día. */}
+      {/* El enfoque va con la auditoría y no con las bandejas: no es trabajo
+          pendiente, es qué dicen en conjunto las ofertas que entraron. */}
+      <List sx={{ px: 2 }}>
+        <ListItemButton
+          component={NavLink}
+          to="/enfoque"
+          end
+          onClick={onNavigate}
+          sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
+        >
+          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+            <IconTargetArrow size="20" stroke={1.5} />
+          </ListItemIcon>
+          <ListItemText primary="Enfoque" />
+        </ListItemButton>
+      </List>
+
       <List sx={{ px: 2 }}>
         <ListItemButton
           component={NavLink}

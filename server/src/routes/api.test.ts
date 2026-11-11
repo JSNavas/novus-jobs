@@ -81,7 +81,7 @@ describe('API HTTP', () => {
     const pool = new BrowserPool(join(dir, 'profiles'), true);
     app = await buildApp({
       jobs, runs, runner, scheduler, pool, sources: [], scheduleHours: [9, 13, 18],
-      gmailAccount: null, settings: new SettingsRepository(db), webDist: null,
+      gmailAccount: null, settings: new SettingsRepository(db), profile: PROFILE, webDist: null,
     });
   });
 
