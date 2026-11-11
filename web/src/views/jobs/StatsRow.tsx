@@ -23,8 +23,9 @@ const StatsRow = ({ stats }: StatsRowProps) => {
   const counters = [
     { label: 'Nuevas', value: stats.new, hint: 'Sin mirar todavía', positive: true },
     { label: 'Guardadas', value: stats.saved, hint: 'Para postularte', positive: false },
-    // 'Para ti' y no 'aceptadas': las junior quedan fuera del recuento.
-    { label: 'Total para ti', value: stats.total, hint: 'Sin las junior', positive: false },
+    // 'Para ti' y no 'aceptadas': las junior quedan fuera del recuento. Sin
+    // pie: el nombre ya lo dice, y la aclaración solo nombraba lo que falta.
+    { label: 'Total para ti', value: stats.total, hint: null, positive: false },
   ];
 
   return (
@@ -43,9 +44,11 @@ const StatsRow = ({ stats }: StatsRowProps) => {
             >
               {counter.value}
             </Typography>
-            <Typography variant="caption" component="div" color="textSecondary" mt={1}>
-              {counter.hint}
-            </Typography>
+            {counter.hint ? (
+              <Typography variant="caption" component="div" color="textSecondary" mt={1}>
+                {counter.hint}
+              </Typography>
+            ) : null}
           </Box>
         </BlankCard>
       ))}
