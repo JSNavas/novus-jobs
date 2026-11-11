@@ -194,6 +194,14 @@ Una fila por idea: «Arquitectura limpia (hexagonal, DDD, SOLID)» es una y no t
 
 La **ventana** (3, 6, 12 o 24 meses) se elige en la propia página: no cambia qué se guarda, sino con cuánto pasado se mira lo guardado. Seis por defecto — una ventana corta reacciona rápido pero tiembla, y lo que interesa ver es algo *empezando* a pedirse, con tiempo para reaccionar.
 
+### Lo nuevo se avisa
+
+Un tema aparece el día que dos vacantes coinciden en pedirlo, y hasta ahora no había forma de enterarse sin recordar cómo estaba la lista la última vez — justo lo contrario de para lo que existe la página.
+
+Ahora **el menú lleva el número** de lo que apareció desde que entraste por última vez, y dentro esas filas salen **resaltadas**. El resaltado se apaga **al salir** de la pantalla, no al entrar: apagarlo al entrar sería dibujar el aviso y borrarlo en el mismo instante.
+
+La primera vez no se marca nada: se guarda la lista como punto de partida. Encontrarse los 39 temas resaltados no es un aviso, es un fondo de pantalla — y enseña a ignorar el resaltado justo el día que empieza a significar algo.
+
 ### Apareciendo
 
 El catálogo de temas está escrito a mano, y ese era su único agujero: **lo que no está en él no se detecta por mucho que lo pidan**.

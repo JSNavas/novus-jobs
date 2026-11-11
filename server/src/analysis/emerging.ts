@@ -23,6 +23,8 @@ export interface EmergingTerm {
   vacancies: number;
   /** Una frase donde aparece, para no tener que ir al anuncio. */
   example: string | null;
+  /** ¿Apareció desde la última vez que él miró? Lo decide `news.ts`. */
+  isNew?: boolean;
 }
 
 /** Igual que un tema: con una sola vacante no hay patrón, hay una empresa. */

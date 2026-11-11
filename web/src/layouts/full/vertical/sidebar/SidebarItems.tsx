@@ -139,6 +139,10 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
             <IconTargetArrow size="20" stroke={1.5} />
           </ListItemIcon>
           <ListItemText primary="Enfoque" />
+          {/* Lo que apareció desde la última vez que entró. Sin esto, una
+              tendencia nueva solo se descubre abriendo la página a ver si
+              acaso — que es pedirle que recuerde cómo estaba la lista. */}
+          {stats?.focusNew ? <AppChip label={String(stats.focusNew)} tone="success" /> : null}
         </ListItemButton>
       </List>
 

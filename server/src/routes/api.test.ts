@@ -177,6 +177,9 @@ describe('API HTTP', () => {
     assert.deepEqual(res.json(), {
       new: 1, saved: 1, total: 2, rejected: 1, lastRun: null,
       byStatus: { new: 1, seen: 0, saved: 1, dismissed: 0 },
+      // Viaja aquí para que el menú haga UNA sola petición cada quince
+      // segundos, en vez de una por cada contador que enseña.
+      focusNew: 0,
     });
   });
 

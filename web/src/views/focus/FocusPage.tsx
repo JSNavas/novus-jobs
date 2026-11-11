@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, LinearProgress, MenuItem, Stack, TextField, Typography } from '@mui/material';
-import { getFocus, type Focus, type FocusTopic } from '../../api/client';
+import { getFocus, markFocusSeen, type Focus, type FocusTopic } from '../../api/client';
 import { AppAlert, AppChip, BlankCard, PageContainer } from '../../components/ui';
 
 /**
@@ -13,9 +13,13 @@ import { AppAlert, AppChip, BlankCard, PageContainer } from '../../components/ui
  */
 
 const TopicRow = ({ topic, total }: { topic: FocusTopic; total: number }) => (
-  <Box>
+  // Resaltado con un borde y un fondo tenue, no con el texto en otro color:
+  // lo que hay que poder leer de un vistazo es CUÁL es nuevo, y eso se ve
+  // antes por la forma del bloque que por el tono de una palabra.
+  <Box sx={topic.isNew ? { pl: 1.5, py: 1, borderLeft: 3, borderColor: 'success.main', bgcolor: 'action.hover', borderRadius: 1 } : undefined}>
     <Stack direction="row" spacing={1} alignItems="baseline" flexWrap="wrap" useFlexGap>
       <Typography variant="subtitle1">{topic.name}</Typography>
+      {topic.isNew ? <AppChip label="nuevo" tone="success" /> : null}
       {/* El mismo número estaba escrito tres veces: «9 de 15», «60% de las
           vacantes» y la barra. Se queda el dato exacto y la barra, que es lo
           que deja comparar 39 filas de un vistazo sin leer ninguna. */}
@@ -48,6 +52,17 @@ const FocusPage = () => {
       .then(setFocus)
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
   }, [months]);
+
+  /*
+   * AL SALIR, no al entrar.
+   *
+   * Marcarlo al entrar apagaría el resaltado en el mismo instante en que se
+   * dibuja: el aviso existiría en la base de datos y nunca en la pantalla.
+   * Se marca al desmontar, que es cuando él ya ha tenido la página delante.
+   *
+   * Sin dependencias a propósito: cambiar la ventana no cuenta como salir.
+   */
+  useEffect(() => () => { void markFocusSeen().catch(() => undefined); }, []);
 
   return (
     <PageContainer
@@ -124,10 +139,14 @@ const FocusPage = () => {
                     </Typography>
                   </Box>
                   {focus.emerging.map((item) => (
-                    <Box key={item.term}>
+                    <Box
+                      key={item.term}
+                      sx={item.isNew ? { pl: 1.5, py: 1, borderLeft: 3, borderColor: 'success.main', bgcolor: 'action.hover', borderRadius: 1 } : undefined}
+                    >
                       <Stack direction="row" spacing={1} alignItems="baseline">
                         <Typography variant="subtitle1">{item.term}</Typography>
                         <AppChip label={`${item.vacancies} de ${focus.analysed}`} tone="neutral" />
+                        {item.isNew ? <AppChip label="nuevo" tone="success" /> : null}
                       </Stack>
                       {item.example ? (
                         <Typography variant="body2" color="textSecondary" sx={{ pl: 1.5, borderLeft: 2, borderColor: 'divider' }}>

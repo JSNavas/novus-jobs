@@ -21,6 +21,8 @@ const MAX_LIMIT = 200;
 interface JobRoutesDeps {
   jobs: JobsRepository;
   runs: RunsRepository;
+  /** Cuántos temas del Enfoque son nuevos. Para el contador del menú. */
+  focusNew: () => number;
 }
 
 function parseJobQuery(raw: unknown): Result<JobQuery> {
@@ -87,6 +89,9 @@ export function registerJobRoutes(app: FastifyInstance, deps: JobRoutesDeps): vo
   });
 
   app.get('/api/stats', (_request, reply) => {
-    return reply.send({ ...deps.jobs.stats(), lastRun: deps.runs.latest() });
+    // `focusNew` viaja con las estadísticas y no en una ruta propia para que
+    // el menú siga haciendo UNA sola petición cada quince segundos. Quién lo
+    // calcula no es asunto de esta ruta: llega como función.
+    return reply.send({ ...deps.jobs.stats(), lastRun: deps.runs.latest(), focusNew: deps.focusNew() });
   });
 }

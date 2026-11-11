@@ -36,3 +36,9 @@ export const MOTIVATION_TEMPLATE_KEY = 'motivationTemplate';
  * que se analiza lo ya guardado se elige en la propia página de Enfoque.
  */
 export const MAX_AGE_MONTHS_KEY = 'vacancyMaxAgeMonths';
+
+/**
+ * Lo que él ya vio en el Enfoque: un array JSON de nombres. Sirve para
+ * resaltar lo que apareció desde la última vez. Ver `analysis/news.ts`.
+ */
+export const FOCUS_SEEN_KEY = 'focusSeen';

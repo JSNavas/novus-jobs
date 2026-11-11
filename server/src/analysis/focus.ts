@@ -31,6 +31,8 @@ export interface FocusTopic {
    * dato barato y la pantalla puede querer matizarlo algún día.
    */
   known: boolean;
+  /** ¿Apareció desde la última vez que él miró? Lo decide `news.ts`. */
+  isNew?: boolean;
   /**
    * Frases reales de los anuncios, tal cual las escribieron. Es lo que él
    * pidió ver: no la etiqueta «Docker», sino «Experiencia con Docker y
@@ -47,6 +49,8 @@ export interface Focus {
   topics: FocusTopic[];
   /** Lo que se repite y el catálogo todavía no tiene. Ver `emerging.ts`. */
   emerging: EmergingTerm[];
+  /** Cuántos temas y términos son nuevos. Es el número del menú. */
+  newCount?: number;
 }
 
 /** Con una sola vacante no hay patrón, hay una empresa. Lo dijo él: «2 o 3». */

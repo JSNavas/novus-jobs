@@ -1067,3 +1067,56 @@ El detector solo mira palabras sueltas. «Server Components» o «event sourcing
 —dos palabras— no los propondrá. Los n-gramas multiplican el ruido, y con el
 corpus de hoy no compensaba; si algún día la lista de hallazgos se queda corta,
 ese es el siguiente paso.
+
+---
+
+## Rev. 22 — Lo nuevo del Enfoque se avisa · 2026-11-11
+
+Un tema aparece el día que dos vacantes coinciden en pedirlo. Hasta aquí, eso
+solo se descubría abriendo la página a ver si acaso y recordando cómo estaba
+la lista la última vez: pedirle al señor que haga de memoria del sistema.
+
+- **Contador en el menú**, junto a «Enfoque».
+- **Filas resaltadas** dentro, con un borde y un fondo tenue —no con el texto
+  en otro color: lo que hay que ver de un vistazo es CUÁL es nuevo, y eso se
+  ve antes por la forma del bloque que por el tono de una palabra.
+- **Se apaga al salir**, no al entrar.
+
+### Tres decisiones que lo hacen fiable
+
+**Al salir y no al entrar.** Marcarlo al cargar apagaría el aviso en el mismo
+instante en que se dibuja: existiría en la base de datos y nunca en la
+pantalla. Se marca al desmontar el componente, que es cuando él ya tuvo la
+página delante. Hay un test que lo fija: leer la pantalla dos veces no apaga
+nada.
+
+**La primera vez no marca nada**, y guarda la lista como punto de partida.
+Encontrarse los 39 temas resaltados no es un aviso, es un fondo de pantalla, y
+enseña a ignorar el resaltado justo el día que empieza a significar algo.
+
+**«Ya lo vi» se SUMA a lo visto, no lo reemplaza.** Con una ventana de tres
+meses se ven menos temas que con una de doce; reemplazar haría que estrechar
+la lente marcara como nuevo algo que ya se había visto. Por lo mismo, el
+`POST /api/focus/seen` marca sobre la ventana más ancha: equivocarse hacia «ya
+lo vio» cuesta un aviso, equivocarse hacia «es nuevo» cuesta la confianza en
+el resaltado entero.
+
+### Dónde vive
+
+En la BD (`settings.focusSeen`, un array JSON de nombres) y no en el
+navegador: el contador del menú sale de la API, y lo que ya vio no debería
+depender de desde qué ordenador lo vio.
+
+El contador viaja dentro de `/api/stats` —que el menú ya consulta cada quince
+segundos— para no añadir una petición por cada número que enseña. Lo calcula
+`app.ts` una vez y lo usan las dos rutas, así que **el número del menú y lo
+resaltado dentro no pueden desmentirse**.
+
+### Comprobado en real
+
+1. Primera lectura: `newCount: 0` (siembra la base).
+2. Se quita «Docker» de lo visto: `newCount: 1`, y nombra Docker.
+3. `/api/stats` enseña `focusNew: 1`.
+4. `POST /api/focus/seen` → `focusNew: 0`.
+
+200 tests.

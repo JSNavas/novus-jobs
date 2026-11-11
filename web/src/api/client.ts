@@ -50,6 +50,8 @@ export interface Stats {
   rejected: number;
   /** Cuántas hay en cada estado: lo que enseña el menú lateral. */
   byStatus: Record<JobStatus, number>;
+  /** Novedades sin mirar en el Enfoque. */
+  focusNew: number;
   lastRun: RunInfo | null;
 }
 
@@ -119,6 +121,8 @@ export interface FocusTopic {
   share: number;
   /** Si ya está en su perfil. Lo que no lo está es la lista de estudio. */
   known: boolean;
+  /** ¿Apareció desde la última vez que miró? */
+  isNew?: boolean;
   /** Frases reales de los anuncios, tal cual las escribieron. */
   examples: string[];
 }
@@ -128,6 +132,8 @@ export interface EmergingTerm {
   term: string;
   vacancies: number;
   example: string | null;
+  /** ¿Apareció desde la última vez que miró? */
+  isNew?: boolean;
 }
 
 export interface Focus {
@@ -136,6 +142,16 @@ export interface Focus {
   windowDays: number;
   topics: FocusTopic[];
   emerging: EmergingTerm[];
+  /** Cuántas novedades hay. Es el número del menú. */
+  newCount?: number;
+}
+
+/**
+ * «Ya lo vi». Se llama AL SALIR de la pantalla: al entrar borraría el
+ * resaltado antes de que diera tiempo a leerlo.
+ */
+export function markFocusSeen(): Promise<{ ok: boolean }> {
+  return request<{ ok: boolean }>('/focus/seen', { method: 'POST' });
 }
 
 /** Qué piden en común las vacantes aceptadas. Se calcula al vuelo. */

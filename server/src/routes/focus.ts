@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import { buildFocus } from '../analysis/focus.js';
 import type { JobsRepository } from '../db/jobs.repository.js';
+import { markSeen, withNews } from '../analysis/news.js';
+import type { SettingsRepository } from '../db/settings.repository.js';
 import type { CandidateProfile } from '../filters/decide.js';
 import { JobVerdict } from '../types.js';
 
@@ -14,6 +16,7 @@ import { JobVerdict } from '../types.js';
 export interface FocusRoutesDeps {
   jobs: JobsRepository;
   profile: CandidateProfile;
+  settings: SettingsRepository;
 }
 
 /** Todo lo aceptado. El tope de tres meses ya lo aplicó el pipeline al entrar. */
@@ -26,19 +29,36 @@ export function registerFocusRoute(app: FastifyInstance, deps: FocusRoutesDeps):
     return Number.isInteger(months) && months >= 1 && months <= 24 ? months * 30 : undefined;
   };
 
+  const accepted = () => deps.jobs.list({
+    status: null,
+    verdict: JobVerdict.Accepted,
+    runId: null,
+    seniority: null,
+    source: null,
+    search: null,
+    hasApply: null,
+    limit: MAX_JOBS,
+    offset: 0,
+  }).items;
+
   app.get('/api/focus', (request) => {
-    const page = deps.jobs.list({
-      status: null,
-      verdict: JobVerdict.Accepted,
-      runId: null,
-      seniority: null,
-      source: null,
-      search: null,
-      hasApply: null,
-      limit: MAX_JOBS,
-      offset: 0,
-    });
     const months = (request.query as { months?: unknown } | undefined)?.months;
-    return buildFocus(page.items, deps.profile, { windowDays: windowDays(months) });
+    return withNews(buildFocus(accepted(), deps.profile, { windowDays: windowDays(months) }), deps.settings);
+  });
+
+  /**
+   * «Ya lo vi». Lo llama la pantalla AL SALIR, no al entrar: marcarlo al
+   * entrar borraría el resaltado antes de que diera tiempo a leerlo.
+   *
+   * Se marca sobre la ventana más ancha y no sobre la que él estuviera
+   * mirando: lo que ha visto es la pantalla, y un tema que solo asoma con
+   * doce meses no debería quedar marcado por haber mirado tres... pero
+   * tampoco al revés. Se usa la ancha porque equivocarse hacia «ya lo vio»
+   * cuesta un aviso; equivocarse hacia «es nuevo» cuesta la confianza en el
+   * resaltado entero.
+   */
+  app.post('/api/focus/seen', () => {
+    markSeen(buildFocus(accepted(), deps.profile, { windowDays: 24 * 30 }), deps.settings);
+    return { ok: true };
   });
 }
