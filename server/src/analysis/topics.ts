@@ -128,8 +128,23 @@ export const TOPICS: readonly Topic[] = [
     'LangChain', 'LlamaIndex', 'CrewAI'),
   topic('practicas', 'MCP', 'Model Context Protocol'),
   topic('practicas', 'Prompt engineering', 'prompt', 'prompts', 'prompting'),
-  topic('practicas', 'Asistentes de código', 'Copilot', 'Cursor', 'Claude Code', 'asistentes de IA',
-    'asistentes de programación'),
+  /*
+   * Se nombran las herramientas EN EL TÍTULO porque es lo que él busca al
+   * mirar: «¿piden Claude? ¿piden Cursor?». Un tema llamado «Asistentes de
+   * código» a secas obliga a abrir los ejemplos para saber de qué habla.
+   *
+   * Medido en sus vacantes: una pide «herramientas de IA para desarrollo,
+   * tales como GitHub Copilot, ChatGPT, Claude, Cursor o similares» y otra
+   * dice «construyes EN Cursor las soluciones ya diseñadas». No es lo mismo
+   * que montar un LLM en el producto, y por eso es un tema aparte.
+   *
+   * Lovable queda FUERA a propósito: en la única vacante donde aparece va
+   * junto a WordPress y Webflow — es montar webs sin código, no asistir a
+   * quien programa.
+   */
+  topic('practicas', 'Asistentes de código (Copilot, Cursor, Claude)', 'Copilot', 'Cursor', 'Claude Code',
+    'Windsurf', 'Codex', 'asistentes de IA', 'asistentes de programación', 'herramientas de IA para desarrollo',
+    'vibe coding', 'pair programming con IA'),
   topic('practicas', 'Machine learning', 'aprendizaje automático', 'TensorFlow', 'PyTorch', 'scikit-learn',
     'modelos predictivos', 'MLOps'),
   topic('practicas', 'IA en el producto', 'inteligencia artificial', 'IA generativa', 'GenAI'),
