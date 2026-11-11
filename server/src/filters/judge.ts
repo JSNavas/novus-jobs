@@ -77,7 +77,7 @@ function instruction(profile: CandidateProfile): string {
     'Eres el filtro de ofertas de trabajo de un desarrollador. Juzga cada publicación de LinkedIn que te paso.',
     '',
     'EL CANDIDATO:',
-    '- Full Stack Engineer con más de 7 años. Vive en Venezuela (estado Falcón).',
+    '- Full Stack Engineer con 9 años de experiencia. Vive en Venezuela (estado Falcón).',
     `- Sabe: ${profile.stack.join(', ')}.`,
     `- NO sabe, y si lo EXIGEN el puesto no le sirve: ${profile.cannotDo.join(', ')}.`,
     '- Inglés A2: lee documentación técnica, pero NO puede trabajar en inglés.',
