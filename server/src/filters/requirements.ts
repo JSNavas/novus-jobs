@@ -1,28 +1,56 @@
+import { ENGLISH_LEVELS, type EnglishLevel } from '../profile/types.js';
 import { escapeRegex } from './text-match.js';
 
 /**
- * ¿Exige inglés? 'desirable' (plus, "inglés deseable") no descarta: aparece en
- * casi todas las ofertas de LATAM y tratarlo como exigencia perdería las buenas.
+ * Lo que una oferta pide de inglés: qué nivel y si es obligatorio.
+ *
+ * Antes esto devolvía 'required' | 'desirable' | 'none', y "required" estaba
+ * calculado contra UN nivel concreto —el B1 del dueño del proyecto— escrito
+ * dentro de las propias expresiones. Ahora se mide el nivel que exige el anuncio
+ * y quien compara es `decide.ts`, contra el nivel de cada usuario: el mismo
+ * "inglés B2 excluyente" descarta a quien tiene B1 y no a quien tiene C1.
  */
-type EnglishRequirement = 'required' | 'desirable' | 'none';
+export interface EnglishDemand {
+  /** El nivel que pide, en la escala del perfil. `none` es no pedir ninguno. */
+  level: EnglishLevel;
+  /**
+   * Si lo pide de verdad. 'deseable', 'valorable' o 'es un plus' aparecen en
+   * casi todas las ofertas de LATAM: tratarlos como exigencia perdería las
+   * buenas.
+   */
+  mandatory: boolean;
+}
 
 const ENGLISH_MENTION = /ingl[ée]s|english|biling[üu]e|bilingual/i;
 const BILINGUAL = /\bbiling[üu]e\b|\bbilingual\b/i;
 const NOT_REQUIRED = /deseable|no\s+excluyente|no\s+es\s+excluyente|no\s+obligatorio|no\s+requerid|no\s+requiere|no\s+se\s+requiere|no\s+es\s+necesario|no\s+indispensable|sin\s+necesidad|valorable|se\s+valorar[áa]?|valoramos|se\s+valora|es\s+un\s+plus|\ba\s+plus\b|is\s+a\s+plus|nice\s+to\s+have|not\s+required|preferible|preferred|opcional|optional/i;
 
 /**
- * UN NIVEL BAJO SÍ LO TIENE, aunque el anuncio lo marque como excluyente.
+ * El nivel que nombra el anuncio, en la escala del Marco Común Europeo.
  *
- * El CV dice "inglés B1 en progreso, lectura técnica fluida". Así que "inglés
- * A2 (excluyente)" o "inglés básico, lectura y escritura" NO son un motivo
- * para descartar: son requisitos que cumple. Antes "excluyente" mandaba sobre
- * todo y tiraba ofertas que le servían — y un descarte así no se ve nunca.
- *
- * B1 y por encima siguen descartando: ahí el CV dice "en progreso", que no es
- * lo mismo que tenerlo.
+ * Importa el nivel y no solo "alto o bajo": "inglés A2 (excluyente)" y "inglés
+ * C1 (excluyente)" son la misma frase para una regla binaria y dos ofertas
+ * distintas para una persona con B1 —la primera la cumple, la segunda no—. Antes
+ * esto estaba resuelto con una lista `LOW_LEVEL` que significaba "lo que el
+ * dueño ya tiene", y por eso no se podía compartir el proyecto.
  */
-const LOW_LEVEL = /\ba1\b|\ba2\b|b[áa]sic[oa]|basic\b|elemental|principiante|lectura|reading|comprensi[óo]n\s+lectora|escrit[oa]\s+b[áa]sic|t[ée]cnico\s+b[áa]sico/i;
-const LEVEL = /avanzad|advanc|fluid|fluen|strong|conversacional|conversational|nativ|native|dominio|excelente|excellent|buen[ao]?\s|s[óo]lido|solid|alto\b|upper|intermedi|proficien|professional|business|\bb1\b|\bb2\b|\bc1\b|\bc2\b/i;
+const LEVEL_MARKS: ReadonlyArray<readonly [EnglishLevel, RegExp]> = [
+  ['native', /\bnativ\w*|\bnative\b|biling[üu]e|bilingual/i],
+  ['c2', /\bc2\b|dominio\s+total|proficiency/i],
+  ['c1', /\bc1\b|avanzad|advanc|fluid|fluen|excelente|excellent|s[óo]lido|solid|professional|business|proficien/i],
+  ['b2', /\bb2\b|upper|intermedio\s+alto|conversacional|conversational|strong|buen[ao]?\s|alto\b/i],
+  ['b1', /\bb1\b|intermedi/i],
+  ['a2', /\ba2\b|b[áa]sic[oa]|basic\b|elemental|lectura|reading|comprensi[óo]n\s+lectora|escrit[oa]\s+b[áa]sic|t[ée]cnico\s+b[áa]sico/i],
+  ['a1', /\ba1\b|principiante|beginner/i],
+];
+
+/** El nivel más alto que nombre la ventana: "B1 mínimo, B2 ideal" pide B2. */
+function demandedLevel(window: string): EnglishLevel | null {
+  const found = LEVEL_MARKS.filter(([, re]) => re.test(window)).map(([level]) => level);
+  if (!found.length) return null;
+  return found.reduce((a, b) => (ENGLISH_LEVELS.indexOf(a) >= ENGLISH_LEVELS.indexOf(b) ? a : b));
+}
+
 const OBLIGATION = /obligatori|requerid|se\s+requiere|requiere|required|require\b|excluyente|indispensable|imprescindible|mandatory|must\b|necesario|es\s+un\s+requisito|requisito/i;
 const REAL_USE = /hablad|escrit|oral|conversar|comunicars?e|comunicaci[óo]n|communicat|reuni[óo]n|reuniones|meetings?|stand-?ups?|daily|entrevista|equipo\s+trabaja|se\s+comunicar|skills?\b|speak|written|spoken/i;
 const ENGLISH_WINDOW = 70;
@@ -66,17 +94,24 @@ function cutAtBullet(fragment: string, side: 'start' | 'end'): string {
  * reclutadores escriben "inglés avanzado", "nivel de inglés: C1" y "se requiere
  * inglés", y cubrir eso con frases enteras exige una lista infinita.
  */
-export function englishRequirement(text: string): EnglishRequirement {
+export function englishDemand(text: string): EnglishDemand {
   const t = text.toLowerCase();
-  if (!ENGLISH_MENTION.test(t)) return 'none';
-  if (BILINGUAL.test(t)) return 'required';
+  if (!ENGLISH_MENTION.test(t)) return { level: 'none', mandatory: false };
+  if (BILINGUAL.test(t)) return { level: 'native', mandatory: true };
   const windows = englishWindows(t);
+  const level = windows.map(demandedLevel).reduce<EnglishLevel | null>(
+    (best, next) => (next && (!best || ENGLISH_LEVELS.indexOf(next) > ENGLISH_LEVELS.indexOf(best)) ? next : best),
+    null,
+  );
   // Lo que dice expresamente que NO es obligatorio manda sobre todo lo demás.
-  if (windows.some((w) => NOT_REQUIRED.test(w))) return 'desirable';
-  // Y un nivel bajo tampoco descarta, lo pidan como lo pidan: es el que tiene.
-  if (windows.some((w) => LOW_LEVEL.test(w))) return 'desirable';
-  const required = windows.some((w) => LEVEL.test(w) || OBLIGATION.test(w) || REAL_USE.test(w));
-  return required ? 'required' : 'none';
+  if (windows.some((w) => NOT_REQUIRED.test(w))) return { level: level ?? 'none', mandatory: false };
+  // Nombrar un nivel ya es pedirlo: "inglés B2" sin más es un requisito, igual
+  // que lo son un "excluyente" o un uso real (reuniones, dailies, escritura).
+  const mandatory = windows.some((w) => demandedLevel(w) !== null || OBLIGATION.test(w) || REAL_USE.test(w));
+  // Pide inglés de verdad pero no dice cuánto: se toma como el nivel con el que
+  // se puede trabajar, que es lo que quiere decir "se requiere inglés" a secas.
+  if (mandatory && !level) return { level: 'b2', mandatory: true };
+  return { level: level ?? 'none', mandatory };
 }
 
 /**

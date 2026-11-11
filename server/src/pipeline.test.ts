@@ -221,7 +221,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     });
     assert.equal(
       stored.items[0]!.rejectionReason,
-      'presencial o híbrido fuera de Venezuela',
+      'es presencial y no busca presencial',
       'el motivo de la regla dice más que un "[IA] no es una vacante"',
     );
   });

@@ -27,10 +27,15 @@ export enum RunStatus {
 }
 
 export enum JobLocation {
-  Venezuela = 'venezuela',
+  /** Se puede trabajar desde el país del usuario: remoto local, o la oferta lo nombra. */
+  HomeCountry = 'home_country',
+  /** Remoto sin restricción de residencia, o restringido a una región que le incluye. */
   Global = 'global',
+  /** Remoto, pero solo para residentes de otro país. */
   OtherCountry = 'other_country',
   Onsite = 'onsite',
+  /** Presencial a tiempo parcial. Separado de `Onsite`: son dos decisiones distintas. */
+  Hybrid = 'hybrid',
   Unknown = 'unknown',
 }
 

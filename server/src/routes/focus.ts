@@ -15,7 +15,8 @@ import { JobVerdict } from '../types.js';
  */
 export interface FocusRoutesDeps {
   jobs: JobsRepository;
-  profile: CandidateProfile;
+  /** Se lee en cada petición: el perfil cambia desde Configuración sin reiniciar. */
+  profile: () => CandidateProfile;
   settings: SettingsRepository;
 }
 
@@ -43,7 +44,7 @@ export function registerFocusRoute(app: FastifyInstance, deps: FocusRoutesDeps):
 
   app.get('/api/focus', (request) => {
     const months = (request.query as { months?: unknown } | undefined)?.months;
-    return withNews(buildFocus(accepted(), deps.profile, { windowDays: windowDays(months) }), deps.settings);
+    return withNews(buildFocus(accepted(), deps.profile(), { windowDays: windowDays(months) }), deps.settings);
   });
 
   /**
@@ -58,7 +59,7 @@ export function registerFocusRoute(app: FastifyInstance, deps: FocusRoutesDeps):
    * resaltado entero.
    */
   app.post('/api/focus/seen', () => {
-    markSeen(buildFocus(accepted(), deps.profile, { windowDays: 24 * 30 }), deps.settings);
+    markSeen(buildFocus(accepted(), deps.profile(), { windowDays: 24 * 30 }), deps.settings);
     return { ok: true };
   });
 }

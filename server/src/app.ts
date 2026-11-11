@@ -30,7 +30,8 @@ export interface AppDeps {
   schedules: SourceSchedules;
   gmailAccount: string | null;
   settings: SettingsRepository;
-  profile: CandidateProfile;
+  /** Se lee en cada petición: el perfil cambia desde Configuración sin reiniciar. */
+  profile: () => CandidateProfile;
   /** Carpeta con la UI compilada. Si no existe, el servidor solo sirve la API. */
   webDist: string | null;
 }
@@ -47,7 +48,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
         status: null, verdict: JobVerdict.Accepted, runId: null, seniority: null,
         source: null, search: null, hasApply: null, limit: 500, offset: 0,
       }).items,
-      deps.profile,
+      deps.profile(),
     ),
     deps.settings,
   ).newCount ?? 0;

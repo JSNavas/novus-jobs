@@ -40,7 +40,19 @@ interface RunnerDeps {
   jobs: JobsRepository;
   runs: RunsRepository;
   judge: LlmJudge | null;
-  profile: CandidateProfile;
+  /**
+   * El perfil del candidato, como función: se lee al empezar cada pasada. Si
+   * fuera un valor, editar el stack en Configuración no surtiría efecto hasta
+   * reiniciar el servicio — y eso es justo lo que no se le puede pedir a quien
+   * acaba de corregir una tecnología.
+   */
+  profile: () => CandidateProfile;
+  /**
+   * Si el alta está completa. Sin perfil no hay nada que coincidir y la pasada
+   * descartaría cuanto llegue: se niega antes de gastar una lectura de su
+   * cuenta en un resultado que ya se sabe.
+   */
+  onboarded: () => boolean;
   mailer: Mailer;
   dashboardUrl: string;
   clock?: () => Date;
@@ -69,6 +81,10 @@ export class Runner implements PassRunner {
    * configuración con muchas franjas lo esquivaría entero.
    */
   startScheduled(names: readonly string[]): void {
+    if (!this.deps.onboarded()) {
+      console.log('[runner] alta sin terminar: la búsqueda automática espera a que haya perfil');
+      return;
+    }
     const dayStart = vetDayStart(this.clock()).toISOString();
     const due = this.sourcesNamed(names).filter((source) => {
       const ceiling = source.policy.maxPassesPerDay;
@@ -97,6 +113,7 @@ export class Runner implements PassRunner {
    */
   startManual(): RunInfo {
     if (this.busy) throw new RunRefusedError('ya hay una búsqueda en curso');
+    if (!this.deps.onboarded()) throw new RunRefusedError('todavía no has terminado el alta: sin tu perfil, una búsqueda descartaría todo lo que encuentre');
     if (!this.deps.sources.length) throw new RunRefusedError('no hay ninguna plataforma activa');
 
     const allowed: JobSource[] = [];
@@ -244,7 +261,7 @@ export class Runner implements PassRunner {
         maxAgeDays: this.deps.maxAgeDays(),
         jobs: this.deps.jobs,
         judge: this.deps.judge,
-        profile: this.deps.profile,
+        profile: this.deps.profile(),
         runId: id,
       });
       const note = describe(result.failures);

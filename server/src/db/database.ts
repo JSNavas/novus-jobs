@@ -41,6 +41,65 @@ function backfillRunId(db: Db): void {
   `);
 }
 
+/** Las columnas de `jobs`, en el orden en que se copian al rehacer la tabla. */
+const JOB_COLUMNS = [
+  'id', 'source', 'fingerprint', 'title', 'role', 'company', 'author', 'text', 'url',
+  'location', 'location_kind', 'verdict', 'rejection_reason', 'seniority',
+  'is_aggregator', 'is_uncertain', 'stack_match', 'apply_url', 'contact_email',
+  'judge_status', 'status', 'found_at', 'posted_at', 'applications',
+  'response_days_min', 'response_days_max', 'run_id',
+] as const;
+
+/**
+ * Quita de `jobs` los `CHECK` de enum que quedaron congelados.
+ *
+ * Las bases creadas antes llevan escrita en el DDL la lista de valores de
+ * entonces, y SQLite no sabe modificar una restricción: la única forma es
+ * rehacer la tabla. Mientras siga ahí, un valor nuevo del enum —`home_country`,
+ * `hybrid`— se inserta bien en una instalación nueva y falla en la suya.
+ *
+ * Se detecta por el valor que delata a las viejas, `'venezuela'`, así que esto
+ * corre UNA vez y nunca más. Va en una transacción con las claves ajenas
+ * apagadas: a mitad de camino la tabla no existe, y una caída ahí no puede
+ * dejar la base sin sus ofertas.
+ */
+function dropFrozenEnumChecks(db: Db): void {
+  const ddl = db.prepare<[], { sql: string | null }>(
+    "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'jobs'",
+  ).get()?.sql;
+  if (!ddl?.includes("'venezuela'")) return;
+
+  const columns = JOB_COLUMNS.join(', ');
+  db.pragma('foreign_keys = OFF');
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    db.exec(SCHEMA.replace(/CREATE TABLE IF NOT EXISTS jobs \(/, 'CREATE TABLE jobs_rebuilt ('));
+    db.exec(`INSERT INTO jobs_rebuilt (${columns}) SELECT ${columns} FROM jobs`);
+    db.exec('DROP TABLE jobs');
+    db.exec('ALTER TABLE jobs_rebuilt RENAME TO jobs');
+    db.exec('CREATE INDEX IF NOT EXISTS jobs_found_at ON jobs (found_at DESC)');
+    db.exec('COMMIT');
+    console.log('[bd] tabla jobs rehecha sin los CHECK de enum congelados');
+  } catch (error) {
+    db.exec('ROLLBACK');
+    throw error;
+  } finally {
+    db.pragma('foreign_keys = ON');
+  }
+}
+
+/**
+ * `location_kind` decía `venezuela` cuando el filtro daba por hecho que el
+ * usuario vivía allí. Ahora el valor es `home_country` —"el país del usuario",
+ * cualquiera que sea— y hay que renombrar lo ya guardado: si no, las ofertas de
+ * antes dejan de encajar en el enum y el dashboard las pinta sin etiqueta.
+ *
+ * Solo toca las filas con el valor viejo, así que repetirlo no cambia nada.
+ */
+function renameLegacyHomeLocation(db: Db): void {
+  db.exec("UPDATE jobs SET location_kind = 'home_country' WHERE location_kind = 'venezuela'");
+}
+
 /** Abre (y crea si falta) `jobs.db` dentro del directorio de datos. */
 export function openDatabase(dataDir: string): Db {
   mkdirSync(dataDir, { recursive: true });
@@ -55,5 +114,9 @@ export function openDatabase(dataDir: string): Db {
   ensureColumn(db, 'jobs', 'response_days_min', 'INTEGER');
   ensureColumn(db, 'jobs', 'response_days_max', 'INTEGER');
   backfillRunId(db);
+  // El orden importa: primero caen los CHECK viejos y solo entonces se puede
+  // escribir el valor nuevo.
+  dropFrozenEnumChecks(db);
+  renameLegacyHomeLocation(db);
   return db;
 }

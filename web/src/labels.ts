@@ -12,11 +12,17 @@ export const jobSeniorityLabel: Record<JobSeniority, string> = {
   [JobSeniority.Junior]: 'Extras (junior)',
 };
 
+/**
+ * Las etiquetas no nombran ningún país: el mismo dashboard lo usa gente que
+ * busca desde sitios distintos, y "tu país" es cierto para todas. Cuál es ese
+ * país lo dice su perfil, no esta tabla.
+ */
 export const jobLocationLabel: Record<JobLocation, string> = {
-  [JobLocation.Venezuela]: 'Venezuela',
-  [JobLocation.Global]: 'remoto global / LATAM',
+  [JobLocation.HomeCountry]: 'desde tu país',
+  [JobLocation.Global]: 'remoto global / tu región',
   [JobLocation.OtherCountry]: 'remoto desde otro país',
   [JobLocation.Onsite]: 'presencial',
+  [JobLocation.Hybrid]: 'híbrido',
   [JobLocation.Unknown]: 'no dice desde dónde se puede trabajar',
 };
 

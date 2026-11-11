@@ -1,20 +1,27 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { PROFILE } from '../profile/profile.js';
-import { englishRequirement, unknownRequiredTech } from './requirements.js';
+import { englishDemand, unknownRequiredTech } from './requirements.js';
+import { englishRank, type EnglishLevel } from '../profile/types.js';
 
 /**
- * El CV del señor: "inglés B1 en progreso, lectura técnica fluida".
+ * Lo que mide esto no es "¿piden inglés?" sino "¿piden MÁS del que tengo?", y la
+ * respuesta depende de quién pregunte: el mismo "inglés B2 excluyente" descarta
+ * a quien tiene B1 y no a quien tiene C1. Por eso los casos se escriben contra
+ * un nivel concreto y no contra una verdad absoluta.
  *
- * Lo que descarta no es que pidan inglés, sino que pidan MÁS del que tiene. Un
- * "inglés A2 (excluyente)" es un requisito que cumple, y tirarlo era perder
- * ofertas buenas sin que nadie se enterase.
+ * El nivel de referencia es B1 porque es el del perfil de ejemplo, con el que
+ * se encontraron estos casos reales.
  */
-describe('englishRequirement', () => {
-  const pasa = (t: string) => assert.notEqual(englishRequirement(t), 'required', t);
-  const descarta = (t: string) => assert.equal(englishRequirement(t), 'required', t);
+describe('englishDemand', () => {
+  const cierra = (texto: string, mio: EnglishLevel): boolean => {
+    const demand = englishDemand(texto);
+    return demand.mandatory && englishRank(demand.level) > englishRank(mio);
+  };
+  const pasa = (t: string) => assert.equal(cierra(t, 'b1'), false, t);
+  const descarta = (t: string) => assert.equal(cierra(t, 'b1'), true, t);
 
-  it('un nivel BAJO no descarta, aunque lo marquen como excluyente', () => {
+  it('un nivel que SÍ se tiene no descarta, aunque lo marquen como excluyente', () => {
     pasa('✔️ Inglés A2 (excluyente).');
     pasa('Inglés A1 requerido.');
     pasa('Inglés básico obligatorio.');
@@ -22,7 +29,7 @@ describe('englishRequirement', () => {
     pasa('Inglés: comprensión lectora técnica, indispensable.');
   });
 
-  it('un nivel ALTO sí descarta: ahí el CV dice "en progreso"', () => {
+  it('un nivel por encima del propio sí descarta', () => {
     descarta('✔️ Inglés Upper Intermediate (B2+), excluyente.');
     descarta('Se requiere inglés avanzado (C1).');
     descarta('Inglés conversacional para reuniones diarias.');
@@ -40,6 +47,16 @@ describe('englishRequirement', () => {
 
   it('el "Se valorará" de la viñeta siguiente no cuenta como esta', () => {
     descarta('✔️ Inglés avanzado, excluyente.\n⭐ Se valorará:\n✔️ AWS');
+  });
+
+  /** La misma oferta, otro candidato: con C1 encima, un B2 excluyente ya no cierra. */
+  it('el mismo anuncio no descarta a quien tiene más nivel', () => {
+    assert.equal(cierra('✔️ Inglés Upper Intermediate (B2+), excluyente.', 'c1'), false);
+    assert.equal(cierra('Buscamos perfil bilingüe.', 'native'), false);
+  });
+
+  it('pedir inglés sin decir cuánto se toma como nivel de trabajo', () => {
+    assert.deepEqual(englishDemand('Se requiere inglés para el día a día.'), { level: 'b2', mandatory: true });
   });
 });
 

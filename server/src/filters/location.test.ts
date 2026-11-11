@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { JobLocation } from '../types.js';
+import { findCountry } from './countries.js';
 import { classifyLocation } from './location.js';
+
+/**
+ * Estas pruebas se escribieron con casos reales de alguien que busca desde
+ * Venezuela, así que el hogar del perfil es Venezuela. La regla que miden no es
+ * "Venezuela encaja": es "el país del usuario encaja y los demás no".
+ */
+const HOGAR = { country: findCountry('VE'), city: null };
 
 describe('classifyLocation — región contra modalidad', () => {
   /**
@@ -16,12 +24,12 @@ describe('classifyLocation — región contra modalidad', () => {
   ].join('\n');
 
   it('una ciudad concreta descarta aunque el texto diga "LatAm"', () => {
-    assert.equal(classifyLocation(BUENOS_AIRES), JobLocation.OtherCountry);
+    assert.equal(classifyLocation(BUENOS_AIRES, HOGAR), JobLocation.OtherCountry);
   });
 
   it('"remoto para LATAM" sí vale: Venezuela está dentro', () => {
     assert.equal(
-      classifyLocation('Buscamos backend Node.js. 100% remoto para toda LATAM.'),
+      classifyLocation('Buscamos backend Node.js. 100% remoto para toda LATAM.', HOGAR),
       JobLocation.Global,
     );
   });
@@ -29,7 +37,7 @@ describe('classifyLocation — región contra modalidad', () => {
   it('"LatAm" a secas no dice la modalidad: queda por confirmar, no se tira', () => {
     // Ante la duda se manda marcada, que es lo contrario de darla por buena.
     assert.equal(
-      classifyLocation('Buscamos backend Node.js para una fintech de LatAm.'),
+      classifyLocation('Buscamos backend Node.js para una fintech de LatAm.', HOGAR),
       JobLocation.Unknown,
     );
   });
@@ -37,33 +45,33 @@ describe('classifyLocation — región contra modalidad', () => {
   it('una ciudad SE PERDONA si el anuncio afirma que es remoto', () => {
     // "Oficinas en Bogotá" no es dónde tienes que vivir si el puesto es remoto.
     assert.equal(
-      classifyLocation('Backend Node.js, 100% remoto. Nuestras oficinas están en Bogotá.'),
+      classifyLocation('Backend Node.js, 100% remoto. Nuestras oficinas están en Bogotá.', HOGAR),
       JobLocation.Global,
     );
   });
 
   it('Venezuela manda sobre cualquier otra señal', () => {
     assert.equal(
-      classifyLocation('Remoto desde Venezuela. Oficina en Buenos Aires.'),
-      JobLocation.Venezuela,
+      classifyLocation('Remoto desde Venezuela. Oficina en Buenos Aires.', HOGAR),
+      JobLocation.HomeCountry,
     );
   });
 
   it('un remoto restringido a otro país se descarta', () => {
     assert.equal(
-      classifyLocation('Desarrollador Node.js, remoto Argentina.'),
+      classifyLocation('Desarrollador Node.js, remoto Argentina.', HOGAR),
       JobLocation.OtherCountry,
     );
   });
 
   it('lo presencial manda sobre todo lo demás', () => {
     assert.equal(
-      classifyLocation('Backend Node.js, presencial. Remoto global no disponible.'),
+      classifyLocation('Backend Node.js, presencial. Remoto global no disponible.', HOGAR),
       JobLocation.Onsite,
     );
   });
 
   it('sin ninguna pista, por confirmar', () => {
-    assert.equal(classifyLocation('Buscamos backend Node.js con experiencia.'), JobLocation.Unknown);
+    assert.equal(classifyLocation('Buscamos backend Node.js con experiencia.', HOGAR), JobLocation.Unknown);
   });
 });

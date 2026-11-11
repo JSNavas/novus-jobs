@@ -30,7 +30,7 @@ function newJob(overrides: Partial<NewJob>): NewJob {
     text: 'Buscamos desarrollador TypeScript remoto desde Venezuela',
     url: 'https://www.linkedin.com/feed/update/urn:li:activity:1',
     location: 'Venezuela',
-    locationKind: JobLocation.Venezuela,
+    locationKind: JobLocation.HomeCountry,
     verdict: JobVerdict.Accepted,
     rejectionReason: null,
     seniority: JobSeniority.Regular,
@@ -74,7 +74,7 @@ describe('API HTTP', () => {
     jobs.insert(newJob({ fingerprint: 'fp-otra-pasada', runId: 2 }));
     const settings = new SettingsRepository(db);
     const schedules = new SourceSchedules(settings, [9, 13, 18]);
-    const runner = new Runner({ sources: [FAKE_SOURCE], maxAgeDays: () => 90, jobs, runs, judge: null, profile: PROFILE, mailer: new Mailer(null), dashboardUrl: 'http://localhost/' });
+    const runner = new Runner({ sources: [FAKE_SOURCE], maxAgeDays: () => 90, jobs, runs, judge: null, profile: () => PROFILE, onboarded: () => true, mailer: new Mailer(null), dashboardUrl: 'http://localhost/' });
     const scheduler = new Scheduler({
       hours: [9, 13, 18],
       sources: [],
@@ -85,7 +85,7 @@ describe('API HTTP', () => {
     const pool = new BrowserPool(join(dir, 'profiles'), true);
     app = await buildApp({
       jobs, runs, runner, scheduler, pool, sources: [], scheduleHours: [9, 13, 18], schedules,
-      gmailAccount: null, settings, profile: PROFILE, webDist: null,
+      gmailAccount: null, settings, profile: () => PROFILE, webDist: null,
     });
   });
 

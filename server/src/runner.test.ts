@@ -70,7 +70,7 @@ describe('Runner — suelo de las búsquedas manuales', () => {
       jobs: new JobsRepository(db),
       runs,
       judge: null,
-      profile: PROFILE,
+      profile: () => PROFILE, onboarded: () => true,
       mailer: new Mailer(null),
       dashboardUrl: 'http://localhost/',
       clock: () => now,

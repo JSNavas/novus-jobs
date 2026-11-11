@@ -15,7 +15,7 @@ function job(overrides: Partial<NewJob> = {}): NewJob {
     text: 'Buscamos\nDesarrollador Full Stack con TypeScript y Node.js, remoto desde Venezuela',
     url: 'https://www.linkedin.com/feed/update/1',
     location: 'Venezuela',
-    locationKind: JobLocation.Venezuela,
+    locationKind: JobLocation.HomeCountry,
     verdict: JobVerdict.Accepted,
     rejectionReason: null,
     seniority: JobSeniority.Regular,

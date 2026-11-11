@@ -2,6 +2,7 @@ import { GoogleGenAI } from '@google/genai';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildApp } from './app.js';
+import type { CandidateProfile } from './profile/types.js';
 import { migrateProfile } from './browser/migrate.js';
 import { BrowserPool } from './browser/session.js';
 import { legacyLinkedinProfileDir, loadConfig } from './config.js';
@@ -11,7 +12,7 @@ import { RunsRepository } from './db/runs.repository.js';
 import { readMaxAgeMonths } from './routes/settings.js';
 import { SettingsRepository } from './db/settings.repository.js';
 import { LlmJudge } from './filters/judge.js';
-import { PROFILE } from './profile/profile.js';
+import { ProfileRepository } from './profile/profile.repository.js';
 import { Mailer } from './notify/mailer.js';
 import { Runner } from './runner.js';
 import { LastPassStore, Scheduler } from './scheduler/scheduler.js';
@@ -50,9 +51,17 @@ async function main(): Promise<void> {
     : '[arranque] sin RESEND_API_KEY / MAIL_FROM / MAIL_TO: no se mandan correos');
 
   const settings = new SettingsRepository(db);
+  const profiles = new ProfileRepository(settings);
+  // Como función y no como valor: así un cambio en Configuración o en el alta
+  // entra en la siguiente pasada sin reiniciar el servicio.
+  const profile = (): CandidateProfile => profiles.get();
+  const onboarded = (): boolean => profiles.isOnboarded();
+  console.log(onboarded()
+    ? `[arranque] perfil cargado: ${profile().core.length} tecnologías de núcleo, inglés ${profile().english.level.toUpperCase()}`
+    : '[arranque] sin alta: abre el dashboard y completa tu perfil para que empiecen las búsquedas');
   const runner = new Runner({
     sources,
-    maxAgeDays: () => readMaxAgeMonths(settings) * 30, jobs, runs, judge, profile: PROFILE,
+    maxAgeDays: () => readMaxAgeMonths(settings) * 30, jobs, runs, judge, profile, onboarded,
     mailer, dashboardUrl: config.dashboardUrl,
   });
   const schedules = new SourceSchedules(settings, config.scheduleHours);
@@ -66,7 +75,7 @@ async function main(): Promise<void> {
 
   const app = await buildApp({
     settings,
-    profile: PROFILE,
+    profile,
     jobs,
     runs,
     runner,

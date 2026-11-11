@@ -3,7 +3,12 @@ import { describe, it } from 'node:test';
 import { LlmJudge } from './judge.js';
 import type { CandidateProfile, Offer } from './decide.js';
 
-const PERFIL: CandidateProfile = { stack: ['Node.js'], core: ['Node.js'], cannotDo: ['Java'] };
+const PERFIL: CandidateProfile = {
+  stack: ['Node.js'], core: ['Node.js'], cannotDo: ['Java'],
+  english: { level: 'b1', filter: true },
+  geo: { country: 'VE', city: null, excludeLocalEmployers: true },
+  modality: { remoteGlobal: true, remoteHomeCountry: true, hybrid: false, onsite: false },
+};
 
 function offers(n: number): Offer[] {
   return Array.from({ length: n }, (_, i) => ({ text: `vacante numero ${i}`, url: null, author: null }));

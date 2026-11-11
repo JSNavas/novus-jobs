@@ -1,21 +1,23 @@
+import type { CandidateProfile } from './types.js';
+
 /**
- * Perfil del candidato, sacado de su CV (9 años, Full Stack).
+ * EL PERFIL DE EJEMPLO. No es el de nadie en producción: el de cada usuario
+ * vive en la base de datos y lo rellena el alta (ver `profile.repository.ts`).
  *
- * Se edita en código, no en la UI: cambia poco y una pantalla de ajustes sería
- * sobreingeniería (decisión 8 del plan). Las tres listas hacen cosas distintas:
+ * Esto se queda por dos razones. La primera es que las pruebas necesitan UN
+ * perfil realista contra el que medir las reglas, y uno inventado de tres
+ * tecnologías no habría encontrado ninguno de los casos reales que hay escritos
+ * en `filters/`. La segunda es que el formulario del alta propone este reparto
+ * como ejemplo de qué va en cada lista.
+ *
+ * Las tres listas de tecnología hacen cosas distintas:
  *
  * - `stack`: todo lo que sabe. Enriquece el "Coincide con", NO abre la puerta.
  * - `core`: al menos una tiene que aparecer para que la oferta encaje. Sin este
- *   corte, una vacante de Java que mencione Docker le llegaría igual.
- * - `cannotDo`: si una oferta EXIGE alguna de estas, no le sirve. De aquí sale
- *   el veto por tecnología: añadir una es una línea, y ese es el único sitio.
- *
- * ⚠️ `cannotDo` es lo que más se equivoca en los dos sentidos. Meter algo que
- * SÍ sabe tira ofertas buenas sin que nadie se entere — pasó con Symfony, que
- * estaba en la lista cuando el CV dice que sacó los pagos automáticos de un
- * monolito Symfony en ePayco. Antes de añadir nada, se mira el CV.
+ *   corte, una vacante de Java que mencione Docker llegaría igual.
+ * - `cannotDo`: si una oferta EXIGE alguna de estas, no sirve.
  */
-export const PROFILE = {
+export const PROFILE: CandidateProfile = {
   stack: [
     // Lenguajes y runtime
     'TypeScript', 'JavaScript', 'Node.js', 'NodeJS', 'Node', 'Python', 'PHP',
@@ -81,4 +83,7 @@ export const PROFILE = {
     'Umbraco', 'Sitecore', 'Prestashop',
     'Salesforce', 'SharePoint', 'Dynamics', 'SAP', 'ABAP', 'COBOL', 'Camunda',
   ],
-} as const;
+  english: { level: 'b1', filter: true },
+  geo: { country: 'VE', city: null, excludeLocalEmployers: true },
+  modality: { remoteGlobal: true, remoteHomeCountry: true, hybrid: false, onsite: false },
+};

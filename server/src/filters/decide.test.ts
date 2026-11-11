@@ -15,14 +15,14 @@ describe('decideShipping', () => {
   it('acepta una oferta remota que encaja con el stack', () => {
     const verdict = decideShipping({ text: REMOTE_TS_OFFER, url: null }, PROFILE);
     assert.equal(verdict.accepted, true);
-    assert.equal(verdict.location, JobLocation.Venezuela);
+    assert.equal(verdict.location, JobLocation.HomeCountry);
     assert.equal(verdict.stackMatch.includes('TypeScript'), true);
   });
 
   it('rechaza la oferta que exige inglés avanzado', () => {
     const verdict = decideShipping({ text: `${REMOTE_TS_OFFER}\nSe requiere inglés avanzado (C1).`, url: null }, PROFILE);
     assert.equal(verdict.accepted, false);
-    assert.equal(verdict.reason, 'exigen inglés avanzado');
+    assert.equal(verdict.reason, 'exigen inglés C1 y tiene B1');
   });
 
   it('rechaza la oferta presencial fuera de Venezuela', () => {
@@ -62,7 +62,7 @@ describe('decideShipping', () => {
     const sinCpp = OFERTA_CPP.replace(/C\+\+/g, 'Node.js');
     const verdict = decideShipping({ text: sinCpp, url: null }, PROFILE);
     assert.equal(verdict.accepted, false);
-    assert.equal(verdict.reason, 'exigen inglés avanzado');
+    assert.equal(verdict.reason, 'exigen inglés B2 y tiene B1');
   });
 
   it('Symfony NO se veta: el CV dice que lo trabajó en ePayco', () => {

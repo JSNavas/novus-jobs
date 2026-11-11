@@ -1,12 +1,25 @@
-import { JobLocation, JobSeniority, JobStatus, JobVerdict, JudgeStatus, RunStatus, RunTrigger } from '../types.js';
+import { JobStatus } from '../types.js';
 
-/**
- * Los valores de los enums van a los `CHECK` desde el mismo sitio que el TS:
- * un valor nuevo se añade una vez y la BD lo acepta sin tocar SQL a mano.
- */
-function inList<T extends string>(values: Record<string, T>): string {
-  return Object.values(values).map((v) => `'${v}'`).join(', ');
-}
+/* ═══════════════════════════════════════════════════════════════════════════
+ * POR QUÉ NINGÚN ENUM LLEVA `CHECK`
+ *
+ * Lo llevaban, generados desde el propio TS, y parecía lo correcto: la BD
+ * rechazaba un valor que el código no conocía. Lo que no hace un `CHECK` es
+ * cambiar cuando cambia el enum — `CREATE TABLE IF NOT EXISTS` no toca una
+ * tabla que ya existe, así que la lista de valores se queda CONGELADA en la
+ * base de quien ya tenía el proyecto instalado.
+ *
+ * Y entonces pasa esto, medido: al renombrar `venezuela` por `home_country`
+ * —el valor dejó de nombrar un país para nombrar "el país del usuario", que es
+ * lo que permite que esto sirva a cualquiera— la migración murió con
+ * "CHECK constraint failed" en una instalación real, mientras que en una nueva
+ * habría funcionado sin enterarse. Un `CHECK` de enum convierte cada valor
+ * nuevo en una migración de tabla completa.
+ *
+ * Los valores los valida el TypeScript, que es el mismo en todas las
+ * instalaciones. Los `CHECK` que sí se quedan son los que no dependen de un
+ * enum: los `IN (0, 1)` de los booleanos.
+ * ═══════════════════════════════════════════════════════════════════════════ */
 
 export const SCHEMA = `
 CREATE TABLE IF NOT EXISTS jobs (
@@ -20,18 +33,22 @@ CREATE TABLE IF NOT EXISTS jobs (
   text             TEXT    NOT NULL,
   url              TEXT,
   location         TEXT,
-  location_kind    TEXT    NOT NULL CHECK (location_kind IN (${inList(JobLocation)})),
-  verdict          TEXT    NOT NULL CHECK (verdict IN (${inList(JobVerdict)})),
+  location_kind    TEXT    NOT NULL,
+  verdict          TEXT    NOT NULL,
   rejection_reason TEXT,
-  seniority        TEXT    NOT NULL CHECK (seniority IN (${inList(JobSeniority)})),
+  seniority        TEXT    NOT NULL,
   is_aggregator    INTEGER NOT NULL DEFAULT 0 CHECK (is_aggregator IN (0, 1)),
   is_uncertain     INTEGER NOT NULL DEFAULT 0 CHECK (is_uncertain IN (0, 1)),
   stack_match      TEXT    NOT NULL DEFAULT '[]',
   apply_url        TEXT,
   contact_email    TEXT,
-  judge_status     TEXT    NOT NULL CHECK (judge_status IN (${inList(JudgeStatus)})),
-  status           TEXT    NOT NULL DEFAULT '${JobStatus.New}' CHECK (status IN (${inList(JobStatus)})),
+  judge_status     TEXT    NOT NULL,
+  status           TEXT    NOT NULL DEFAULT '${JobStatus.New}',
   found_at         TEXT    NOT NULL,
+  -- De qué pasada salió. Lo añadía ensureColumn() y por eso faltaba al rehacer
+  -- la tabla: una columna que ya es permanente va en el esquema, no en una
+  -- migración. ensureColumn() se queda para las bases anteriores a esto.
+  run_id           INTEGER,
   -- Cuándo la publicó la plataforma, no cuándo la leímos nosotros.
   posted_at        TEXT,
   -- Los números de la plataforma. Cambian con los días, así que viven en
@@ -49,8 +66,8 @@ CREATE TABLE IF NOT EXISTS runs (
   source      TEXT    NOT NULL,
   started_at  TEXT    NOT NULL,
   finished_at TEXT,
-  status      TEXT    NOT NULL CHECK (status IN (${inList(RunStatus)})),
-  trigger     TEXT    NOT NULL CHECK (trigger IN (${inList(RunTrigger)})),
+  status      TEXT    NOT NULL,
+  trigger     TEXT    NOT NULL,
   fetched     INTEGER NOT NULL DEFAULT 0,
   accepted    INTEGER NOT NULL DEFAULT 0,
   rejected    INTEGER NOT NULL DEFAULT 0,
