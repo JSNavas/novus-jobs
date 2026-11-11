@@ -3,7 +3,8 @@ import type { RunsRepository } from '../db/runs.repository.js';
 import type { Runner } from '../runner.js';
 import { RunRefusedError } from '../runner.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
-import { SCHEDULE_TIMEZONE } from '../scheduler/timing.js';
+import { nextRunAt, SCHEDULE_TIMEZONE } from '../scheduler/timing.js';
+import type { JobSource } from '../sources/types.js';
 import { optionalInteger, stringParams, type Result } from './parse.js';
 
 /** Diez por página en todas partes: es lo que se lee sin desplazarse. */
@@ -15,6 +16,7 @@ interface RunRoutesDeps {
   runner: Runner;
   scheduler: Scheduler;
   hours: readonly number[];
+  sources: readonly JobSource[];
 }
 
 function parseRunsPage(raw: unknown): Result<{ limit: number; offset: number }> {
@@ -27,8 +29,26 @@ function parseRunsPage(raw: unknown): Result<{ limit: number; offset: number }> 
 }
 
 export function registerRunRoutes(app: FastifyInstance, deps: RunRoutesDeps): void {
-  /** Cuándo busca, para que la interfaz no tenga que suponerlo. */
-  app.get('/api/schedule', () => ({ hours: deps.hours, timezone: SCHEDULE_TIMEZONE }));
+  /**
+   * Cuándo busca, para que la interfaz no tenga que suponerlo.
+   *
+   * `nextAt` es la próxima lectura DE VERDAD: la más cercana entre todas las
+   * fuentes, franjas e intervalos mezclados. La UI no sabe —ni tiene por qué—
+   * que Get on Board va cada media hora y LinkedIn por franjas.
+   */
+  app.get('/api/schedule', () => {
+    const next = nextRunAt(
+      new Date(),
+      deps.hours,
+      deps.sources.map((source) => ({ name: source.name, schedule: source.policy.schedule })),
+      (source) => deps.runner.lastPassAt(source),
+    );
+    return {
+      hours: deps.hours,
+      timezone: SCHEDULE_TIMEZONE,
+      nextAt: next === null ? null : new Date(next).toISOString(),
+    };
+  });
 
   app.get('/api/runs', (request, reply) => {
     const page = parseRunsPage(request.query);

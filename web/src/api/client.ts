@@ -58,6 +58,8 @@ export interface Stats {
 export interface Schedule {
   hours: number[];
   timezone: string;
+  /** La próxima lectura real, la más cercana entre todas las fuentes. */
+  nextAt: string | null;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {

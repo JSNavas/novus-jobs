@@ -243,7 +243,8 @@ describe('API HTTP', () => {
   it('GET /api/schedule dice las horas y la zona, para que la UI no las invente', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/schedule' });
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(res.json(), { hours: [9, 13, 18], timezone: 'hora de Venezuela' });
+    // Sin fuentes montadas no hay próxima lectura que anunciar.
+    assert.deepEqual(res.json(), { hours: [9, 13, 18], timezone: 'hora de Venezuela', nextAt: null });
   });
 
   it('GET /api/runs valida el límite', async () => {

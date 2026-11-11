@@ -71,6 +71,24 @@ export function nextSearchIn(hours: number[], now: Date): NextSearch | null {
 }
 
 /**
+ * El instante exacto que manda el servidor, leído como cuenta atrás.
+ *
+ * `nextAt` ya es la más próxima de TODAS las fuentes —franjas de LinkedIn e
+ * intervalos de Get on Board mezclados—, así que la interfaz no recalcula
+ * horarios: solo resta. `nextSearchIn` se queda para cuando el servidor es
+ * viejo y no manda `nextAt`.
+ */
+export function nextSearchAt(nextAt: string, now: Date): NextSearch | null {
+  const target = Date.parse(nextAt);
+  if (Number.isNaN(target)) return null;
+  const vetHour = new Date(target + VET_OFFSET_HOURS * 3_600_000).getUTCHours();
+  return {
+    hour: vetHour,
+    minutesLeft: Math.max(0, Math.floor((target - now.getTime()) / 60_000)),
+  };
+}
+
+/**
  * "Próxima en 2 h 14 min" while it is near; "Próxima a las 9:00 am" when it is
  * far, because a countdown of 14 hours is noise and the clock time is the fact.
  */

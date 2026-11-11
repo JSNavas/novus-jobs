@@ -50,7 +50,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   ).newCount ?? 0;
 
   registerJobRoutes(app, { jobs: deps.jobs, runs: deps.runs, focusNew });
-  registerRunRoutes(app, { runs: deps.runs, runner: deps.runner, scheduler: deps.scheduler, hours: deps.scheduleHours });
+  registerRunRoutes(app, { runs: deps.runs, runner: deps.runner, scheduler: deps.scheduler, hours: deps.scheduleHours, sources: deps.sources });
   registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler });
   registerSettingsRoute(app, { gmailAccount: deps.gmailAccount, settings: deps.settings });
   registerFocusRoute(app, { jobs: deps.jobs, profile: deps.profile, settings: deps.settings });

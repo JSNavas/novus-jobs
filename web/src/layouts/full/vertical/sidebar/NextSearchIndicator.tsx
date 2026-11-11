@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { getSchedule, type Schedule } from '../../../../api/client';
-import { formatNextSearch, nextSearchIn } from '../../../../views/jobs/scheduleText';
+import { formatNextSearch, nextSearchAt, nextSearchIn } from '../../../../views/jobs/scheduleText';
 
 /** The countdown is read in minutes, so refreshing every 30 s is plenty. */
 const TICK_INTERVAL_MS = 30_000;
@@ -23,7 +23,11 @@ const NextSearchIndicator = ({ lastRunFailed }: NextSearchIndicatorProps) => {
 
   useEffect(() => {
     const refresh = (): void => {
-      if (document.visibilityState === 'visible') setNow(new Date());
+      if (document.visibilityState !== 'visible') return;
+      setNow(new Date());
+      // `nextAt` caduca en cuanto pasa una lectura: la cuenta atrás de una
+      // fuente por intervalo solo se reinicia si se vuelve a preguntar.
+      getSchedule().then(setSchedule).catch(() => undefined);
     };
     const timer = setInterval(refresh, TICK_INTERVAL_MS);
     document.addEventListener('visibilitychange', refresh);
@@ -33,7 +37,9 @@ const NextSearchIndicator = ({ lastRunFailed }: NextSearchIndicatorProps) => {
     };
   }, []);
 
-  const next = schedule ? nextSearchIn(schedule.hours, now) : null;
+  const next = schedule
+    ? (schedule.nextAt ? nextSearchAt(schedule.nextAt, now) : nextSearchIn(schedule.hours, now))
+    : null;
   if (!next && !lastRunFailed) return null;
 
   // The left padding lands the text under the Dashboard label, past its 36px icon.

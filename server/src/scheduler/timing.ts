@@ -58,3 +58,50 @@ export function shouldRunPass(vet: Date, hours: readonly number[], last?: LastPa
   if (last && last.date === slot.date && last.hour >= slot.hour) return undefined;
   return { ...slot, recovered: vet.getUTCHours() !== slot.hour };
 }
+
+/** Lo que el planificador sabe de una fuente para decir cuándo le toca. */
+export interface NextRunSource {
+  readonly name: string;
+  readonly schedule: { readonly kind: 'configured-hours' } | { readonly kind: 'every-minutes'; readonly minutes: number };
+}
+
+/** La franja siguiente a `now`, en milisegundos absolutos. */
+function nextSlotAt(now: Date, hours: readonly number[]): number | null {
+  const sorted = [...hours].sort((a, b) => a - b);
+  const earliest = sorted[0];
+  if (earliest === undefined) return null;
+  const vet = toVet(now);
+  const midnightVet = Date.UTC(vet.getUTCFullYear(), vet.getUTCMonth(), vet.getUTCDate()) + VET_OFFSET_MS;
+  const following = sorted.find((hour) => midnightVet + hour * 3_600_000 > now.getTime());
+  return following === undefined
+    ? midnightVet + 24 * 3_600_000 + earliest * 3_600_000
+    : midnightVet + following * 3_600_000;
+}
+
+/**
+ * Cuándo vuelve a buscar el sistema: LA MÁS PRÓXIMA DE TODAS LAS FUENTES.
+ *
+ * El dashboard anunciaba la franja de LinkedIn y punto, así que con Get on
+ * Board leyendo cada media hora decía "próxima a las 9:00 am" mientras la
+ * siguiente lectura real estaba a veinte minutos. Quien mira quiere saber
+ * cuándo entra la próxima oferta, no de qué plataforma viene.
+ */
+export function nextRunAt(
+  now: Date,
+  hours: readonly number[],
+  sources: readonly NextRunSource[],
+  lastPassAt: (source: string) => number | null,
+): number | null {
+  const candidates: number[] = [];
+  for (const source of sources) {
+    if (source.schedule.kind === 'every-minutes') {
+      const last = lastPassAt(source.name);
+      const due = last === null ? now.getTime() : last + source.schedule.minutes * 60_000;
+      candidates.push(Math.max(due, now.getTime()));
+      continue;
+    }
+    const slot = nextSlotAt(now, hours);
+    if (slot !== null) candidates.push(slot);
+  }
+  return candidates.length ? Math.min(...candidates) : null;
+}
