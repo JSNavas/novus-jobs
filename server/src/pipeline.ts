@@ -4,7 +4,7 @@ import { decideShipping, fingerprint, locationLabel, storedText, type CandidateP
 import { companyName, offerTitle, roleOnly, stripAuthorHeaders } from './filters/headline.js';
 import type { LlmJudge, JudgeVerdict } from './filters/judge.js';
 import { classifyFailure, failureMessage, worstFailure } from './sources/failure.js';
-import type { JobSource, RawPost } from './sources/types.js';
+import type { JobSource, PostMetrics, RawPost } from './sources/types.js';
 import { JobLocation, JobSeniority, JudgeStatus, JobVerdict, type RunFailure } from './types.js';
 
 interface PipelineDeps {
@@ -74,6 +74,16 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
   const posts = await source.fetch((list) => indicesToFetchPermalink(list, deps.profile, isFresh));
   const offers: Offer[] = posts.map(toOffer);
   const fresh = offers.filter((o) => isFresh(o.text));
+  const metricsOf = new Map(posts.map((post) => [fingerprint(post.text), post.metrics ?? null]));
+
+  // Lo que ya está guardado también se pone al día. Las postulaciones suben
+  // cada día, y una oferta enseñando las que tenía el día que se encontró es
+  // peor que no decir nada: parece un dato de hoy.
+  for (const post of posts) {
+    const huella = fingerprint(post.text);
+    if (!post.metrics || isFresh(post.text)) continue;
+    deps.jobs.refreshMetrics(source.name, huella, post.metrics);
+  }
   const judged = await judgeOffers(fresh, deps);
 
   const outcome: RunOutcome = { fetched: posts.length, accepted: 0, rejected: 0 };
@@ -82,7 +92,14 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
     const ruleVerdict = decideShipping(offer, deps.profile);
     const judgment = judged.get(fingerprint(offer.text));
     const verdict = applyJudgment(ruleVerdict, judgment);
-    const job = toNewJob(source.name, offer, verdict, judgment ? JudgeStatus.Judged : JudgeStatus.Skipped, deps.runId);
+    const job = toNewJob(
+      source.name,
+      offer,
+      verdict,
+      judgment ? JudgeStatus.Judged : JudgeStatus.Skipped,
+      deps.runId,
+      metricsOf.get(fingerprint(offer.text)) ?? null,
+    );
     if (!deps.jobs.insert(job)) continue;
     if (verdict.accepted) {
       outcome.accepted++;
@@ -196,6 +213,7 @@ function toNewJob(
   verdict: Verdict,
   judgeStatus: JudgeStatus,
   runId: number,
+  metrics: PostMetrics | null,
 ): NewJob {
   // El anuncio SIN la firma de quien publica: de ahí salen el título y la
   // empresa, y es también lo que se guarda para leer. Con la cabecera delante,
@@ -224,7 +242,10 @@ function toNewJob(
     stackMatch: verdict.stackMatch,
     applyUrl: verdict.applyUrl,
     contactEmail: verdict.contactEmail,
-    postedAt: null,
+    // De la plataforma, no nuestra: cuándo la publicaron y cuánta gente va ya.
+    postedAt: metrics?.postedAt ?? null,
+    applications: metrics?.applications ?? null,
+    responseDays: metrics?.responseDays ?? null,
     runId,
   };
 }

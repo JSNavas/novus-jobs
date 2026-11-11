@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { Box, Button, Stack, Typography } from '@mui/material';
 import { AppAlert, AppChip, BlankCard } from '../../components/ui';
-import { formatDateTime } from '../../format';
+import { formatDate, formatDateTime } from '../../format';
 import { jobLocationLabel, jobSourceLabel, jobStatusLabel } from '../../labels';
 import { JobLocation, JobSeniority, JobStatus, JobVerdict, type Job } from '../../types';
 import type { Settings } from '../../api/client';
@@ -128,6 +128,20 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
 
 
   const actions = statusActions.filter((action) => action.status !== job.status);
+
+  const responseText = (): string | null => {
+    const days = job.responseDays;
+    if (!days) return null;
+    if (days.min && days.max) return `responde entre ${days.min} y ${days.max} días`;
+    const one = days.max ?? days.min;
+    return one ? `responde en unos ${one} días` : null;
+  };
+  const competition = [
+    job.applications === null
+      ? null
+      : `${job.applications} ${job.applications === 1 ? 'postulación' : 'postulaciones'}`,
+    responseText(),
+  ].filter(Boolean).join(' · ');
   const canApplyByEmail = !job.applyUrl && shouldOfferApplication(job);
 
   /**
@@ -147,13 +161,21 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2} flexWrap="wrap">
           <Box>
             <Typography variant="h5">{job.title ?? 'Sin título'}</Typography>
-            {/* DE DÓNDE SALIÓ, lo primero de la línea. Con dos plataformas
-                —y con la vía de postulación cambiando según cuál sea— saber si
-                una oferta viene de LinkedIn o de Get on Board deja de ser un
-                detalle: es lo que dice si hay que responder a un recruiter o
-                rellenar un formulario. */}
+            {/* DE DÓNDE SALIÓ y DE CUÁNDO ES.
+                La fecha era la de nuestra lectura, y con una pasada cada media
+                hora eso siempre dice «hace un rato»: no informa de nada. La que
+                sirve es la de la plataforma — una vacante del 2 de noviembre
+                con 298 postulaciones dice que llegas tarde. Cuando la fuente no
+                la publica (LinkedIn) se dice cuándo la encontramos, nombrándolo,
+                en vez de hacerla pasar por fecha de publicación. */}
             <Typography variant="subtitle2" color="textSecondary">
-              {[jobSourceLabel(job.source), job.company, formatDateTime(job.foundAt)].filter(Boolean).join(' · ')}
+              {[
+                jobSourceLabel(job.source),
+                job.company,
+                job.postedAt
+                  ? `publicada el ${formatDate(job.postedAt)}`
+                  : `encontrada el ${formatDateTime(job.foundAt)}`,
+              ].filter(Boolean).join(' · ')}
             </Typography>
           </Box>
           <Stack direction="row" spacing={1}>
@@ -175,6 +197,11 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
           <Typography variant="body2">Coincide con: {job.stackMatch.join(', ')}</Typography>
         ) : null}
         <Typography variant="body2">Ubicación: {locationText(job)}</Typography>
+        {/* LO QUE DICE SI VALE LA PENA. Un puesto con 298 postulaciones y una
+            empresa que tarda un mes en contestar no se trabaja igual que uno
+            recién publicado con cuatro. Solo se enseña lo que la plataforma
+            da: inventar un cero sería afirmar que no se ha postulado nadie. */}
+        {competition ? <Typography variant="body2">{competition}</Typography> : null}
 
         {/* ═══ LO QUE SE PUEDE HACER CON LA OFERTA ═══
             Una sola fila, no tres sueltas. Antes el contacto, el enlace y el

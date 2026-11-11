@@ -61,7 +61,12 @@ export interface Job {
   judgeStatus: JudgeStatus;
   status: JobStatus;
   foundAt: string;
+  /** Cuándo la publicó la plataforma. `null` si no lo dice. */
   postedAt: string | null;
+  /** Cuánta gente se había postulado la última vez que se leyó. */
+  applications: number | null;
+  /** Lo que la empresa tarda en contestar, en días. */
+  responseDays: { min: number | null; max: number | null } | null;
   stackMatch: string[];
   locationKind: JobLocation;
   applyUrl: string | null;

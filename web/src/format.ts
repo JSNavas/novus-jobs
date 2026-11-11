@@ -42,3 +42,15 @@ export function formatDateTime(iso: string | null): string {
   const period = (p.dayPeriod ?? '').replace(/[.\s\u202f\u00a0]/g, '').toLowerCase();
   return `${p.day} ${month} ${p.year}, ${p.hour}:${p.minute} ${period}`;
 }
+
+/**
+ * Solo el día. En la fecha en que se publicó una vacante la hora no aporta
+ * nada: lo que importa es si es de hoy o de hace tres semanas.
+ */
+export function formatDate(iso: string | null): string {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const p = partsOf(date);
+  return `${p.day} ${p.month} ${p.year}`;
+}

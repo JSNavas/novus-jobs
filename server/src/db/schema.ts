@@ -32,7 +32,13 @@ CREATE TABLE IF NOT EXISTS jobs (
   judge_status     TEXT    NOT NULL CHECK (judge_status IN (${inList(JudgeStatus)})),
   status           TEXT    NOT NULL DEFAULT '${JobStatus.New}' CHECK (status IN (${inList(JobStatus)})),
   found_at         TEXT    NOT NULL,
+  -- Cuándo la publicó la plataforma, no cuándo la leímos nosotros.
   posted_at        TEXT,
+  -- Los números de la plataforma. Cambian con los días, así que viven en
+  -- columnas y no en el texto: el texto es lo que la huella deduplica.
+  applications     INTEGER,
+  response_days_min INTEGER,
+  response_days_max INTEGER,
   UNIQUE (source, fingerprint)
 );
 

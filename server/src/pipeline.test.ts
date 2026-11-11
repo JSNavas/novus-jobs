@@ -10,7 +10,7 @@ import { runPasses } from './pipeline.js';
 import { PROFILE } from './profile/profile.js';
 import { OPEN_API_POLICY } from './sources/policy.js';
 import type { JobSource, RawPost } from './sources/types.js';
-import { JobLocation, JobVerdict, JudgeStatus } from './types.js';
+import { JobLocation, JobStatus, JobVerdict, JudgeStatus } from './types.js';
 
 /**
  * EL CRUCE ENTRE LAS REGLAS Y EL JUEZ, que es donde se perdían las ofertas.
@@ -38,6 +38,26 @@ const SEGURIDAD_DE_RED =
 /** No menciona nada de su stack: descarte de los que el juez NO puede tocar. */
 const SIN_STACK =
   'Buscamos Contador Senior 100% remoto para LATAM. Responsabilidades: conciliaciones, impuestos y cierres mensuales. Sueldo USD 2000. Postula en jobs@acme.com';
+
+/** Como `fakeSource`, pero con los números que publica la plataforma. */
+function fakeSourceWithMetrics(texts: readonly string[], applications: number): JobSource {
+  const base = fakeSource(texts);
+  return {
+    ...base,
+    async fetch(): Promise<RawPost[]> {
+      return texts.map((text) => ({
+        text,
+        author: 'Alguien',
+        url: null,
+        metrics: {
+          postedAt: '2026-11-02T10:00:00.000Z',
+          applications,
+          responseDays: { min: 23, max: 31 },
+        },
+      }));
+    },
+  };
+}
 
 function fakeSource(texts: readonly string[]): JobSource {
   return {
@@ -185,6 +205,63 @@ describe('pipeline — el juez cruzado con las reglas', () => {
       'presencial o híbrido fuera de Venezuela',
       'el motivo de la regla dice más que un "[IA] no es una vacante"',
     );
+  });
+
+  /* ═══ LOS NÚMEROS DE LA PLATAFORMA ═══
+   * Van en columnas y no en el texto justamente para esto: cambian cada día,
+   * y la huella que deduplica es un sha1 del texto. */
+
+  it('guarda cuándo la publicaron ellos y cuánta gente se postuló', async () => {
+    const source = fakeSourceWithMetrics([BUENA], 298);
+    await runPasses([source], { jobs, judge: null, profile: PROFILE, runId: 1 });
+
+    const stored = jobs.list({
+      status: null, verdict: null, runId: null, seniority: null,
+      source: null, search: null, hasApply: null, limit: 10, offset: 0,
+    });
+    const job = stored.items[0]!;
+    assert.equal(job.postedAt, '2026-11-02T10:00:00.000Z');
+    assert.equal(job.applications, 298);
+    assert.deepEqual(job.responseDays, { min: 23, max: 31 });
+  });
+
+  it('EL CASO REAL: una segunda pasada actualiza las postulaciones sin duplicar la oferta', async () => {
+    // 298 el lunes y 310 el martes. Si el número viviera en el texto, la huella
+    // cambiaría y la misma vacante entraría otra vez como nueva.
+    await runPasses([fakeSourceWithMetrics([BUENA], 298)], { jobs, judge: null, profile: PROFILE, runId: 1 });
+    await runPasses([fakeSourceWithMetrics([BUENA], 310)], { jobs, judge: null, profile: PROFILE, runId: 2 });
+
+    const stored = jobs.list({
+      status: null, verdict: null, runId: null, seniority: null,
+      source: null, search: null, hasApply: null, limit: 10, offset: 0,
+    });
+    assert.equal(stored.items.length, 1, 'una sola fila: la huella no cambió');
+    assert.equal(stored.items[0]!.applications, 310, 'con el número de hoy, no el de la primera lectura');
+  });
+
+  it('refrescar los números NO toca el estado que él le puso a la oferta', async () => {
+    await runPasses([fakeSourceWithMetrics([BUENA], 298)], { jobs, judge: null, profile: PROFILE, runId: 1 });
+    const stored = jobs.list({
+      status: null, verdict: null, runId: null, seniority: null,
+      source: null, search: null, hasApply: null, limit: 10, offset: 0,
+    });
+    jobs.updateStatus(stored.items[0]!.id, JobStatus.Saved);
+
+    await runPasses([fakeSourceWithMetrics([BUENA], 310)], { jobs, judge: null, profile: PROFILE, runId: 2 });
+
+    const after = jobs.findById(stored.items[0]!.id);
+    assert.equal(after?.status, JobStatus.Saved, 'la guardó él; una lectura posterior no la devuelve a nuevas');
+    assert.equal(after?.applications, 310);
+  });
+
+  it('una fuente que no publica números deja esos campos vacíos, sin inventar un cero', async () => {
+    await run([BUENA], null);
+    const stored = jobs.list({
+      status: null, verdict: null, runId: null, seniority: null,
+      source: null, search: null, hasApply: null, limit: 10, offset: 0,
+    });
+    assert.equal(stored.items[0]!.applications, null, 'un 0 diría que no se ha postulado nadie');
+    assert.equal(stored.items[0]!.postedAt, null);
   });
 
   it('sin juez manda la regla, y el descarte queda marcado como no juzgado', async () => {

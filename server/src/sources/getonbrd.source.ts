@@ -1,5 +1,5 @@
 import { OPEN_API_POLICY } from './policy.js';
-import type { JobSource, PermalinkSelector, RawPost } from './types.js';
+import type { JobSource, PermalinkSelector, PostMetrics, RawPost } from './types.js';
 
 /**
  * ═══ GET ON BOARD, POR SU API PÚBLICA Y NO POR SU MCP ═══
@@ -65,6 +65,9 @@ interface ApiJob {
     countries?: unknown;
     min_salary?: unknown;
     max_salary?: unknown;
+    published_at?: unknown;
+    applications_count?: unknown;
+    response_time_in_days?: { min?: unknown; max?: unknown };
     category_name?: unknown;
     company?: { data?: { attributes?: { name?: unknown } } };
     seniority?: { data?: { attributes?: { name?: unknown } } };
@@ -201,6 +204,27 @@ function toPostText(job: ApiJob, categories: Map<string, string>): string | null
   return [head.join('\n'), ...body].join('\n\n');
 }
 
+/**
+ * Los números de la plataforma, fuera del texto.
+ *
+ * `published_at` llega en segundos desde epoch. Importa que sea la fecha de
+ * ELLOS: hasta ahora la tarjeta enseñaba cuándo la habíamos encontrado
+ * nosotros, que con una pasada cada media hora es siempre «hace un rato» y no
+ * dice nada. Saber que una vacante es del 2 de noviembre y lleva 298
+ * postulaciones sí dice algo: que llegas tarde.
+ */
+function toMetrics(attributes: NonNullable<ApiJob['attributes']>): PostMetrics {
+  const published = positiveNumber(attributes.published_at);
+  const response = attributes.response_time_in_days;
+  const min = positiveNumber(response?.min);
+  const max = positiveNumber(response?.max);
+  return {
+    postedAt: published ? new Date(published * 1000).toISOString() : null,
+    applications: typeof attributes.applications_count === 'number' ? attributes.applications_count : null,
+    responseDays: min || max ? { min, max } : null,
+  };
+}
+
 function toRawPost(job: ApiJob, categories: Map<string, string>): RawPost | null {
   const body = toPostText(job, categories);
   if (!body) return null;
@@ -213,6 +237,7 @@ function toRawPost(job: ApiJob, categories: Map<string, string>): RawPost | null
     // abrir el menú "⋯" de cada publicación para esto, y ese clic se raciona
     // porque lo paga la cuenta; aquí el enlace viene en la respuesta.
     url: jobUrl(String(job.id), categories.get(category) ?? null),
+    metrics: toMetrics(job.attributes!),
   };
 }
 

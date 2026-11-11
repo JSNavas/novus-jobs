@@ -3,10 +3,31 @@ import type { Config } from '../config.js';
 import type { LoginWall } from './login-wall.js';
 import type { SourcePolicy } from './policy.js';
 
+/**
+ * Los números que la plataforma pone junto a la oferta.
+ *
+ * VAN APARTE DEL TEXTO, y es lo único importante de este tipo. `applications`
+ * sube cada día: si se escribiera dentro del anuncio, cambiaría la huella sha1
+ * que deduplica y las 187 vacantes volverían a entrar como nuevas en cada
+ * pasada. Como campos sueltos se pueden refrescar sin tocar la huella.
+ *
+ * Todo opcional porque solo los da quien los tiene: Get on Board los entrega en
+ * su API; de un post de LinkedIn no se sacan sin abrir la publicación.
+ */
+export interface PostMetrics {
+  /** Cuándo la publicaron ELLOS, en ISO. No cuándo la encontramos nosotros. */
+  postedAt: string | null;
+  /** Cuánta gente se ha postulado ya. Dice si llegas tarde. */
+  applications: number | null;
+  /** Lo que tarda la empresa en contestar, en días. */
+  responseDays: { min: number | null; max: number | null } | null;
+}
+
 export interface RawPost {
   text: string;
   author: string | null;
   url: string | null;
+  metrics?: PostMetrics;
 }
 
 /**

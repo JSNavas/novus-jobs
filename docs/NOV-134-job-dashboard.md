@@ -620,3 +620,53 @@ La plantilla admite cualquier texto, así que puede guardarse una sin huecos
 mal escrito (`{empresas}`), que se pegaría literal. No se valida a propósito:
 la pantalla lista los tres huecos y el señor es quien escribe ahí. Si llegara a
 pasar, el sitio donde avisarlo es la propia pantalla, con una vista previa.
+
+---
+
+## Rev. 13 — La fecha de ellos, y la competencia · 2026-11-11
+
+La tarjeta enseñaba la fecha en que NOSOTROS encontramos la oferta. Con una
+pasada cada media hora eso siempre dice «hace un rato»: no informa de nada. La
+que sirve es la de la plataforma — una vacante del 2 de noviembre con 298
+postulaciones dice algo muy concreto, que llegas tarde.
+
+Se añaden tres datos que Get on Board publica y que deciden si vale la pena
+escribir: **cuándo se publicó**, **cuántas postulaciones lleva** y **cuánto
+tarda esa empresa en responder**.
+
+### Por qué NO van en el texto del anuncio
+
+`applications_count` sube cada día. La huella que deduplica es un sha1 de los
+primeros 800 caracteres del texto, así que meterlo ahí haría que las 187
+vacantes volvieran a entrar como nuevas **en cada pasada**. Van en columnas
+propias (`posted_at`, `applications`, `response_days_min/max`) y viajan en
+`RawPost.metrics`, fuera del texto.
+
+Esa misma separación permite lo siguiente, que es la mitad del valor:
+
+### Las ofertas ya guardadas se ponen al día
+
+`runSource` recorre también los posts que YA están en la base y llama a
+`refreshMetrics`. Sin eso, una oferta enseñaría para siempre las postulaciones
+que tenía el día que se encontró, y «298 postulaciones» de hace una semana es
+peor que no decir nada: parece un dato de hoy.
+
+`refreshMetrics` toca solo esas cuatro columnas. El texto, el veredicto y el
+estado en la bandeja son de él y de la pasada que la juzgó: una lectura
+posterior no tiene por qué pisarlos. Hay un test que lo fija — una oferta
+guardada sigue guardada después de refrescarse.
+
+### Lo que no se inventa
+
+Una fuente que no publica estos datos los deja en `null`, y la tarjeta no
+enseña esa línea. Un `0` diría «no se ha postulado nadie», que es una
+afirmación, no un hueco. LinkedIn no los da sin abrir cada publicación, así que
+ahí la tarjeta sigue diciendo «encontrada el …», nombrándolo, en vez de hacer
+pasar nuestra fecha de lectura por fecha de publicación.
+
+### GAP
+
+Los números son de la última lectura, no de este instante: entre pasadas
+envejecen hasta media hora. No se dice en la tarjeta. Si llegara a importar, lo
+honesto sería escribir «298 postulaciones (hace 20 min)» y no refrescar más a
+menudo, que solo sería más tráfico contra su API.

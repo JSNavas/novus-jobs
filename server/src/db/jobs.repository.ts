@@ -1,8 +1,15 @@
+import type { PostMetrics } from '../sources/types.js';
 import { JobLocation, JobSeniority, JobStatus, JobVerdict, JudgeStatus, type Job } from '../types.js';
 import type { Db } from './database.js';
 
-export type NewJob = Omit<Job, 'id' | 'status' | 'foundAt' | 'runId'>
-  & { foundAt?: string; runId?: number | null };
+export type NewJob = Omit<Job, 'id' | 'status' | 'foundAt' | 'runId' | 'applications' | 'responseDays'>
+  & {
+    foundAt?: string;
+    runId?: number | null;
+    /** Opcionales: solo los trae la fuente que los publica. */
+    applications?: number | null;
+    responseDays?: { min: number | null; max: number | null } | null;
+  };
 
 export interface JobQuery {
   status: JobStatus | null;
@@ -52,12 +59,16 @@ interface JobRow {
   status: JobStatus;
   found_at: string;
   posted_at: string | null;
+  applications: number | null;
+  response_days_min: number | null;
+  response_days_max: number | null;
   run_id: number | null;
 }
 
 const JOB_COLUMNS = `id, source, fingerprint, title, role, company, author, text, url, location, location_kind,
   verdict, rejection_reason, seniority, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
-  judge_status, status, found_at, posted_at, run_id`;
+  judge_status, status, found_at, posted_at, run_id,
+  applications, response_days_min, response_days_max`;
 
 function toJob(row: JobRow): Job {
   return {
@@ -79,6 +90,10 @@ function toJob(row: JobRow): Job {
     status: row.status,
     foundAt: row.found_at,
     postedAt: row.posted_at,
+    applications: row.applications,
+    responseDays: row.response_days_min || row.response_days_max
+      ? { min: row.response_days_min, max: row.response_days_max }
+      : null,
     stackMatch: JSON.parse(row.stack_match) as string[],
     locationKind: row.location_kind,
     applyUrl: row.apply_url,
@@ -96,20 +111,50 @@ export class JobsRepository {
     const result = this.db.prepare(`
       INSERT OR IGNORE INTO jobs (source, fingerprint, title, role, company, author, text, url, location, location_kind,
         verdict, rejection_reason, seniority, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
-        judge_status, status, found_at, posted_at, run_id)
+        judge_status, status, found_at, posted_at, run_id,
+        applications, response_days_min, response_days_max)
       VALUES (@source, @fingerprint, @title, @role, @company, @author, @text, @url, @location, @locationKind,
         @verdict, @rejectionReason, @seniority, @isAggregator, @isUncertain, @stackMatch, @applyUrl, @contactEmail,
-        @judgeStatus, @status, @foundAt, @postedAt, @runId)
+        @judgeStatus, @status, @foundAt, @postedAt, @runId,
+        @applications, @responseDaysMin, @responseDaysMax)
     `).run({
       ...job,
       isAggregator: job.isAggregator ? 1 : 0,
       isUncertain: job.isUncertain ? 1 : 0,
       stackMatch: JSON.stringify(job.stackMatch),
+      applications: job.applications ?? null,
+      responseDaysMin: job.responseDays?.min ?? null,
+      responseDaysMax: job.responseDays?.max ?? null,
       status: JobStatus.New,
       foundAt: job.foundAt ?? new Date().toISOString(),
       runId: job.runId ?? null,
     });
     return result.changes > 0;
+  }
+
+  /**
+   * Refresca los números de una oferta QUE YA ESTÁ GUARDADA.
+   *
+   * Las postulaciones suben cada día. Sin esto, una oferta enseñaría para
+   * siempre las que tenía el día que se encontró, y «298 postulaciones» de
+   * hace una semana es peor que no decir nada: parece un dato de hoy.
+   *
+   * Solo toca estas columnas. El texto, el veredicto y el estado en la bandeja
+   * son de él y de la pasada que la juzgó, y una lectura posterior no tiene
+   * por qué pisarlos.
+   */
+  refreshMetrics(source: string, fingerprint: string, metrics: PostMetrics): void {
+    this.db.prepare(`
+      UPDATE jobs SET posted_at = ?, applications = ?, response_days_min = ?, response_days_max = ?
+      WHERE source = ? AND fingerprint = ?
+    `).run(
+      metrics.postedAt,
+      metrics.applications,
+      metrics.responseDays?.min ?? null,
+      metrics.responseDays?.max ?? null,
+      source,
+      fingerprint,
+    );
   }
 
   fingerprintsOf(source: string): Set<string> {

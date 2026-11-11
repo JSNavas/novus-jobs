@@ -51,6 +51,9 @@ export function openDatabase(dataDir: string): Db {
   ensureColumn(db, 'runs', 'failure', 'TEXT');
   ensureColumn(db, 'jobs', 'role', 'TEXT');
   ensureColumn(db, 'jobs', 'run_id', 'INTEGER');
+  ensureColumn(db, 'jobs', 'applications', 'INTEGER');
+  ensureColumn(db, 'jobs', 'response_days_min', 'INTEGER');
+  ensureColumn(db, 'jobs', 'response_days_max', 'INTEGER');
   backfillRunId(db);
   return db;
 }
