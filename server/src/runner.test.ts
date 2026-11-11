@@ -159,27 +159,19 @@ describe('Runner — suelo de las búsquedas manuales', () => {
    * veces un navegador carga el feed y con qué patrón. Cada uno de estos tapa
    * una forma distinta de parecer un robot. */
 
-  it('no se puede buscar justo después de la pasada automática', () => {
-    // Era el agujero del suelo "una por hora": si la última MANUAL fue ayer,
-    // pulsar a las 18:01 encadenaba dos cargas con un minuto de diferencia.
+  it('la pasada automática NO bloquea el botón: el suelo manual es lo único que cuenta', () => {
+    // Hubo un tope de 20 min tras cualquier lectura. Lo quitó el señor el
+    // 2026-11-11: con una hora entre manuales ya no se encadenan dos cargas
+    // por insistir, y lo que hacía en la práctica era negarle el botón.
     pastRun(null, RunTrigger.Scheduled);
     advance(60_000);
-    assert.match(refusal(() => runner().startManual()), /dos lecturas seguidas/);
-  });
-
-  it('pasados 20 min de la automática ya se permite', () => {
-    pastRun(null, RunTrigger.Scheduled);
-    advance(21 * 60_000);
     assert.ok(runner().startManual().id);
   });
 
-  it('el presupuesto diario corta a la cuarta búsqueda a mano', () => {
-    for (let i = 0; i < 3; i++) {
-      pastManual(null);
-      advance((i + 1) * 61 * 60_000);
-    }
-    advance(10 * 60 * 60_000);
-    assert.match(refusal(() => runner().startManual()), /máximo/);
+  it('ya no hay presupuesto diario: a la cuarta se puede, si se respetó la hora', () => {
+    for (let i = 0; i < 3; i++) pastManual(null);
+    advance(61 * 60_000);
+    assert.ok(runner().startManual().id);
   });
 
   it('una manual que murió con el perfil ocupado NO gasta presupuesto', () => {
@@ -190,7 +182,7 @@ describe('Runner — suelo de las búsquedas manuales', () => {
   });
 
   it('el techo diario también para al planificador', () => {
-    for (let i = 0; i < 8; i++) pastRun(null, RunTrigger.Scheduled);
+    for (let i = 0; i < 20; i++) pastRun(null, RunTrigger.Scheduled);
     const before = runs.list(50).items.length;
     runner().startScheduled(['linkedin']);
     assert.equal(runs.list(50).items.length, before, 'no debería haber lanzado nada');
@@ -201,12 +193,13 @@ describe('Runner — suelo de las búsquedas manuales', () => {
    * API pública sin cuenta ni sesión. Un tope sin nada que proteger es una
    * avería, no prudencia. */
 
-  it('EL CASO REAL: con LinkedIn agotado, Get on Board se busca igual', () => {
-    for (let i = 0; i < 4; i++) pastRun(null, RunTrigger.Manual); // 4 manuales de linkedin
+  it('EL CASO REAL: con LinkedIn en su hora de espera, Get on Board se busca igual', () => {
+    pastRun(null, RunTrigger.Manual); // linkedin acaba de buscar: le toca esperar
+    const previas = runs.list(50).items.map((r) => r.id);
     const run = runner([LINKEDIN, GETONBRD]).startManual();
 
     assert.ok(run.id, 'la búsqueda arranca');
-    const lanzadas = runs.list(50).items.filter((r) => r.id > 4).map((r) => r.source);
+    const lanzadas = runs.list(50).items.filter((r) => !previas.includes(r.id)).map((r) => r.source);
     assert.deepEqual(lanzadas, ['getonbrd'], 'solo la que podía: LinkedIn no se toca');
   });
 
@@ -247,17 +240,14 @@ describe('Runner — suelo de las búsquedas manuales', () => {
     assert.deepEqual(runs.list(10).items.map((r) => r.source).sort(), ['getonbrd', 'linkedin']);
   });
 
-  it('el presupuesto se cuenta por día de Venezuela, no por día UTC', () => {
+  it('el techo del día se cuenta por día de Venezuela, no por día UTC', () => {
     // A las 20:00 UTC son las 16:00 en Venezuela: sigue siendo el mismo día y
     // el contador NO se ha reiniciado. Con el corte en UTC, la tarde del señor
-    // tendría presupuesto doble.
+    // tendría techo doble.
     now = new Date('2026-11-10T20:00:00.000Z');
-    for (let i = 0; i < 3; i++) {
-      pastManual(null);
-      now = new Date(now.getTime() + 61 * 60_000);
-    }
+    for (let i = 0; i < 20; i++) pastRun(null, RunTrigger.Scheduled);
     now = new Date('2026-11-11T01:00:00.000Z'); // 21:00 en Venezuela, mismo día
-    assert.match(refusal(() => runner().startManual()), /máximo/);
+    assert.match(refusal(() => runner().startManual()), /techo del día/);
     now = new Date('2026-11-11T05:00:00.000Z'); // 01:00 en Venezuela, día nuevo
     assert.ok(runner().startManual().id);
   });

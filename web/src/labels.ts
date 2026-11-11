@@ -43,3 +43,18 @@ export const runFailureAdvice: Record<RunFailure, string> = {
     'La sesión está bien, pero no se encontró ninguna publicación. Hay una captura en los logs del servidor.',
   [RunFailure.Other]: 'Mira el detalle debajo y los logs del servidor.',
 };
+
+/**
+ * De dónde salió la oferta, con el nombre que usa la plataforma.
+ *
+ * Es una función y no un `Record` porque `Job.source` es un `string` libre —el
+ * id que la fuente guarda en la BD— y no un enum: una plataforma nueva aparece
+ * en los datos antes que en esta tabla. Ante un nombre desconocido se enseña
+ * el id tal cual, que dice la verdad, en vez de un hueco.
+ */
+const SOURCE_LABELS: Record<string, string> = {
+  linkedin: 'LinkedIn',
+  getonbrd: 'Get on Board',
+};
+
+export const jobSourceLabel = (source: string): string => SOURCE_LABELS[source] ?? source;

@@ -52,18 +52,28 @@ export type SourceSchedule =
  */
 export const WATCHED_ACCOUNT_POLICY: SourcePolicy = {
   schedule: { kind: 'configured-hours' },
-  // Con el suelo de una hora, un día de insistir son catorce lecturas. Nadie
-  // abre LinkedIn catorce veces a buscar lo mismo.
-  manualDailyBudget: 3,
+  /*
+   * UN SOLO TOPE MANUAL: una hora entre búsquedas. Decisión del señor el
+   * 2026-11-11, y es suya porque es su cuenta.
+   *
+   * Antes había tres topes manuales encima de este —presupuesto de 3 al día,
+   * 20 minutos tras cualquier lectura y techo de 8— pensados para que el botón
+   * no cambiara lo que LinkedIn ve. En la práctica lo que hacían era negarle
+   * el botón a media tarde. Con el suelo de una hora, el peor día posible son
+   * ~14 lecturas manuales repartidas, que es un ritmo humano: nadie pulsa dos
+   * veces seguidas y cada lectura está a una hora de la anterior.
+   */
+  manualDailyBudget: null,
   manualMinIntervalMs: 60 * 60_000,
-  // Sin esto, el botón pulsado a las 18:01 encadenaba dos cargas del feed con
-  // un minuto de diferencia: la de la franja y la tuya. Dos lecturas seguidas
-  // es el patrón que menos se parece a una persona.
-  minGapAfterAnyPassMs: 20 * 60_000,
-  // Red de seguridad, no límite de uso: con 3 franjas + 3 manuales nunca salta.
-  // Está para que un SCHEDULE_HOURS de doce horas, o un fallo en bucle, no
-  // puedan convertirse en un día de cargas continuas sin que nadie lo pare.
-  maxPassesPerDay: 8,
+  minGapAfterAnyPassMs: 0,
+  /*
+   * El techo se queda, pero alto: con el suelo de una hora no se puede llegar
+   * a 20 en un día (14 manuales + 3 franjas son 17), así que nunca le estorba.
+   * Sigue ahí para lo que siempre estuvo: que un `SCHEDULE_HOURS` con doce
+   * horas, o un fallo que reintente en bucle, no puedan convertirse en un día
+   * de cargas continuas sin que nadie lo pare.
+   */
+  maxPassesPerDay: 20,
   retryAfterBusyMs: 5 * 60_000,
 };
 

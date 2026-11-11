@@ -478,3 +478,36 @@ El techo duro y el presupuesto se cuentan por `source`, así que una fuente
 nueva empieza con el contador a cero aunque el día ya vaya cargado. Es lo
 correcto mientras las plataformas sean independientes; dejaría de serlo si
 alguna vez dos fuentes leyeran de la misma cuenta.
+
+---
+
+## Rev. 10 — La fuente, a la vista · 2026-11-11
+
+Con dos plataformas, de dónde viene una oferta deja de ser un detalle interno:
+dice si hay que responderle a un recruiter o rellenar un formulario. Se enseña
+en la línea de metadatos de la tarjeta (`Get on Board · Empresa · fecha`) y en
+el correo de ofertas nuevas, delante de la ubicación.
+
+`jobSourceLabel` es una función con un mapa y respaldo, no un `Record` sobre un
+enum: `Job.source` es el id libre que guarda cada fuente, así que una
+plataforma nueva aparece en los datos antes que en la tabla de nombres. Lo
+desconocido se enseña tal cual, que dice la verdad, en vez de un hueco.
+
+### El ritmo de LinkedIn, más corto
+
+Decisión del señor, y es suya porque es su cuenta: **de los cuatro topes
+manuales queda uno, la hora entre búsquedas**. Se van el presupuesto de 3 al
+día y el hueco de 20 minutos tras cualquier lectura. El techo duro sube de 8 a
+20, donde ya no estorba (14 manuales + 3 franjas son 17) pero sigue tapando un
+bucle de reintentos. La automática no cambia: 9, 13 y 18.
+
+### Detalle cosmético que se deja a propósito
+
+El título de una oferta de Get on Board sale como «BC Tecnología busca:
+Developer Full-Stack – LATAM», porque es la primera línea del texto que compone
+la fuente. Se podría dejar solo el puesto moviendo la empresa a su propia línea
+—el nombre tiene que seguir en el texto para que el juez detecte un empleador
+venezolano—, pero eso cambia el texto y con él la huella sha1 que deduplica:
+las 187 vacantes volverían a entrar como nuevas una vez, duplicando las 27 que
+ya están guardadas y repitiendo el correo. No compensa por un prefijo. `role`
+ya sale limpio («Developer Full-Stack»).

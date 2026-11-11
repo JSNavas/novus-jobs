@@ -41,6 +41,20 @@ export function offersSubject(count: number): string {
     : `${count} ofertas nuevas para revisar`;
 }
 
+/**
+ * El nombre de la plataforma. Un `Record` abierto y no un enum: `source` es el
+ * id libre que guarda cada fuente, y una plataforma nueva llega a los datos
+ * antes que a esta tabla. Lo desconocido se enseña tal cual.
+ */
+const SOURCE_LABELS: Record<string, string> = {
+  linkedin: 'LinkedIn',
+  getonbrd: 'Get on Board',
+};
+
+function sourceLabel(source: string): string {
+  return SOURCE_LABELS[source] ?? source;
+}
+
 /** El aviso de ofertas nuevas. `dashboardUrl` es a dónde tiene que ir. */
 export function offersMail(jobs: readonly NewJob[], dashboardUrl: string): Mail {
   const listed = jobs.slice(0, MAX_LISTED);
@@ -49,7 +63,12 @@ export function offersMail(jobs: readonly NewJob[], dashboardUrl: string): Mail 
   const lines = listed.map((job) => {
     const stack = job.stackMatch.slice(0, 5).join(', ');
     const where = job.location ?? 'sin ubicación';
-    return { title: headline(job.text), meta: [where, stack].filter(Boolean).join(' · ') };
+    // De dónde viene, lo primero: con dos plataformas, dice si hay que
+    // responderle a alguien o rellenar un formulario.
+    return {
+      title: headline(job.text),
+      meta: [sourceLabel(job.source), where, stack].filter(Boolean).join(' · '),
+    };
   });
 
   const text = [

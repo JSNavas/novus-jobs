@@ -145,16 +145,11 @@ Todo se refresca solo cada 15 segundos y las horas van en **hora de Venezuela**,
 
 El ritmo no lo decide el sitio: lo decide **qué se arriesga al leerlo**. Una cuenta vigilada se protege; una API pública solo pide buena educación. Cada fuente trae su política (`sources/policy.ts`) y se le cuenta por separado — con su propia fila en `runs`.
 
-**LinkedIn — una cuenta que te vigila.** Cuatro topes a la vez, y es deliberado que sean cuatro: lo que LinkedIn mide no es cuántas veces pulsas un botón, sino cuántas veces un navegador carga tu feed y con qué patrón.
+**LinkedIn — una cuenta que te vigila.** Un tope para el botón: **1 hora entre búsquedas manuales**. Con ese suelo no se encadenan dos cargas por insistir, y el peor día posible son ~14 lecturas repartidas, que es un ritmo humano.
 
-| | Límite | Qué patrón evita |
-|---|---|---|
-| 1 | 1 hora entre búsquedas manuales | insistir |
-| 2 | 20 min tras cualquier lectura, incluida la automática | encadenar dos cargas seguidas |
-| 3 | 3 búsquedas manuales al día (día de Venezuela) | 14 lecturas diarias cumpliendo el tope horario |
-| 4 | techo duro de 8 lecturas al día | una configuración mal puesta o un bucle de reintentos |
+Queda además un techo duro de 20 lecturas al día. No es un límite de uso —con el suelo de una hora no se puede llegar— sino la red de seguridad para que un `SCHEDULE_HOURS` mal puesto o un bucle de reintentos no se conviertan en un día de cargas continuas.
 
-Automática en las franjas de `SCHEDULE_HOURS`: 9, 13 y 18 (VET).
+Automática en las franjas de `SCHEDULE_HOURS`: 9, 13 y 18 (VET), sin cambios.
 
 **Get on Board — una API abierta.** No hay cuenta, ni sesión, ni nadie midiendo el patrón. Automática **cada 30 minutos**, y a mano **sin tope diario**, con un suelo de 1 minuto para no ser un mal vecino de su servidor. Son unas 48 peticiones al día a un endpoint de búsqueda.
 

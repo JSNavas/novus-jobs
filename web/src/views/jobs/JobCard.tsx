@@ -2,7 +2,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { Box, Button, Stack, Typography } from '@mui/material';
 import { AppAlert, AppChip, BlankCard } from '../../components/ui';
 import { formatDateTime } from '../../format';
-import { jobLocationLabel, jobStatusLabel } from '../../labels';
+import { jobLocationLabel, jobSourceLabel, jobStatusLabel } from '../../labels';
 import { JobLocation, JobStatus, JobVerdict, type Job } from '../../types';
 import type { Settings } from '../../api/client';
 import { gmailComposeUrl, shouldOfferApplication } from './apply';
@@ -122,8 +122,13 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2} flexWrap="wrap">
           <Box>
             <Typography variant="h5">{job.title ?? 'Sin título'}</Typography>
+            {/* DE DÓNDE SALIÓ, lo primero de la línea. Con dos plataformas
+                —y con la vía de postulación cambiando según cuál sea— saber si
+                una oferta viene de LinkedIn o de Get on Board deja de ser un
+                detalle: es lo que dice si hay que responder a un recruiter o
+                rellenar un formulario. */}
             <Typography variant="subtitle2" color="textSecondary">
-              {[job.company, formatDateTime(job.foundAt)].filter(Boolean).join(' · ')}
+              {[jobSourceLabel(job.source), job.company, formatDateTime(job.foundAt)].filter(Boolean).join(' · ')}
             </Typography>
           </Box>
           <Stack direction="row" spacing={1}>
