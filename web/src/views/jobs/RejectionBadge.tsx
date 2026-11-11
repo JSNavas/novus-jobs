@@ -7,9 +7,10 @@ interface RejectionBadgeProps {
 }
 
 /**
- * La categoría se lee de un vistazo; el texto completo está en el tooltip y en
- * la línea de abajo. El tooltip solo lo ve quien tiene ratón, así que la línea
- * visible es la que cuenta para teclado y lector de pantalla.
+ * The category reads at a glance; the full reason is in the tooltip and in the
+ * line below. The tooltip is mouse-only, so the visible line is what keyboard
+ * and screen reader users get. The chip is not focusable on purpose: it would
+ * be a tab stop with no announced purpose, and the reason is already on screen.
  */
 const RejectionBadge = ({ reason }: RejectionBadgeProps) => {
   const { label, tone } = rejectionCategory(reason);
@@ -17,15 +18,7 @@ const RejectionBadge = ({ reason }: RejectionBadgeProps) => {
   return (
     <Stack spacing={0.5} alignItems="flex-start">
       <Tooltip title={reason}>
-        <Box
-          component="span"
-          tabIndex={0}
-          sx={{
-            display: 'inline-flex',
-            borderRadius: 1,
-            '&:focus-visible': { outline: '1px solid', outlineColor: 'primary.main', outlineOffset: 2 },
-          }}
-        >
+        <Box component="span" sx={{ display: 'inline-flex' }}>
           <AppChip label={label} tone={tone} />
         </Box>
       </Tooltip>
