@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { JobStatus } from '../../../../types';
 import { runStatusLabel, runStatusTone } from '../../../../views/dashboard/runStatus';
 import { INBOX_VIEWS, showsCount } from '../../../../views/jobs/inbox';
+import NextSearchIndicator from './NextSearchIndicator';
 
 /**
  * The menu IS the inbox map: one entry per status, each with its counter.
@@ -50,6 +51,8 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
     return () => { cancelled = true; clearInterval(timer); };
   }, []);
 
+  const lastRunFailed = stats?.lastRun ? runStatusTone(stats.lastRun) === 'error' : false;
+
   const countOf = (view: (typeof INBOX_VIEWS)[number]): number | null => {
     if (!stats || !showsCount(view)) return null;
     return stats.byStatus[view.status];
@@ -76,6 +79,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
             <AppStatusPilot tone={runStatusTone(stats.lastRun)} srLabel={runStatusLabel(stats.lastRun)} />
           ) : null}
         </ListItemButton>
+        <NextSearchIndicator lastRunFailed={lastRunFailed} />
       </List>
 
     <List sx={{ px: 2 }} subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>Ofertas</ListSubheader>}>
