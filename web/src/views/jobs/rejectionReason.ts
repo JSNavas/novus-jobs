@@ -1,6 +1,5 @@
 /**
- * Tono del distintivo. Solo dos: un descarte no es un fallo del sistema, así
- * que nunca va en rojo (eso ya lo dice el chip "Descartada por el filtro").
+ * Only two tones. A discard is not a system failure, so it never goes red.
  */
 type RejectionTone = 'warning' | 'neutral';
 
@@ -10,12 +9,12 @@ interface RejectionCategory {
 }
 
 /**
- * Los textos son los que emiten `server/src/filters/decide.ts` y
- * `server/src/pipeline.ts`. Si cambian allí, cambian aquí: sin coincidencia cae
- * en "Otro motivo", que es honesto aunque menos útil.
+ * Patterns mirror the texts emitted by `server/src/filters/decide.ts` and
+ * `server/src/pipeline.ts`. If those change, change this list too: without a
+ * match the reason falls back to "Otro motivo", which is honest but less useful.
  *
- * Ámbar para los juicios que se pueden discutir (IA, periférico, otro
- * ecosistema); gris para los hechos verificables de la oferta.
+ * Amber marks judgment calls that can be disputed (AI, peripheral, other
+ * ecosystem); gray marks verifiable facts about the offer.
  */
 const CATEGORIES: readonly { match: RegExp; category: RejectionCategory }[] = [
   { match: /^\[IA\]/, category: { label: 'Rechazo IA', tone: 'warning' } },
