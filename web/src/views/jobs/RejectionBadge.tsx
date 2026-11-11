@@ -17,7 +17,7 @@ const RejectionBadge = ({ reason }: RejectionBadgeProps) => {
 
   return (
     <Stack spacing={0.5} alignItems="flex-start">
-      <Tooltip title={reason}>
+      <Tooltip title={reason} describeChild>
         <Box component="span" sx={{ display: 'inline-flex' }}>
           <AppChip label={label} tone={tone} />
         </Box>
