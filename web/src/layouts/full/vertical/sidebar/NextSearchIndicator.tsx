@@ -34,7 +34,7 @@ const NextSearchIndicator = ({ lastRunFailed }: NextSearchIndicatorProps) => {
   }, []);
 
   const next = schedule ? nextSearchIn(schedule.hours, now) : null;
-  if (!next) return null;
+  if (!next && !lastRunFailed) return null;
 
   // The left padding lands the text under the Dashboard label, past its 36px icon.
   return (
@@ -44,9 +44,11 @@ const NextSearchIndicator = ({ lastRunFailed }: NextSearchIndicatorProps) => {
           La última búsqueda falló
         </Typography>
       ) : null}
-      <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-        {formatNextSearch(next)}
-      </Typography>
+      {next ? (
+        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+          {formatNextSearch(next)}
+        </Typography>
+      ) : null}
     </Box>
   );
 };
