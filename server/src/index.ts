@@ -12,6 +12,7 @@ import { RunsRepository } from './db/runs.repository.js';
 import { readMaxAgeMonths } from './routes/settings.js';
 import { SettingsRepository } from './db/settings.repository.js';
 import { LlmJudge } from './filters/judge.js';
+import { CvEnhancer } from './cv/enhance.js';
 import { ProfileRepository } from './profile/profile.repository.js';
 import { Mailer } from './notify/mailer.js';
 import { Runner } from './runner.js';
@@ -40,9 +41,11 @@ async function main(): Promise<void> {
   // Todas las conocidas: cuáles corren lo dice el interruptor de cada una, que
   // se consulta en cada pasada y se puede cambiar desde Integraciones.
   const sources = buildSources(config, pool);
-  const judge = config.geminiApiKey
-    ? new LlmJudge(new GoogleGenAI({ apiKey: config.geminiApiKey }), config.judgeModel)
-    : null;
+  // Un solo cliente de Gemini para los dos usos: juzgar ofertas y, si el
+  // usuario lo pide, leerle el CV en el alta.
+  const gemini = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;
+  const judge = gemini ? new LlmJudge(gemini, config.judgeModel) : null;
+  const enhancer = gemini ? new CvEnhancer(gemini, config.judgeModel) : null;
   console.log(judge
     ? `[arranque] juez LLM activo (${config.judgeModel})`
     : '[arranque] sin GEMINI_API_KEY: el juez LLM queda desactivado y mandan las reglas');
@@ -92,6 +95,9 @@ async function main(): Promise<void> {
     schedules,
     gmailAccount: config.gmailAccount,
     toggles,
+    dataDir: config.dataDir,
+    enhancer,
+    profiles,
     webDist: existsSync(config.webDist) ? config.webDist : null,
   });
 

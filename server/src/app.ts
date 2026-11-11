@@ -1,3 +1,4 @@
+import fastifyMultipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import Fastify, { type FastifyInstance } from 'fastify';
 import type { BrowserPool } from './browser/session.js';
@@ -11,6 +12,7 @@ import { withNews } from './analysis/news.js';
 import { JobVerdict } from './types.js';
 import { registerFocusRoute } from './routes/focus.js';
 import { registerSettingsRoute } from './routes/settings.js';
+import { registerOnboardingRoutes } from './routes/onboarding.js';
 import { registerJobRoutes } from './routes/jobs.js';
 import { registerIntegrationRoutes } from './routes/integrations.js';
 import { registerRunRoutes } from './routes/runs.js';
@@ -19,6 +21,8 @@ import type { Scheduler } from './scheduler/scheduler.js';
 import type { SourceSchedules } from './sources/schedules.js';
 import type { SourceToggles } from './sources/toggles.js';
 import type { JobSource } from './sources/types.js';
+import type { CvEnhancer } from './cv/enhance.js';
+import type { ProfileRepository } from './profile/profile.repository.js';
 
 export interface AppDeps {
   jobs: JobsRepository;
@@ -30,6 +34,12 @@ export interface AppDeps {
   scheduleHours: readonly number[];
   schedules: SourceSchedules;
   gmailAccount: string | null;
+  /** Dónde viven la base, los logs y el CV del usuario. */
+  dataDir: string;
+  /** Lectura del CV con el modelo. `null` sin GEMINI_API_KEY: entonces solo hay reglas. */
+  enhancer: CvEnhancer | null;
+  /** El perfil, para leerlo y escribirlo desde el alta y desde Configuración. */
+  profiles: ProfileRepository;
   /** Qué plataformas están encendidas. La ruta de integraciones las lee y las cambia. */
   toggles: SourceToggles;
   settings: SettingsRepository;
@@ -41,6 +51,9 @@ export interface AppDeps {
 
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
+  // Solo para el CV del alta. El tope real lo pone la ruta; aquí va el del
+  // plugin, que corta la subida en caliente en vez de leerla entera primero.
+  await app.register(fastifyMultipart, { limits: { files: 1, fileSize: 8 * 1024 * 1024 } });
   app.get('/api/health', () => ({ ok: true }));
   // El contador de novedades del Enfoque se calcula aquí, una vez, y lo usan
   // las dos rutas. Sale de lo mismo que la pantalla, así que el número del
@@ -65,6 +78,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler });
   registerSettingsRoute(app, { gmailAccount: deps.gmailAccount, settings: deps.settings });
   registerFocusRoute(app, { jobs: deps.jobs, profile: deps.profile, settings: deps.settings });
+  registerOnboardingRoutes(app, { profiles: deps.profiles, dataDir: deps.dataDir, enhancer: deps.enhancer });
 
   if (deps.webDist) await app.register(fastifyStatic, { root: deps.webDist });
   app.setNotFoundHandler((request, reply) => {

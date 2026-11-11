@@ -18,6 +18,7 @@ import { Runner } from '../runner.js';
 import { LastPassStore, Scheduler } from '../scheduler/scheduler.js';
 import { SourceSchedules } from '../sources/schedules.js';
 import { SourceToggles } from '../sources/toggles.js';
+import { ProfileRepository } from '../profile/profile.repository.js';
 import { JobLocation, JobSeniority, JobVerdict, JudgeStatus } from '../types.js';
 
 function newJob(overrides: Partial<NewJob>): NewJob {
@@ -89,6 +90,7 @@ describe('API HTTP', () => {
     app = await buildApp({
       jobs, runs, runner, scheduler, pool, sources: [], scheduleHours: [9, 13, 18], schedules,
       gmailAccount: null, settings, profile: () => PROFILE, toggles, webDist: null,
+      dataDir: dir, enhancer: null, profiles: new ProfileRepository(settings),
     });
   });
 
