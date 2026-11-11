@@ -154,18 +154,25 @@ function stackSentence(job: Job): string {
   // Singular cuando solo coincide una: "en las tecnologías React" chirría, y
   // un detalle así delata una plantilla rellenada por una máquina.
   const noun = stack.length > 1 ? 'las tecnologías' : 'la tecnología';
-  return ` Vi que para la vacante requieren conocimientos en ${noun} ${list}, que es justo lo que uso a diario.`;
+  const tail = stack.length > 1
+    ? 'que son justo las tecnologías que vengo usando'
+    : 'que es justo la tecnología que vengo usando';
+  return (
+    ` Vi que para la vacante requieren conocimientos en ${noun} ${list}, ${tail} desde hace más de ` +
+    '5 años y que uso a diario en mis proyectos personales.'
+  );
 }
 
-/** Suya, literal. La escribió él y no se reescribe. */
+/** Suya, literal. La escribió él y no se reescribe (solo se le ponen los acentos). */
 const PITCH =
-  ' porque busco un equipo donde aportar toda la experiencia que he adquirido a lo largo de ' +
-  '9 años como desarrollador de software, tanto en frontend como en backend.';
+  ' ya que es un rol donde puedo aportar toda la experiencia que he adquirido a lo largo de ' +
+  '9 años como desarrollador de software.';
 
 const CLOSING =
-  ' Soy responsable y dedicado, me gusta trabajar en equipo y me adapto rápido a los entornos ' +
-  'nuevos. Me fascina aprender tecnologías nuevas, y soy amante de las buenas prácticas y del ' +
-  'código escalable, lo que me mantiene en estudio constante para crecer cada día como desarrollador.';
+  ' Soy responsable y dedicado, me gusta trabajar en equipo y me adapto rápidamente a los nuevos ' +
+  'entornos de trabajo. Me fascina aprender nuevas tecnologías, cómo integrarlas y cómo mejorar mi ' +
+  'flujo de trabajo para que sea más rápido y productivo. Soy amante de las buenas prácticas y del ' +
+  'código escalable, y me mantengo en constante estudio para crecer cada día como desarrollador.';
 
 /**
  * El párrafo listo para pegar en la postulación.
