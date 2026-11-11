@@ -151,7 +151,10 @@ function stackSentence(job: Job): string {
   const list = stack.length > 1
     ? `${stack.slice(0, -1).join(', ')} y ${stack[stack.length - 1]}`
     : stack[0];
-  return ` Vi que el puesto trabaja con ${list}, que es justo lo que uso a diario.`;
+  // Singular cuando solo coincide una: "en las tecnologías React" chirría, y
+  // un detalle así delata una plantilla rellenada por una máquina.
+  const noun = stack.length > 1 ? 'las tecnologías' : 'la tecnología';
+  return ` Vi que para la vacante requieren conocimientos en ${noun} ${list}, que es justo lo que uso a diario.`;
 }
 
 /** Suya, literal. La escribió él y no se reescribe. */
