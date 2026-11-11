@@ -670,3 +670,59 @@ Los números son de la última lectura, no de este instante: entre pasadas
 envejecen hasta media hora. No se dice en la tarjeta. Si llegara a importar, lo
 honesto sería escribir «298 postulaciones (hace 20 min)» y no refrescar más a
 menudo, que solo sería más tráfico contra su API.
+
+---
+
+## Rev. 14 — Tope de tres meses y orden por fecha de publicación · 2026-11-11
+
+Con las fechas ya a la vista (Rev. 13), lo que enseñaban era malo: de 27
+aceptadas, **14 llevaban más de dos meses publicadas**, y la primera de la
+lista era del 14 de noviembre de 2025 con 969 postulaciones. Escribirle a eso
+es tirar el tiempo, y peor: entierra la vacante de ayer entre veinte de hace
+medio año.
+
+### El corte
+
+**90 días.** Va en `pipeline.ts` y no en `decide.ts`, y DESPUÉS del juez. Las
+dos cosas son deliberadas:
+
+- **Aparte de las reglas**, porque `decideShipping` solo ve el texto del
+  anuncio y la fecha no está ahí: viaja en `RawPost.metrics`.
+- **Después del juez**, porque el juez puede rescatar un descarte por ubicación
+  o por tecnología —son lecturas, y él lee mejor— pero no puede opinar sobre
+  una fecha. Una vacante de hace ocho meses lo es por mucho que encaje. Hay un
+  test que lo fija: con el juez diciendo que sirve, sigue descartada.
+
+Lo viejo tampoco se le manda al juez: son tokens gastados en una respuesta que
+se va a ignorar.
+
+Una oferta **sin** fecha no se descarta. LinkedIn no la publica, y tirar todo
+lo que no la trae apagaría esa fuente entera.
+
+### El orden
+
+`ORDER BY COALESCE(posted_at, found_at) DESC`. Ordenar por `found_at` mezclaba
+una vacante de hace ocho meses con una de ayer, porque las dos se leyeron en la
+misma pasada. El `COALESCE` deja que LinkedIn se ordene por la lectura, que
+ahí es la mejor aproximación que hay.
+
+### Lo ya guardado
+
+Se reclasificaron **9 ofertas** que estaban aceptadas y pasaban de los 90 días.
+Se tocaron solo las que estaban en `new` y `seen`.
+
+**Las 3 en `saved` se dejaron como estaban**, aunque sean de enero y noviembre
+del año pasado: guardarlas fue una decisión suya, y una regla nueva no deshace
+lo que alguien decidió a mano. Si las quiere fuera, las saca él.
+
+### Respuestas a lo que preguntó, con los datos delante
+
+- **«¿Por qué unas salen Por confirmar?»** Es `isUncertain`: las reglas la
+  descartaron y el juez las rescató. Se marcan para que las mire dos veces, en
+  vez de colarlas como si nadie hubiera dudado.
+- **«¿BC Tecnología tiene tantas duplicadas?»** No hay duplicados: 55 ofertas,
+  53 títulos distintos y 55 huellas distintas. Es una consultora que publica
+  decenas de vacantes.
+- **«Esas deberían salir y no salen.»** De las cuatro de su captura, una **sí
+  está** (Back-end NestJS de WiTi, aceptada). Las otras tres las descartaron
+  sus propios vetos: dos exigen C# y la otra Shopify.

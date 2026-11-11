@@ -186,7 +186,13 @@ export class JobsRepository {
     const { where, params } = this.buildWhere(query);
     const total = this.db.prepare<unknown[], { count: number }>(`SELECT COUNT(*) AS count FROM jobs ${where}`).get(...params)?.count ?? 0;
     const rows = this.db.prepare<unknown[], JobRow>(
-      `SELECT ${JOB_COLUMNS} FROM jobs ${where} ORDER BY found_at DESC, id DESC LIMIT ? OFFSET ?`,
+      // LO MÁS RECIENTE PRIMERO, y «reciente» es cuándo la publicaron ellos,
+      // no cuándo la leímos nosotros. Ordenar por `found_at` mezclaba una
+      // vacante de hace ocho meses con una de ayer, porque las dos se leyeron
+      // en la misma pasada. `COALESCE` deja que LinkedIn —que no publica la
+      // fecha— se ordene por la lectura, que ahí es la mejor aproximación.
+      `SELECT ${JOB_COLUMNS} FROM jobs ${where}
+       ORDER BY COALESCE(posted_at, found_at) DESC, id DESC LIMIT ? OFFSET ?`,
     ).all(...params, query.limit, query.offset);
     return { items: rows.map(toJob), total, bySeniority: this.countBySeniority(query) };
   }

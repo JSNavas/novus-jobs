@@ -24,6 +24,10 @@ import { JobLocation, JobStatus, JobVerdict, JudgeStatus } from './types.js';
 const BUENA =
   'Buscamos Full Stack Senior 100% remoto para LATAM. Stack: Node.js, React, PostgreSQL. Sueldo USD 3000. Postula: https://lnkd.in/dxyz';
 
+/** Otra vacante buena, para poder comparar el orden de dos. */
+const OTRA_BUENA =
+  'Otra vacante: buscamos Backend Senior 100% remoto para LATAM. Stack: Node.js, TypeScript, PostgreSQL. Sueldo USD 3500. Postula: https://lnkd.in/dotra';
+
 /** Presencial en Barcelona: las reglas la descartan por ubicación. */
 const PRESENCIAL =
   'Full-Stack Developer (Senior). Ubicacion: Barcelona, Espana. Modalidad presencial. Buscamos un/a Full-Stack Developer con Node.js, React y AWS. Contrato indefinido. Postula en https://lnkd.in/dabc';
@@ -38,6 +42,21 @@ const SEGURIDAD_DE_RED =
 /** No menciona nada de su stack: descarte de los que el juez NO puede tocar. */
 const SIN_STACK =
   'Buscamos Contador Senior 100% remoto para LATAM. Responsabilidades: conciliaciones, impuestos y cierres mensuales. Sueldo USD 2000. Postula en jobs@acme.com';
+
+/** Una fuente cuyas ofertas se publicaron hace `days` días. */
+function fakeSourceAged(texts: readonly string[], days: number): JobSource {
+  const postedAt = new Date(Date.now() - days * 24 * 60 * 60_000).toISOString();
+  const base = fakeSource(texts);
+  return {
+    ...base,
+    async fetch(): Promise<RawPost[]> {
+      return texts.map((text) => ({
+        text, author: 'Alguien', url: null,
+        metrics: { postedAt, applications: 500, responseDays: null },
+      }));
+    },
+  };
+}
 
 /** Como `fakeSource`, pero con los números que publica la plataforma. */
 function fakeSourceWithMetrics(texts: readonly string[], applications: number): JobSource {
@@ -262,6 +281,56 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     });
     assert.equal(stored.items[0]!.applications, null, 'un 0 diría que no se ha postulado nadie');
     assert.equal(stored.items[0]!.postedAt, null);
+  });
+
+  /* ═══ EL TOPE DE TRES MESES ═══
+   * De 27 aceptadas el 2026-11-11, 14 llevaban más de dos meses publicadas, y
+   * la primera era de noviembre de 2025 con 969 postulaciones. */
+
+  it('EL CASO REAL: una vacante de hace ocho meses no entra, por buena que sea', async () => {
+    const result = await runPasses([fakeSourceAged([BUENA], 240)], {
+      jobs, judge: null, profile: PROFILE, runId: 1,
+    });
+
+    assert.equal(result.outcome.accepted, 0);
+    const stored = jobs.list({
+      status: null, verdict: null, runId: null, seniority: null,
+      source: null, search: null, hasApply: null, limit: 10, offset: 0,
+    });
+    assert.match(stored.items[0]!.rejectionReason ?? '', /^publicada hace 8 meses/);
+  });
+
+  it('justo dentro del tope sí entra: el corte son tres meses, no dos', async () => {
+    const result = await runPasses([fakeSourceAged([BUENA], 80)], {
+      jobs, judge: null, profile: PROFILE, runId: 1,
+    });
+    assert.equal(result.outcome.accepted, 1);
+  });
+
+  it('NI EL JUEZ rescata una vacante vieja: una fecha no se opina', async () => {
+    const { judge } = fakeJudge(() => ({ isOffer: true, rejection: null }));
+    const result = await runPasses([fakeSourceAged([BUENA], 200)], {
+      jobs, judge, profile: PROFILE, runId: 1,
+    });
+    assert.equal(result.outcome.accepted, 0, 'el juez dijo que sirve, pero sigue siendo de hace medio año');
+  });
+
+  it('una oferta SIN fecha no se descarta: LinkedIn no la publica', async () => {
+    const result = await run([BUENA], null);
+    assert.equal(result.outcome.accepted, 1, 'tirar lo que no trae fecha apagaría esa fuente entera');
+  });
+
+  it('la lista sale por fecha de publicación, no por cuándo la leímos', async () => {
+    // Las dos se leen en la misma pasada: si se ordenara por `found_at`, el
+    // orden lo decidiría el azar del recorrido.
+    await runPasses([fakeSourceAged([BUENA], 60)], { jobs, judge: null, profile: PROFILE, runId: 1 });
+    await runPasses([fakeSourceAged([OTRA_BUENA], 5)], { jobs, judge: null, profile: PROFILE, runId: 1 });
+
+    const stored = jobs.list({
+      status: null, verdict: null, runId: null, seniority: null,
+      source: null, search: null, hasApply: null, limit: 10, offset: 0,
+    });
+    assert.match(stored.items[0]!.text, /Otra vacante/, 'la de hace 5 días va primero');
   });
 
   it('sin juez manda la regla, y el descarte queda marcado como no juzgado', async () => {

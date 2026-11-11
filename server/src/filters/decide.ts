@@ -18,7 +18,7 @@ export interface Offer {
  * definitivo: dejar que lo revoque sería dejar entrar «Encargado de atención a
  * pacientes» porque el modelo confirma que sí, es una vacante remota de verdad.
  */
-export type RejectedBy = 'not-offer' | 'location' | 'veto' | 'stack';
+export type RejectedBy = 'not-offer' | 'location' | 'veto' | 'stack' | 'stale';
 
 export interface Verdict {
   accepted: boolean;

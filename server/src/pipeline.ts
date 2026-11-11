@@ -73,8 +73,8 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
   const isFresh = (text: string) => !seen.has(fingerprint(text));
   const posts = await source.fetch((list) => indicesToFetchPermalink(list, deps.profile, isFresh));
   const offers: Offer[] = posts.map(toOffer);
-  const fresh = offers.filter((o) => isFresh(o.text));
   const metricsOf = new Map(posts.map((post) => [fingerprint(post.text), post.metrics ?? null]));
+  const fresh = offers.filter((o) => isFresh(o.text));
 
   // Lo que ya está guardado también se pone al día. Las postulaciones suben
   // cada día, y una oferta enseñando las que tenía el día que se encontró es
@@ -84,21 +84,29 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
     if (!post.metrics || isFresh(post.text)) continue;
     deps.jobs.refreshMetrics(source.name, huella, post.metrics);
   }
-  const judged = await judgeOffers(fresh, deps);
+  const now = Date.now();
+  // Lo viejo no se le manda al juez: no puede cambiar una fecha, y son tokens
+  // gastados en una respuesta que se va a ignorar.
+  const judgeable = fresh.filter((o) => {
+    const days = ageInDays(metricsOf.get(fingerprint(o.text))?.postedAt ?? null, now);
+    return days === null || days <= MAX_AGE_DAYS;
+  });
+  const judged = await judgeOffers(judgeable, deps);
 
   const outcome: RunOutcome = { fetched: posts.length, accepted: 0, rejected: 0 };
   const stored: NewJob[] = [];
   for (const offer of fresh) {
+    const metrics = metricsOf.get(fingerprint(offer.text)) ?? null;
     const ruleVerdict = decideShipping(offer, deps.profile);
     const judgment = judged.get(fingerprint(offer.text));
-    const verdict = applyJudgment(ruleVerdict, judgment);
+    const verdict = rejectIfStale(applyJudgment(ruleVerdict, judgment), metrics, now);
     const job = toNewJob(
       source.name,
       offer,
       verdict,
       judgment ? JudgeStatus.Judged : JudgeStatus.Skipped,
       deps.runId,
-      metricsOf.get(fingerprint(offer.text)) ?? null,
+      metrics,
     );
     if (!deps.jobs.insert(job)) continue;
     if (verdict.accepted) {
@@ -128,6 +136,47 @@ function toOffer(post: RawPost): Offer {
  * stack, así que no puede opinar, y mandarlo sería pagar tokens por una
  * respuesta que `applyJudgment` va a ignorar de todas formas.
  */
+/* ═══════════════════════════════════════════════════════════════════════════
+ * LA EDAD DE LA OFERTA, que no la decide nadie: es una fecha.
+ *
+ * Medido el 2026-11-11: de 27 ofertas aceptadas, 14 llevaban más de dos meses
+ * publicadas, y la primera de la lista era del 14 de noviembre de 2025 con 969
+ * postulaciones. Escribirle a eso es tirar el tiempo — y peor, entierra la
+ * vacante de ayer entre veinte de hace medio año.
+ *
+ * Tres meses, que es lo que pidió el señor. El corte va APARTE de las reglas y
+ * DESPUÉS del juez, y las dos cosas son deliberadas:
+ *
+ *   · aparte, porque `decideShipping` solo ve el texto del anuncio, y la fecha
+ *     de publicación no está ahí: viaja en `RawPost.metrics`.
+ *   · después, porque el juez puede rescatar un descarte por ubicación o por
+ *     tecnología —son lecturas, y él lee mejor— pero no puede opinar sobre una
+ *     fecha. Una vacante de hace ocho meses lo es por mucho que encaje.
+ *
+ * Una oferta SIN fecha no se descarta: LinkedIn no la publica, y tirar todo lo
+ * que no trae fecha sería apagar esa fuente entera.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+const MAX_AGE_DAYS = 90;
+const DAY_MS = 24 * 60 * 60_000;
+
+function ageInDays(postedAt: string | null, now: number): number | null {
+  if (!postedAt) return null;
+  const published = Date.parse(postedAt);
+  return Number.isNaN(published) ? null : Math.floor((now - published) / DAY_MS);
+}
+
+function rejectIfStale(verdict: Verdict, metrics: PostMetrics | null, now: number): Verdict {
+  const days = ageInDays(metrics?.postedAt ?? null, now);
+  if (days === null || days <= MAX_AGE_DAYS) return verdict;
+  return {
+    ...verdict,
+    accepted: false,
+    uncertain: false,
+    reason: `publicada hace ${Math.floor(days / 30)} meses; el tope son 3`,
+    rejectedBy: 'stale',
+  };
+}
+
 function isJudgeable(rules: Verdict): boolean {
   return rules.accepted || rules.rejectedBy !== 'stack';
 }
