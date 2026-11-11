@@ -2,9 +2,9 @@
  * Tono del distintivo. Solo dos: un descarte no es un fallo del sistema, así
  * que nunca va en rojo (eso ya lo dice el chip "Descartada por el filtro").
  */
-export type RejectionTone = 'warning' | 'neutral';
+type RejectionTone = 'warning' | 'neutral';
 
-export interface RejectionCategory {
+interface RejectionCategory {
   label: string;
   tone: RejectionTone;
 }
