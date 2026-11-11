@@ -47,6 +47,8 @@ interface RunnerDeps {
    * acaba de corregir una tecnología.
    */
   profile: () => CandidateProfile;
+  /** Si esta plataforma está encendida en Integraciones. Se pregunta en cada pasada. */
+  enabled: (source: string) => boolean;
   /**
    * Si el alta está completa. Sin perfil no hay nada que coincidir y la pasada
    * descartaría cuanto llegue: se niega antes de gastar una lectura de su
@@ -114,11 +116,12 @@ export class Runner implements PassRunner {
   startManual(): RunInfo {
     if (this.busy) throw new RunRefusedError('ya hay una búsqueda en curso');
     if (!this.deps.onboarded()) throw new RunRefusedError('todavía no has terminado el alta: sin tu perfil, una búsqueda descartaría todo lo que encuentre');
-    if (!this.deps.sources.length) throw new RunRefusedError('no hay ninguna plataforma activa');
+    const active = this.deps.sources.filter((s) => this.deps.enabled(s.name));
+    if (!active.length) throw new RunRefusedError('no hay ninguna plataforma encendida: enciende alguna en Integraciones');
 
     const allowed: JobSource[] = [];
     const refusals: string[] = [];
-    for (const source of this.deps.sources) {
+    for (const source of active) {
       const why = this.refuseManual(source);
       if (why) refusals.push(`${source.label}: ${why}`);
       else allowed.push(source);
@@ -192,8 +195,14 @@ export class Runner implements PassRunner {
     return null;
   }
 
+  /**
+   * Las fuentes pedidas que además estén ENCENDIDAS. El filtro va aquí y no en
+   * quien llama porque es el último punto antes de tocar una plataforma: un
+   * planificador con una lista calculada hace un minuto no puede leer una cuenta
+   * que el usuario acaba de apagar.
+   */
   private sourcesNamed(names: readonly string[]): JobSource[] {
-    return this.deps.sources.filter((source) => names.includes(source.name));
+    return this.deps.sources.filter((source) => names.includes(source.name) && this.deps.enabled(source.name));
   }
 
   /**

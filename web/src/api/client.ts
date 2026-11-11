@@ -207,6 +207,8 @@ export interface Integration {
   name: string;
   label: string;
   needsLogin: boolean;
+  /** Si corre. Una apagada se sigue listando: es como se vuelve a encender. */
+  enabled: boolean;
   schedule: IntegrationSchedule;
   timezone: string;
   lastRunAt: string | null;
@@ -215,6 +217,18 @@ export interface Integration {
 
 export function listIntegrations(): Promise<Integration[]> {
   return request<Integration[]>('/integrations');
+}
+
+/**
+ * Enciende o apaga una plataforma. No borra nada de lo que ya encontró, y
+ * encenderla no dispara una búsqueda: entra por su horario.
+ */
+export function updateIntegrationEnabled(name: string, enabled: boolean): Promise<Integration> {
+  return request<Integration>(`/integrations/${name}/enabled`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ enabled }),
+  });
 }
 
 export function updateIntegrationSchedule(

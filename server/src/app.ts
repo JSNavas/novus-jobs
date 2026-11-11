@@ -17,6 +17,7 @@ import { registerRunRoutes } from './routes/runs.js';
 import type { Runner } from './runner.js';
 import type { Scheduler } from './scheduler/scheduler.js';
 import type { SourceSchedules } from './sources/schedules.js';
+import type { SourceToggles } from './sources/toggles.js';
 import type { JobSource } from './sources/types.js';
 
 export interface AppDeps {
@@ -29,6 +30,8 @@ export interface AppDeps {
   scheduleHours: readonly number[];
   schedules: SourceSchedules;
   gmailAccount: string | null;
+  /** Qué plataformas están encendidas. La ruta de integraciones las lee y las cambia. */
+  toggles: SourceToggles;
   settings: SettingsRepository;
   /** Se lee en cada petición: el perfil cambia desde Configuración sin reiniciar. */
   profile: () => CandidateProfile;
@@ -55,7 +58,10 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
 
   registerJobRoutes(app, { jobs: deps.jobs, runs: deps.runs, focusNew });
   registerRunRoutes(app, { runs: deps.runs, runner: deps.runner, scheduler: deps.scheduler, hours: deps.scheduleHours, sources: deps.sources, schedules: deps.schedules });
-  registerIntegrationRoutes(app, { sources: deps.sources, schedules: deps.schedules, runner: deps.runner, hours: deps.scheduleHours });
+  registerIntegrationRoutes(app, {
+    sources: deps.sources, schedules: deps.schedules, runner: deps.runner,
+    hours: deps.scheduleHours, toggles: deps.toggles,
+  });
   registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler });
   registerSettingsRoute(app, { gmailAccount: deps.gmailAccount, settings: deps.settings });
   registerFocusRoute(app, { jobs: deps.jobs, profile: deps.profile, settings: deps.settings });

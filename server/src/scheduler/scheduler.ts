@@ -78,6 +78,8 @@ interface SchedulerOptions {
    * tiene que notarse en el tick siguiente, no al reiniciar el servicio.
    */
   schedules: SourceSchedules;
+  /** Si una plataforma está encendida. Se pregunta en cada tick, no al arrancar. */
+  enabled: (source: string) => boolean;
   store: LastPassStore;
   runner: PassRunner;
   clock?: () => Date;
@@ -110,6 +112,10 @@ export class Scheduler {
     this.interval = setInterval(() => this.tick(), TICK_MS);
     this.startupTimer = setTimeout(() => this.tick(), STARTUP_DELAY_MS);
     for (const source of this.options.sources) {
+      if (!this.options.enabled(source.name)) {
+        console.log(`[scheduler] ${source.name}: apagada`);
+        continue;
+      }
       const schedule = this.options.schedules.of(source);
       const when = schedule.kind === 'every-minutes'
         ? `cada ${schedule.minutes} min`
@@ -170,6 +176,9 @@ export class Scheduler {
     const due: string[] = [];
 
     for (const source of this.options.sources) {
+      // Una apagada no marca franja ni acumula retraso: cuando se encienda,
+      // empieza desde su siguiente franja y no con una recuperación de ayer.
+      if (!this.options.enabled(source.name)) continue;
       const schedule = this.options.schedules.of(source);
       if (schedule.kind === 'every-minutes') {
         const last = this.options.runner.lastPassAt(source.name);
@@ -195,6 +204,7 @@ export class Scheduler {
    */
   markCurrentSlot(): void {
     for (const source of this.options.sources) {
+      if (!this.options.enabled(source.name)) continue;
       if (this.options.schedules.of(source).kind !== 'configured-hours') continue;
       const slot = currentSlot(toVet(this.clock()), this.hoursOf(source));
       if (slot) this.options.store.write(source.name, slot);

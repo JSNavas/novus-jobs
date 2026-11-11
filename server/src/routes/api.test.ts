@@ -17,6 +17,7 @@ import { PROFILE } from '../profile/profile.js';
 import { Runner } from '../runner.js';
 import { LastPassStore, Scheduler } from '../scheduler/scheduler.js';
 import { SourceSchedules } from '../sources/schedules.js';
+import { SourceToggles } from '../sources/toggles.js';
 import { JobLocation, JobSeniority, JobVerdict, JudgeStatus } from '../types.js';
 
 function newJob(overrides: Partial<NewJob>): NewJob {
@@ -74,18 +75,20 @@ describe('API HTTP', () => {
     jobs.insert(newJob({ fingerprint: 'fp-otra-pasada', runId: 2 }));
     const settings = new SettingsRepository(db);
     const schedules = new SourceSchedules(settings, [9, 13, 18]);
-    const runner = new Runner({ sources: [FAKE_SOURCE], maxAgeDays: () => 90, jobs, runs, judge: null, profile: () => PROFILE, onboarded: () => true, mailer: new Mailer(null), dashboardUrl: 'http://localhost/' });
+    const toggles = new SourceToggles(settings, [FAKE_SOURCE.name]);
+    const runner = new Runner({ sources: [FAKE_SOURCE], maxAgeDays: () => 90, jobs, runs, judge: null, profile: () => PROFILE, onboarded: () => true, enabled: () => true, mailer: new Mailer(null), dashboardUrl: 'http://localhost/' });
     const scheduler = new Scheduler({
       hours: [9, 13, 18],
       sources: [],
       store: new LastPassStore(join(dir, 'last-pass.json')),
       runner,
+      enabled: () => true,
       schedules,
     });
     const pool = new BrowserPool(join(dir, 'profiles'), true);
     app = await buildApp({
       jobs, runs, runner, scheduler, pool, sources: [], scheduleHours: [9, 13, 18], schedules,
-      gmailAccount: null, settings, profile: () => PROFILE, webDist: null,
+      gmailAccount: null, settings, profile: () => PROFILE, toggles, webDist: null,
     });
   });
 

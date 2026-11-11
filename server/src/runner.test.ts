@@ -63,14 +63,19 @@ describe('Runner — suelo de las búsquedas manuales', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  function runner(sources: readonly JobSource[] = [LINKEDIN]): Runner {
+  function runner(
+    sources: readonly JobSource[] = [LINKEDIN],
+    gates: { onboarded?: boolean; enabled?: (source: string) => boolean } = {},
+  ): Runner {
     return new Runner({
       sources,
       maxAgeDays: () => 90,
       jobs: new JobsRepository(db),
       runs,
       judge: null,
-      profile: () => PROFILE, onboarded: () => true,
+      profile: () => PROFILE,
+      onboarded: () => gates.onboarded ?? true,
+      enabled: gates.enabled ?? (() => true),
       mailer: new Mailer(null),
       dashboardUrl: 'http://localhost/',
       clock: () => now,
@@ -251,5 +256,63 @@ describe('Runner — suelo de las búsquedas manuales', () => {
     assert.match(refusal(() => runner().startManual()), /techo del día/);
     now = new Date('2026-11-11T05:00:00.000Z'); // 01:00 en Venezuela, día nuevo
     assert.ok(runner().startManual().id);
+  });
+});
+
+/**
+ * LO QUE NO SE PUEDE BUSCAR. Las dos puertas que hay antes de tocar una
+ * plataforma, y las dos se cerraron por el mismo motivo: una lectura gastada no
+ * se recupera, ni en el presupuesto del día ni en lo que la cuenta ve.
+ */
+describe('Runner — cuándo se niega a buscar', () => {
+  let dir: string;
+  let db: Db;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'runner-gates-'));
+    db = openDatabase(dir);
+  });
+
+  afterEach(async () => {
+    for (let i = 0; i < 5; i++) await new Promise((resolve) => setImmediate(resolve));
+    db.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  function runnerWith(gates: { onboarded?: boolean; enabled?: (source: string) => boolean }): Runner {
+    return new Runner({
+      sources: [LINKEDIN, GETONBRD],
+      maxAgeDays: () => 90,
+      jobs: new JobsRepository(db),
+      runs: new RunsRepository(db),
+      judge: null,
+      profile: () => PROFILE,
+      onboarded: () => gates.onboarded ?? true,
+      enabled: gates.enabled ?? (() => true),
+      mailer: new Mailer(null),
+      dashboardUrl: 'http://localhost/',
+    });
+  }
+
+  it('sin el alta terminada no busca: sin perfil, descartaría todo lo que encuentre', () => {
+    const it0 = runnerWith({ onboarded: false });
+    assert.throws(() => it0.startManual(), RunRefusedError);
+  });
+
+  it('el planificador tampoco arranca sin alta', () => {
+    const it0 = runnerWith({ onboarded: false });
+    it0.startScheduled(['linkedin']);
+    assert.equal(it0.isBusy(), false);
+  });
+
+  it('una plataforma apagada no se lee, aunque el planificador la pida', () => {
+    const only = runnerWith({ enabled: (name) => name === 'getonbrd' });
+    only.startScheduled(['linkedin']);
+    assert.equal(only.isBusy(), false, 'LinkedIn está apagada: no debería haber arrancado nada');
+  });
+
+  it('con todas apagadas, el botón dice qué hacer en vez de fallar', () => {
+    const none = runnerWith({ enabled: () => false });
+    assert.throws(() => none.startManual(), /Integraciones/);
   });
 });

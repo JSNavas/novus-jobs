@@ -12,9 +12,11 @@ import type { JobSource, SourceDefinition } from './types.js';
  *      Si necesita sesión, pide su navegador al pool con `pool.session('<id>')`
  *      y declara `profileId` y `loginUrl`; si no la necesita, los deja en `null`.
  *   2. Una línea en esta lista.
- *   3. Añadirla a `JOB_SOURCES` en el `.env`.
  *
- * Para quitarla: sacarla de `JOB_SOURCES`. El código se queda, inofensivo.
+ * Eso es todo: aparece en Integraciones, apagada, y el usuario la enciende
+ * cuando quiera. Para quitarla del todo: borrar su fichero y su línea de aquí;
+ * nada más la nombra. Para dejar de usarla sin borrarla: el interruptor de
+ * Integraciones (ver `toggles.ts`).
  *
  * Nada más cambia. El runner, el scheduler, el pipeline, la API y la UI no
  * saben cuántas plataformas hay ni cómo se llaman, y las ofertas ya se guardan
@@ -48,10 +50,19 @@ export function sourceDefinition(name: string): SourceDefinition {
   return definition;
 }
 
+/**
+ * Todas las plataformas que el proyecto conoce, construidas.
+ *
+ * TODAS, no solo las encendidas: una fuente que no se construye no existe para
+ * la interfaz, y entonces no hay forma de volver a encenderla desde el
+ * dashboard. Cuáles corren lo dice `SourceToggles`, que se consulta en cada
+ * pasada. Construir una fuente no abre navegadores ni hace peticiones: eso pasa
+ * en su `fetch`.
+ */
 export function buildSources(config: Config, pool: BrowserPool): JobSource[] {
-  return config.enabledSources.map((name) => {
+  return DEFINITIONS.map((definition) => {
     try {
-      return sourceDefinition(name).create(config, pool);
+      return definition.create(config, pool);
     } catch (error) {
       throw new Error(`JOB_SOURCES: ${error instanceof Error ? error.message : String(error)}`);
     }

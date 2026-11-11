@@ -66,7 +66,7 @@ describe('Scheduler', () => {
     sources: readonly JobSource[] = [LINKEDIN],
     schedules = new SourceSchedules(new FakeSettings(), [9, 13, 18]),
   ): Scheduler {
-    return new Scheduler({ hours: [9, 13, 18], sources, store, runner, schedules, clock: () => new Date(iso) });
+    return new Scheduler({ hours: [9, 13, 18], sources, store, runner, schedules, enabled: () => true, clock: () => new Date(iso) });
   }
 
   it('lanza una pasada en la franja y deja la marca en disco', () => {
@@ -119,6 +119,7 @@ describe('Scheduler', () => {
     let clock = new Date('2026-11-10T17:20:00Z');
     const scheduler = new Scheduler({
       hours: [9, 13, 18], sources: [LINKEDIN], store, runner, clock: () => clock,
+      enabled: () => true,
       schedules: new SourceSchedules(new FakeSettings(), [9, 13, 18]),
     });
     scheduler.pauseForLogin();

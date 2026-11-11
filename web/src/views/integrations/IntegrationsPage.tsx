@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router';
 import {
-  Box, Button, CircularProgress, Stack, TextField, ToggleButton, Typography,
+  Box, Button, CircularProgress, Stack, Switch, TextField, ToggleButton, Tooltip, Typography,
 } from '@mui/material';
 import {
-  listIntegrations, updateIntegrationSchedule, type Integration,
+  listIntegrations, updateIntegrationEnabled, updateIntegrationSchedule, type Integration,
 } from '../../api/client';
 import { AppAlert, AppChip, BlankCard, PageContainer } from '../../components/ui';
 import { formatDateTime } from '../../format';
@@ -16,8 +16,10 @@ import {
 /**
  * INTEGRACIONES — una tarjeta por plataforma, y ninguna escrita a mano.
  *
- * La lista sale de `/api/integrations`, que a su vez es `JOB_SOURCES`: el día
- * que entre InfoJobs aparecerá aquí sola, con su editor, sin tocar React. Lo
+ * La lista sale de `/api/integrations`, que son TODAS las que el servidor
+ * conoce, encendidas o no: el día que entre InfoJobs aparecerá aquí sola, con
+ * su editor, sin tocar React. Y se listan también las apagadas porque si no, no
+ * habría desde dónde volver a encenderlas. Lo
  * único que decide qué editor se pinta es la FORMA del horario que declara su
  * política: LinkedIn va por franjas porque es una cuenta vigilada y leer a
  * deshora es lo que quema una cuenta; Get on Board va por intervalo porque es
@@ -157,13 +159,46 @@ const HoursEditor = ({ integration, onSaved }: CardProps) => {
   );
 };
 
+/**
+ * El interruptor de la plataforma. Vive en la cabecera y no entre los ajustes
+ * del horario porque es de otro orden: el horario dice cuándo se lee, esto dice
+ * si se lee. Apagada, el editor se queda visible pero en gris: lo que se
+ * configuró sigue ahí y se recupera tal cual al encenderla.
+ */
+const EnabledSwitch = ({ integration, onSaved }: CardProps) => {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const toggle = (next: boolean): void => {
+    setSaving(true);
+    setError(null);
+    updateIntegrationEnabled(integration.name, next)
+      .then(onSaved)
+      .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
+      .finally(() => setSaving(false));
+  };
+
+  return (
+    <Tooltip title={error ?? (integration.enabled ? 'Dejar de buscar aquí' : 'Volver a buscar aquí')}>
+      <Switch
+        checked={integration.enabled}
+        disabled={saving}
+        onChange={(event) => toggle(event.target.checked)}
+        inputProps={{ 'aria-label': `${integration.enabled ? 'Apagar' : 'Encender'} ${integration.label}` }}
+        color={error ? 'error' : 'primary'}
+      />
+    </Tooltip>
+  );
+};
+
 const IntegrationCard = ({ integration, onSaved }: CardProps) => {
   const next = integration.nextAt ? nextSearchAt(integration.nextAt, new Date()) : null;
+  const off = !integration.enabled;
   return (
     <BlankCard>
       <Box p={3}>
         <Stack direction="row" spacing={1.5} alignItems="center" mb={0.5} flexWrap="wrap" useFlexGap>
-          <Typography variant="h6">{integration.label}</Typography>
+          <Typography variant="h6" sx={{ opacity: off ? 0.6 : 1 }}>{integration.label}</Typography>
           <AppChip
             label={integration.schedule.kind === 'every-minutes'
               ? `cada ${intervalLabel(integration.schedule.minutes)}`
@@ -171,14 +206,21 @@ const IntegrationCard = ({ integration, onSaved }: CardProps) => {
             tone="neutral"
           />
           {integration.needsLogin ? <AppChip label="con sesión" tone="neutral" /> : null}
+          {off ? <AppChip label="apagada" tone="neutral" /> : null}
+          <Box flexGrow={1} />
+          <EnabledSwitch integration={integration} onSaved={onSaved} />
         </Stack>
         <Typography variant="caption" color="textSecondary" display="block" mb={2.5}>
-          {next ? formatNextSearch(next) : 'Sin próxima búsqueda programada'}
-          {integration.lastRunAt ? ` · última: ${formatDateTime(integration.lastRunAt)}` : ' · todavía no ha leído'}
+          {off
+            ? 'Apagada: no se lee ni entra en las búsquedas. Lo que ya encontró sigue en la bandeja.'
+            : `${next ? formatNextSearch(next) : 'Sin próxima búsqueda programada'}${
+              integration.lastRunAt ? ` · última: ${formatDateTime(integration.lastRunAt)}` : ' · todavía no ha leído'}`}
         </Typography>
-        {integration.schedule.kind === 'every-minutes'
-          ? <IntervalEditor integration={integration} onSaved={onSaved} />
-          : <HoursEditor integration={integration} onSaved={onSaved} />}
+        <Box sx={{ opacity: off ? 0.45 : 1, pointerEvents: off ? 'none' : 'auto' }}>
+          {integration.schedule.kind === 'every-minutes'
+            ? <IntervalEditor integration={integration} onSaved={onSaved} />
+            : <HoursEditor integration={integration} onSaved={onSaved} />}
+        </Box>
       </Box>
     </BlankCard>
   );
@@ -226,7 +268,7 @@ const IntegrationsPage = () => {
         <AppAlert severity="info">
           {name
             ? `No hay ninguna integración llamada "${name}".`
-            : 'No hay ninguna integración activa. Se encienden con JOB_SOURCES en el .env del servidor.'}
+            : 'Este servidor no trae ninguna plataforma. Se añaden en server/src/sources/ y aparecen aquí solas.'}
         </AppAlert>
       ) : null}
       <Stack spacing={2}>

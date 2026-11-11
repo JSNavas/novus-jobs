@@ -19,6 +19,7 @@ import { LastPassStore, Scheduler } from './scheduler/scheduler.js';
 import { LINKEDIN_PROFILE_ID } from './sources/linkedin.source.js';
 import { SourceSchedules } from './sources/schedules.js';
 import { buildSources } from './sources/registry.js';
+import { SourceToggles } from './sources/toggles.js';
 
 async function main(): Promise<void> {
   const config = loadConfig();
@@ -36,8 +37,9 @@ async function main(): Promise<void> {
   // La sesión que el señor ya tenía, cuando el perfil vivía dentro del repo.
   migrateProfile(legacyLinkedinProfileDir(config), pool.session(LINKEDIN_PROFILE_ID).dir);
 
+  // Todas las conocidas: cuáles corren lo dice el interruptor de cada una, que
+  // se consulta en cada pasada y se puede cambiar desde Integraciones.
   const sources = buildSources(config, pool);
-  console.log(`[arranque] fuentes activas: ${sources.map((s) => s.label).join(', ') || 'ninguna'}`);
   const judge = config.geminiApiKey
     ? new LlmJudge(new GoogleGenAI({ apiKey: config.geminiApiKey }), config.judgeModel)
     : null;
@@ -51,6 +53,9 @@ async function main(): Promise<void> {
     : '[arranque] sin RESEND_API_KEY / MAIL_FROM / MAIL_TO: no se mandan correos');
 
   const settings = new SettingsRepository(db);
+  const toggles = new SourceToggles(settings, config.enabledSources);
+  const enabled = (name: string): boolean => toggles.isEnabled(name);
+  console.log(`[arranque] plataformas: ${sources.map((s) => `${s.label}${enabled(s.name) ? '' : ' (apagada)'}`).join(', ') || 'ninguna'}`);
   const profiles = new ProfileRepository(settings);
   // Como función y no como valor: así un cambio en Configuración o en el alta
   // entra en la siguiente pasada sin reiniciar el servicio.
@@ -61,7 +66,7 @@ async function main(): Promise<void> {
     : '[arranque] sin alta: abre el dashboard y completa tu perfil para que empiecen las búsquedas');
   const runner = new Runner({
     sources,
-    maxAgeDays: () => readMaxAgeMonths(settings) * 30, jobs, runs, judge, profile, onboarded,
+    maxAgeDays: () => readMaxAgeMonths(settings) * 30, jobs, runs, judge, profile, onboarded, enabled,
     mailer, dashboardUrl: config.dashboardUrl,
   });
   const schedules = new SourceSchedules(settings, config.scheduleHours);
@@ -71,6 +76,7 @@ async function main(): Promise<void> {
     schedules,
     store: new LastPassStore(join(config.dataDir, 'last-pass.json')),
     runner,
+    enabled,
   });
 
   const app = await buildApp({
@@ -85,6 +91,7 @@ async function main(): Promise<void> {
     scheduleHours: config.scheduleHours,
     schedules,
     gmailAccount: config.gmailAccount,
+    toggles,
     webDist: existsSync(config.webDist) ? config.webDist : null,
   });
 
