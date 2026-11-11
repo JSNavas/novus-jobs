@@ -1,6 +1,6 @@
 # Novus Jobs
 
-Busca trabajo por ti en LinkedIn y Get on Board, tres veces al día, y te avisa solo cuando aparece algo que de verdad encaja.
+Busca trabajo por ti en LinkedIn y Get on Board, te avisa solo cuando aparece algo que de verdad encaja, y te dice qué están pidiendo las vacantes que te sirven.
 
 ## Para qué existe
 
@@ -15,6 +15,7 @@ Novus Jobs lee el feed en tu nombre, aplica tu criterio y te deja en el dashboar
 3. **Que tu cuenta de LinkedIn siga sana.** Es lo único irremplazable de todo esto. El ritmo que la plataforma ve está limitado por cuatro topes simultáneos y no se sube ni aunque insistas con el botón.
 4. **Que iniciar sesión pase una sola vez.** La sesión se guarda y se refresca sola; si caduca, te llega un correo diciendo exactamente qué comando correr.
 5. **Que crezca a más plataformas.** LinkedIn fue la primera, no la única: añadir una es una clase y una línea en el registro. Get on Board es la segunda, y entró sin tocar nada del pipeline.
+6. **Que te diga dónde poner el esfuerzo.** Si dos o tres vacantes piden lo mismo, eso es lo relevante. El [Enfoque](#enfoque) lo cuenta solo, y lo que empieza a pedirse y nadie clasificó asoma igual.
 
 ### Lo que NO hace
 
@@ -25,6 +26,16 @@ Novus Jobs lee el feed en tu nombre, aplica tu criterio y te deja en el dashboar
 ### De dónde sale
 
 Es una réplica deliberada del patrón de [A.R.T.I.O](../A.R.T.I.O), que lleva meses leyendo ese mismo feed a diario sin que la cuenta se resienta: el ritmo de tres franjas, el scroll del contenedor interno, la lectura del DOM y el navegador único por perfil vienen de ahí. Lo que aquí se añadió —y ARTIO no necesitaba— está explicado en los comentarios del código, caso por caso.
+
+## Las pantallas
+
+| | Qué es |
+|---|---|
+| `/` | el dashboard: qué hizo el buscador y qué descartó |
+| `/nuevas` · `/vistas` · `/guardadas` · `/descartadas` | la bandeja |
+| `/rechazadas` | lo que tumbó el filtro, con el motivo |
+| `/enfoque` | qué piden en común las vacantes que te sirven |
+| `/configuracion` | lo que puedes cambiar sin tocar código |
 
 ## Estructura
 
@@ -137,9 +148,72 @@ El contador solo está donde se actúa —cuántas quedan por mirar y cuántas h
 
 Las pestañas **Para Ti** y **Extras (Junior)** separan lo tuyo de lo junior. **Las junior no entran en ningún contador**: llegan como extra, por si quieres pasárselas a alguien, y no son trabajo tuyo pendiente. Un número que no corresponde con lo que hay que hacer deja de servir para decidir si vale la pena abrir el dashboard, que es lo único que ese número tiene que hacer.
 
-Cada oferta trae lo que se puede hacer con ella: **Redactar en Gmail** (abre tu cuenta con el puesto en el asunto y tu plantilla escrita, para que revises y envíes), ver la publicación o el perfil de quien la puso, y copiarla para compartirla. En las junior no aparece el envío de CV.
+Cada tarjeta empieza diciendo **de dónde viene y de cuándo es**: `Get on Board · BC Tecnología · publicada el 2 nov 2026`. La fecha es la de la plataforma, no la de nuestra lectura — con una pasada cada media hora, «hace un rato» no informa de nada, mientras que «2 de noviembre, 298 postulaciones» dice que llegas tarde. Cuando la fuente no publica la fecha (LinkedIn), la tarjeta dice «encontrada el…», nombrándolo, en vez de hacer pasar una cosa por la otra.
+
+Debajo, lo que Get on Board publica y decide si vale la pena escribir: **cuántas postulaciones lleva** y **cuánto tarda esa empresa en responder**. Se refrescan en cada pasada, porque un «298 postulaciones» de hace una semana es peor que no decir nada.
+
+Y en una sola fila, todo lo que se puede hacer con ella:
+
+| Botón | Qué hace |
+|---|---|
+| **Postularse** | abre la oferta donde se postula uno |
+| **Redactar en Gmail** | tu cuenta, con el puesto en el asunto y tu plantilla escrita |
+| **Copiar motivación** | el «¿por qué te interesa trabajar aquí?» ya adaptado a esa oferta |
+| **Copiar enlace** | el enlace y nada más, para pasárselo a alguien |
+| Vista · Guardar · Descartar | moverla por la bandeja |
+
+Debajo del anuncio solo queda «Ver más», que es lo único que habla del texto y no de la oferta. En las junior no aparece ni el envío de CV ni la motivación: no te postulas a esas.
+
+### La motivación de cada postulación
+
+Get on Board pide un «¿por qué te interesa trabajar aquí?» en cada postulación, entre 50 y 1000 caracteres. Escribirlo a mano cada vez es lo que hace que se acabe pegando siempre el mismo párrafo genérico, y un párrafo genérico se nota.
+
+El botón copia **tu** texto con tres huecos rellenos con los datos de esa oferta: `{puesto}`, `{empresa}` y `{tecnologias}` (hasta cuatro coincidencias reales con tu stack). Esa última frase es la única que no se puede escribir de antemano, y por eso es la que demuestra que leíste el anuncio.
+
+Dos comportamientos que no se ven: si una oferta no coincide con ninguna tecnología, **la frase que lleva `{tecnologias}` se quita entera** en vez de quedarse coja; y `{empresa}` pone «la empresa» cuando no se sabe quién contrata — en LinkedIn el autor es la *persona* que publicó, y «me interesa trabajar en María Pérez» sería peor que no nombrar a nadie.
+
+El texto se edita en **Configuración**, no en el código.
 
 Todo se refresca solo cada 15 segundos y las horas van en **hora de Venezuela**, con am/pm.
+
+## Enfoque
+
+La respuesta a **«¿qué tengo que saber para competir por las vacantes que me sirven?»**, sacada de lo que dicen los anuncios.
+
+La cadena es lo que la hace distinta de cualquier ranking de tecnologías: **tu stack ya filtró qué vacantes entran**, así que la página no pregunta qué sabes — pregunta qué piden las que te sirven. Por eso es una sola lista y no dos: separar por lo que ya dominas sería filtrar dos veces por lo mismo.
+
+Cada fila es un tema con el número de vacantes que lo piden y, debajo, **las frases reales de los anuncios**. El nombre del tema es solo el índice; lo que informa son las frases — no «estudia Docker», sino qué esperan que sepas de Docker.
+
+Tres reglas sostienen el número:
+
+- **Solo lo aceptado.** Contar las descartadas convertiría esto en «aprende C# e inglés avanzado», o sea lo que no quieres hacer.
+- **Una vez por vacante, no por menciones.** Un anuncio que repite «AWS» catorce veces no hace a AWS más demandado: hace a esa empresa más repetitiva.
+- **Mínimo dos vacantes.** Con una no hay patrón, hay una empresa.
+
+Una fila por idea: «Arquitectura limpia (hexagonal, DDD, SOLID)» es una y no tres, porque en los anuncios vienen en la misma frase. El detalle se lee abajo.
+
+La **ventana** (3, 6, 12 o 24 meses) se elige en la propia página: no cambia qué se guarda, sino con cuánto pasado se mira lo guardado. Seis por defecto — una ventana corta reacciona rápido pero tiembla, y lo que interesa ver es algo *empezando* a pedirse, con tiempo para reaccionar.
+
+### Apareciendo
+
+El catálogo de temas está escrito a mano, y ese era su único agujero: **lo que no está en él no se detecta por mucho que lo pidan**.
+
+Esta sección lo cierra por el otro lado. En vez de contar lo que conocemos, busca **cualquier palabra técnica que se repita en varias vacantes y que el catálogo no tenga**. Sale sola después de cada búsqueda, sin que nadie la haya previsto: si mañana seis vacantes empiezan a pedir Rust, asoma ahí.
+
+Para que no proponga basura hay cinco filtros, y el primero es el que de verdad decide: que se repita en dos vacantes o más. Los otros cuatro quitan las siglas que ya cuenta el catálogo, los nombres de las empresas, la primera palabra de cada frase (su mayúscula no es un nombre propio) y lo que no tiene forma de tecnología.
+
+## Configuración
+
+Lo que se cambia sin tocar código ni reiniciar nada:
+
+| Ajuste | Qué decide |
+|---|---|
+| **Motivación** | el párrafo que copia cada oferta, con sus huecos |
+| **Antigüedad máxima** | cuántos meses puede tener una vacante para entrar (3 por defecto) |
+
+Viven en la base de datos y no en el `.env` a propósito: el `.env` solo se lee al arrancar, y corregir una coma no puede obligarte a reiniciar el servicio. La antigüedad se lee **en cada pasada**, así que cambiarla surte efecto en la siguiente búsqueda.
+
+> **La antigüedad de Configuración no es la ventana de Enfoque.** La primera decide qué se guarda; la segunda, con cuánto pasado se mira lo ya guardado. Son dos cosas y por eso se cambian en dos sitios.
 
 ## El ritmo, que es el de cada plataforma
 
