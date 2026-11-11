@@ -6,6 +6,7 @@ import { jobLocationLabel, jobStatusLabel } from '../../labels';
 import { JobLocation, JobStatus, JobVerdict, type Job } from '../../types';
 import type { Settings } from '../../api/client';
 import { gmailComposeUrl, shouldOfferApplication } from './apply';
+import RejectionBadge from './RejectionBadge';
 
 interface JobCardProps {
   job: Job;
@@ -132,14 +133,12 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
           </Stack>
         </Stack>
 
-        {/* EL MOTIVO DEL DESCARTE, A LA VISTA.
-            Se guardaba desde el principio y no se enseñaba en ninguna parte,
-            así que auditarlo exigía abrir la base de datos. Un criterio que no
-            se puede leer no se puede corregir, y el único error que importa de
-            verdad —una oferta buena tirada— solo se ve aquí. */}
-        {job.rejectionReason ? (
-          <AppAlert severity="warning">Descartada: {job.rejectionReason}</AppAlert>
-        ) : null}
+        {/* THE DISCARD REASON, IN SIGHT.
+            It was stored from the start and shown nowhere, so auditing it meant
+            opening the database. A criterion you can't read can't be corrected,
+            and the one error that really matters — a good offer thrown out — is
+            only visible here. */}
+        {job.rejectionReason ? <RejectionBadge reason={job.rejectionReason} /> : null}
 
         <Typography variant="body2">Publicado por {job.author ?? 'autor desconocido'}</Typography>
         {job.stackMatch.length > 0 ? (
