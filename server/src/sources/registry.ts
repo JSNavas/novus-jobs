@@ -1,5 +1,6 @@
 import type { BrowserPool } from '../browser/session.js';
 import type { Config } from '../config.js';
+import { GetOnBoardSource } from './getonbrd.source.js';
 import { LinkedInSource } from './linkedin.source.js';
 import type { JobSource, SourceDefinition } from './types.js';
 
@@ -24,6 +25,12 @@ const DEFINITIONS: readonly SourceDefinition[] = [
     name: 'linkedin',
     label: 'LinkedIn',
     create: (config, pool) => new LinkedInSource(config, pool),
+  },
+  {
+    name: 'getonbrd',
+    label: 'Get on Board',
+    // Ni `config` ni `pool`: lee de una API pública, sin sesión ni navegador.
+    create: () => new GetOnBoardSource(),
   },
 ];
 

@@ -1,6 +1,6 @@
 # Novus Jobs
 
-Busca trabajo en LinkedIn por ti, tres veces al día, y te avisa solo cuando aparece algo que de verdad encaja.
+Busca trabajo por ti en LinkedIn y Get on Board, tres veces al día, y te avisa solo cuando aparece algo que de verdad encaja.
 
 ## Para qué existe
 
@@ -14,7 +14,7 @@ Novus Jobs lee el feed en tu nombre, aplica tu criterio y te deja en el dashboar
 2. **Que no tengas que mirar.** Tres pasadas al día y un correo cuando hay algo. El silencio significa que no había nada, y eso también es información.
 3. **Que tu cuenta de LinkedIn siga sana.** Es lo único irremplazable de todo esto. El ritmo que la plataforma ve está limitado por cuatro topes simultáneos y no se sube ni aunque insistas con el botón.
 4. **Que iniciar sesión pase una sola vez.** La sesión se guarda y se refresca sola; si caduca, te llega un correo diciendo exactamente qué comando correr.
-5. **Que crezca a más plataformas.** LinkedIn es la primera, no la única: añadir una es una clase y una línea en el registro.
+5. **Que crezca a más plataformas.** LinkedIn fue la primera, no la única: añadir una es una clase y una línea en el registro. Get on Board es la segunda, y entró sin tocar nada del pipeline.
 
 ### Lo que NO hace
 
@@ -77,7 +77,7 @@ Variables de entorno (`server/.env`, todas opcionales):
 | `PORT` | `47831` | Puerto de la API y de la UI |
 | `SCHEDULE_HOURS` | `9,13,18` | Franjas de pasada, hora de Venezuela (UTC-4) |
 | `SCHEDULER_ENABLED` | `true` | `false` apaga las pasadas automáticas |
-| `JOB_SOURCES` | `linkedin` | Plataformas activas, separadas por comas |
+| `JOB_SOURCES` | `linkedin,getonbrd` | Plataformas activas, separadas por comas |
 | `BROWSER_PROFILES_DIR` | `~/.novus-jobs/browser-profiles` | Dónde viven las sesiones del navegador |
 | `BROWSER_HEADLESS` | `true` | `false` abre el navegador con ventana en las pasadas (para depurar) |
 | `LINKEDIN_FEED_URL` | `https://www.linkedin.com/feed/` | Feed que se lee |
@@ -203,6 +203,20 @@ El proyecto está hecho para ir sumando sitios de empleo sin tocar nada más. So
 3. Añadirla a `JOB_SOURCES`.
 
 Para quitarla, sacarla de `JOB_SOURCES`. El código se queda, inofensivo.
+
+### Las dos que hay
+
+| | LinkedIn | Get on Board |
+|---|---|---|
+| Cómo lee | navegador con tu sesión | `GET /api/v0/search/jobs`, sin autenticación |
+| Cuenta | la tuya, y es lo irremplazable | ninguna |
+| Enlace de la oferta | hay que abrir el menú «⋯» y se raciona | viene en la respuesta |
+| Ubicación y modalidad | se adivinan del texto | campos del JSON |
+| Qué pide | todo el feed | todas las vacantes remotas, sin palabra clave |
+
+Y una advertencia que vale para las dos: Get on Board **no** dice si contratan en Venezuela. `remote_zone` viene siempre `null` y el país de un remoto llega como `["Remote"]`, así que la elegibilidad sigue estando solo en la prosa. Las reglas y el juez hablan igual.
+
+> **Por qué su API y no su MCP.** Get on Board publica un servidor MCP en `getonbrd.com/mcp`, y es la herramienta del **reclutador**: `search_talent` busca candidatos en su base de talento, y `list_jobs` lista las vacantes que publica *tu* empresa. No hay nada para buscar empleo ni para ver postulaciones. Lo que sí sirve es su API pública, que responde 200 sin credenciales.
 
 Dos reglas que no se negocian, y son las que mantienen las cuentas sanas:
 

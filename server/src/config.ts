@@ -66,7 +66,12 @@ function mailConfig(): Config['mail'] {
 const SERVER_ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 
 const DEFAULT_SCHEDULE_HOURS = '9,13,18';
-const DEFAULT_SOURCES = 'linkedin';
+/**
+ * Las dos fuentes activas. Get on Board entra por defecto y no por `.env`
+ * porque no pide nada a cambio: lee de una API pública, sin cuenta, sin
+ * navegador y sin sesión que caducar. Apagarla es sacarla de `JOB_SOURCES`.
+ */
+const DEFAULT_SOURCES = 'linkedin,getonbrd';
 const DEFAULT_FEED_URL = 'https://www.linkedin.com/feed/';
 /**
  * El modelo del juez. `flash-lite` porque la tarea es clasificar texto corto

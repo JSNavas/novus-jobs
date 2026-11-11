@@ -336,3 +336,87 @@ se le pregunta, es revocable como los demás.
 - **El enlace permanente del post** no siempre se consigue. Se intenta primero el `urn:li:activity:` del DOM (cero interacción) y se recurre al menú «⋯». Sin ninguno, la oferta apunta a su enlace externo o al perfil del autor, y el botón lo dice.
 - **`npm test` usaba `dist/**/*.test.js` sin comillas**: `sh` lo expandía a un solo nivel y `dist/runner.test.js` nunca se ejecutó. Al arreglarlo aparecieron fallos reales en esos tests (el reloj de las pasadas lo ponía el sistema y no el runner). Corregido; `runs.start()` recibe el instante.
 - **Depende de que el Mac esté encendido**: launchd local, no hay servidor remoto.
+
+---
+
+## Rev. 8 — Segunda plataforma: Get on Board · 2026-11-11
+
+Primera fuente que no es LinkedIn. Entró sin tocar el pipeline, las reglas, el
+juez, la BD ni la UI: una clase en `sources/getonbrd.source.ts`, una línea en
+`DEFINITIONS` y su nombre en el valor por defecto de `JOB_SOURCES`.
+
+### Su MCP no servía
+
+Get on Board publica un servidor MCP (`getonbrd.com/mcp`). Es para el lado
+contrario del mercado: sus cuatro tools son `whoami`, `search_talent` —busca
+candidatos en su base de talento—, `list_jobs` y `job_details`, que listan las
+vacantes que publica *tu empresa*. Nada para buscar empleo ni para ver
+postulaciones. Descartado tras leer su documentación.
+
+Lo que sí hay es `GET /api/v0/search/jobs`, **200 sin autenticación**. Medido
+el 2026-11-11: 187 vacantes remotas en total, dos páginas de 100.
+
+### Lo que esto cambia respecto a LinkedIn
+
+| | LinkedIn | Get on Board |
+|---|---|---|
+| Cuenta en riesgo | la suya | ninguna |
+| Navegador | Chromium con perfil persistente | ninguno |
+| Enlace de la oferta | menú «⋯», racionado por salud de cuenta | en la respuesta |
+| Ubicación / modalidad | regex sobre el texto del post | `remote`, `remote_modality`, `countries` |
+| Sueldo y seniority | si el post los dice | `min_salary`, `max_salary`, `seniority` |
+
+### Medición en seco, las 187 contra las reglas
+
+| | |
+|---|---|
+| Aceptadas por las reglas | **29 (15,5 %)** |
+| Descartadas | 158 |
+
+Los motivos, de mayor a menor: inglés avanzado exigido (41), nada de su stack
+(25), Salesforce (9), remoto restringido a otro país (9), WordPress (7), Go (6),
+SAP (5). Ninguno sospechoso: son los mismos vetos que ya se validaron contra el
+historial de ARTIO.
+
+Para comparar: ARTIO acepta ~7 % y el feed de LinkedIn venía dando 0 de 23.
+
+### El fallo que la medición destapó
+
+Las 29 aceptadas salían **sin vía de postulación**. `extractApplyUrl`
+(`filters/offer.ts:49`) reconoce una URL de postulación por su forma —`jobs`,
+`career`, `apply`, `postula`, `vacante`, `greenhouse`…— y la que se estaba
+poniendo era `/empleos/<slug>`, que no está en esa lista.
+
+Se arregló con el dato correcto y no ensanchando el regex: la URL canónica de
+Get on Board es `/jobs/<categoría>/<slug>`, y la respuesta trae el nombre de la
+categoría, no su slug, así que la fuente pide `/api/v0/categories` una vez por
+pasada para traducirlo. Lleva `/jobs/`, así que el extractor la reconoce sin
+tocarlo. Verificado: 29 de 29 con vía de postulación. Si esa petición falla, se
+sigue con `/empleos/<slug>`, que redirige con un 301 — se pierde el botón, no la
+pasada.
+
+### Decisiones que conviene no reabrir
+
+- **Sin palabra clave.** Se piden todas las remotas y deciden los filtros, igual
+  que con el feed. Buscar por términos metería un criterio más estrecho que el
+  del resto del proyecto, y ya se midió que el problema nunca fue la falta de
+  ofertas.
+- **El JSON se convierte a texto.** Suena a paso atrás, pero el pipeline recibe
+  `RawPost.text` y de ahí saca todo. Que aceptara campos sueltos significaría
+  tocar reglas, juez y BD por una sola fuente.
+- **Lo decisivo va primero en el texto.** El juez corta a 1800 caracteres: el
+  puesto, la modalidad y los requisitos tienen que caber antes del recorte.
+- **Nada volátil en el texto.** La huella que deduplica es un sha1 de los
+  primeros 800 caracteres. `applications_count` sube a diario: si se colara, la
+  misma vacante entraría como nueva en cada pasada. Hay un test que lo fija.
+- **`selectPermalinks` se ignora.** Existe para racionar clics que cuestan salud
+  de cuenta. Aquí no hay cuenta ni clics.
+
+### GAPs
+
+- La deduplicación es por fuente (`fingerprintsOf(source)`): una vacante
+  publicada en LinkedIn y en Get on Board aparece dos veces.
+- Sin integración con la cuenta: `/misempleos` redirige a `/webpros/login`, así
+  que saber a cuáles ya se postuló pediría sesión de navegador. No se hizo
+  porque no hace falta para encontrar ofertas.
+- El tope de 3 páginas se queda corto si Get on Board pasa de 300 remotas.
