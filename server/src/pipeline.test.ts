@@ -27,6 +27,13 @@ const BUENA =
 const PRESENCIAL =
   'Full-Stack Developer (Senior). Ubicacion: Barcelona, Espana. Modalidad presencial. Buscamos un/a Full-Stack Developer con Node.js, React y AWS. Contrato indefinido. Postula en https://lnkd.in/dabc';
 
+/**
+ * Las reglas la ACEPTAN —menciona Python, que está en el núcleo— pero el puesto
+ * no es de desarrollo. Caso tomado de la pasada 15 del 2026-11-11.
+ */
+const SEGURIDAD_DE_RED =
+  'Freelanly | Ingeniero de Seguridad de Red. Estados Unidos. USD 102000-138000/ano. El cliente necesita un Ingeniero de Seguridad de Red para firewalls, VPN y segmentacion. Scripting en Python deseable. Remoto. Postula: https://lnkd.in/dseg';
+
 /** No menciona nada de su stack: descarte de los que el juez NO puede tocar. */
 const SIN_STACK =
   'Buscamos Contador Senior 100% remoto para LATAM. Responsabilidades: conciliaciones, impuestos y cierres mensuales. Sueldo USD 2000. Postula en jobs@acme.com';
@@ -142,6 +149,25 @@ describe('pipeline — el juez cruzado con las reglas', () => {
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     assert.match(stored.items[0]!.rejectionReason ?? '', /^\[IA\] pide ir a la oficina/);
+  });
+
+  it('EL CASO REAL: el juez veta un puesto que no es de su oficio aunque las reglas lo acepten', async () => {
+    // La pasada 15 aceptó "Ingeniero de Seguridad de Red" porque el anuncio
+    // menciona Python, que está en el núcleo. Las reglas no saben de oficios:
+    // en cuanto una tecnología del núcleo aparece, dejan pasar. El juez sí.
+    const { judge } = fakeJudge(() => ({
+      isOffer: true,
+      rejection: 'role',
+      reason: 'es un puesto de seguridad de redes, no de desarrollo',
+    }));
+    const result = await run([SEGURIDAD_DE_RED], judge);
+
+    assert.equal(result.outcome.accepted, 0);
+    const stored = jobs.list({
+      status: null, verdict: null, runId: null, seniority: null,
+      source: null, search: null, hasApply: null, limit: 10, offset: 0,
+    });
+    assert.match(stored.items[0]!.rejectionReason ?? '', /^\[IA\] es un puesto de seguridad de redes/);
   });
 
   it('un descarte de las reglas que el juez confirma conserva el motivo concreto de la regla', async () => {

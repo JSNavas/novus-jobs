@@ -10,7 +10,7 @@ import type { CandidateProfile, Offer } from './decide.js';
  * descarte", porque el modelo no puede inventarse un veto. Qué descartes puede
  * revocar lo decide `applyJudgment`, no este fichero.
  */
-const JUDGE_REJECTIONS = ['onsite', 'other-country', 'english', 'technology', 'venezuelan-employer'] as const;
+const JUDGE_REJECTIONS = ['onsite', 'other-country', 'english', 'technology', 'venezuelan-employer', 'role'] as const;
 type JudgeRejection = (typeof JUDGE_REJECTIONS)[number];
 
 export interface JudgeVerdict {
@@ -98,6 +98,14 @@ function instruction(profile: CandidateProfile): string {
     '   "english"           → EXIGEN inglés por escrito.',
     '   "technology"        → EXIGEN algo que no sabe (de la lista de arriba).',
     '   "venezuelan-employer" → la contrata una empresa de Venezuela.',
+    '   "role"              → el puesto NO es de desarrollo de software, aunque el',
+    '                         anuncio mencione tecnologías que él sabe. Es de',
+    '                         seguridad/redes, datos (data engineer, analista BI),',
+    '                         QA manual, soporte, diseño, producto, ventas o',
+    '                         reclutamiento. Él programa: backend, frontend o full',
+    '                         stack. Un puesto de desarrollo que ADEMÁS pida nociones',
+    '                         de seguridad o datos NO es "role": lo es cuando el',
+    '                         trabajo principal no es escribir software.',
     '   null                → EL RESTO DE CASOS.',
     '',
     '   Si no está en esa lista, es null. Que no diga si es remoto NO es un descarte.',

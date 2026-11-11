@@ -273,11 +273,57 @@ fuente y un juez de mentira contra una base real en `tmp`; `filters/judge.test.t
 cubre la tanda caída y el desplazamiento de índices entre tandas;
 `db/runs.repository.test.ts` fija que el contador guardado se ignora.
 
+### Rev. 7b — Lo que enseñaron las dos primeras pasadas reales
+
+**Pasada 14** (manual, 23 leídas): **22 de 23 descartes pasaron por el juez**.
+Con el código anterior habrían sido cero. El único que no se le mandó fue el de
+`stack`, exactamente como se diseñó. Gemini confirmó los 22: cero rescates. No
+es un fallo del mecanismo —funciona de punta a punta— sino la confirmación de
+que esos descartes eran correctos, que es lo que ya decía la comparación con
+ARTIO. 18 de las 23 publicaciones ni siquiera eran ofertas.
+
+**Pasada 15** (programada, 23 leídas) destapó dos cosas:
+
+**El `-lite` no contesta.** Las 23 salieron `skipped`:
+
+```
+[juez] fallo pasajero (503 "This model is currently experiencing high demand"): reintento en 4s
+[juez] no pudo juzgar (503 ...); mandan las reglas
+[juez] 1 tanda(s) sin veredicto; esas ofertas las deciden las reglas
+```
+
+19 juzgables en una sola tanda, la tanda cayó, cero veredictos. El modelo por
+defecto pasa a `gemini-3.5-flash`. El `lite` es el más barato y por eso el más
+disputado, y la tarea —clasificar texto corto contra un criterio explícito— no
+pide la inteligencia que separa a uno de otro: pide que conteste. Esa última
+línea del log es de la Rev. 7; antes el fallo habría sido mudo.
+
+**Las reglas no saben de oficios.** La única «aceptada» de la pasada 15 era un
+*Ingeniero de Seguridad de Red* (EE. UU., USD 102-138k) que entró con
+`stack_match: ["Python"]`. `judgeCore` acepta en cuanto una tecnología del
+núcleo aparece y solo consulta `isOwnRole` cuando el núcleo NO coincide, así que
+un puesto que no es el suyo pero menciona Python o JavaScript pasa directo.
+ARTIO tiene el mismo hueco.
+
+No se arregla con una regla: exigir `isOwnRole` siempre tiraría los anuncios
+cortos que nombran el rol sin listar stack, que es justo para lo que se escribió
+ese detector. Un oficio es un juicio de significado, así que se añade `"role"` a
+los descartes del juez, con la frontera escrita en el prompt: un puesto de
+desarrollo que ADEMÁS pida nociones de seguridad o datos no es `role`; lo es
+cuando el trabajo principal no es escribir software. Al ser un motivo por el que
+se le pregunta, es revocable como los demás.
+
 ### GAPs que quedan
-- **Nada de la Rev. 7 ha corrido contra Gemini de verdad.** La evidencia es de
-  tests con dobles y de un replay de `decideShipping` sobre las 118
-  publicaciones guardadas. El 85% es cuántos descartes **se le preguntan** al
-  juez, no cuántos rescata. Hasta una pasada real no se sabe si son 1 o 15.
+- **El `role` no está probado contra Gemini todavía**, solo con un doble en
+  `pipeline.test.ts` sobre el anuncio real que se coló.
+- **La señal del feed cronológico es prometedora pero no concluyente.** Tras
+  poner «Publicaciones más recientes» en los ajustes de la cuenta, el «no es una
+  oferta» cayó del 78% (18/23, pasada 14) al 48% (11/23, pasada 15). Con 23
+  publicaciones puede ser ruido.
+- **El rescate no ha rescatado nada todavía.** Ya corrió contra Gemini (pasada
+  14, Rev. 7b): el juez vio 22 de 23 descartes y confirmó los 22. Sabemos que el
+  mecanismo funciona; no sabemos aún su tasa de rescate real, porque hasta ahora
+  las reglas no se han equivocado en una pasada observada.
 - **Un rescate entra sin enlace al post.** `indicesToFetchPermalink` sigue
   pidiendo el enlace permanente solo de lo que aceptan las reglas, y no puede
   saber el rescate: el permalink se pide durante el `fetch`, antes de juzgar.

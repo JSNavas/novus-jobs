@@ -170,11 +170,15 @@ Las reglas miran letras; el juez mira significado. Es el segundo par de ojos, y 
 
 Lo que atrapa es lo que ninguna expresión regular puede: *"esto es una base de talentos, no una vacante"*. Eso mismo, literal, en la primera pasada con el juez encendido. Y al revés: *"React, Angular o similar"* no es un veto por Angular, pero la regex no sabe leerlo.
 
+El juez juzga además **si el puesto es de su oficio**. Las reglas no saben de oficios: en cuanto una tecnología del núcleo aparece en el anuncio, dejan pasar. Así entró un «Ingeniero de Seguridad de Red» porque mencionaba Python. Eso lo ve el modelo, no una expresión regular.
+
 **El único descarte que el juez no puede revocar es el del stack**, porque es el único por el que no se le pregunta. Dejárselo revocar sería dejar entrar «Encargado de atención a pacientes, remoto» porque el modelo confirma —con razón— que sí, es una vacante remota de verdad.
 
 Que el juez pudiera **solo** descartar fue la decisión original, y estaba mal: medido sobre el feed real, de 117 descartes 114 no habían pasado nunca por el juez, y solo 17 eran del stack. Los otros 100 se tiraban sin segunda opinión pudiendo tenerla, y un falso descarte de una regex no tenía vuelta: se guardaba con `judge_status = skipped` y nadie lo volvía a mirar.
 
 Un rescate entra marcado como **«por confirmar»**, no como oferta limpia; y si lo revocado fue la ubicación, la ubicación pasa a «no dice desde dónde se puede trabajar», porque la regla que afirmaba «presencial» es justo la que acaba de caerse.
+
+El modelo por defecto es `gemini-3.5-flash`, no el `-lite`: el `lite` es el más barato y por eso el más disputado, y una pasada perdió sus 19 juicios con un `503 high demand` con reintento incluido. Clasificar texto corto no pide más inteligencia; pide que conteste.
 
 Va por **Gemini en la capa gratuita de Google AI Studio**, el mismo proveedor que ya usa ARTIO para esta tarea. Se le manda casi toda la pasada (todo menos los descartes por stack): unas 2 llamadas por pasada en tandas de 20 publicaciones, con 3 pasadas al día, muy por debajo del límite gratuito. Si una tanda falla se reintenta y, si vuelve a fallar, **las demás tandas se conservan** y esas ofertas las deciden las reglas: antes un 503 pasajero en la segunda tanda borraba los veredictos de la primera y la pasada entera volvía a cero.
 

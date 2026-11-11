@@ -76,8 +76,14 @@ const DEFAULT_FEED_URL = 'https://www.linkedin.com/feed/';
  * Se fija el 3.5 y no el 3.1 que usa ARTIO porque el 3.1 llevaba horas
  * devolviendo 503 por saturación, y un juez que no contesta es un juez
  * apagado. Se cambia con JUDGE_MODEL sin tocar código.
+ *
+ * Y se deja de usar `-lite` por lo mismo: el 2026-11-11 la pasada de las 13:00
+ * perdió sus 19 juicios con `503 This model is currently experiencing high
+ * demand`, reintento incluido. El `lite` es el más barato y por eso el más
+ * disputado. La tarea sigue siendo clasificar texto corto, así que el salto de
+ * precio no compra inteligencia que haga falta: compra que conteste.
  */
-const DEFAULT_JUDGE_MODEL = 'gemini-3.5-flash-lite';
+const DEFAULT_JUDGE_MODEL = 'gemini-3.5-flash';
 const HOME_DIR = join(homedir(), '.novus-jobs');
 
 function optional(name: string): string | null {
