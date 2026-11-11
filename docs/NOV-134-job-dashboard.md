@@ -148,7 +148,144 @@ Dos fallos del aviso flotante encontrados al probar el tope diario:
 - Cualquier 409 se mostraba con el prefijo "Ya hay una búsqueda en curso", pero ese código cubre todos los rechazos: el tope del día, los minutos que faltan, la sesión caída. El prefijo contradecía al motivo real que venía detrás. El servidor ya dice la verdad; se muestra tal cual.
 - `severity` caía por defecto a `'success'` cuando el mensaje pasaba a `null` al cerrar. Un `Snackbar` sigue pintando su contenido mientras se desvanece, así que el aviso **rojo de error se volvía verde al irse**: parecía que, tras decirte que no se podía buscar, algo había salido bien. `AppSnackbar` recuerda ahora lo último que enseñó y lo mantiene durante la salida.
 
+## Rev. 7 — El juez podía descartar, pero no rescatar · 2026-11-11
+
+Entró por una queja: *"ARTIO consigue ofertas diariamente y este no consigue
+ninguna, todas descartadas"*. Lo primero fue medir, porque la premisa no se
+sostenía.
+
+### Lo que decían los datos
+
+ARTIO, contando el campo `enviada` de `.artio-data/ofertas/*.jsonl` en sus
+últimos 14 días con actividad: **838 publicaciones evaluadas, 60 enviadas
+(7,2%)**. Entre 1 y 10 al día, media ~4, y **no corre a diario**: huecos de
+días enteros (5→9 oct, 10→14→21 oct, 21 oct→9 nov). No existe el ARTIO que
+escupe ofertas todos los días.
+
+novus-jobs en esas fechas: 118 evaluadas en 2 días, 1 aceptada. Y las
+distribuciones de motivos son casi calcadas:
+
+| Motivo | ARTIO | novus-jobs |
+|---|---|---|
+| No es una oferta (post técnico/opinión) | 48,5% | 47% |
+| Presencial o híbrido fuera de Venezuela | 12,2% | 15,4% |
+| Remoto restringido a otro país | 9,1% | 10,3% |
+| No menciona nada de su stack | 8,2% | 12,8% |
+
+**Los filtros no estaban rotos.** Se leyeron los descartes uno a uno: un reto
+de SQL, un tutorial de Docker sobre PID 1, una demo de un plugin, vacantes
+presenciales reales en Albolote, Barcelona y Pakistán, y roles no-dev de
+Workremoto (atención a pacientes, diseño gráfico). Ninguno era una oferta que
+encajara. Se comprobó además que el clasificador de ubicación no sobre-dispara:
+cero publicaciones marcadas `onsite` que hablen de remoto sin mencionar
+presencial o híbrido. Y la fuente es **la misma en los dos proyectos**:
+`linkedin.com/feed/`.
+
+El cuello de botella es la fuente, no el filtro. Pero sí había un defecto real,
+y es el que se arregla aquí.
+
+### El juez solo veía lo que ya había pasado
+
+`judgeAccepted` filtraba `fresh` por `decideShipping(...).accepted`, así que al
+modelo solo se le mandaba lo que las reglas **ya habían aceptado**, y
+`applyJudgment` salía por `if (!judgment || !rules.accepted) return rules`.
+
+Consecuencia: **un falso descarte de una regex era irrecuperable.** La oferta se
+guardaba descartada con `judge_status = skipped` y nadie la volvía a mirar. De
+los 117 descartes guardados, **114 nunca pasaron por el juez**.
+
+La decisión original —que el juez solo pudiera vetar— estaba documentada como
+deliberada en la Rev. 6 y en el README. Estaba mal.
+
+Ahora `Verdict` lleva `rejectedBy: 'not-offer' | 'location' | 'veto' | 'stack'`
+(`filters/decide.ts`), para que el cruce reglas/juez se decida por código y no
+casando textos en español. `judgeOffers` manda al juez todo menos los descartes
+por `stack`, y `applyJudgment` puede revocarlos. Sobre los mismos 117 descartes:
+
+```
+55 not-offer  ┐
+30 location   ├─ 100 van al juez (85%)
+11 veto       ┘
+17 stack      ─── definitivos
+```
+
+**El stack no se revoca, y es el único.** Es lo único por lo que no se pregunta
+en el prompt. Dejárselo revocar metería «Encargado de atención a pacientes,
+remoto» en la bandeja, porque el modelo confirmaría —con razón— que sí es una
+vacante remota de verdad. Tampoco se le manda: sería pagar tokens por una
+respuesta que se va a ignorar.
+
+Dos cuidados en el rescate:
+
+- Entra marcado como `uncertain` («por confirmar»), no como oferta limpia.
+- Si lo revocado fue la **ubicación**, la ubicación baja a `Unknown`. La regla
+  que afirmaba «presencial» es justo la que se acaba de caer, así que seguir
+  mostrándola sería repetir el error con otra etiqueta. Por eso `toNewJob` ya
+  no lee la ubicación de `rules` sino del veredicto final, y el parámetro
+  `rules` desaparece de su firma.
+- Un descarte de las reglas que el juez confirma **conserva el motivo de la
+  regla**, que es más concreto que un `[IA] no es una vacante`. Los textos que
+  consume `rejectionCategory` (NOV-172) no cambian.
+
+### Una tanda caída ya no borra las demás
+
+`LlmJudge.judge` devolvía `null` al primer lote fallido: mandaban las reglas y
+no se mezclaban criterios a medias. Era defendible cuando el juez solo podía
+vetar —perderlo solo dejaba pasar algún falso positivo—. Con rescates, un 503
+de Google en la segunda tanda **borraba los rescates de la primera** y la pasada
+entera volvía a cero ofertas por un fallo pasajero.
+
+Ahora acumula lo que sí respondió y devuelve `null` solo si no se pudo juzgar
+nada. Las ofertas sin veredicto quedan `Skipped`, que es lo que eran todas
+antes. El número de tandas caídas se registra en el log.
+
+### Los contadores de cada búsqueda se cuentan, no se recuerdan
+
+Los contadores del historial y la tabla se habían separado:
+
+| Pasada | Reportaba | Guardado |
+|---|---|---|
+| 6 | 2 acc / 21 rech | **0 filas** |
+| 7 | 3 acc / 20 rech | 1 acc / 22 rech |
+| 8 | 1 acc / 24 rech | 0 acc / 25 rech |
+| 9–11 | coinciden | coinciden |
+
+**No era un bug de código.** Se verificó cruzando `found_at` con la ventana de
+cada pasada; el backfill de `run_id` de esta misma tarea es correcto y
+conservador (solo toca `run_id IS NULL` y exige que `found_at` caiga dentro de
+la ventana), y las filas de la pasada 6 no están en ninguna de las dos bases de
+datos del repo. Es daño histórico, y las pasadas posteriores cuadran exactas.
+
+El defecto real es otro: en el dashboard esos números **son pulsables**, y una
+cifra apuntada al cerrar la pasada puede separarse de lo que hay detrás. Ahora
+`accepted` y `rejected` se cuentan contra `jobs` por `run_id` en un único
+`RUN_COLUMNS` que usan `find`, `latest`, `previousTo` y `list`
+(`db/runs.repository.ts`). Repara solo el historial torcido: la pasada 6 enseña
+0 en vez de prometer 2 que no se pueden abrir.
+
+`fetched` sigue leyéndose de la columna: cuenta publicaciones **leídas**,
+duplicadas incluidas, que a propósito no se guardan en `jobs`. No es pulsable.
+
+### Cobertura
+
+13 tests nuevos (137 en total): `pipeline.test.ts` cruza reglas y juez con una
+fuente y un juez de mentira contra una base real en `tmp`; `filters/judge.test.ts`
+cubre la tanda caída y el desplazamiento de índices entre tandas;
+`db/runs.repository.test.ts` fija que el contador guardado se ignora.
+
 ### GAPs que quedan
+- **Nada de la Rev. 7 ha corrido contra Gemini de verdad.** La evidencia es de
+  tests con dobles y de un replay de `decideShipping` sobre las 118
+  publicaciones guardadas. El 85% es cuántos descartes **se le preguntan** al
+  juez, no cuántos rescata. Hasta una pasada real no se sabe si son 1 o 15.
+- **Un rescate entra sin enlace al post.** `indicesToFetchPermalink` sigue
+  pidiendo el enlace permanente solo de lo que aceptan las reglas, y no puede
+  saber el rescate: el permalink se pide durante el `fetch`, antes de juzgar.
+  Ampliarlo significa abrir el menú «⋯» en casi todas las publicaciones de cada
+  pasada, y la salud de la cuenta manda sobre todo lo demás. De los 100
+  descartes rescatables, 36 ya traen `apply_url` o correo extraído del texto.
+  Término medio si hiciera falta: pedirlo solo para `location` y `veto` (~30 por
+  pasada en vez de ~4), nunca para `not-offer`.
 - **El criterio se afinó con 23 publicaciones de un día.** Cada oferta que no sirva es una regla que falta.
 - **El enlace permanente del post** no siempre se consigue. Se intenta primero el `urn:li:activity:` del DOM (cero interacción) y se recurre al menú «⋯». Sin ninguno, la oferta apunta a su enlace externo o al perfil del autor, y el botón lo dice.
 - **`npm test` usaba `dist/**/*.test.js` sin comillas**: `sh` lo expandía a un solo nivel y `dist/runner.test.js` nunca se ejecutó. Al arreglarlo aparecieron fallos reales en esos tests (el reloj de las pasadas lo ponía el sistema y no el runner). Corregido; `runs.start()` recibe el instante.

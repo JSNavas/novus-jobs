@@ -1,5 +1,25 @@
-import { RunFailure, RunStatus, RunTrigger, type RunInfo } from '../types.js';
+import { JobVerdict, RunFailure, RunStatus, RunTrigger, type RunInfo } from '../types.js';
 import type { Db } from './database.js';
+
+/**
+ * UN CONTADOR SE CUENTA, NO SE RECUERDA.
+ *
+ * `accepted` y `rejected` existen como columnas de `runs`, pero no se leen de
+ * ahí: se cuentan contra `jobs`. En el dashboard esos números son pulsables, y
+ * un número guardado puede separarse de lo que hay detrás —pasó: la pasada 7
+ * decía «3 aceptadas» y en la tabla había 1, y la 6 decía «23 leídas» sin una
+ * sola fila que abrir—. Un contador que al pulsarlo no enseña lo que promete es
+ * peor que no poder pulsarlo, así que se calcula de la única fuente que el
+ * usuario puede ver. Esto además repara solo el historial ya torcido.
+ *
+ * `fetched` sí se lee de la columna: cuenta publicaciones LEÍDAS, duplicadas
+ * incluidas, y esas no se guardan en `jobs` a propósito. No es pulsable.
+ */
+const RUN_COLUMNS = `
+  r.id, r.source, r.started_at, r.finished_at, r.status, r.fetched, r.error, r.failure,
+  (SELECT COUNT(*) FROM jobs j WHERE j.run_id = r.id AND j.verdict = '${JobVerdict.Accepted}') AS accepted,
+  (SELECT COUNT(*) FROM jobs j WHERE j.run_id = r.id AND j.verdict = '${JobVerdict.Rejected}') AS rejected
+`;
 
 interface RunRow {
   id: number;
@@ -73,7 +93,7 @@ export class RunsRepository {
   }
 
   find(id: number): RunInfo | null {
-    const row = this.db.prepare<[number], RunRow>("SELECT * FROM runs WHERE id = ?").get(id);
+    const row = this.db.prepare<[number], RunRow>(`SELECT ${RUN_COLUMNS} FROM runs r WHERE r.id = ?`).get(id);
     return row ? toRun(row) : null;
   }
 
@@ -124,12 +144,14 @@ export class RunsRepository {
 
   /** La pasada inmediatamente anterior a `id`. Sirve para no repetir un aviso. */
   previousTo(id: number): RunInfo | null {
-    const row = this.db.prepare<[number], RunRow>('SELECT * FROM runs WHERE id < ? ORDER BY id DESC LIMIT 1').get(id);
+    const row = this.db.prepare<[number], RunRow>(
+      `SELECT ${RUN_COLUMNS} FROM runs r WHERE r.id < ? ORDER BY r.id DESC LIMIT 1`,
+    ).get(id);
     return row ? toRun(row) : null;
   }
 
   latest(): RunInfo | null {
-    const row = this.db.prepare<[], RunRow>('SELECT * FROM runs ORDER BY id DESC LIMIT 1').get();
+    const row = this.db.prepare<[], RunRow>(`SELECT ${RUN_COLUMNS} FROM runs r ORDER BY r.id DESC LIMIT 1`).get();
     return row ? toRun(row) : null;
   }
 
@@ -143,7 +165,7 @@ export class RunsRepository {
   list(limit: number, offset = 0): { items: RunInfo[]; total: number } {
     const total = this.db.prepare<[], { count: number }>('SELECT COUNT(*) AS count FROM runs').get()?.count ?? 0;
     const rows = this.db.prepare<[number, number], RunRow>(
-      'SELECT * FROM runs ORDER BY id DESC LIMIT ? OFFSET ?',
+      `SELECT ${RUN_COLUMNS} FROM runs r ORDER BY r.id DESC LIMIT ? OFFSET ?`,
     ).all(limit, offset);
     return { items: rows.map(toRun), total };
   }

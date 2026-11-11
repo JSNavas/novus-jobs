@@ -3,9 +3,12 @@ import type { Config } from '../config.js';
 import type { CandidateProfile, Offer } from './decide.js';
 
 /**
- * Segundo par de ojos: el modelo solo puede DESCARTAR lo que las reglas
- * dejaron pasar, y solo con uno de estos motivos. Un motivo fuera de la lista
- * se trata como "sin descarte": el modelo no puede inventarse un veto.
+ * Segundo par de ojos, en los dos sentidos: el modelo puede DESCARTAR lo que
+ * las reglas dejaron pasar y REVOCAR lo que las reglas descartaron por algo
+ * que él sabe leer mejor (ubicación, idioma, tecnología, o si es una vacante).
+ * Solo con uno de estos motivos: uno fuera de la lista se trata como "sin
+ * descarte", porque el modelo no puede inventarse un veto. Qué descartes puede
+ * revocar lo decide `applyJudgment`, no este fichero.
  */
 const JUDGE_REJECTIONS = ['onsite', 'other-country', 'english', 'technology', 'venezuelan-employer'] as const;
 type JudgeRejection = (typeof JUDGE_REJECTIONS)[number];
@@ -159,18 +162,33 @@ export class LlmJudge {
   ) {}
 
   /**
-   * Juzga el lote entero. Devuelve `null` si cualquier tanda falla: en ese caso
-   * mandan las reglas, y nunca se mezclan criterios a medias.
+   * Juzga el lote entero, tanda a tanda.
+   *
+   * UNA TANDA QUE FALLA NO TIRA LAS DEMÁS. Antes se devolvía `null` al primer
+   * fallo: mandaban las reglas y no se mezclaban criterios a medias. Eso valía
+   * cuando el juez solo podía VETAR, porque perderlo solo dejaba pasar algún
+   * falso positivo. Ahora el juez también RESCATA descartes de las reglas, así
+   * que un 503 de Google en la segunda tanda borraba los rescates de la
+   * primera: la pasada entera volvía a cero ofertas por un fallo pasajero.
+   * Cada oferta sin veredicto se guarda como `Skipped`, que es exactamente lo
+   * que era antes para todas.
+   *
+   * Devuelve `null` solo si no se pudo juzgar NADA.
    */
   async judge(offers: readonly Offer[], profile: CandidateProfile): Promise<JudgeVerdict[] | null> {
     const verdicts: JudgeVerdict[] = [];
+    let failed = 0;
     for (let start = 0; start < offers.length; start += POSTS_PER_CALL) {
       const batch = offers.slice(start, start + POSTS_PER_CALL);
       const batchVerdicts = await this.judgeBatch(batch, profile, start);
-      if (!batchVerdicts) return null;
+      if (!batchVerdicts) {
+        failed++;
+        continue;
+      }
       verdicts.push(...batchVerdicts);
     }
-    return verdicts;
+    if (failed) console.warn(`[juez] ${failed} tanda(s) sin veredicto; esas ofertas las deciden las reglas`);
+    return verdicts.length ? verdicts : null;
   }
 
   private async judgeBatch(batch: readonly Offer[], profile: CandidateProfile, offset: number): Promise<JudgeVerdict[] | null> {

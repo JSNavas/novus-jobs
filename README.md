@@ -108,7 +108,7 @@ Es la página de inicio, y existe porque la aplicación parecía rota cuando fun
 
 Arriba, cinco contadores: Nuevas, Vistas, Guardadas, Descartadas por ti y **Descartadas por el filtro**. Debajo, el historial de **búsquedas** con lo que leyó cada una, cuántas encajaron, cuántas descartó y si falló, con el motivo.
 
-**Todo es pulsable y lleva a las ofertas que forman el número.** Un contador que no se puede abrir obliga a creérselo, y lo que hay detrás —qué descartó y por qué— es justo lo que hay que poder auditar. Pulsando una búsqueda se ven sus ofertas, aceptadas y descartadas juntas: separarlas escondería la mitad del trabajo, y el criterio solo se juzga leyendo seguidas la que pasó y la que no.
+**Todo es pulsable y lleva a las ofertas que forman el número.** Un contador que no se puede abrir obliga a creérselo, y lo que hay detrás —qué descartó y por qué— es justo lo que hay que poder auditar. Por eso **los contadores de cada búsqueda se cuentan, no se recuerdan**: salen de contar las ofertas guardadas, no de la cifra que la pasada apuntó al terminar. Las dos se habían separado —una búsqueda decía «3 aceptadas» con 1 en la tabla, otra «23 leídas» sin una sola fila que abrir— y un número que al pulsarlo no enseña lo que promete es peor que un número que no se puede pulsar. Lo único que sí se recuerda es cuántas se **leyeron**, que incluye las repetidas y no lleva a ninguna parte. Pulsando una búsqueda se ven sus ofertas, aceptadas y descartadas juntas: separarlas escondería la mitad del trabajo, y el criterio solo se juzga leyendo seguidas la que pasó y la que no.
 
 Para poder volver a una búsqueda, cada oferta guarda de cuál salió (`jobs.run_id`). Lo guardado antes de que existiera esa columna se rellenó deduciendo la búsqueda por la hora: sin eso, el historial enseñaría «28 leídas» y al pulsarlo no habría nada, que es peor que no poder pulsar — parece que las ofertas se perdieron.
 
@@ -166,11 +166,17 @@ También avisa cuando la búsqueda **se para** (sesión caducada, perfil ocupado
 
 ## El juez
 
-Las reglas miran letras; el juez mira significado. Es el segundo par de ojos y **solo puede descartar** lo que las reglas dejaron pasar: nunca rescata lo que ellas tumban por un motivo duro (presencial, país restringido, inglés, tecnología que no maneja). Ahí mandan las reglas, y es deliberado.
+Las reglas miran letras; el juez mira significado. Es el segundo par de ojos, y va en los **dos sentidos**: descarta lo que las reglas dejaron pasar y **rescata lo que las reglas tumbaron** por algo que él sabe leer mejor —si es una vacante de verdad, la ubicación, el idioma, la tecnología—.
 
-Lo que atrapa es lo que ninguna expresión regular puede: *"esto es una base de talentos, no una vacante"*. Eso mismo, literal, en la primera pasada con el juez encendido.
+Lo que atrapa es lo que ninguna expresión regular puede: *"esto es una base de talentos, no una vacante"*. Eso mismo, literal, en la primera pasada con el juez encendido. Y al revés: *"React, Angular o similar"* no es un veto por Angular, pero la regex no sabe leerlo.
 
-Va por **Gemini en la capa gratuita de Google AI Studio**, el mismo proveedor que ya usa ARTIO para esta tarea. Una pasada de 25 publicaciones son ~5.100 tokens y hay 3 pasadas al día: unas 90 llamadas al mes, muy por debajo del límite gratuito. Si el proveedor falla se reintenta una vez y, si vuelve a fallar, mandan las reglas y queda escrito el motivo en el log — un juez que no contesta no puede dejarte sin ofertas.
+**El único descarte que el juez no puede revocar es el del stack**, porque es el único por el que no se le pregunta. Dejárselo revocar sería dejar entrar «Encargado de atención a pacientes, remoto» porque el modelo confirma —con razón— que sí, es una vacante remota de verdad.
+
+Que el juez pudiera **solo** descartar fue la decisión original, y estaba mal: medido sobre el feed real, de 117 descartes 114 no habían pasado nunca por el juez, y solo 17 eran del stack. Los otros 100 se tiraban sin segunda opinión pudiendo tenerla, y un falso descarte de una regex no tenía vuelta: se guardaba con `judge_status = skipped` y nadie lo volvía a mirar.
+
+Un rescate entra marcado como **«por confirmar»**, no como oferta limpia; y si lo revocado fue la ubicación, la ubicación pasa a «no dice desde dónde se puede trabajar», porque la regla que afirmaba «presencial» es justo la que acaba de caerse.
+
+Va por **Gemini en la capa gratuita de Google AI Studio**, el mismo proveedor que ya usa ARTIO para esta tarea. Se le manda casi toda la pasada (todo menos los descartes por stack): unas 2 llamadas por pasada en tandas de 20 publicaciones, con 3 pasadas al día, muy por debajo del límite gratuito. Si una tanda falla se reintenta y, si vuelve a fallar, **las demás tandas se conservan** y esas ofertas las deciden las reglas: antes un 503 pasajero en la segunda tanda borraba los veredictos de la primera y la pasada entera volvía a cero.
 
 ## Afinar el criterio
 
