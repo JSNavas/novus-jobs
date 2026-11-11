@@ -52,6 +52,7 @@ async function main(): Promise<void> {
   });
   const scheduler = new Scheduler({
     hours: config.scheduleHours,
+    sources,
     store: new LastPassStore(join(config.dataDir, 'last-pass.json')),
     runner,
   });

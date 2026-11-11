@@ -1,6 +1,7 @@
 import type { BrowserPool } from '../browser/session.js';
 import type { Config } from '../config.js';
 import type { LoginWall } from './login-wall.js';
+import type { SourcePolicy } from './policy.js';
 
 export interface RawPost {
   text: string;
@@ -45,6 +46,12 @@ export interface JobSource {
   readonly profileId: string | null;
   /** Dónde se inicia sesión. `null` si no hace falta. */
   readonly loginUrl: string | null;
+  /**
+   * Su ritmo: cuándo la lanza el planificador y cuánto se puede insistir a
+   * mano. Va en la fuente y no en un sitio común porque lo que lo decide es
+   * qué se arriesga al leerla, y eso solo lo sabe ella.
+   */
+  readonly policy: SourcePolicy;
   fetch(selectPermalinks: PermalinkSelector): Promise<RawPost[]>;
   close(): Promise<void>;
 }

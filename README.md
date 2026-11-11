@@ -141,9 +141,11 @@ Cada oferta trae lo que se puede hacer con ella: **Redactar en Gmail** (abre tu 
 
 Todo se refresca solo cada 15 segundos y las horas van en **hora de Venezuela**, con am/pm.
 
-## El ritmo, que es lo que protege la cuenta
+## El ritmo, que es el de cada plataforma
 
-Cuatro topes a la vez, y es deliberado que sean cuatro: lo que LinkedIn mide no es cuántas veces pulsas un botón, sino cuántas veces un navegador carga tu feed y con qué patrón.
+El ritmo no lo decide el sitio: lo decide **qué se arriesga al leerlo**. Una cuenta vigilada se protege; una API pública solo pide buena educación. Cada fuente trae su política (`sources/policy.ts`) y se le cuenta por separado — con su propia fila en `runs`.
+
+**LinkedIn — una cuenta que te vigila.** Cuatro topes a la vez, y es deliberado que sean cuatro: lo que LinkedIn mide no es cuántas veces pulsas un botón, sino cuántas veces un navegador carga tu feed y con qué patrón.
 
 | | Límite | Qué patrón evita |
 |---|---|---|
@@ -152,7 +154,13 @@ Cuatro topes a la vez, y es deliberado que sean cuatro: lo que LinkedIn mide no 
 | 3 | 3 búsquedas manuales al día (día de Venezuela) | 14 lecturas diarias cumpliendo el tope horario |
 | 4 | techo duro de 8 lecturas al día | una configuración mal puesta o un bucle de reintentos |
 
-Si la sesión se cayó, el botón **se niega del todo**: nada va a cambiar hasta que inicies sesión, y machacar una pantalla de login es justo lo que marca una cuenta.
+Automática en las franjas de `SCHEDULE_HOURS`: 9, 13 y 18 (VET).
+
+**Get on Board — una API abierta.** No hay cuenta, ni sesión, ni nadie midiendo el patrón. Automática **cada 30 minutos**, y a mano **sin tope diario**, con un suelo de 1 minuto para no ser un mal vecino de su servidor. Son unas 48 peticiones al día a un endpoint de búsqueda.
+
+El botón pregunta plataforma por plataforma y lanza las que puedan. Antes era todo o nada: el presupuesto de LinkedIn, ya gastado, bloqueaba también a Get on Board, que no tiene nada que gastar. Si ninguna puede, dice el motivo de cada una.
+
+Si la sesión de LinkedIn se cayó, el botón **se niega para ella**: nada va a cambiar hasta que inicies sesión, y machacar una pantalla de login es justo lo que marca una cuenta. Las demás plataformas siguen.
 
 ## Avisos por correo
 

@@ -10,6 +10,8 @@ import { openDatabase, type Db } from '../db/database.js';
 import { JobsRepository, type NewJob } from '../db/jobs.repository.js';
 import { RunsRepository } from '../db/runs.repository.js';
 import { Mailer } from '../notify/mailer.js';
+import { WATCHED_ACCOUNT_POLICY } from '../sources/policy.js';
+import type { JobSource } from '../sources/types.js';
 import { PROFILE } from '../profile/profile.js';
 import { Runner } from '../runner.js';
 import { LastPassStore, Scheduler } from '../scheduler/scheduler.js';
@@ -41,6 +43,17 @@ function newJob(overrides: Partial<NewJob>): NewJob {
   };
 }
 
+/** Una plataforma con el ritmo vigilado: es la que hace que el segundo POST sea 409. */
+const FAKE_SOURCE: JobSource = {
+  name: 'linkedin',
+  label: 'LinkedIn',
+  profileId: null,
+  loginUrl: null,
+  policy: WATCHED_ACCOUNT_POLICY,
+  async fetch() { return []; },
+  async close() {},
+};
+
 describe('API HTTP', () => {
   let dir: string;
   let db: Db;
@@ -57,9 +70,10 @@ describe('API HTTP', () => {
       contactEmail: null, runId: 1,
     }));
     jobs.insert(newJob({ fingerprint: 'fp-otra-pasada', runId: 2 }));
-    const runner = new Runner({ sources: [], jobs, runs, judge: null, profile: PROFILE, mailer: new Mailer(null), dashboardUrl: 'http://localhost/' });
+    const runner = new Runner({ sources: [FAKE_SOURCE], jobs, runs, judge: null, profile: PROFILE, mailer: new Mailer(null), dashboardUrl: 'http://localhost/' });
     const scheduler = new Scheduler({
       hours: [9, 13, 18],
+      sources: [],
       store: new LastPassStore(join(dir, 'last-pass.json')),
       runner,
     });

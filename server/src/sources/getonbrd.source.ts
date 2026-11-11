@@ -1,3 +1,4 @@
+import { OPEN_API_POLICY } from './policy.js';
 import type { JobSource, PermalinkSelector, RawPost } from './types.js';
 
 /**
@@ -220,6 +221,7 @@ export class GetOnBoardSource implements JobSource {
   readonly label = 'Get on Board';
   readonly profileId = null;
   readonly loginUrl = null;
+  readonly policy = OPEN_API_POLICY;
 
   /**
    * `selectPermalinks` se ignora, y es correcto: existe para racionar los

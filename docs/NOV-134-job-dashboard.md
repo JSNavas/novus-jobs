@@ -420,3 +420,61 @@ pasada.
   que saber a cuáles ya se postuló pediría sesión de navegador. No se hizo
   porque no hace falta para encontrar ofertas.
 - El tope de 3 páginas se queda corto si Get on Board pasa de 300 remotas.
+
+---
+
+## Rev. 9 — El ritmo deja de ser global · 2026-11-11
+
+Los cuatro topes que protegen la cuenta de LinkedIn vivían como constantes de
+módulo en `runner.ts`. Eso los hacía globales por construcción, y con una sola
+fuente nadie lo notaba: «el ritmo» y «el ritmo de LinkedIn» eran lo mismo.
+
+Con la segunda fuente dejó de serlo. El mismo día que entró Get on Board, el
+presupuesto manual —gastado leyendo LinkedIn— impedía consultar una API pública
+que no tiene cuenta, ni sesión, ni nadie midiendo el patrón. Un tope sin nada
+que proteger no es prudencia: es una avería.
+
+### Lo que decide el ritmo es qué se arriesga, no la plataforma
+
+`sources/policy.ts` tiene dos políticas, y se llaman por lo que son y no por
+quién las usa, para que una fuente nueva elija en vez de escribir otra:
+
+| | `WATCHED_ACCOUNT_POLICY` | `OPEN_API_POLICY` |
+|---|---|---|
+| Automática | franjas de `SCHEDULE_HOURS` (9, 13, 18 VET) | cada 30 min |
+| Entre manuales | 1 hora | 1 minuto |
+| Manuales al día | 3 | sin tope |
+| Hueco tras cualquier pasada | 20 min | ninguno |
+| Techo diario | 8 | ninguno |
+
+### Tres cambios que lo hacen posible
+
+1. **Una fila de `runs` por plataforma.** Antes era una sola con los nombres
+   pegados con comas (`linkedin,getonbrd`). Con eso es imposible contarle el
+   ritmo a cada una por separado, y además mezclaba en un número los resultados
+   de dos sitios. Las pasadas siguen en serie.
+2. **Los contadores de ritmo filtran por fuente.** `lastManual`,
+   `countTouchingSince` y `lastTouchingAt` reciben el nombre de la plataforma.
+3. **El botón pregunta una por una.** `startManual` evalúa cada fuente y lanza
+   las que puedan; las que no, van al log. Solo si NINGUNA puede se niega, con
+   el motivo de cada una. Antes era todo o nada.
+
+### El planificador, con dos cadencias
+
+- Por franjas: igual que siempre, con marca en disco y recuperación de la
+  franja perdida. La marca pasó a ser **una por plataforma** — con una sola,
+  dos fuentes en franjas compartirían registro y la segunda se daría por hecha
+  sin haber leído nada. El fichero viejo (`{date, hour}` suelto) se sigue
+  leyendo como la marca de LinkedIn, para no perder la franja del día al
+  desplegar.
+- Por intervalo: no lleva marca. Su reloj es la última fila de `runs`, así que
+  un reinicio no la descoloca ni la duplica.
+- El tick bajó de 10 a 5 minutos: con ticks de 10, un intervalo de 30 oscilaba
+  entre 30 y 40 minutos reales. Un tick no toca ninguna plataforma.
+
+### GAP
+
+El techo duro y el presupuesto se cuentan por `source`, así que una fuente
+nueva empieza con el contador a cero aunque el día ya vaya cargado. Es lo
+correcto mientras las plataformas sean independientes; dejaría de serlo si
+alguna vez dos fuentes leyeran de la misma cuenta.

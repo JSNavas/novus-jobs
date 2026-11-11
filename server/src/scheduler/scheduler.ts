@@ -1,37 +1,75 @@
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { PassRunner } from '../runner.js';
+import type { JobSource } from '../sources/types.js';
 import { currentSlot, shouldRunPass, toVet, type LastPass } from './timing.js';
 
-const TICK_MS = 10 * 60_000;
+/**
+ * Cada cuánto se MIRA si toca. No es cada cuánto se lee.
+ *
+ * Bajó de 10 a 5 minutos al entrar una fuente que va cada 30: con ticks de 10
+ * el intervalo real oscilaba entre 30 y 40 minutos según cómo cayera el reloj.
+ * Un tick no toca ninguna plataforma —solo compara fechas— así que mirar más a
+ * menudo no cuesta nada ni cambia el ritmo que nadie ve.
+ */
+const TICK_MS = 5 * 60_000;
 /** Al arrancar se mira enseguida, para recuperar la franja pendiente sin esperar al siguiente tick. */
 const STARTUP_DELAY_MS = 20_000;
 
-/** La marca de la última pasada va a disco: sobrevive a reinicios del servidor. */
+/**
+ * La marca de la última franja va a disco: sobrevive a reinicios del servidor.
+ *
+ * UNA MARCA POR PLATAFORMA. Con una sola, dos fuentes en franjas compartirían
+ * el registro y la segunda se daría por hecha sin haber leído nada. El fichero
+ * viejo —`{date, hour}` suelto, de cuando solo existía LinkedIn— se sigue
+ * leyendo como la marca de LinkedIn, para no perder la franja del día al
+ * desplegar esto.
+ */
 export class LastPassStore {
   constructor(private readonly file: string) {}
 
-  read(): LastPass | undefined {
-    try {
-      const parsed: unknown = JSON.parse(readFileSync(this.file, 'utf8'));
-      if (typeof parsed !== 'object' || parsed === null) return undefined;
-      const { date, hour } = parsed as { date?: unknown; hour?: unknown };
-      return typeof date === 'string' && typeof hour === 'number' ? { date, hour } : undefined;
-    } catch {
-      return undefined;
-    }
+  read(source: string): LastPass | undefined {
+    const all = this.readAll();
+    return all[source];
   }
 
-  write(last: LastPass): void {
+  write(source: string, last: LastPass): void {
+    const all = this.readAll();
+    all[source] = last;
     mkdirSync(dirname(this.file), { recursive: true });
     const tmp = `${this.file}.tmp`;
-    writeFileSync(tmp, JSON.stringify(last), 'utf8');
+    writeFileSync(tmp, JSON.stringify(all), 'utf8');
     renameSync(tmp, this.file);
+  }
+
+  private readAll(): Record<string, LastPass> {
+    try {
+      const parsed: unknown = JSON.parse(readFileSync(this.file, 'utf8'));
+      if (typeof parsed !== 'object' || parsed === null) return {};
+      const legacy = asLastPass(parsed);
+      if (legacy) return { linkedin: legacy };
+      const out: Record<string, LastPass> = {};
+      for (const [source, value] of Object.entries(parsed)) {
+        const last = asLastPass(value);
+        if (last) out[source] = last;
+      }
+      return out;
+    } catch {
+      return {};
+    }
   }
 }
 
+function asLastPass(value: unknown): LastPass | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const { date, hour } = value as { date?: unknown; hour?: unknown };
+  return typeof date === 'string' && typeof hour === 'number' ? { date, hour } : undefined;
+}
+
 interface SchedulerOptions {
+  /** Las franjas de `SCHEDULE_HOURS`, para las fuentes que van por franjas. */
   hours: readonly number[];
+  sources: readonly JobSource[];
   store: LastPassStore;
   runner: PassRunner;
   clock?: () => Date;
@@ -63,7 +101,13 @@ export class Scheduler {
   start(): void {
     this.interval = setInterval(() => this.tick(), TICK_MS);
     this.startupTimer = setTimeout(() => this.tick(), STARTUP_DELAY_MS);
-    console.log(`[scheduler] pasadas a las ${this.options.hours.join(', ')} (VET)`);
+    for (const source of this.options.sources) {
+      const schedule = source.policy.schedule;
+      const when = schedule.kind === 'every-minutes'
+        ? `cada ${schedule.minutes} min`
+        : `a las ${this.options.hours.join(', ')} (VET)`;
+      console.log(`[scheduler] ${source.name}: ${when}`);
+    }
   }
 
   stop(): void {
@@ -100,22 +144,52 @@ export class Scheduler {
     return this.pausedUntil !== null && this.clock().getTime() < this.pausedUntil;
   }
 
+  /**
+   * Mira si le toca a ALGUNA plataforma. Dos cadencias conviven:
+   *
+   *   · por franjas   → la de siempre, con su marca en disco y recuperación de
+   *                     la franja perdida si el servidor estuvo apagado.
+   *   · por intervalo → se compara con su última pasada REAL, leída de la base.
+   *                     No necesita marca: la propia fila es la marca, así que
+   *                     un reinicio no la descoloca ni la duplica.
+   */
   tick(): void {
     if (this.isPaused()) return;
-    const slot = shouldRunPass(toVet(this.clock()), this.options.hours, this.options.store.read());
-    if (!slot) return;
     if (this.options.runner.isBusy()) return;
-    this.options.store.write({ date: slot.date, hour: slot.hour });
-    if (slot.recovered) console.log(`[scheduler] recuperando la franja de las ${slot.hour}:00 (VET)`);
-    this.options.runner.startScheduled();
+
+    const vet = toVet(this.clock());
+    const now = this.clock().getTime();
+    const due: string[] = [];
+
+    for (const source of this.options.sources) {
+      const schedule = source.policy.schedule;
+      if (schedule.kind === 'every-minutes') {
+        const last = this.options.runner.lastPassAt(source.name);
+        if (last === null || now - last >= schedule.minutes * 60_000) due.push(source.name);
+        continue;
+      }
+      const slot = shouldRunPass(vet, this.options.hours, this.options.store.read(source.name));
+      if (!slot) continue;
+      this.options.store.write(source.name, { date: slot.date, hour: slot.hour });
+      if (slot.recovered) console.log(`[scheduler] ${source.name}: recuperando la franja de las ${slot.hour}:00 (VET)`);
+      due.push(source.name);
+    }
+
+    if (due.length) this.options.runner.startScheduled(due);
   }
 
   /**
    * Una búsqueda manual cuenta como la pasada de la franja actual: así el tick
    * no vuelve a mirar la misma franja justo después.
+   *
+   * Solo para las de franjas. Las de intervalo no llevan marca: su reloj es la
+   * última fila de `runs`, que la búsqueda manual acaba de escribir.
    */
   markCurrentSlot(): void {
     const slot = currentSlot(toVet(this.clock()), this.options.hours);
-    if (slot) this.options.store.write(slot);
+    if (!slot) return;
+    for (const source of this.options.sources) {
+      if (source.policy.schedule.kind === 'configured-hours') this.options.store.write(source.name, slot);
+    }
   }
 }

@@ -9,7 +9,28 @@ import { RunsRepository } from './db/runs.repository.js';
 import { Mailer } from './notify/mailer.js';
 import { PROFILE } from './profile/profile.js';
 import { RunRefusedError, Runner } from './runner.js';
+import { OPEN_API_POLICY, WATCHED_ACCOUNT_POLICY } from './sources/policy.js';
+import type { JobSource } from './sources/types.js';
 import { RunFailure, RunTrigger } from './types.js';
+
+/**
+ * Fuentes de mentira: el runner solo mira su nombre y su política para decidir
+ * el ritmo. No llegan a leer nada porque `fetch` devuelve vacío.
+ */
+function fakeSource(name: string, policy: JobSource['policy']): JobSource {
+  return {
+    name,
+    label: name,
+    profileId: null,
+    loginUrl: null,
+    policy,
+    async fetch() { return []; },
+    async close() {},
+  };
+}
+
+const LINKEDIN = fakeSource('linkedin', WATCHED_ACCOUNT_POLICY);
+const GETONBRD = fakeSource('getonbrd', OPEN_API_POLICY);
 
 /**
  * EL RITMO ES LA SALUD DE LA CUENTA, así que se prueba.
@@ -33,14 +54,18 @@ describe('Runner — suelo de las búsquedas manuales', () => {
     now = new Date(T0);
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // `launch` dispara la pasada sin esperarla. Se le dan unos turnos al bucle
+    // de eventos: si no, la BD se cierra con el pipeline a medias y el fallo
+    // aparece en OTRO test, que es el peor sitio donde puede aparecer.
+    for (let i = 0; i < 5; i++) await new Promise((resolve) => setImmediate(resolve));
     db.close();
     rmSync(dir, { recursive: true, force: true });
   });
 
-  function runner(): Runner {
+  function runner(sources: readonly JobSource[] = [LINKEDIN]): Runner {
     return new Runner({
-      sources: [],
+      sources,
       jobs: new JobsRepository(db),
       runs,
       judge: null,
@@ -125,7 +150,7 @@ describe('Runner — suelo de las búsquedas manuales', () => {
   it('las pasadas programadas no las limita el suelo manual', () => {
     pastManual(null);
     const r = runner();
-    r.startScheduled();
+    r.startScheduled(['linkedin']);
     assert.equal(runs.list(10).items.filter((x) => x.id === 2).length, 1);
   });
 
@@ -167,8 +192,59 @@ describe('Runner — suelo de las búsquedas manuales', () => {
   it('el techo diario también para al planificador', () => {
     for (let i = 0; i < 8; i++) pastRun(null, RunTrigger.Scheduled);
     const before = runs.list(50).items.length;
-    runner().startScheduled();
+    runner().startScheduled(['linkedin']);
     assert.equal(runs.list(50).items.length, before, 'no debería haber lanzado nada');
+  });
+
+  /* ═══ CADA PLATAFORMA, SU RITMO ═══
+   * El 2026-11-11 el presupuesto de LinkedIn, ya gastado, impedía consultar una
+   * API pública sin cuenta ni sesión. Un tope sin nada que proteger es una
+   * avería, no prudencia. */
+
+  it('EL CASO REAL: con LinkedIn agotado, Get on Board se busca igual', () => {
+    for (let i = 0; i < 4; i++) pastRun(null, RunTrigger.Manual); // 4 manuales de linkedin
+    const run = runner([LINKEDIN, GETONBRD]).startManual();
+
+    assert.ok(run.id, 'la búsqueda arranca');
+    const lanzadas = runs.list(50).items.filter((r) => r.id > 4).map((r) => r.source);
+    assert.deepEqual(lanzadas, ['getonbrd'], 'solo la que podía: LinkedIn no se toca');
+  });
+
+  it('lo leído en Get on Board no gasta el presupuesto de LinkedIn', () => {
+    for (let i = 0; i < 5; i++) {
+      const id = runs.start('getonbrd', RunTrigger.Manual, now.toISOString());
+      runs.finish(id, { fetched: 187, accepted: 29, rejected: 158 });
+    }
+    advance(60_000);
+    const lanzadas = runs.list(50).items.map((r) => r.id);
+    runner([LINKEDIN, GETONBRD]).startManual();
+    const nuevas = runs.list(50).items.filter((r) => !lanzadas.includes(r.id)).map((r) => r.source);
+    assert.deepEqual(nuevas.sort(), ['getonbrd', 'linkedin'], 'LinkedIn tenía su presupuesto intacto');
+  });
+
+  it('Get on Board se puede repetir al minuto, que es su suelo', () => {
+    const id = runs.start('getonbrd', RunTrigger.Manual, now.toISOString());
+    runs.finish(id, { fetched: 187, accepted: 29, rejected: 158 });
+
+    assert.match(refusal(() => runner([GETONBRD]).startManual()), /espera 1 min/);
+    advance(61_000);
+    assert.ok(runner([GETONBRD]).startManual().id);
+  });
+
+  it('si NINGUNA puede, se niega y dice el motivo de cada una', () => {
+    pastManual(null);                                    // linkedin: suelo de una hora
+    const id = runs.start('getonbrd', RunTrigger.Manual, now.toISOString());
+    runs.finish(id, { fetched: 1, accepted: 0, rejected: 1 });
+    advance(30_000); // menos del minuto de Get on Board y menos de la hora de LinkedIn
+
+    const message = refusal(() => runner([LINKEDIN, GETONBRD]).startManual());
+    assert.match(message, /linkedin: /);
+    assert.match(message, /getonbrd: /);
+  });
+
+  it('cada plataforma deja su propia fila, no una con los nombres pegados', () => {
+    runner([LINKEDIN, GETONBRD]).startManual();
+    assert.deepEqual(runs.list(10).items.map((r) => r.source).sort(), ['getonbrd', 'linkedin']);
   });
 
   it('el presupuesto se cuenta por día de Venezuela, no por día UTC', () => {

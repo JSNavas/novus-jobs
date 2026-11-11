@@ -111,10 +111,10 @@ export class RunsRepository {
    * botón, y el motivo es lo que distingue "cierra una ventana y repite" de
    * "no insistas hasta iniciar sesión".
    */
-  lastManual(): { startedAt: string; status: RunStatus; failure: RunFailure | null } | null {
-    const row = this.db.prepare<[string], { started_at: string; status: RunStatus; failure: RunFailure | null }>(
-      'SELECT started_at, status, failure FROM runs WHERE trigger = ? ORDER BY id DESC LIMIT 1',
-    ).get(RunTrigger.Manual);
+  lastManual(source: string): { startedAt: string; status: RunStatus; failure: RunFailure | null } | null {
+    const row = this.db.prepare<[string, string], { started_at: string; status: RunStatus; failure: RunFailure | null }>(
+      'SELECT started_at, status, failure FROM runs WHERE trigger = ? AND source = ? ORDER BY id DESC LIMIT 1',
+    ).get(RunTrigger.Manual, source);
     return row ? { startedAt: row.started_at, status: row.status, failure: row.failure } : null;
   }
 
@@ -124,21 +124,31 @@ export class RunsRepository {
    * Una que murió con el perfil ocupado no cuenta: ni se abrió el navegador, ni
    * LinkedIn vio nada. Gastarle presupuesto al señor por una ventana que se
    * dejó abierta sería cobrarle algo que no consumió.
+   *
+   * Siempre por plataforma: cada una tiene su propio ritmo y su propio
+   * presupuesto, y lo leído en una no puede gastar el de la otra.
    */
-  countTouchingSince(since: string, trigger?: RunTrigger): number {
-    const base = "SELECT COUNT(*) AS n FROM runs WHERE started_at >= ? AND (failure IS NULL OR failure != ?)";
+  countTouchingSince(since: string, source: string, trigger?: RunTrigger): number {
+    const base =
+      'SELECT COUNT(*) AS n FROM runs WHERE started_at >= ? AND (failure IS NULL OR failure != ?) AND source = ?';
     const sql = trigger ? `${base} AND trigger = ?` : base;
-    const params: unknown[] = [since, RunFailure.ProfileBusy];
+    const params: unknown[] = [since, RunFailure.ProfileBusy, source];
     if (trigger) params.push(trigger);
     const row = this.db.prepare(sql).get(...params) as { n: number } | undefined;
     return row?.n ?? 0;
   }
 
-  /** Cuándo se tocó la plataforma por última vez, sea manual o programada. */
-  lastTouchingAt(): string | null {
-    const row = this.db.prepare<[string], { started_at: string }>(
-      'SELECT started_at FROM runs WHERE failure IS NULL OR failure != ? ORDER BY id DESC LIMIT 1',
-    ).get(RunFailure.ProfileBusy);
+  /**
+   * Cuándo se tocó ESTA plataforma por última vez, sea manual o programada.
+   *
+   * Por plataforma y no global: el hueco existe para no encadenar dos lecturas
+   * seguidas de un mismo sitio, y una consulta a una API abierta no cambia en
+   * nada el patrón que ve LinkedIn.
+   */
+  lastTouchingAt(source: string): string | null {
+    const row = this.db.prepare<[string, string], { started_at: string }>(
+      'SELECT started_at FROM runs WHERE (failure IS NULL OR failure != ?) AND source = ? ORDER BY id DESC LIMIT 1',
+    ).get(RunFailure.ProfileBusy, source);
     return row?.started_at ?? null;
   }
 

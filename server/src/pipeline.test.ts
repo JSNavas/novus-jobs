@@ -8,6 +8,7 @@ import { JobsRepository } from './db/jobs.repository.js';
 import type { LlmJudge, JudgeVerdict } from './filters/judge.js';
 import { runPasses } from './pipeline.js';
 import { PROFILE } from './profile/profile.js';
+import { OPEN_API_POLICY } from './sources/policy.js';
 import type { JobSource, RawPost } from './sources/types.js';
 import { JobLocation, JobVerdict, JudgeStatus } from './types.js';
 
@@ -44,6 +45,7 @@ function fakeSource(texts: readonly string[]): JobSource {
     label: 'LinkedIn',
     profileId: null,
     loginUrl: null,
+    policy: OPEN_API_POLICY,
     async fetch(): Promise<RawPost[]> {
       return texts.map((text) => ({ text, author: 'Alguien', url: null }));
     },

@@ -1,23 +1,42 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import type { PassRunner } from '../runner.js';
+import { OPEN_API_POLICY, WATCHED_ACCOUNT_POLICY } from '../sources/policy.js';
+import type { JobSource } from '../sources/types.js';
 import { LastPassStore, Scheduler } from './scheduler.js';
 
 class FakeRunner implements PassRunner {
   busy = false;
   scheduled = 0;
+  /** Los nombres de cada disparo, en orden: dice A QUIÉN se lanzó, no solo cuántas veces. */
+  launched: string[][] = [];
+  /** Última pasada por fuente, que es lo que el planificador lee de la BD. */
+  last = new Map<string, number>();
 
   isBusy(): boolean {
     return this.busy;
   }
 
-  startScheduled(): void {
+  startScheduled(sources: readonly string[]): void {
     this.scheduled++;
+    this.launched.push([...sources]);
+  }
+
+  lastPassAt(source: string): number | null {
+    return this.last.get(source) ?? null;
   }
 }
+
+/** Una fuente de mentira: al planificador solo le importan su nombre y su política. */
+function fakeSource(name: string, policy: JobSource['policy']): JobSource {
+  return { name, label: name, profileId: null, loginUrl: null, policy } as JobSource;
+}
+
+const LINKEDIN = fakeSource('linkedin', WATCHED_ACCOUNT_POLICY);
+const GETONBRD = fakeSource('getonbrd', OPEN_API_POLICY);
 
 describe('Scheduler', () => {
   let dir: string;
@@ -34,14 +53,14 @@ describe('Scheduler', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  function schedulerAt(iso: string): Scheduler {
-    return new Scheduler({ hours: [9, 13, 18], store, runner, clock: () => new Date(iso) });
+  function schedulerAt(iso: string, sources: readonly JobSource[] = [LINKEDIN]): Scheduler {
+    return new Scheduler({ hours: [9, 13, 18], sources, store, runner, clock: () => new Date(iso) });
   }
 
   it('lanza una pasada en la franja y deja la marca en disco', () => {
     schedulerAt('2026-11-10T17:20:00Z').tick();
     assert.equal(runner.scheduled, 1);
-    assert.deepEqual(store.read(), { date: '2026-11-10', hour: 13 });
+    assert.deepEqual(store.read('linkedin'), { date: '2026-11-10', hour: 13 });
   });
 
   it('un segundo tick en la misma franja no lanza nada', () => {
@@ -55,7 +74,7 @@ describe('Scheduler', () => {
     runner.busy = true;
     schedulerAt('2026-11-10T17:20:00Z').tick();
     assert.equal(runner.scheduled, 0);
-    assert.equal(store.read(), undefined);
+    assert.equal(store.read('linkedin'), undefined);
   });
 
   it('una búsqueda manual cuenta como la pasada de la franja actual', () => {
@@ -71,7 +90,7 @@ describe('Scheduler', () => {
     scheduler.pauseForLogin();
     scheduler.tick();
     assert.equal(runner.scheduled, 0);
-    assert.equal(store.read(), undefined);
+    assert.equal(store.read('linkedin'), undefined);
   });
 
   it('al reanudar se recupera la franja que se perdió durante el login', () => {
@@ -81,12 +100,12 @@ describe('Scheduler', () => {
     scheduler.resume();
     scheduler.tick();
     assert.equal(runner.scheduled, 1);
-    assert.deepEqual(store.read(), { date: '2026-11-10', hour: 13 });
+    assert.deepEqual(store.read('linkedin'), { date: '2026-11-10', hour: 13 });
   });
 
   it('la pausa caduca sola: un login abandonado no apaga las pasadas para siempre', () => {
     let clock = new Date('2026-11-10T17:20:00Z');
-    const scheduler = new Scheduler({ hours: [9, 13, 18], store, runner, clock: () => clock });
+    const scheduler = new Scheduler({ hours: [9, 13, 18], sources: [LINKEDIN], store, runner, clock: () => clock });
     scheduler.pauseForLogin();
     assert.equal(scheduler.isPaused(), true);
     clock = new Date('2026-11-10T17:50:00Z'); // media hora después
@@ -96,6 +115,59 @@ describe('Scheduler', () => {
   });
 
   it('LastPassStore devuelve undefined si el fichero no existe o está roto', () => {
-    assert.equal(store.read(), undefined);
+    assert.equal(store.read('linkedin'), undefined);
+  });
+
+  /* ═══ DOS CADENCIAS A LA VEZ ═══ */
+
+  it('la fuente por intervalo se lanza aunque no sea franja de la otra', () => {
+    // Las 15:00 VET no son franja. Con la de las 13:00 ya dada por hecha,
+    // LinkedIn no tiene nada que hacer; Get on Board sí, porque su reloj son
+    // 30 minutos y no las 9, 13 y 18.
+    store.write('linkedin', { date: '2026-11-10', hour: 13 });
+    schedulerAt('2026-11-10T19:00:00Z', [LINKEDIN, GETONBRD]).tick();
+    assert.deepEqual(runner.launched, [['getonbrd']]);
+  });
+
+  it('la de intervalo no se repite antes de sus 30 min, y sí después', () => {
+    const now = Date.parse('2026-11-10T19:00:00Z');
+    runner.last.set('getonbrd', now - 20 * 60_000);
+    schedulerAt('2026-11-10T19:00:00Z', [GETONBRD]).tick();
+    assert.equal(runner.scheduled, 0, 'a los 20 min todavía no');
+
+    runner.last.set('getonbrd', now - 31 * 60_000);
+    schedulerAt('2026-11-10T19:00:00Z', [GETONBRD]).tick();
+    assert.deepEqual(runner.launched, [['getonbrd']]);
+  });
+
+  it('en una franja coinciden las dos y se lanzan en el mismo disparo', () => {
+    schedulerAt('2026-11-10T17:20:00Z', [LINKEDIN, GETONBRD]).tick();
+    assert.deepEqual(runner.launched, [['linkedin', 'getonbrd']]);
+  });
+
+  it('la marca de franja es de cada fuente: la de una no da por hecha la otra', () => {
+    const otra = fakeSource('otra', WATCHED_ACCOUNT_POLICY);
+    schedulerAt('2026-11-10T17:20:00Z', [LINKEDIN]).tick();
+    assert.deepEqual(store.read('linkedin'), { date: '2026-11-10', hour: 13 });
+    assert.equal(store.read('otra'), undefined, 'nadie leyó por ella');
+
+    schedulerAt('2026-11-10T17:25:00Z', [LINKEDIN, otra]).tick();
+    assert.deepEqual(runner.launched[1], ['otra'], 'solo la que faltaba');
+  });
+
+  it('una búsqueda manual NO marca franja para las de intervalo: su reloj es la BD', () => {
+    schedulerAt('2026-11-10T17:20:00Z', [LINKEDIN, GETONBRD]).markCurrentSlot();
+    assert.deepEqual(store.read('linkedin'), { date: '2026-11-10', hour: 13 });
+    assert.equal(store.read('getonbrd'), undefined);
+  });
+
+  it('lee el fichero viejo de una sola marca como la de LinkedIn', () => {
+    // Al desplegar esto el fichero en disco tiene el formato antiguo. Si no se
+    // entendiera, la franja del día se repetiría nada más arrancar.
+    const file = join(dir, 'data', 'last-pass.json');
+    mkdirSync(join(dir, 'data'), { recursive: true });
+    writeFileSync(file, JSON.stringify({ date: '2026-11-10', hour: 13 }), 'utf8');
+
+    assert.deepEqual(new LastPassStore(file).read('linkedin'), { date: '2026-11-10', hour: 13 });
   });
 });

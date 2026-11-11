@@ -5,6 +5,7 @@ import { NAVIGATION_TIMEOUT_MS, type BrowserPool, type BrowserSession } from '..
 import type { Config } from '../config.js';
 import { normalizeText } from '../filters/normalize.js';
 import { loginWallAdvice, loginWallOf } from './login-wall.js';
+import { WATCHED_ACCOUNT_POLICY } from './policy.js';
 import { splitMergedPosts } from './split-posts.js';
 import { LoginRequiredError, type JobSource, type PermalinkSelector, type RawPost } from './types.js';
 
@@ -43,6 +44,7 @@ export class LinkedInSource implements JobSource {
   readonly label = 'LinkedIn';
   readonly profileId = LINKEDIN_PROFILE_ID;
   readonly loginUrl = LOGIN_URL;
+  readonly policy = WATCHED_ACCOUNT_POLICY;
   private readonly session: BrowserSession;
 
   constructor(private readonly config: Config, pool: BrowserPool) {

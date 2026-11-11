@@ -11,67 +11,25 @@ import { RunFailure, RunStatus, RunTrigger, type RunInfo } from './types.js';
 
 export interface PassRunner {
   isBusy(): boolean;
-  startScheduled(): void;
+  /** Lanza SOLO estas plataformas, por nombre. Las demás no se tocan. */
+  startScheduled(sources: readonly string[]): void;
+  /** Cuándo tocó esa plataforma por última vez, para las que van por intervalo. */
+  lastPassAt(source: string): number | null;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
- * EL RITMO QUE VE LINKEDIN. Es lo único que protege la cuenta, y por eso no es
- * un número suelto sino CUATRO LÍMITES que se cumplen todos a la vez.
+ * EL RITMO YA NO ES UNO, SINO EL DE CADA PLATAFORMA.
  *
- * Lo que LinkedIn mide no es cuántas veces pulsas un botón: es cuántas veces
- * un navegador automatizado carga tu feed, cada cuánto, y si ese patrón parece
- * una persona. Un solo tope "una por hora" deja pasar cosas que no parecen una
- * persona — pulsar justo después de la pasada automática, o veinticuatro
- * lecturas en un día repartidas una por hora.
+ * Los cuatro límites que protegían la cuenta de LinkedIn vivían aquí como
+ * constantes del módulo, y eso los hacía globales por construcción: al entrar
+ * la segunda fuente, el presupuesto gastado leyendo LinkedIn impedía consultar
+ * una API pública sin cuenta ni sesión. Ahora cada fuente trae su
+ * `SourcePolicy` y este fichero solo sabe APLICARLA — los números y el porqué
+ * están en `sources/policy.ts`.
  *
- * La referencia es ARTIO: tres pasadas al día, sin botón, y la cuenta del señor
- * lleva meses sana. Aquí hay botón porque el dashboard lo pide, así que estos
- * límites existen para que tenerlo no cambie lo que LinkedIn ve.
+ * Lo que no cambió: una pasada a la vez, y cada plataforma con su propia fila
+ * en `runs`, que es lo que permite contarle el ritmo por separado.
  * ═══════════════════════════════════════════════════════════════════════════ */
-
-/** 1. Entre dos búsquedas a mano. */
-const MANUAL_MIN_INTERVAL_MS = 60 * 60_000;
-
-/**
- * 2. Después de CUALQUIER lectura, también la automática.
- *
- * Sin esto, el botón pulsado a las 18:01 encadenaba dos cargas del feed con un
- * minuto de diferencia: la de la franja de las 6 y la tuya. Dos lecturas
- * seguidas es el patrón que menos se parece a una persona mirando LinkedIn.
- */
-const MIN_GAP_AFTER_ANY_PASS_MS = 20 * 60_000;
-
-/**
- * 3. Búsquedas a mano por día (día de Venezuela).
- *
- * Con el suelo de una hora, un día de insistir son catorce lecturas. Ninguna
- * persona abre LinkedIn catorce veces a buscar lo mismo, y el total diario es
- * lo que de verdad dibuja el patrón.
- */
-const MANUAL_DAILY_BUDGET = 3;
-
-/**
- * 4. Techo duro de lecturas al día, cuente quien las pida.
- *
- * Es la red de seguridad, no el límite de uso: con la configuración normal
- * —3 franjas + hasta 3 manuales— nunca salta. Está para que un `SCHEDULE_HOURS`
- * con doce horas, o un fallo que reintente en bucle, no puedan convertirse en
- * un día de cargas continuas sin que nadie lo pare.
- */
-const MAX_PASSES_PER_DAY = 8;
-
-/**
- * La ÚNICA excepción al suelo de una hora: el perfil estaba cogido por otra
- * ventana de Chromium. Eso no llegó a tocar la plataforma —ni se abrió el
- * navegador— así que reintentar no le cuesta nada a la cuenta, y lo arregla
- * cerrar una ventana.
- *
- * Antes la excepción era "la última manual leyó 0 publicaciones", y eso estaba
- * al revés: una sesión caída lee 0 publicaciones, así que una sesión perdida
- * autorizaba a golpear el feed cada diez minutos indefinidamente — justo el
- * comportamiento que marca una cuenta, y justo cuando menos convenía.
- */
-const MANUAL_RETRY_AFTER_BUSY_MS = 5 * 60_000;
 
 export class RunRefusedError extends Error {}
 
@@ -103,81 +61,151 @@ export class Runner implements PassRunner {
     return this.busy;
   }
 
-  startScheduled(): void {
-    // El techo duro vale también para el planificador: si no, una
-    // configuración con muchas franjas lo esquivaría entero.
-    const today = this.deps.runs.countTouchingSince(vetDayStart(this.clock()).toISOString());
-    if (today >= MAX_PASSES_PER_DAY) {
-      console.warn(`[runner] techo diario alcanzado (${today} lecturas): la franja se salta para no machacar la plataforma`);
-      return;
-    }
-    this.launch(RunTrigger.Scheduled);
+  /**
+   * Las franjas (o el intervalo) ya dijeron que toca: aquí solo queda el techo
+   * duro de cada plataforma, que vale también para el planificador. Si no, una
+   * configuración con muchas franjas lo esquivaría entero.
+   */
+  startScheduled(names: readonly string[]): void {
+    const dayStart = vetDayStart(this.clock()).toISOString();
+    const due = this.sourcesNamed(names).filter((source) => {
+      const ceiling = source.policy.maxPassesPerDay;
+      if (ceiling === null) return true;
+      const today = this.deps.runs.countTouchingSince(dayStart, source.name);
+      if (today < ceiling) return true;
+      console.warn(`[runner] ${source.name}: techo diario alcanzado (${today} lecturas); la franja se salta`);
+      return false;
+    });
+    if (due.length) this.launch(RunTrigger.Scheduled, due);
   }
 
+  /** Lo que necesita el planificador para las fuentes que van por intervalo. */
+  lastPassAt(source: string): number | null {
+    const last = this.deps.runs.lastTouchingAt(source);
+    return last ? Date.parse(last) : null;
+  }
+
+  /**
+   * El botón.
+   *
+   * Pregunta plataforma por plataforma, y lanza las que puedan. Antes era todo
+   * o nada: el presupuesto de LinkedIn, ya gastado, bloqueaba también a Get on
+   * Board, que no tiene nada que gastar. Si NINGUNA puede, se niega con el
+   * motivo de la primera — el del señor, no el del código.
+   */
   startManual(): RunInfo {
     if (this.busy) throw new RunRefusedError('ya hay una búsqueda en curso');
-    const last = this.deps.runs.lastManual();
+    if (!this.deps.sources.length) throw new RunRefusedError('no hay ninguna plataforma activa');
+
+    const allowed: JobSource[] = [];
+    const refusals: string[] = [];
+    for (const source of this.deps.sources) {
+      const why = this.refuseManual(source);
+      if (why) refusals.push(`${source.label}: ${why}`);
+      else allowed.push(source);
+    }
+    if (!allowed.length) throw new RunRefusedError(refusals.join(' · '));
+    // Las que no pudieron se dicen en el log, no en el error: la búsqueda SÍ
+    // arrancó, y un 409 con el texto de una negativa sería mentir.
+    if (refusals.length) console.log(`[runner] a mano se saltan — ${refusals.join(' · ')}`);
+    return this.launch(RunTrigger.Manual, allowed);
+  }
+
+  /** `null` si esta plataforma se puede leer ahora a mano; si no, por qué no. */
+  private refuseManual(source: JobSource): string | null {
+    const policy = source.policy;
+    const last = this.deps.runs.lastManual(source.name);
 
     // Sin sesión no hay nada que reintentar: el feed va a devolver la misma
     // pantalla de login por mucho que se pulse. Se niega y se dice qué hacer.
     if (last?.failure === RunFailure.LoginRequired) {
-      throw new RunRefusedError(
-        'la última búsqueda se encontró sin sesión. Inicia sesión otra vez (`npm run login -- <plataforma>`) ' +
-        'y la siguiente pasada funcionará; insistir ahora solo arriesga la cuenta. ' +
-        'El detalle está en el error de esa pasada.',
+      return (
+        'la última búsqueda se encontró sin sesión. Inicia sesión otra vez ' +
+        `(\`npm run login -- ${source.name}\`) y la siguiente pasada funcionará; ` +
+        'insistir ahora solo arriesga la cuenta'
       );
     }
 
     const now = this.clock().getTime();
     const dayStart = vetDayStart(this.clock()).toISOString();
 
-    // Presupuesto del día. Se cuenta solo lo que llegó a cargar el feed.
-    const manualToday = this.deps.runs.countTouchingSince(dayStart, RunTrigger.Manual);
-    if (manualToday >= MANUAL_DAILY_BUDGET) {
-      throw new RunRefusedError(
-        `ya has buscado a mano ${manualToday} ${manualToday === 1 ? 'vez' : 'veces'} hoy, que es el máximo. ` +
-        'Las búsquedas automáticas siguen funcionando: el tope está para que LinkedIn no vea un patrón raro en tu cuenta.',
-      );
+    // Presupuesto del día. Se cuenta solo lo que llegó a tocar la plataforma.
+    if (policy.manualDailyBudget !== null) {
+      const manualToday = this.deps.runs.countTouchingSince(dayStart, source.name, RunTrigger.Manual);
+      if (manualToday >= policy.manualDailyBudget) {
+        return (
+          `ya has buscado a mano ${manualToday} ${manualToday === 1 ? 'vez' : 'veces'} hoy, que es el máximo. ` +
+          'Las búsquedas automáticas siguen funcionando: el tope está para que no vea un patrón raro en tu cuenta'
+        );
+      }
     }
-    const today = this.deps.runs.countTouchingSince(dayStart);
-    if (today >= MAX_PASSES_PER_DAY) {
-      throw new RunRefusedError(`hoy ya se ha leído el feed ${today} veces, que es el techo del día`);
+    if (policy.maxPassesPerDay !== null) {
+      const today = this.deps.runs.countTouchingSince(dayStart, source.name);
+      if (today >= policy.maxPassesPerDay) return `hoy ya se ha leído ${today} veces, que es el techo del día`;
     }
 
     // Entre manuales. Si la anterior murió con el perfil ocupado no llegó a
     // tocar nada, así que ese suelo es mucho más corto.
-    const floor = last?.failure === RunFailure.ProfileBusy ? MANUAL_RETRY_AFTER_BUSY_MS : MANUAL_MIN_INTERVAL_MS;
-    if (last) {
+    const floor = last?.failure === RunFailure.ProfileBusy ? policy.retryAfterBusyMs : policy.manualMinIntervalMs;
+    if (last && floor > 0) {
       const waited = now - Date.parse(last.startedAt);
       if (waited < floor) {
-        throw new RunRefusedError(
+        return (
           `la última búsqueda manual fue hace ${minutes(waited)} min; ` +
-          `espera ${minutes(floor - waited)} min más para no subir el ritmo que ve la plataforma`,
+          `espera ${minutes(floor - waited)} min más para no subir el ritmo que ve la plataforma`
         );
       }
     }
 
-    // Tras cualquier lectura, también la automática.
-    const lastTouch = this.deps.runs.lastTouchingAt();
-    if (lastTouch) {
-      const since = now - Date.parse(lastTouch);
-      if (since < MIN_GAP_AFTER_ANY_PASS_MS) {
-        throw new RunRefusedError(
-          `se acaba de leer el feed hace ${minutes(since)} min; ` +
-          `espera ${minutes(MIN_GAP_AFTER_ANY_PASS_MS - since)} min para no encadenar dos lecturas seguidas`,
-        );
+    // Tras cualquier lectura suya, también la automática.
+    if (policy.minGapAfterAnyPassMs > 0) {
+      const lastTouch = this.deps.runs.lastTouchingAt(source.name);
+      if (lastTouch) {
+        const since = now - Date.parse(lastTouch);
+        if (since < policy.minGapAfterAnyPassMs) {
+          return (
+            `se acaba de leer hace ${minutes(since)} min; ` +
+            `espera ${minutes(policy.minGapAfterAnyPassMs - since)} min para no encadenar dos lecturas seguidas`
+          );
+        }
       }
     }
-    return this.launch(RunTrigger.Manual);
+    return null;
   }
 
-  private launch(trigger: RunTrigger): RunInfo {
+  private sourcesNamed(names: readonly string[]): JobSource[] {
+    return this.deps.sources.filter((source) => names.includes(source.name));
+  }
+
+  /**
+   * UNA FILA DE `runs` POR PLATAFORMA, y las pasadas en serie.
+   *
+   * Antes era una sola fila con los nombres pegados con comas. Eso bastaba con
+   * una fuente, pero hace imposible contarle el ritmo a cada una por separado
+   * —que es justo lo que protege la cuenta de LinkedIn sin castigar a una API
+   * abierta— y además mezclaba en un número los resultados de dos sitios.
+   *
+   * En serie, no en paralelo: dos navegadores a la vez son dos plataformas
+   * viendo actividad simultánea desde la misma máquina.
+   */
+  private launch(trigger: RunTrigger, sources: readonly JobSource[]): RunInfo {
     this.busy = true;
-    const id = this.deps.runs.start(this.deps.sources.map((s) => s.name).join(','), trigger, this.clock().toISOString());
-    const run = this.deps.runs.find(id);
-    if (!run) throw new Error(`la pasada ${id} no se encontró tras crearla`);
-    void this.execute(id);
-    return run;
+    const startedAt = this.clock().toISOString();
+    const planned = sources.map((source) => ({ source, id: this.deps.runs.start(source.name, trigger, startedAt) }));
+    const first = this.deps.runs.find(planned[0]!.id);
+    if (!first) throw new Error(`la pasada ${planned[0]!.id} no se encontró tras crearla`);
+    void this.executeAll(planned);
+    return first;
+  }
+
+  private async executeAll(planned: readonly { source: JobSource; id: number }[]): Promise<void> {
+    try {
+      for (const { source, id } of planned) {
+        await this.execute(id, source);
+      }
+    } finally {
+      this.busy = false;
+    }
   }
 
   /**
@@ -206,9 +234,9 @@ export class Runner implements PassRunner {
     await this.deps.mailer.send(failureMail(failure, detail, this.deps.dashboardUrl));
   }
 
-  private async execute(id: number): Promise<void> {
+  private async execute(id: number, source: JobSource): Promise<void> {
     try {
-      const result = await runPasses(this.deps.sources, {
+      const result = await runPasses([source], {
         jobs: this.deps.jobs,
         judge: this.deps.judge,
         profile: this.deps.profile,
@@ -216,9 +244,9 @@ export class Runner implements PassRunner {
       });
       const note = describe(result.failures);
 
-      // Una pasada sin NI UNA oferta leída y con fuentes caídas es un fallo. Si
-      // alguna plataforma entregó, la pasada valió: se cierra bien y el motivo
-      // de la que falló queda anotado, no escondido.
+      // La fuente falló y no entregó nada: la fila se cierra como error. Las
+      // demás plataformas de esta tanda siguen con su propia fila, así que una
+      // caída ya no se lleva por delante lo que las otras sí leyeron.
       if (note && result.outcome.fetched === 0) {
         this.deps.runs.fail(id, note.message, note.failure);
         console.error(`[run ${id}] error: ${note.message}`);
@@ -228,7 +256,7 @@ export class Runner implements PassRunner {
       this.deps.runs.finish(id, result.outcome, note);
       const partial = note ? ` (parcial: ${note.message})` : '';
       console.log(
-        `[run ${id}] ok: ${result.outcome.fetched} leídas, ` +
+        `[run ${id}] ${source.name} ok: ${result.outcome.fetched} leídas, ` +
         `${result.outcome.accepted} aceptadas, ${result.outcome.rejected} descartadas${partial}`,
       );
       await this.announce(result.accepted);
@@ -237,9 +265,7 @@ export class Runner implements PassRunner {
       // propio pipeline (la BD, el juez), no de una plataforma.
       const message = error instanceof Error ? error.message : String(error);
       this.deps.runs.fail(id, message, RunFailure.Other);
-      console.error(`[run ${id}] error: ${message}`);
-    } finally {
-      this.busy = false;
+      console.error(`[run ${id}] ${source.name} error: ${message}`);
     }
   }
 }
