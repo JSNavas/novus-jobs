@@ -873,3 +873,44 @@ correcto.
 Se añaden igual por el mismo motivo que MCP: **un tema que no está en el
 catálogo no se detecta por mucho que lo pidan**. El coste de tenerlo esperando
 es cero; el de no tenerlo es enterarse tarde.
+
+---
+
+## Rev. 18 — La IA, en dos temas y con cuatro frases · 2026-11-11
+
+Tres intentos en una tarde, y el tercero lo decidió él mirándolo:
+
+1. **Uno solo** («IA aplicada al desarrollo»): mezclaba escribir código con
+   Copilot —una herramienta— con montar un RAG en producción —un oficio—.
+   Salía 5 de 18 y no decía nada accionable.
+2. **Ocho** (LLMs, RAG, agentes, MCP, prompts, ML, asistentes, IA en producto):
+   peor. Recorrer ocho filas para enterarse de lo mismo es trabajo.
+3. **Dos**, que es lo que queda.
+
+### El corte que sobrevive
+
+El único que cambia lo que él haría:
+
+- **Usar IA para programar** → una herramienta que se aprende en una tarde.
+- **Construir con IA** → un oficio que se estudia.
+
+Lo que antes eran ocho etiquetas ahora se lee en los ejemplos. Su frase lo
+resume: «así no tengo que estar leyendo más abajo para conseguir MCP, LLM, RAG
+por separado».
+
+### Las frases no son un adorno: son lo que se lee
+
+`MAX_EXAMPLES` sube de 2 a 4. Un tema ancho como «IA aplicada» con dos
+ejemplos deja fuera la mitad de lo que piden, y entonces hay que ir a buscarlo
+al anuncio — que es justo lo que esta pantalla existe para evitar.
+
+Resultado sobre 15 vacantes: **IA aplicada, 7 (47%)**, con «Vercel AI SDK e
+integración de distintos proveedores de LLM», «agentes de IA o sistemas
+multi-agente» y «flujos agentic y determinísticos» leyéndose de un vistazo.
+
+### Lo que se pierde, dicho claro
+
+MCP ya no tiene fila propia. Si empieza a pedirse, aparecerá **dentro de los
+ejemplos** de «IA aplicada», no como un tema que sube solo — que era la gracia
+de tenerlo suelto. Es el precio de no tener ocho filas, y lo paga él a
+sabiendas. Si algún día quiere la alerta temprana, se le devuelve su fila.

@@ -109,39 +109,36 @@ export const TOPICS: readonly Topic[] = [
   topic('practicas', 'Documentación técnica', 'Swagger', 'OpenAPI', 'documentar'),
   topic('practicas', 'Refactorización y deuda técnica', 'refactor', 'deuda técnica', 'código limpio', 'clean code'),
 
-  /* ─── IA, DESGLOSADA Y NO EN UN SOLO SACO ───────────────────────────────
-   * Estuvo como un único tema, «IA aplicada al desarrollo», que mezclaba
-   * escribir código con Copilot —una herramienta— con montar un RAG en
-   * producción —un oficio—. Salía 5 de 18 y no decía NADA accionable: no se
-   * podía saber si piden usar IA o construirla.
+  /* ─── IA ─────────────────────────────────────────────────────────────────
+   * DOS TEMAS, y ni uno ni ocho.
    *
-   * Desglosado sobre las mismas 18 vacantes: RAG en 6, agentes en 5, LLM en 5.
-   * RAG sube al tercer puesto de toda la lista y antes no se veía.
+   * Empezó como uno solo, «IA aplicada al desarrollo», que mezclaba escribir
+   * código con Copilot —una herramienta— con montar un RAG en producción —un
+   * oficio—. Se desglosó en ocho: LLMs, RAG, agentes, MCP, prompts, ML…
    *
-   * MCP va aquí aunque hoy esté en CERO vacantes, y es el motivo de que el
-   * Enfoque exista: el día que empiece a pedirse, aparece solo. Un tema que no
-   * está en el catálogo no se detecta por mucho que lo pidan. */
-  topic('practicas', 'RAG y bases vectoriales', 'RAG', 'embeddings', 'base vectorial', 'bases vectoriales',
-    'búsqueda semántica', 'pgvector', 'Pinecone', 'Qdrant', 'Weaviate', 'Chroma'),
-  topic('practicas', 'LLMs', 'LLM', 'modelos de lenguaje', 'OpenAI', 'GPT', 'Anthropic', 'Claude', 'Gemini'),
-  topic('practicas', 'Agentes de IA', 'agentes', 'multiagente', 'agentic', 'tool calling', 'function calling',
-    'LangChain', 'LlamaIndex', 'CrewAI'),
-  topic('practicas', 'MCP', 'Model Context Protocol'),
-  topic('practicas', 'Prompt engineering', 'prompt', 'prompts', 'prompting'),
-  /*
-   * Se nombran las herramientas EN EL TÍTULO porque es lo que él busca al
-   * mirar: «¿piden Claude? ¿piden Cursor?». Un tema llamado «Asistentes de
-   * código» a secas obliga a abrir los ejemplos para saber de qué habla.
+   * Y ocho era peor. Él lo dijo mirándolo: tener que recorrer ocho filas para
+   * enterarse de lo mismo es trabajo, cuando lo que informa de verdad son las
+   * FRASES de los anuncios. «Frameworks y proveedores de IA: experiencia con
+   * Vercel AI SDK e integración de distintos proveedores de LLM» dice más que
+   * cualquier etiqueta que le pongamos encima.
    *
-   * Medido en sus vacantes: una pide «herramientas de IA para desarrollo,
-   * tales como GitHub Copilot, ChatGPT, Claude, Cursor o similares» y otra
-   * dice «construyes EN Cursor las soluciones ya diseñadas». No es lo mismo
-   * que montar un LLM en el producto, y por eso es un tema aparte.
+   * Así que el corte que queda es el único que cambia lo que él haría:
+   *   · USAR IA para programar  → una herramienta que se aprende en una tarde.
+   *   · CONSTRUIR con IA        → un oficio que se estudia.
    *
-   * Lovable queda FUERA a propósito: en la única vacante donde aparece va
-   * junto a WordPress y Webflow — es montar webs sin código, no asistir a
-   * quien programa.
+   * Lo que antes eran ocho etiquetas ahora se lee en los ejemplos, que por eso
+   * subieron de dos a cuatro.
    */
+  topic('practicas', 'IA aplicada (LLM, RAG, agentes)',
+    'LLM', 'modelos de lenguaje', 'OpenAI', 'GPT', 'Anthropic', 'Gemini', 'Vercel AI SDK',
+    'RAG', 'embeddings', 'base vectorial', 'bases vectoriales', 'búsqueda semántica',
+    'pgvector', 'Pinecone', 'Qdrant', 'Weaviate', 'Chroma',
+    'agentes', 'multiagente', 'agentic', 'tool calling', 'function calling', 'LangChain', 'LlamaIndex', 'CrewAI',
+    'MCP', 'Model Context Protocol',
+    'prompt', 'prompts', 'prompting',
+    'inteligencia artificial', 'IA generativa', 'GenAI',
+    'machine learning', 'aprendizaje automático', 'TensorFlow', 'PyTorch', 'scikit-learn', 'MLOps'),
+
   topic('practicas', 'Asistentes de código (Copilot, Cursor, Claude)', 'Copilot', 'Cursor', 'Claude Code',
     'Windsurf', 'Codex', 'asistentes de IA', 'asistentes de programación', 'herramientas de IA para desarrollo',
     'vibe coding', 'pair programming con IA'),

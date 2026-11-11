@@ -64,8 +64,15 @@ const MIN_VACANCIES = 2;
  */
 const WINDOW_DAYS = 180;
 const DAY_MS = 24 * 60 * 60_000;
-/** Dos frases bastan para entender qué piden; más es una pared de texto. */
-const MAX_EXAMPLES = 2;
+/**
+ * CUATRO frases, no dos.
+ *
+ * Las frases no son un adorno del tema: son LO QUE SE LEE. Un tema ancho como
+ * «IA aplicada» con dos ejemplos deja fuera la mitad de lo que piden, y
+ * entonces hay que ir a buscarlo al anuncio — que es justo lo que esta
+ * pantalla existe para evitar.
+ */
+const MAX_EXAMPLES = 4;
 /** Una línea más larga que esto no es un requisito: es un párrafo. */
 const MAX_EXAMPLE_CHARS = 180;
 const MIN_EXAMPLE_CHARS = 25;
