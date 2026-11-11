@@ -1,8 +1,8 @@
 import type { Shadows } from '@mui/material/styles';
 
 /*
- * Sin sombras: en la torre la separación la hacen el borde de 1px y el salto
- * entre superficies grafito. Una sombra de plantilla rompe ese plano.
+ * No shadows: in the control tower, separation comes from the 1px border and
+ * the step between graphite surfaces. A template shadow breaks that plane.
  */
 const shadows: Shadows = [
   'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none', 'none',

@@ -12,18 +12,17 @@ import { runStatusLabel, runStatusTone } from './runStatus';
 const POLL_INTERVAL_MS = 15_000;
 
 /**
- * LA PÁGINA QUE FALTABA: qué ha hecho el buscador y dónde está cada oferta.
+ * The page that was missing: what the searcher did and where each offer is.
  *
- * Antes la primera pantalla era la bandeja de «Nuevas», y con el filtro
- * haciendo bien su trabajo esa bandeja sale vacía casi siempre. El resultado
- * era una aplicación que parecía rota: cero ofertas, cero información, y nada
- * que explicara que detrás había setenta publicaciones leídas y descartadas
- * con su motivo. El trabajo invisible hay que enseñarlo, porque es la única
- * prueba de que el sistema está vivo cuando no hay nada que enseñar.
+ * The first screen used to be the "Nuevas" inbox, and with the filter doing
+ * its job that inbox is almost always empty. The result looked broken: zero
+ * offers, zero information, and nothing explaining that behind it were seventy
+ * postings read and discarded with their reason. Invisible work has to be shown,
+ * because it is the only proof the system is alive when there is nothing to show.
  *
- * Todo número de aquí es pulsable y lleva a las ofertas que lo forman. Un
- * contador que no se puede abrir obliga a creérselo, y lo que hay detrás —qué
- * descartó y por qué— es justo lo que hay que poder auditar.
+ * Every number here is clickable and leads to the offers behind it. A counter
+ * that cannot be opened forces you to take it on trust, and what sits behind it
+ * (what was discarded and why) is exactly what has to be auditable.
  */
 
 interface Tile {
@@ -32,7 +31,7 @@ interface Tile {
   hint: string;
   to: string;
   tone: 'success' | 'neutral';
-  /** Lo que apartó el filtro sin que nadie lo mirara: se enseña apagado y con borde discontinuo. */
+  /** What the filter set aside unseen: shown muted with a dashed border. */
   audit?: boolean;
 }
 
@@ -75,7 +74,7 @@ const tilesOf = (stats: Stats): Tile[] => [
   },
 ];
 
-/** Una búsqueda fallida se ve de un vistazo: banda roja a la izquierda y fondo teñido. */
+/** A failed search is visible at a glance: red band on the left and a tinted background. */
 const failedRowSx = {
   bgcolor: 'error.light',
   '& > td:first-of-type': { borderLeft: 3, borderColor: 'error.main' },
@@ -182,8 +181,7 @@ const DashboardPage = () => {
                 <TableCell>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <AppStatusPilot label={runStatusLabel(run)} tone={runStatusTone(run)} />
-                    {/* El motivo del fallo, recortado: el detalle entero está
-                        en la página de la búsqueda. */}
+                    {/* Failure reason, truncated: the full detail lives on the search page. */}
                     {run.error ? (
                       <Typography variant="caption" color="textSecondary" noWrap sx={{ maxWidth: 320 }}>
                         {run.error}

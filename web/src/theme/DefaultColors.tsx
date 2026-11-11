@@ -1,9 +1,9 @@
 const INK = '#0A0C0E';
 
 /*
- * Solo tres colores saturados: verde (correcto), ámbar (aviso) y rojo (fallo).
- * El cian apagado es el único acento y sirve para foco, enlaces y selección.
- * Los grises escalonan las superficies de fondo a tarjeta.
+ * Only three saturated colors: green (ok), amber (warning) and red (failure).
+ * The muted cyan is the only accent and is reserved for focus, links and selection.
+ * The grays step the background surfaces up to the card surface.
  */
 const darkPalette = {
   primary: {

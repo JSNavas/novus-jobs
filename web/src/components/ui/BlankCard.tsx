@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 
 interface BlankCardProps {
   children: ReactNode;
-  /** Borde discontinuo: marca lo que es auditoría y no trabajo pendiente. */
+  /** Dashed border: marks audit data, not pending work. */
   dashed?: boolean;
 }
 
