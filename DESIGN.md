@@ -35,7 +35,7 @@ typography:
     fontFamily: 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif'
     fontSize: "0.75rem"
     fontWeight: 400
-    lineHeight: "1rem"
+    lineHeight: "1.66"
   label:
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace'
     fontSize: "0.6875rem"
@@ -95,7 +95,7 @@ Paleta de tono frío y muy contenida. Hay dos familias: los grises, que construy
 - **Surface** (`#12161A`, background.paper): tarjetas, tablas, diálogos y popovers. Un escalón por encima del fondo.
 - **Graphite 100** (`#101417`, grey.100): fondo de bloques de texto en monoespaciada, como el cuerpo del log de una oferta.
 - **Graphite 200** (`#161B1F`, grey.200): pista de las barras de progreso y el trazo de los campos de texto.
-- **Graphite 300** (`#222930`, grey.300): barra de desplazamiento.
+- **Graphite 300** (`#222930`, grey.300): el tema lo reserva para la barra de `simplebar`, que hoy no usa ninguna pantalla. La barra de desplazamiento del navegador no está estilizada.
 - **Divider** (`#232A31`, divider): todos los bordes: tarjetas, tablas, cabecera, barra lateral y líneas entre filas.
 - **Graphite 400** (`#3A444E`, grey.400), **grey.500** (`#8A96A3`) y **grey.600** (`#C9D1D9`): en la paleta, pero ningún componente revisado los usa por nombre. El gris de texto sale de `text.secondary`, que tiene el mismo valor que grey.500.
 - **Text primary** (`#D5DCE3`): texto de cuerpo y cifras que hay que leer.
@@ -118,7 +118,7 @@ Paleta de tono frío y muy contenida. Hay dos familias: los grises, que construy
 - **Card title** (`h5`, 600, 1.125rem): título dentro de una tarjeta. Va con `subtitle2` gris debajo.
 - **Body** (`body1`, 400, 0.875rem / 1.334rem): texto corriente, celdas, mensajes vacíos.
 - **Body small** (`body2`, 400, 0.75rem / 1rem): texto de apoyo, etiquetas de estado, datos de tarjeta de oferta.
-- **Caption** (0.75rem): pista debajo de una cifra, y el motivo de fallo truncado en la tabla.
+- **Caption** (0.75rem, interlineado por defecto de MUI, 1.66; sin override en el tema): pista debajo de una cifra, y el motivo de fallo truncado en la tabla. No confundir con **Body small**, que es `body2` y sí tiene override (1rem).
 - **Overline** (mono, 500, 0.6875rem, mayúsculas, tracking 0.08em): etiquetas de cabecera de tabla y de cifra, y la etiqueta fija "Ofertas de empleo" de la cabecera.
 - **Metric** (mono, 500, 2rem, altura 1, cifras tabulares): solo las cifras de los contadores.
 - **Mono** (variant `mono`, 400, 0.8125rem, cifras tabulares): fechas de las tablas y el logotipo `NOVUS·JOBS`.
@@ -134,7 +134,7 @@ Modelo de dos columnas fijas: barra lateral a la izquierda y contenido a la dere
 - **Cabecera:** barra pegada arriba, fondo ink, borde inferior divider, altura de barra dense (48px). Contiene solo el botón de menú (móvil) y la etiqueta `OFERTAS DE EMPLEO`.
 - **Contenido:** contenedor de ancho máximo `lg` (1200px), con 24px arriba y abajo.
 - **Rejilla de cifras:** 1 columna en móvil, 2 desde `sm`, 5 desde `lg` en el dashboard; 4 desde `sm` en el resumen de ofertas.
-- **Densidad:** tablas `size="small"`, celdas con padding estándar de MUI, texto de 14px en cuerpo. Es una herramienta de seguimiento: se busca densidad, no aire.
+- **Densidad:** tablas `size="small"` (el padding de celda es el que MUI asigna a ese tamaño), texto de 14px en cuerpo. Es una herramienta de seguimiento: se busca densidad, no aire.
 
 **Espaciado** (unidad de MUI = 8px, sin escala propia):
 - Entre bloques de página: `mb` 3 (24px) bajo la cabecera de página; 4 (32px) bajo la rejilla de cifras del dashboard, antes del bloque "Búsquedas".
@@ -162,6 +162,7 @@ Forma casi cuadrada.
 - **Radio base:** 3px (`theme.shape.borderRadius`). Lo heredan los botones, los chips y las tarjetas. En `sx` un `borderRadius: 1` equivale a 3px, porque MUI multiplica por el radio base.
 - **Excepciones explícitas:** barras de progreso, con 6px; y la clase global `btn-xs` para botones cuadrados de 30px, con 6px.
 - **Bordes:** 1px sólidos en divider. Tarjetas dashed solo para datos de auditoría (ver Cards).
+- **Clase `btn-xs`:** definida globalmente en `theme/Components.tsx` (botón cuadrado de 30px, radio 6px). Hoy ningún componente la usa; si hace falta un botón cuadrado, usa esa clase en vez de inventar medidas.
 - **Sin clipping ni siluetas especiales:** las filas de tabla son rectángulos; la única marca lateral es la franja roja de fallo.
 
 ## Components
@@ -176,12 +177,14 @@ Cada componente tiene una frase de carácter y luego sus estados. Los componente
 ### Metric tile (dashboard)
 - **Carácter:** un contador que es también un enlace. Cada cifra se puede abrir.
 - **Shape:** `BlankCard` (outlined, sin sombra, sin padding propio). El recuadro interior tiene padding 20px y es el que se pulsa: cambia a `action.hover` al pasar el cursor.
+- **Excepción pendiente:** la bandeja (`StatsRow`, en `views/jobs/`) pinta sus cuatro cifras con etiqueta `subtitle2` y cifra `h5`, sin overline ni mono. No sigue este patrón hasta que se unifique; no lo copies.
 - **Contenido:** etiqueta `overline` gris, cifra `metric` (2rem mono), pista `caption` gris debajo ("Sin mirar todavía").
 - **Color:** la cifra va en `text.primary`. Solo "Nuevas" pasa a verde y únicamente si es mayor que cero.
 - **Auditoría:** "Descartadas por el filtro" lleva borde **dashed**. Es el único uso del borde punteado: marca lo que el filtro apartó sin que nadie lo viera. No se usa para pendiente.
 
 ### Dashboard card (`DashboardCard`)
-- **Shape:** card outlined, sin sombra, padding 24px.
+- **Estado:** exportada desde `components/ui/`, pero ninguna pantalla la usa hoy.
+- **Shape:** card outlined, sin sombra. Su padding efectivo es 39px, no 24px: el `MuiCard` del tema pone 15px en el contenedor y `DashboardCard` añade 24px en `CardContent`. Antes de usarla hay que corregirlo (ver `Components.tsx`); no copies el aire de este bloque.
 - **Cabecera:** `h5` con subtítulo `subtitle2` gris a la izquierda; una acción opcional a la derecha, alineada al centro. Margen 16px bajo la cabecera.
 
 ### Tables
@@ -229,14 +232,28 @@ Cada componente tiene una frase de carácter y luego sus estados. Los componente
 ### Inputs
 - **Shape:** contorno, radio base. Relleno interior 12px 14px (8px 14px en tamaño pequeño).
 - **Trazo:** `grey.200` en reposo; cian en hover y en foco.
-- **Error:** el tema no define un estado de error para el campo; el mensaje de error se da con `AppAlert`.
+- **Error:** el tema no sobrescribe el estado de error del campo, así que MUI lo pinta en `error.main` (rojo) por defecto. El mensaje de error del formulario va en `AppAlert`.
 
 ### Navigation (barra lateral)
 - **Carácter:** lista sobria de enlaces, con el logotipo en mono cian arriba.
+- **Grupos:** dos subtítulos en gris, "Ofertas" y "Auditoría" (esta última para "Descartadas por el filtro").
+- **Enlace activo:** fondo `primary.light` (cian al 12%) y texto `primary.main`. Es la única marca de dónde estás; no añadas barra lateral de color.
 - **Lugar:** fija a la izquierda desde `lg`; cajón temporal por debajo, que se cierra al navegar.
 
 ### Pagination (`AppPagination`)
 - **Estructura:** a la izquierda, `body2` gris con el rango y el total ("1-10 de 42 búsquedas"); a la derecha, los controles de página de MUI. El nombre del elemento (`noun`) es el único texto que cambia entre pantallas.
+- **Con una sola página no se pinta.** Si el total cabe en `PAGE_SIZE`, el componente devuelve `null`: un control que dice "1" compite con lo que sí se pulsa.
+
+### Pestañas (`AppTabs`)
+- **Shape:** `Tabs` de MUI sin override: indicador en cian (`primary`), con 16px de margen inferior. Se usan para filtrar la bandeja por seniority.
+
+### Diálogo (`AppDialog`)
+- **Shape:** `Dialog` `fullWidth` de tamaño `sm`, con fondo `surface` y sin sombra (la elevación de MUI está anulada en `Shadows.tsx`).
+- **Acciones:** "Cancelar" en `text`; la confirmación en `contained`, solo si se pasa `onConfirm`.
+
+### Aviso flotante (`AppSnackbar`)
+- **Shape:** `Alert` `filled` abajo y centrado, 6 segundos. Solo dos tonos: `error` y `success`.
+- **Contenido:** conserva el último mensaje mientras se desvanece, para que un error no cambie de color al cerrarse.
 
 ### Progress
 - **Circular** (`CircularProgress`) centrado con `py` 6 cuando la pantalla carga por primera vez.
@@ -276,3 +293,17 @@ El vacío es un estado legítimo, no un error, y debe decir **por qué** está v
 - **Don't** añadir un modo claro: la app solo tiene el tema oscuro.
 - **Don't** usar el borde dashed para indicar pendiente. Es la marca de lo que el filtro apartó.
 - **Don't** dejar un vacío sin frase, ni usar la misma frase para dos vacíos distintos.
+
+## Cómo seguir el patrón
+
+Lista corta para quien llega nuevo. Antes de dar una pantalla por buena:
+
+- **Tokens, no colores a pelo.** Ningún `#hex`, `rgb()` ni `rgba()` fuera de `src/theme/`. Usa `primary.main`, `text.secondary`, `error.light`, `divider`, `action.hover`. Compruébalo con `grep -rnE "#[0-9A-Fa-f]{3,6}|rgba?\(" web/src | grep -v src/theme/`: tiene que salir vacío. La pre de la oferta (`JobCard`, 13px y `monospace` genérica) es la única excepción conocida.
+- **Tipografía del tema.** Variantes `h4`, `h5`, `h6`, `body1`, `body2`, `overline`, `metric`, `mono`. Nada de `fontSize` a pelo.
+- **Estados.** Verde, ámbar o rojo solo si significan algo, y siempre con texto al lado. Fallo: `AppStatusPilot` con `tone="error"` o `AppAlert severity="error"`.
+- **Vacíos.** Una frase en `textSecondary` que diga por qué está vacío. En tabla, una fila única con `colSpan` y `py={2}`; en lista, `py={4}` centrado.
+- **Tabla.** `size="small"`, cifras a la derecha, fechas en `mono`, fila pulsable con `hover`. Fallo: fila en `error.light` con franja izquierda de 3px.
+- **Tarjeta.** `BlankCard` (contorno, sin sombra, sin padding propio). El aire va dentro, en el hijo. No uses un `Card` suelto.
+- **Componentes.** Busca primero en `components/ui/`; crea uno nuevo solo si no existe y en ese caso documéntalo aquí.
+- **Sin sombras, sin modo claro.** El borde `divider` y el escalón de gris separan. Un `boxShadow` nuevo se revierte.
+- **Verificación.** `cd web && npx tsc --noEmit && npm run lint`, y mira la pantalla servida: que se vea tu texto, no solo un `200`.
