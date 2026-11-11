@@ -74,10 +74,15 @@ const tilesOf = (stats: Stats): Tile[] => [
   },
 ];
 
-/** A failed search is visible at a glance: red band on the left and a tinted background. */
+/**
+ * A failed search is visible at a glance: red band on the left and a tinted background.
+ *
+ * Only `borderLeftColor`: `borderColor` repainted the cell's own bottom divider
+ * red too, and that stray horizontal red line read as part of the error.
+ */
 const failedRowSx = {
   bgcolor: 'error.light',
-  '& > td:first-of-type': { borderLeft: 3, borderColor: 'error.main' },
+  '& > td:first-of-type': { borderLeft: 3, borderLeftColor: 'error.main' },
 };
 
 const DashboardPage = () => {
@@ -131,12 +136,8 @@ const DashboardPage = () => {
           }}
         >
           {tilesOf(stats).map((tile) => (
-            <BlankCard key={tile.label} dashed={tile.audit}>
-              <Box
-                p={2.5}
-                onClick={() => void navigate(tile.to)}
-                sx={{ cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' }, borderRadius: 1 }}
-              >
+            <BlankCard key={tile.label} dashed={tile.audit} onClick={() => void navigate(tile.to)}>
+              <Box p={2.5}>
                 <Typography variant="overline" component="div" color="textSecondary">{tile.label}</Typography>
                 <Typography variant="metric" component="div" mt={1.5} color={tile.tone === 'success' && tile.value > 0 ? 'success.main' : 'textPrimary'}>
                   {tile.value}
