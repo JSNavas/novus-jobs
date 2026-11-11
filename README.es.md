@@ -32,6 +32,30 @@ Novus Jobs lee el feed en tu nombre, aplica tu criterio y te deja en el dashboar
 
 Es una réplica deliberada del patrón de un bot anterior del autor, que lleva meses leyendo ese mismo feed a diario sin que la cuenta se resienta: el ritmo de tres franjas, el scroll del contenedor interno, la lectura del DOM y el navegador único por perfil vienen de ahí. Lo que aquí se añadió está explicado en los comentarios del código, caso por caso.
 
+## Lo que este proyecto no negocia
+
+Seis reglas. Son la razón de que el código sea como es, y un cambio que rompa
+una de ellas es un cambio que este proyecto no quiere, por cómodo que sea.
+
+1. **Tus datos son tuyos.** El CV, el perfil y las ofertas viven en ficheros de
+   tu disco. Lo que sale de la máquina se activa a mano, con tu propia clave, y
+   está enumerado en [docs/PRIVACY.md](docs/PRIVACY.md).
+2. **Nada se descarta en silencio.** Lo que no encaja se guarda con su motivo y
+   se puede auditar. Una regla que tira ofertas buenas es el error más caro de
+   todo esto, y es invisible salvo que quede la prueba.
+3. **El ritmo protege al otro lado.** Lo que marca el paso es qué se arriesga al
+   leer: tu cuenta, o el servidor de alguien. Los topes no son afinado de
+   rendimiento y no se suben por comodidad.
+4. **Lo que es tuyo se configura en la aplicación, nunca en un fichero.** Vive
+   en la base y se aplica en la siguiente búsqueda. Reiniciar un servicio para
+   corregir una coma no es aceptable.
+5. **Ninguna plataforma es especial.** Las fuentes son implementaciones
+   intercambiables tras una interfaz. Borrar la más grande es un fichero y una
+   línea.
+6. **Los comentarios dicen por qué, no qué.** Casi toda regla rara del filtro
+   nombra la oferta real que la hizo necesaria. Un arreglo sin su caso no lo
+   puede verificar nadie después.
+
 ## Las pantallas
 
 | | Qué es |

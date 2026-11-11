@@ -58,6 +58,36 @@ sync, no telemetry, and nothing to pay for.
   API gets one every thirty minutes.
 - It is not a hosted service. There is nothing to sign up for.
 
+## What this project will not trade away
+
+Six rules. They are the reason the code looks the way it does, and a change
+that breaks one of them is a change this project does not want, however
+convenient it is.
+
+1. **Your data stays yours.** The CV, the profile and the postings live in
+   files on your disk. Anything that leaves the machine is opt-in, needs your
+   own API key, and is named in [docs/PRIVACY.md](docs/PRIVACY.md).
+2. **Nothing is discarded in silence.** A posting that does not fit is stored
+   with its reason and shown in the dashboard. A filter that throws good jobs
+   away is the most expensive bug here, and it is invisible unless the evidence
+   is kept.
+3. **The reading pace protects the other side.** What sets the rhythm is what
+   is at risk when you read: your account, or someone else's server. Limits are
+   not performance tuning and are not raised for convenience.
+4. **Anything about you is configured in the app, never in a file.** It is
+   stored in the database and applies to the next search. Restarting a service
+   to fix a typo is not acceptable.
+5. **No platform is special.** Sources are interchangeable implementations
+   behind one interface. Deleting the biggest one is a file and a line.
+6. **Comments say why, not what.** Most odd-looking rules in the filter name
+   the real posting that made them necessary. A fix without its case is not a
+   fix anyone can verify later.
+
+How each is enforced: [CONTRIBUTING.md](CONTRIBUTING.md) for the code,
+[docs/SOURCES.md](docs/SOURCES.md) for platforms,
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the structure, and
+[DESIGN.md](DESIGN.md) for the dashboard.
+
 ## Quick start
 
 Requires **Node.js 22+** and about five minutes.
