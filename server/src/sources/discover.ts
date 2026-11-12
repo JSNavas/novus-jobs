@@ -220,9 +220,10 @@ export async function discover(input: string): Promise<Discovery> {
 
   if (candidates.length === 0) {
     notes.push(
-      'La página no publica sus vacantes en ningún sitio que se pueda leer sin navegador.',
-      'Suele pasar con las que piden iniciar sesión, y con las que dibujan la lista en el navegador sin una API detrás.',
-      'Si conoces la dirección exacta que devuelve el JSON, pégala directamente.',
+      `${target.href} no deja ver sus vacantes desde fuera: ni API, ni feed, ni datos dentro de la página.`,
+      'Casi siempre es porque hay que iniciar sesión, o porque la lista se pide aparte y la página llega vacía.',
+      'Queda buscar esa petición a mano: abre la página en el navegador, pulsa F12 → pestaña Red → filtro Fetch/XHR, recarga, y mira cuál devuelve la lista de vacantes.',
+      'Copia esa dirección (botón derecho → Copiar → Copiar dirección del enlace) y pégala aquí arriba.',
     );
   }
   return { candidates: candidates.sort((a, b) => b.count - a.count), notes };
