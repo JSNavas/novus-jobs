@@ -235,7 +235,7 @@ export interface OnboardingState {
   completed: boolean;
   profile: CandidateProfile;
   catalogue: {
-    countries: { code: string; label: string }[];
+    countries: { code: string; label: string; cities: string[] }[];
     englishLevels: EnglishLevel[];
     ecosystems: { id: string; label: string }[];
   };

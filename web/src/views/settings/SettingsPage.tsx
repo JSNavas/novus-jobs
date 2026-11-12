@@ -108,7 +108,7 @@ const SettingsPage = () => {
         {saved ? <AppAlert severity="info">{t('set.saved')}</AppAlert> : null}
 
         <BlankCard>
-          <Stack spacing={2} p={3} id="perfil">
+          <Stack spacing={2} p={3} sx={{ scrollMarginTop: 96 }} id="perfil">
             <Typography variant="h5">{t('set.cv.title')}</Typography>
             {onboarding ? (
               <CvSection
@@ -121,7 +121,7 @@ const SettingsPage = () => {
         </BlankCard>
 
         <BlankCard>
-          <Stack spacing={2} p={3} id="criterio">
+          <Stack spacing={2} p={3} sx={{ scrollMarginTop: 96 }} id="criterio">
             <Box>
               <Typography variant="h5">{t('set.nav.criteria')}</Typography>
               <Typography variant="body2" color="textSecondary">{t('set.profile.editable')}</Typography>
@@ -141,7 +141,7 @@ const SettingsPage = () => {
         </BlankCard>
 
         <BlankCard>
-          <Stack spacing={2} p={3} id="notificaciones">
+          <Stack spacing={2} p={3} sx={{ scrollMarginTop: 96 }} id="notificaciones">
             <Typography variant="h5">{t('set.mail.title')}</Typography>
             {settings ? (
               <MailSection
@@ -153,7 +153,7 @@ const SettingsPage = () => {
         </BlankCard>
 
         <BlankCard>
-          <Stack spacing={2} p={3} id="candidatura">
+          <Stack spacing={2} p={3} sx={{ scrollMarginTop: 96 }} id="candidatura">
             <Box>
               <Typography variant="h5">{t('set.motivation')}</Typography>
               <Typography variant="body2" color="textSecondary">

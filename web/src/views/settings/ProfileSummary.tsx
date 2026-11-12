@@ -127,6 +127,13 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
       .finally(() => setSaving(false));
   };
 
+  const chosenCountry = catalogue.countries.find((c) => c.code === lists.geo.country);
+  const cityOptions = [
+    ...(chosenCountry?.cities ?? []),
+    // Si la ciudad guardada no está en la lista —vino del CV, por ejemplo— no se pierde.
+    ...(lists.geo.city && !(chosenCountry?.cities ?? []).includes(lists.geo.city) ? [lists.geo.city] : []),
+  ];
+
   const MODALITIES = [
     { key: 'remoteGlobal', label: 'dash.criteria.remoteGlobal' },
     { key: 'remoteHomeCountry', label: 'dash.criteria.remoteHome' },
@@ -233,16 +240,22 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
             </TextField>
             <TextField
               size="small"
+              select
               label={t('set.profile.city')}
               value={lists.geo.city ?? ''}
               onChange={(event) => setLists((prev) => ({
                 ...prev,
-                geo: { ...prev.geo, city: event.target.value.trim() === '' ? null : event.target.value },
+                geo: { ...prev.geo, city: event.target.value === '' ? null : event.target.value },
               }))}
               helperText={t('set.profile.cityHelp')}
               slotProps={{ inputLabel: { shrink: true } }}
-              sx={{ minWidth: 200 }}
-            />
+              sx={{ minWidth: 220 }}
+            >
+              <MenuItem value="">{t('set.profile.anyCity')}</MenuItem>
+              {cityOptions.map((city) => (
+                <MenuItem key={city} value={city}>{city}</MenuItem>
+              ))}
+            </TextField>
             <Stack spacing={0.5} alignItems="flex-start">
               <TextField
                 size="small"

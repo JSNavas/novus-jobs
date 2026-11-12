@@ -23,7 +23,11 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
     completed: deps.profiles.isOnboarded(),
     profile: deps.profiles.get(),
     catalogue: {
-      countries: COUNTRIES.map((c) => ({ code: c.code, label: c.label })),
+      countries: COUNTRIES.map((c) => ({
+        code: c.code,
+        label: c.label,
+        cities: forPicking(c.cities),
+      })),
       englishLevels: ENGLISH_LEVELS,
       languages: LANGUAGES,
       ecosystems: VETOABLE_ECOSYSTEMS.map((eco) => ({ id: eco, label: ECOSYSTEM_LABELS[eco] })),
@@ -161,6 +165,24 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
 }
 
 /** Qué CV hay guardado, para poder decir cuándo se actualizó por última vez. */
+/**
+ * El catálogo lleva «Bogotá» y «Bogota» para poder casar el texto de un anuncio.
+ * Para elegir en una lista sobra una: se queda la acentuada.
+ */
+function forPicking(cities: readonly string[]): string[] {
+  const chosen = new Map<string, string>();
+  for (const city of cities) {
+    const key = city.normalize('NFD').replace(/\p{Diacritic}/gu, '');
+    const current = chosen.get(key);
+    if (!current || city !== key) chosen.set(key, city);
+  }
+  return [...chosen.values()].map(titleCase).sort((a, b) => a.localeCompare(b, 'es'));
+}
+
+function titleCase(name: string): string {
+  return name.replace(/(^|\s)([a-záéíóúñ])/g, (_, space: string, letter: string) => space + letter.toUpperCase());
+}
+
 function storedCv(dataDir: string): { name: string; updatedAt: string; bytes: number } | null {
   const dir = join(dataDir, 'cv');
   if (!existsSync(dir)) return null;
