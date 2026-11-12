@@ -411,7 +411,7 @@ Lo que el modelo escribe se guarda como datos y **no se vuelve a llamar**: las
 siguientes diez mil vacantes se extraen con ese JSON, sin IA y sin coste. La IA
 escribe el adaptador una vez; no extrae cada oferta.
 
-El resto de esta sección es el mismo trabajo hecho a mano.
+### Cómo funciona por debajo (o si prefieres escribirlo a mano)
 
 El proyecto está hecho para ir sumando sitios de empleo sin tocar nada más.
 Solo `sources/registry.ts` sabe qué plataformas existen: ni el runner, ni el
