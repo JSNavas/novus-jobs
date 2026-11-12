@@ -12,13 +12,6 @@ import { t } from '../../i18n';
 
 type Step = 'idle' | 'looking' | 'chosen' | 'saving';
 
-const EXAMPLES: { label: string; url: string }[] = [
-  { label: 'Lever', url: 'https://api.lever.co/v0/postings/EMPRESA?mode=json' },
-  { label: 'Greenhouse', url: 'https://boards-api.greenhouse.io/v1/boards/EMPRESA/jobs?content=true' },
-  { label: 'Ashby', url: 'https://api.ashbyhq.com/posting-api/job-board/EMPRESA' },
-  { label: 'Recruitee', url: 'https://EMPRESA.recruitee.com/api/offers/' },
-];
-
 const describeError = (cause: unknown): string => (cause instanceof Error ? cause.message : String(cause));
 
 const NewSourcePage = () => {
@@ -220,16 +213,20 @@ const NewSourcePage = () => {
             <Typography variant="body2" color="text.secondary">{t('src.help.two')}</Typography>
             <Typography variant="body2" color="text.secondary">{t('src.help.three')}</Typography>
           </Stack>
-          <Typography variant="subtitle2" mb={0.75}>{t('src.help.ats')}</Typography>
-          <Stack spacing={0.75}>
-            {EXAMPLES.map((example) => (
-              <Stack key={example.label} direction="row" spacing={1} alignItems="center">
-                <Chip size="small" label={example.label} />
-                <Typography variant="caption" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
-                  {example.url}
-                </Typography>
-              </Stack>
-            ))}
+          <Typography variant="subtitle2" mb={0.75}>{t('src.help.tell')}</Typography>
+          <Stack spacing={0.5}>
+            <Stack direction="row" spacing={1} alignItems="baseline">
+              <Chip size="small" color="success" variant="outlined" label={t('src.help.yes')} />
+              <Typography variant="caption" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                https://empresa.com/api/v1/jobs?page=1
+              </Typography>
+            </Stack>
+            <Stack direction="row" spacing={1} alignItems="baseline">
+              <Chip size="small" variant="outlined" label={t('src.help.no')} />
+              <Typography variant="caption" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
+                https://empresa.com/careers/senior-developer
+              </Typography>
+            </Stack>
           </Stack>
         </Box>
       </Stack>
