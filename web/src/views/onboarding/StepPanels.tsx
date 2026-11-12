@@ -252,6 +252,7 @@ export const PlaceStep = ({ state, draft, onChange }: PanelProps) => (
         label={t('geo.country')}
         value={draft.geo.country}
         onChange={(event) => onChange({ ...draft, geo: { ...draft.geo, country: event.target.value } })}
+        slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true } }}
         sx={{ minWidth: 240 }}
       >
         <MenuItem value="">{t('geo.noCountry')}</MenuItem>

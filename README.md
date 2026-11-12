@@ -8,6 +8,9 @@ Novus Jobs reads **public job boards** on a schedule, throws away the 95% that
 does not fit you, and leaves the rest in a local dashboard with the reason it
 kept each one — and the reason it discarded all the others.
 
+If a board is missing, **you add it with a JSON file** — no code, and no
+release to wait for: [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md).
+
 You pick which sites it reads. See [supported platforms](#supported-platforms)
 for the ones that ship today, and [docs/SOURCES.md](docs/SOURCES.md) for adding
 one — it is a single file.
@@ -161,27 +164,64 @@ No analytics, no crash reporting, no update check. The server binds to
 Each one is independent: switch it on or off from the Integrations screen, and
 give it its own rhythm. Nothing in the project depends on any single platform.
 
-| Platform | How it is read | Needs a login | Default rhythm |
+| Platform | How it is read | Needs a login | Written as |
 |---|---|---|---|
-| **Get on Board** | Public search API (`/api/v0/search/jobs`), no credentials | No | Every 60 min |
-| **LinkedIn** | Your own feed, in a real browser with your session | Yes, once | 3 time slots a day |
+| **LinkedIn** | Your own feed, in a real browser with your session | Yes, once | class |
+| **Get on Board** | Public search API (`/api/v0/search/jobs`) | No | class |
+| **Hacker News** | This month's "Who is hiring" thread, via Algolia | No | class |
+| **Remotive** | `GET /api/remote-jobs` | No | descriptor |
+| **Remote OK** | `GET /api` | No | descriptor |
+| **Himalayas** | `GET /jobs/api` | No | descriptor |
+| **We Work Remotely** | RSS feed of programming jobs | No | descriptor |
 
-Why the rhythms differ: what sets the pace is **what is at risk when you read**.
-An open API only needs good manners towards someone else's server; an account
-that can be flagged gets a human pace and a hard daily ceiling.
+**Six of the seven need no account at all**, so the project does something
+useful the first time you run it, before you have logged into anything. The
+public ones run every 60 minutes; LinkedIn gets three time slots a day. What
+sets the pace is **what is at risk when you read**: an open API only needs good
+manners towards someone else's server, while an account that can be flagged
+gets a human pace and a hard daily ceiling.
 
-**More are welcome, and this list is meant to grow.** If a board you use is
-missing, [open an issue](.github/ISSUE_TEMPLATE/new-source.md) or send a PR —
-a source is one file and one line, and boards with a public API or an RSS feed
-are the easiest to add. Candidates people have asked for: RemoteOK, We Work
-Remotely, InfoJobs, Wellfound, Remotive, Himalayas, Hacker News "Who is hiring".
+**Four of them are not code.** They are JSON descriptors in
+`server/descriptors/`, which is why this list is meant to grow without going
+through a maintainer: see [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md). If a board
+you use is missing, write a descriptor and
+[open an issue](.github/ISSUE_TEMPLATE/new-source.md) with it, or send a PR.
+
+Remote OK's terms ask that you link back to them when you use their API.
 
 ## Adding a platform
 
-A source is one file and one line in a registry. It declares its name, whether
-it needs a browser session, and the rhythm it is safe to read it at; everything
-else — the dashboard, the scheduler, the filter, the Integrations screen — picks
-it up without changes. Removing one is deleting that file and that line.
+**Usually it is not code.** A board that answers a `GET` with JSON, or publishes
+an RSS feed, is a file in `server/descriptors/`:
+
+```json
+{
+  "version": 1,
+  "name": "remotive",
+  "label": "Remotive",
+  "request": { "url": "https://remotive.com/api/remote-jobs" },
+  "fields": {
+    "list": "jobs", "title": "title", "company": "company_name",
+    "description": "description", "url": "url"
+  }
+}
+```
+
+That is a whole platform: it shows up in Integrations with its own switch and
+rhythm. Paging, `POST` bodies for Workday, RSS, root arrays — all of it is in
+**[docs/DESCRIPTORS.md](docs/DESCRIPTORS.md)**.
+
+This is the part worth stealing for your own project. An aggregator runs on
+someone's server, so it can only afford boards big enough to maintain, and one
+block takes it down for everybody. Reading from your own machine makes the long
+tail viable — your university's board, one bank's careers endpoint — and a
+descriptor is a file, so it can be exported, pasted into an issue and shared.
+It works because the filter reads the posting as prose, so an imperfect mapping
+still yields something the rules and the LLM judge can evaluate.
+
+**A class is for logic, not data**: a session to keep, a signature to compute,
+or two requests to answer one question. Hacker News is the example — the "Who
+is hiring" thread has a new id every month.
 
 ```ts
 { name: 'infojobs', label: 'InfoJobs', create: (config, pool) => new InfoJobsSource(config, pool) }

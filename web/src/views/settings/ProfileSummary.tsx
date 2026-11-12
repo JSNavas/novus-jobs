@@ -248,7 +248,7 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
                 geo: { ...prev.geo, city: event.target.value === '' ? null : event.target.value },
               }))}
               helperText={t('set.profile.cityHelp')}
-              slotProps={{ inputLabel: { shrink: true } }}
+              slotProps={{ inputLabel: { shrink: true }, select: { displayEmpty: true } }}
               sx={{ minWidth: 220 }}
             >
               <MenuItem value="">{t('set.profile.anyCity')}</MenuItem>

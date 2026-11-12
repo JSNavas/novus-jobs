@@ -1,13 +1,20 @@
 # Writing a source
 
 A **source** is one platform Novus Jobs reads: LinkedIn, Get on Board, a job
-board's RSS feed, a company's careers API. Adding one is a file and a line.
-Removing one is deleting them.
+board's RSS feed, a company's careers API.
+
+**Most boards need no code at all.** If the platform is a public endpoint that
+returns JSON or RSS, write a descriptor instead — one JSON file, no TypeScript,
+no rebuild: [DESCRIPTORS.md](DESCRIPTORS.md). This page is for the rest: a
+platform that needs a session, a signature, or two requests to answer one
+question. Adding one of those is a file and a line. Removing one is deleting
+them.
 
 Nothing else in the project knows how many platforms exist or what they are
 called. The scheduler, the runner, the filter, the database and the Integrations
 screen all work off the registry.
 
+- [Code, or a descriptor?](#code-or-a-descriptor)
 - [The contract](#the-contract)
 - [A source that reads an API](#a-source-that-reads-an-api)
 - [A source that needs a login](#a-source-that-needs-a-login)
@@ -15,6 +22,25 @@ screen all work off the registry.
 - [Registering it](#registering-it)
 - [Removing one](#removing-one)
 - [Rules of the house](#rules-of-the-house)
+
+## Code, or a descriptor?
+
+| The platform… | What it takes |
+|---|---|
+| answers a `GET` with JSON | a descriptor |
+| publishes an RSS or Atom feed | a descriptor |
+| takes a JSON body on `POST`, like Workday | a descriptor |
+| needs you to be logged in | a class, with `profileId` and `loginUrl` |
+| needs a signature or a token refreshed | a class |
+| needs one request to learn what the next asks for | a class |
+| hides the postings in HTML | a class |
+
+The last three are not arbitrary. `hackernews.source.ts` is a class because the
+"Who is hiring" thread has a different id every month: a descriptor with the id
+written in it would break on the first of December, silently.
+
+Put differently: a descriptor carries data, a class carries logic. If you find
+yourself wishing the descriptor had an `if`, that is the signal.
 
 ## The contract
 
@@ -175,6 +201,9 @@ To stop using one without deleting it, use the switch in Integrations.
 
 ## Rules of the house
 
+- **Prefer a descriptor.** A class is a maintenance promise from whoever merges
+  it. A descriptor is a file anyone can fix, share or delete, and it needs no
+  release to reach the person who needs it.
 - **One filter, every platform.** A source returns text. It does not decide what
   fits the user; `filters/` does, from the user's profile. A source that filters
   is a second set of rules nobody can audit from the dashboard.

@@ -2,6 +2,8 @@
 
 Busca trabajo por ti en los **sitios de empleo públicos** que tú enciendas, te avisa solo cuando aparece algo que de verdad encaja, y te dice qué están pidiendo las vacantes que te sirven. **Todo en tu máquina**: tu CV no se sube a ningún sitio y tus datos viven en un fichero que puedes borrar.
 
+Y si falta un portal, **lo añades tú con un JSON**, sin tocar el código ni esperar a que nadie publique una versión: [cómo se describe una fuente](docs/DESCRIPTORS.md).
+
 > English: [README.md](README.md) · Instalación paso a paso: [docs/INSTALL.md](docs/INSTALL.md)
 >
 > Esta página es la versión larga, con el porqué de cada decisión. Si solo quieres ponerlo a andar, el README en inglés y la guía de instalación son más directos.
@@ -19,7 +21,7 @@ Novus Jobs lee el feed en tu nombre, aplica tu criterio y te deja en el dashboar
 3. **Que tu cuenta de LinkedIn siga sana.** Es lo único irremplazable de todo esto. El ritmo que la plataforma ve está limitado por cuatro topes simultáneos y no se sube ni aunque insistas con el botón.
 4. **Que iniciar sesión pase una sola vez.** La sesión se guarda y se refresca sola; si caduca, te llega un correo diciendo exactamente qué comando correr.
 5. **Que sirva a cualquiera.** Empezó con el perfil de una persona escrito en el código y ya no: al abrirlo la primera vez hay un alta que lee tu CV, te propone tu stack y tus vetos, y guarda tu perfil en tu base de datos. Nada de lo que decide qué oferta te llega está en el código.
-6. **Que crezca a más plataformas.** LinkedIn fue la primera, no la única: añadir una es una clase y una línea en el registro. Get on Board es la segunda, y entró sin tocar nada del pipeline.
+6. **Que crezca a más plataformas, y sin mí.** LinkedIn fue la primera, no la única. Hoy son siete, y cinco de ellas no tienen código propio: son **descriptores**, un JSON que dice de dónde se bajan las vacantes y en qué campos vienen. Añadir un portal dejó de ser un commit de este repositorio para ser un fichero que cualquiera escribe, exporta y comparte.
 7. **Que te diga dónde poner el esfuerzo.** Si dos o tres vacantes piden lo mismo, eso es lo relevante. El [Enfoque](#enfoque) lo cuenta solo, y lo que empieza a pedirse y nadie clasificó asoma igual.
 
 ### Lo que NO hace
@@ -51,7 +53,8 @@ una de ellas es un cambio que este proyecto no quiere, por cómodo que sea.
    corregir una coma no es aceptable.
 5. **Ninguna plataforma es especial.** Las fuentes son implementaciones
    intercambiables tras una interfaz. Borrar la más grande es un fichero y una
-   línea.
+   línea. Llevado hasta el final: si ninguna es especial, ninguna tiene por qué
+   estar escrita en el código, y por eso la mayoría son datos.
 6. **El porqué vive en las pruebas.** El código no lleva comentarios: lo que
    explica una regla que parece equivocada es su prueba, con el nombre del caso
    real que la hizo falta. Un arreglo sin su caso no lo puede verificar nadie
@@ -298,7 +301,33 @@ Lo que atrapa es lo que ninguna expresión regular puede: *"esto es una base de 
 
 El juez juzga además **si el puesto es de su oficio**. Las reglas no saben de oficios: en cuanto una tecnología del núcleo aparece en el anuncio, dejan pasar. Así entró un «Ingeniero de Seguridad de Red» porque mencionaba Python. Eso lo ve el modelo, no una expresión regular.
 
-**El único descarte que el juez no puede revocar es el del stack**, porque es el único por el que no se le pregunta. Dejárselo revocar sería dejar entrar «Encargado de atención a pacientes, remoto» porque el modelo confirma —con razón— que sí, es una vacante remota de verdad.
+### Lo que el juez no puede revocar
+
+Tres cosas, y las tres por el mismo motivo: no son opiniones suyas.
+
+- **El stack.** Es el único por el que no se le pregunta. Dejárselo revocar sería
+  dejar entrar «Encargado de atención a pacientes, remoto» porque el modelo
+  confirma —con razón— que sí, es una vacante remota de verdad.
+- **Un país escrito en el anuncio.** Un «Ubicación: Spain» no es una suposición
+  de las reglas: está ahí, en el texto. Lo que se adivina —«presencial»,
+  «híbrido»— sí se puede revocar, porque ahí la regla sí estaba opinando.
+- **Lo que otra regla no llegó a mirar.** Esto es lo que más costó ver.
+
+Lo último merece explicación, porque fue un fallo real y caro. Las reglas se
+evalúan en orden y la primera que dispara manda: las demás no llegan a correr.
+Una oferta de Berlín que se descartaba por «no es una oferta» nunca pasaba por
+la regla de ubicación. Y cuando el juez decía «sí es una oferta», el rescate la
+aceptaba sin que nadie mirara desde dónde se trabaja.
+
+El blindaje del stack tenía el mismo agujero: solo protegía si el stack había
+sido el motivo **decisivo**. Si saltaba antes un veto, el juez acababa decidiendo
+sobre el stack —justo lo que no debe pasar— y entraban anuncios de Java sin una
+sola tecnología del candidato.
+
+Medido sobre la pasada del 12 de noviembre de 2026: **30 de 65 aceptadas habían
+entrado por ahí**. Ahora un rescate vuelve a comprobar la ubicación y el núcleo
+antes de aceptar, y las dos comprobaciones salen de la misma función que usan
+las reglas, para que no haya dos verdades sobre qué ubicación vale.
 
 Que el juez pudiera **solo** descartar fue la decisión original, y estaba mal: medido sobre el feed real, de 117 descartes 114 no habían pasado nunca por el juez, y solo 17 eran del stack. Los otros 100 se tiraban sin segunda opinión pudiendo tenerla, y un falso descarte de una regex no tenía vuelta: se guardaba con `judge_status = skipped` y nadie lo volvía a mirar.
 
@@ -333,30 +362,99 @@ El filtro de inglés comparaba contra un B1 escrito dentro de las propias expres
 
 ## Añadir una plataforma
 
-El proyecto está hecho para ir sumando sitios de empleo sin tocar nada más. Solo `sources/registry.ts` sabe qué plataformas existen: ni el runner, ni el planificador, ni el pipeline, ni la API, ni la UI.
+El proyecto está hecho para ir sumando sitios de empleo sin tocar nada más.
+Solo `sources/registry.ts` sabe qué plataformas existen: ni el runner, ni el
+planificador, ni el pipeline, ni la API, ni la UI.
 
-1. `server/src/sources/<nombre>.source.ts` con una clase que cumpla `JobSource`. Si necesita sesión, pide su navegador al pool con `pool.session('<id>')` y declara `profileId` y `loginUrl`; si lee de una API o un RSS, los deja en `null`.
+**Lo normal es que no haga falta código.** Si el portal responde a un `GET` con
+JSON, o publica un RSS, se describe con un fichero en `server/descriptors/`:
+
+```json
+{
+  "version": 1,
+  "name": "remotive",
+  "label": "Remotive",
+  "request": { "url": "https://remotive.com/api/remote-jobs" },
+  "fields": {
+    "list": "jobs",
+    "title": "title",
+    "company": "company_name",
+    "description": "description",
+    "url": "url"
+  }
+}
+```
+
+Eso es una plataforma entera: aparece en Integraciones con su interruptor y su
+ritmo. El formato completo —paginación, `POST` para Workday, feeds RSS, la lista
+en la raíz— está en [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md).
+
+**Por qué esto importa más de lo que parece.** Un agregador vive en el servidor
+de alguien, así que solo puede leer portales lo bastante grandes como para que
+compense mantenerlos, y cuando lo bloquean lo bloquean para todo el mundo a la
+vez. Aquí cada petición sale de tu máquina, con tu IP y tu ritmo. Eso hace
+posible la cola larga: la bolsa de tu universidad, el endpoint de empleo de un
+banco, la página de «Trabaja con nosotros» de la empresa que te interesa. Y como
+un descriptor es un fichero, se exporta, se pega en un issue y se comparte.
+
+El filtro ayuda a que esto funcione aunque el mapeo sea imperfecto: la vacante
+viaja como **texto**, y las reglas y el juez leen prosa. Con cuatro campos
+—título, empresa, descripción y enlace— sale una oferta que el pipeline evalúa
+igual que una de LinkedIn.
+
+**Cuándo sí hace falta una clase.** Cuando hay lógica, no datos: una sesión que
+mantener, una firma que calcular, o dos peticiones para contestar una pregunta.
+Hacker News es el ejemplo: el hilo «Who is hiring» cambia de identificador cada
+mes, así que hay que resolverlo antes de leer los comentarios. Un descriptor con
+ese id escrito dentro se habría roto el 1 de diciembre sin avisar.
+
+1. `server/src/sources/<nombre>.source.ts` con una clase que cumpla `JobSource`.
+   Si necesita sesión, pide su navegador al pool con `pool.session('<id>')` y
+   declara `profileId` y `loginUrl`; si lee de una API, los deja en `null`.
 2. Una línea en `DEFINITIONS`, en `sources/registry.ts`.
 
-Y ya está: aparece en Integraciones **apagada**, con el editor de horario que le toque, y se enciende cuando quieras. Se construyen todas las conocidas aunque estén apagadas —construir una no abre navegadores ni hace peticiones— porque una fuente que no se construye no existe para la interfaz, y entonces no habría desde dónde encenderla.
+Y ya está, en los dos casos: aparece en Integraciones con el editor de horario
+que le toque. Se construyen todas las conocidas aunque estén apagadas
+—construir una no abre navegadores ni hace peticiones— porque una fuente que no
+se construye no existe para la interfaz, y entonces no habría desde dónde
+encenderla.
 
-Para dejar de usarla, el interruptor. Para quitarla del todo, borrar su fichero y su línea; nada más la nombra. `JOB_SOURCES` solo decide cuáles vienen encendidas el primer arranque.
+Para dejar de usarla, el interruptor. Para quitarla del todo, borrar su fichero
+(y su línea, si era una clase); nada más la nombra. `JOB_SOURCES` solo decide
+cuáles vienen encendidas el primer arranque.
 
-El contrato completo, con ejemplos de una fuente con sesión y otra sin ella, está en [docs/SOURCES.md](docs/SOURCES.md).
+El contrato completo está en [docs/SOURCES.md](docs/SOURCES.md), y el formato de
+los descriptores en [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md).
 
 ### Plataformas soportadas
 
-Cada una se enciende, se apaga y se le pone su propio ritmo desde Integraciones. La lista está pensada para crecer: si falta un portal que usas, añadirlo es un fichero y una línea ([docs/SOURCES.md](docs/SOURCES.md)), y los que tienen API pública o RSS son los más fáciles.
+Siete, y cuatro de ellas no tienen código propio. Cada una se enciende, se
+apaga y se le pone su ritmo desde Integraciones.
 
-| | LinkedIn | Get on Board |
-|---|---|---|
-| Cómo lee | navegador con tu sesión | `GET /api/v0/search/jobs`, sin autenticación |
-| Cuenta | la tuya, y es lo irremplazable | ninguna |
-| Enlace de la oferta | hay que abrir el menú «⋯» y se raciona | viene en la respuesta |
-| Ubicación y modalidad | se adivinan del texto | campos del JSON |
-| Qué pide | todo el feed | todas las vacantes remotas, sin palabra clave |
+| Plataforma | Cómo lee | Cuenta | Cómo está hecha |
+|---|---|---|---|
+| **LinkedIn** | navegador con tu sesión | la tuya, y es lo irremplazable | clase |
+| **Get on Board** | `GET /api/v0/search/jobs` | ninguna | clase |
+| **Hacker News** | el hilo «Who is hiring» del mes, vía Algolia | ninguna | clase |
+| **Remotive** | `GET /api/remote-jobs` | ninguna | descriptor |
+| **Remote OK** | `GET /api` | ninguna | descriptor |
+| **Himalayas** | `GET /jobs/api` | ninguna | descriptor |
+| **We Work Remotely** | RSS de empleo en programación | ninguna | descriptor |
 
-Y una advertencia que vale para las dos: Get on Board **no** dice desde qué país se puede trabajar. `remote_zone` viene siempre `null` y el país de un remoto llega como `["Remote"]`, así que la elegibilidad geográfica sigue estando solo en la prosa del anuncio. Las reglas y el juez hablan igual.
+Las cinco sin cuenta funcionan **el primer día, sin configurar nada**: vienen
+encendidas y no piden iniciar sesión en ningún sitio. LinkedIn es la única que
+exige algo tuyo, y por eso no es el punto de entrada del proyecto.
+
+Tres cosas que se aprendieron montándolas, y que valen para la siguiente:
+
+- **Remote OK** devuelve el array en la raíz y pone un aviso legal de primer
+  elemento (`"skip": 1` en su descriptor). Sus términos piden enlazar de vuelta.
+- **We Work Remotely** no tiene campo de empresa: la escribe en el título,
+  `Empresa: Puesto`. De ahí `companySeparator`.
+- **Hacker News** no es una bolsa de empleo sino un hilo de comentarios, y el
+  hilo cambia cada mes. Por eso es la única de las nuevas con clase propia.
+
+Y una advertencia que vale para casi todas: Get on Board **no** dice desde qué país se puede trabajar. `remote_zone` viene siempre `null` y el país de un remoto llega como `["Remote"]`, así que la elegibilidad geográfica sigue estando solo en la prosa del anuncio. Las reglas y el juez hablan igual.
 
 > **Por qué su API y no su MCP.** Get on Board publica un servidor MCP en `getonbrd.com/mcp`, y es la herramienta del **reclutador**: `search_talent` busca candidatos en su base de talento, y `list_jobs` lista las vacantes que publica *tu* empresa. No hay nada para buscar empleo ni para ver postulaciones. Lo que sí sirve es su API pública, que responde 200 sin credenciales.
 
