@@ -5,6 +5,7 @@ import {
   type SourceDescriptor,
 } from './descriptor.js';
 import { plainText } from './html.js';
+import { parseFeed } from './rss.js';
 import { OPEN_API_POLICY } from './policy.js';
 import type { JobSource, PermalinkSelector, PostMetrics, RawPost } from './types.js';
 
@@ -42,14 +43,35 @@ function toIsoDate(value: unknown): string | null {
   return null;
 }
 
-function toPostText(entry: unknown, fields: DescriptorFields): string | null {
-  const title = text(first(entry, fields.title)).trim();
-  if (!title) return null;
+function firstLine(description: string): string {
+  return description.split('\n').map((line) => line.trim()).find((line) => line !== '') ?? '';
+}
 
+function splitTitle(title: string, separator: string | null): { title: string; company: string } {
+  if (separator === null) return { title, company: '' };
+  const at = title.indexOf(separator);
+  if (at <= 0) return { title, company: '' };
+  return {
+    title: title.slice(at + separator.length).trim(),
+    company: title.slice(0, at).trim(),
+  };
+}
+
+function headlineOf(entry: unknown, fields: DescriptorFields, description: string): { title: string; company: string } {
+  const raw = text(first(entry, fields.title)).trim()
+    || (fields.titleFromDescription ? firstLine(description) : '');
+  const named = text(first(entry, fields.company)).trim();
+  if (named) return { title: raw, company: named };
+  return splitTitle(raw, fields.companySeparator);
+}
+
+function toPostText(entry: unknown, fields: DescriptorFields): string | null {
   const description = plainText(text(first(entry, fields.description))).trim();
   if (!description) return null;
 
-  const company = text(first(entry, fields.company)).trim();
+  const { title, company } = headlineOf(entry, fields, description);
+  if (!title) return null;
+
   const location = text(first(entry, fields.location)).trim();
   const salary = text(first(entry, fields.salary)).trim();
   const url = text(first(entry, fields.url)).trim();
@@ -73,7 +95,8 @@ function toMetrics(entry: unknown, fields: DescriptorFields): PostMetrics {
 function toRawPost(entry: unknown, fields: DescriptorFields): RawPost | null {
   const body = toPostText(entry, fields);
   if (!body) return null;
-  const company = text(first(entry, fields.company)).trim();
+  const description = plainText(text(first(entry, fields.description))).trim();
+  const { company } = headlineOf(entry, fields, description);
   const url = text(first(entry, fields.url)).trim();
   return {
     text: body,
@@ -160,10 +183,12 @@ export class DescribedSource implements JobSource {
       target.searchParams.set(this.descriptor.request.paging.param, String(page));
     }
 
+    const { format } = this.descriptor.request;
+
     const response = await fetch(target, {
       method,
       headers: {
-        accept: 'application/json',
+        accept: format === 'rss' ? 'application/rss+xml, application/xml' : 'application/json',
         'user-agent': USER_AGENT,
         ...(body ? { 'content-type': 'application/json' } : {}),
         ...headers,
@@ -176,12 +201,20 @@ export class DescribedSource implements JobSource {
       throw new Error(`${target.href} respondió ${response.status} ${response.statusText}`);
     }
 
+    if (format === 'rss') {
+      const items = parseFeed(await response.text());
+      if (items.length === 0) {
+        throw new Error(`${target.href} no trajo ni un <item>: ¿sigue siendo un feed RSS?`);
+      }
+      return items;
+    }
+
     try {
       return await response.json();
     } catch {
       throw new Error(
-        `${target.href} no devolvió JSON. Un descriptor solo lee APIs JSON; ` +
-        'si es RSS o HTML, hace falta una fuente propia.',
+        `${target.href} no devolvió JSON. Si la fuente es un feed, ` +
+        'el descriptor necesita "format": "rss".',
       );
     }
   }

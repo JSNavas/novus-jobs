@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "name": "weworkremotely",
+  "label": "We Work Remotely",
+  "homepage": "https://weworkremotely.com",
+  "request": {
+    "url": "https://weworkremotely.com/categories/remote-programming-jobs.rss",
+    "method": "GET",
+    "format": "rss"
+  },
+  "fields": {
+    "list": null,
+    "title": "title",
+    "description": "description",
+    "url": [
+      "link",
+      "guid"
+    ],
+    "location": "region",
+    "postedAt": "pubdate",
+    "companySeparator": ":"
+  }
+}

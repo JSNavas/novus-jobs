@@ -4,6 +4,8 @@ export type FieldPath = string;
 
 export type DescriptorMethod = 'GET' | 'POST';
 
+export type DescriptorFormat = 'json' | 'rss';
+
 export interface DescriptorPaging {
   readonly param: string;
   readonly start: number;
@@ -14,6 +16,7 @@ export interface DescriptorPaging {
 export interface DescriptorRequest {
   readonly url: string;
   readonly method: DescriptorMethod;
+  readonly format: DescriptorFormat;
   readonly headers: Readonly<Record<string, string>>;
   readonly query: Readonly<Record<string, string>>;
   readonly body: Readonly<Record<string, unknown>> | null;
@@ -23,6 +26,8 @@ export interface DescriptorRequest {
 export interface DescriptorFields {
   readonly list: FieldPath | null;
   readonly skip: number;
+  readonly titleFromDescription: boolean;
+  readonly companySeparator: string | null;
   readonly title: readonly FieldPath[];
   readonly company: readonly FieldPath[];
   readonly description: readonly FieldPath[];
@@ -121,6 +126,15 @@ function asMethod(value: unknown): DescriptorMethod {
   return text;
 }
 
+function asFormat(value: unknown): DescriptorFormat {
+  if (value === undefined || value === null) return 'json';
+  const text = asString(value, 'request.format').toLowerCase();
+  if (text !== 'json' && text !== 'rss') {
+    throw new DescriptorError(`request.format solo puede ser json o rss, no "${text}".`);
+  }
+  return text;
+}
+
 function asBody(value: unknown, method: DescriptorMethod): Record<string, unknown> | null {
   if (value === undefined || value === null) return null;
   if (method !== 'POST') {
@@ -207,6 +221,7 @@ export function parseDescriptor(input: unknown): SourceDescriptor {
     request: {
       url: parseHttpsUrl(request.url, 'request.url'),
       method,
+      format: asFormat(request.format),
       headers: asStringMap(request.headers, 'request.headers'),
       query: asStringMap(request.query, 'request.query'),
       body: asBody(request.body, method),
@@ -215,7 +230,9 @@ export function parseDescriptor(input: unknown): SourceDescriptor {
     fields: {
       list: optionalText(fields.list),
       skip: asSkip(fields.skip),
-      title: asPaths(fields.title, 'fields.title', true),
+      titleFromDescription: fields.titleFromDescription === true,
+      companySeparator: optionalText(fields.companySeparator),
+      title: asPaths(fields.title, 'fields.title', fields.titleFromDescription !== true),
       company: asPaths(fields.company, 'fields.company', false),
       description: asPaths(fields.description, 'fields.description', true),
       url: asPaths(fields.url, 'fields.url', false),

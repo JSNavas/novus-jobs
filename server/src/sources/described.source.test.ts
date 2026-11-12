@@ -128,10 +128,76 @@ describe('DescribedSource', () => {
     await assert.rejects(() => describedFrom(REMOTIVE).fetch(() => []), /fields\.list/);
   });
 
-  it('una respuesta que no es JSON dice que hace falta una fuente propia, no "error de red"', async () => {
+  it('un feed leído como JSON dice qué poner en el descriptor, no "error de red"', async () => {
     globalThis.fetch = (async () =>
       new Response('<rss><channel/></rss>', { status: 200 })) as typeof fetch;
-    await assert.rejects(() => describedFrom(REMOTIVE).fetch(() => []), /solo lee APIs JSON/);
+    await assert.rejects(() => describedFrom(REMOTIVE).fetch(() => []), /"format": "rss"/);
+  });
+
+  it('un feed RSS entra por los mismos caminos de campos que un JSON', async () => {
+    globalThis.fetch = (async () =>
+      new Response(
+        '<rss><channel><item><title>Acme: Backend Engineer</title>' +
+        '<link>https://wwr.test/1</link><region>Anywhere</region>' +
+        '<description>&lt;p&gt;Go y Postgres&lt;/p&gt;</description>' +
+        '<pubDate>Mon, 19 Oct 2026 10:01:21 +0000</pubDate></item></channel></rss>',
+        { status: 200 },
+      )) as typeof fetch;
+
+    const post = await onePost(describedFrom({
+      name: 'weworkremotely',
+      request: { url: 'https://weworkremotely.com/x.rss', format: 'rss' },
+      fields: {
+        list: null,
+        title: 'title',
+        description: 'description',
+        url: 'link',
+        location: 'region',
+        postedAt: 'pubdate',
+        companySeparator: ':',
+      },
+    }));
+
+    assert.equal(post.employer, 'Acme');
+    assert.match(post.text, /^Acme busca: Backend Engineer\n/);
+    assert.match(post.text, /Ubicación: Anywhere/);
+    assert.match(post.text, /Go y Postgres/);
+    assert.ok(!post.text.includes('&lt;'));
+  });
+
+  it('cuando la empresa viene dentro del título, el separador la saca', async () => {
+    reply({ jobs: [{ title: 'Acme | Backend Engineer', description: 'Go' }] });
+    const post = await onePost(describedFrom({
+      ...REMOTIVE,
+      fields: { ...REMOTIVE.fields, company: 'company_name', companySeparator: '|' },
+    }));
+    assert.equal(post.employer, 'Acme');
+    assert.match(post.text, /^Acme busca: Backend Engineer\n/);
+  });
+
+  it('un campo de empresa con dato manda sobre el separador del título', async () => {
+    reply({ jobs: [{ title: 'Acme | Backend', company_name: 'Acme Corp', description: 'Go' }] });
+    const post = await onePost(describedFrom({
+      ...REMOTIVE,
+      fields: { ...REMOTIVE.fields, companySeparator: '|' },
+    }));
+    assert.equal(post.employer, 'Acme Corp');
+    assert.match(post.text, /^Acme Corp busca: Acme \| Backend\n/);
+  });
+
+  it('sin campo de título, la primera línea del cuerpo sirve: así se lee un hilo de HN', async () => {
+    reply({ hits: [{ comment_text: '<p>Acme | Backend | REMOTE</p><p>Buscamos Go.</p>' }] });
+    const post = await onePost(describedFrom({
+      name: 'un-hilo',
+      request: { url: 'https://hn.algolia.test/api' },
+      fields: {
+        list: 'hits',
+        description: 'comment_text',
+        titleFromDescription: true,
+        companySeparator: '|',
+      },
+    }));
+    assert.match(post.text, /^Acme busca: Backend \| REMOTE\n/);
   });
 
   it('un 403 se cuenta con su código: es lo que distingue "me bloquearon" de "cambió la forma"', async () => {

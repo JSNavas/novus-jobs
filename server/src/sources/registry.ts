@@ -3,6 +3,7 @@ import type { Config } from '../config.js';
 import { DescribedSource } from './described.source.js';
 import type { SourceDescriptor } from './descriptor.js';
 import { GetOnBoardSource } from './getonbrd.source.js';
+import { HackerNewsSource } from './hackernews.source.js';
 import { LinkedInSource } from './linkedin.source.js';
 import type { JobSource, SourceDefinition } from './types.js';
 
@@ -16,6 +17,11 @@ const NATIVE: readonly SourceDefinition[] = [
     name: 'getonbrd',
     label: 'Get on Board',
     create: () => new GetOnBoardSource(),
+  },
+  {
+    name: 'hackernews',
+    label: 'Hacker News (Who is hiring)',
+    create: () => new HackerNewsSource(),
   },
 ];
 

@@ -1,7 +1,6 @@
 import { GoogleGenAI } from '@google/genai';
 import { existsSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { buildApp } from './app.js';
 import type { CandidateProfile } from './profile/types.js';
 import { migrateProfile } from './browser/migrate.js';
@@ -40,7 +39,7 @@ async function main(): Promise<void> {
   migrateProfile(legacyLinkedinProfileDir(config), pool.session(LINKEDIN_PROFILE_ID).dir);
 
   const descriptors = new SourceDescriptors(settings);
-  const catalog = readCatalog(join(dirname(fileURLToPath(import.meta.url)), '..', 'descriptors'));
+  const catalog = readCatalog(join(config.serverRoot, 'descriptors'));
   const described = [...catalog, ...descriptors.all()];
   registerDescriptors(described);
   if (described.length) {
