@@ -21,6 +21,9 @@ const OTRA_BUENA =
 const PRESENCIAL =
   'Full-Stack Developer (Senior). Ubicacion: Barcelona, Espana. Modalidad presencial. Buscamos un/a Full-Stack Developer con Node.js, React y AWS. Contrato indefinido. Postula en https://lnkd.in/dabc';
 
+const PRESENCIAL_SIN_PAIS =
+  'Full-Stack Developer (Senior). Modalidad presencial en nuestras oficinas. Buscamos un/a Full-Stack Developer con Node.js, React y AWS. Contrato indefinido. Postula en https://lnkd.in/dabc';
+
 const SEGURIDAD_DE_RED =
   'Freelanly | Ingeniero de Seguridad de Red. Estados Unidos. USD 102000-138000/ano. El cliente necesita un Ingeniero de Seguridad de Red para firewalls, VPN y segmentacion. Scripting en Python deseable. Remoto. Postula: https://lnkd.in/dseg';
 
@@ -132,7 +135,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
 
   it('EL CASO REAL: rescata una oferta que la regla de ubicación había descartado', async () => {
     const { judge } = fakeJudge(() => ({ isOffer: true, rejection: null }));
-    const result = await run([PRESENCIAL], judge);
+    const result = await run([PRESENCIAL_SIN_PAIS], judge);
 
     assert.equal(result.outcome.accepted, 1, 'el juez dijo que sirve, así que entra');
     assert.equal(result.outcome.rejected, 0);
@@ -150,7 +153,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
 
   it('un rescate por ubicación no sigue afirmando la ubicación que se acaba de tumbar', async () => {
     const { judge } = fakeJudge(() => ({ isOffer: true, rejection: null }));
-    await run([PRESENCIAL], judge);
+    await run([PRESENCIAL_SIN_PAIS], judge);
 
     const stored = jobs.list({
       status: null, verdict: null, runId: null,
@@ -159,6 +162,20 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     const job = stored.items[0]!;
     assert.equal(job.locationKind, JobLocation.Unknown, 'ya no es "presencial": nadie lo sabe');
     assert.equal(job.isUncertain, true, 'entra marcada como por confirmar, no como oferta limpia');
+  });
+
+  it('EL CASO REAL (weworkremotely, 12 nov 2026): presencial Y atada a países ajenos es ajena, y eso no se rescata', async () => {
+    const { judge } = fakeJudge(() => ({ isOffer: true, rejection: null }));
+    const result = await run([PRESENCIAL], judge);
+
+    assert.equal(result.outcome.accepted, 0, 'el sitio lo dice el anuncio: Barcelona no es una confusión que revocar');
+    assert.equal(result.outcome.rejected, 1);
+
+    const stored = jobs.list({
+      status: null, verdict: null, runId: null,
+      source: null, search: null, hasApply: null, limit: 10, offset: 0,
+    });
+    assert.equal(stored.items[0]!.locationKind, JobLocation.OtherCountry);
   });
 
   it('EL CASO REAL (himalayas, 12 nov 2026): un remoto solo para España no lo rescata el juez', async () => {
@@ -245,7 +262,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
 
   it('un descarte de las reglas que el juez confirma conserva el motivo concreto de la regla', async () => {
     const { judge } = fakeJudge(() => ({ isOffer: false, reason: 'no es una vacante' }));
-    await run([PRESENCIAL], judge);
+    await run([PRESENCIAL_SIN_PAIS], judge);
 
     const stored = jobs.list({
       status: null, verdict: null, runId: null,

@@ -79,9 +79,12 @@ const CANDIDATE_PHRASES = [
 ];
 const SELF_INTRODUCTION = /\bsoy\s+[a-záéíóúñ]+([\s,]|\s+[a-záéíóúñ]+\s*,)?\s*(desarrollador|developer|ingenier|programador|full\s*stack|frontend|backend)/i;
 
+const INTRODUCES_HIMSELF = /^\W{0,20}(?:i\s*['’]?\s*m|i\s+am)\s+(?!looking|hiring|seeking|searching|recruiting)[^.!?\n]{0,70}?\b(?:engineer|developer|programmer|designer|freelancer)\b/i;
+
 export function isCandidateSelfPromotion(text: string): boolean {
   const t = text.toLowerCase();
-  return CANDIDATE_PHRASES.some((m) => t.includes(m)) || SELF_INTRODUCTION.test(t);
+  if (CANDIDATE_PHRASES.some((m) => t.includes(m)) || SELF_INTRODUCTION.test(t)) return true;
+  return INTRODUCES_HIMSELF.test(t);
 }
 
 const CONTENT_MARKS: Array<string | RegExp> = [
@@ -116,9 +119,16 @@ const OFFER_SIGNALS = [
   'client project', 'send your cv', 'send your resume',
 ];
 
+const OUR_OWN_LINE = /^\s*(?:hilo|thread|postular|ubicaci[óo]n|localizaci[óo]n|location|nivel|modalidad|[áa]rea|area|sueldo|salary|url|headquarters|pa[íi]s|country|job\s+type|schedule|pay):/i;
+
+function theirWords(text: string): string {
+  return text.split('\n').filter((line) => !OUR_OWN_LINE.test(line)).join('\n').toLowerCase();
+}
+
 export function looksLikeOffer(text: string): boolean {
   const t = text.toLowerCase();
-  if (CONTENT_MARKS.some((m) => (typeof m === 'string' ? t.includes(m) : m.test(t)))) return false;
+  const theirs = theirWords(text);
+  if (CONTENT_MARKS.some((m) => (typeof m === 'string' ? theirs.includes(m) : m.test(theirs)))) return false;
   if (OFFER_SIGNALS.some((m) => t.includes(m))) return true;
   if (/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i.test(t)) return true;
   return /\busd\s*\$?\s*[\d.,]+|\$\s?[\d.,]{3,}|sueldo|remuneraci[óo]n/i.test(t);

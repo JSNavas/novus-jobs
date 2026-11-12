@@ -137,6 +137,35 @@ function restrictionNear(t: string, country: string): boolean {
   return false;
 }
 
+const REMOTE_SCOPE = new RegExp(String.raw`${REMOTE}\s*[(\[]([^)\]]{1,45})[)\]]`, 'gi');
+
+const NOT_A_PLACE_SCOPE = /overlap|timezone|time\s*zone|husos?|horari|hours|gmt|utc|[+-]\d|cet\b|est\b|pst\b|ist\b|preferr?ed|opcional|optional|full[\s-]?time|part[\s-]?time|contract/i;
+
+const SCOPE_ABBREVIATIONS = ['us', 'u.s.', 'usa', 'uk', 'eu', 'eea', 'emea', 'apac', 'anz', 'dach', 'uae'];
+
+function scopeNamesAPlace(scope: string, home: HomeGeo): boolean {
+  if (foreignNames(home).some((name) => wordIn(scope, name))) return true;
+  if (foreignCities(home).some((city) => wordIn(scope, city))) return true;
+  return SCOPE_ABBREVIATIONS.some((short) => wordIn(scope, short));
+}
+
+function remoteScopeIsForeign(t: string, home: HomeGeo): boolean {
+  for (const match of t.matchAll(REMOTE_SCOPE)) {
+    const scope = (match[1] ?? '').trim();
+    if (!scope) continue;
+    if (homeMarks(home).some((m) => scope.includes(m))) continue;
+    if (homeCities(home).some((c) => scope.includes(c))) continue;
+    if (NO_PLACE_IN_LINE.some((m) => scope.includes(m))) continue;
+    if (ANYWHERE_MARKS.some((m) => scope.includes(m))) continue;
+    const region = home.country ? REGION_MARKS[home.country.region] : [];
+    if (region.some((m) => scope.includes(m))) continue;
+    if (scopeNamesAPlace(scope, home)) return true;
+    if (NOT_A_PLACE_SCOPE.test(scope)) continue;
+    return true;
+  }
+  return false;
+}
+
 function tiedTo(t: string, place: string): boolean {
   return restrictionNear(t, place) || nearRemote(t, REMOTE, place) || nearRemote(t, place, REMOTE);
 }
@@ -147,6 +176,7 @@ function foreignCities(home: HomeGeo): string[] {
 }
 
 function restrictsToForeignCountry(t: string, home: HomeGeo, spelled: boolean): boolean {
+  if (remoteScopeIsForeign(t, home)) return true;
   const named = foreignNames(home).filter((c) => wordIn(t, c));
   if (named.some((country) => tiedTo(t, country))) return true;
   if (!spelled && named.some((country) => labelledWithCountry(t, country))) return true;
@@ -155,8 +185,10 @@ function restrictsToForeignCountry(t: string, home: HomeGeo, spelled: boolean): 
 
 export function classifyLocation(text: string, home: HomeGeo): JobLocation {
   const t = text.toLowerCase();
+  const tied = home.country !== null && restrictsToForeignCountry(t, home, readPlaceLine(t, home) !== null);
+
   const onsite = onsiteKind(t, home);
-  if (onsite) return onsite;
+  if (onsite) return tied ? JobLocation.OtherCountry : onsite;
 
   const marks = homeMarks(home);
   if (marks.some((m) => t.includes(m))) return JobLocation.HomeCountry;
@@ -164,7 +196,7 @@ export function classifyLocation(text: string, home: HomeGeo): JobLocation {
 
   const line = readPlaceLine(t, home);
   if (line === 'foreign') return JobLocation.OtherCountry;
-  if (home.country && restrictsToForeignCountry(t, home, line !== null)) return JobLocation.OtherCountry;
+  if (tied) return JobLocation.OtherCountry;
   if (line === 'reachable') return JobLocation.Global;
 
   const homeRegion = home.country ? REGION_MARKS[home.country.region] : [];

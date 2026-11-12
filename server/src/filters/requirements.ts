@@ -13,14 +13,17 @@ const NOT_REQUIRED = /deseable|no\s+excluyente|no\s+es\s+excluyente|no\s+obligat
 const LEVEL_MARKS: ReadonlyArray<readonly [EnglishLevel, RegExp]> = [
   ['native', /\bnativ\w*|\bnative\b|biling[üu]e|bilingual/i],
   ['c2', /\bc2\b|dominio\s+total|proficiency/i],
-  ['c1', /\bc1\b|avanzad|advanc|fluid|fluen|excelente|excellent|s[óo]lido|solid|professional|business|proficien/i],
-  ['b2', /\bb2\b|upper|intermedio\s+alto|conversacional|conversational|strong|buen[ao]?\s|alto\b/i],
+  ['c1', /\bc1\b|avanzad|advanc|fluid|fluen|excelente|excellent|s[óo]lido|solid|business|proficien/i],
+  ['b2', /\bb2\b|upper|intermedio\s+alto|conversacional|conversational|strong|professional|buen[ao]?\s|alto\b/i],
   ['b1', /\bb1\b|intermedi/i],
   ['a2', /\ba2\b|b[áa]sic[oa]|basic\b|elemental|lectura|reading|comprensi[óo]n\s+lectora|escrit[oa]\s+b[áa]sic|t[ée]cnico\s+b[áa]sico/i],
   ['a1', /\ba1\b|principiante|beginner/i],
 ];
 
+const INTERMEDIATE_ADVANCED = /intermedi\w*[\s-]*(?:alto|avanzad\w*|advanc\w*)|intermediate[\s-]*advanced/i;
+
 function demandedLevel(window: string): EnglishLevel | null {
+  if (INTERMEDIATE_ADVANCED.test(window)) return 'b2';
   const found = LEVEL_MARKS.filter(([, re]) => re.test(window)).map(([level]) => level);
   if (!found.length) return null;
   return found.reduce((a, b) => (ENGLISH_LEVELS.indexOf(a) >= ENGLISH_LEVELS.indexOf(b) ? a : b));
@@ -81,9 +84,25 @@ function unknownTechPattern(cannotDo: readonly string[]): RegExp {
   TECH_PATTERN_CACHE.set(key, pattern);
   return pattern;
 }
+const ALSO_A_PLAIN_WORD = new Set([
+  'go', 'spark', 'rails', 'backbone', 'phoenix', 'unity', 'unreal', 'swift', 'dart',
+  'rust', 'ruby', 'julia', 'groovy', 'informatica', 'informática', 'ember', 'flutter',
+  'scala', 'pascal', 'delphi', 'struts', 'talend',
+]);
+
+const TECH_CUE = /experien|conocimient|dominio|manejo|lenguaje|language|programaci|programming|developer|desarroll\w*|engineer|ingenier|framework|backend|back-end|frontend|front-end|microservi|migra\w*|proficien|expertise|familiar/i;
+
+const PLAIN_WORD_WINDOW = 40;
+
 const OPTIONAL_TECH = /deseable|valorable|se\s+valora\w*|valoramos|plus|nice\s+to\s+have|no\s+excluyente|opcional|preferible|bonus|ideal(mente)?/i;
 const MIGRATION_CONTEXT = /migra\w*|legacy|reemplaz\w*|sustitu\w*|desde\s+\w*\s*hacia|monolito/i;
 const TECH_WINDOW = 60;
+
+function namedAsTechnology(t: string, index: number, length: number): boolean {
+  if (t[index - 1] === '-' || t[index + length] === '-') return false;
+  const near = t.slice(Math.max(0, index - PLAIN_WORD_WINDOW), index + length + PLAIN_WORD_WINDOW);
+  return TECH_CUE.test(near);
+}
 
 export function unknownRequiredTech(text: string, cannotDo: readonly string[]): string | null {
   const t = text.toLowerCase();
@@ -91,6 +110,7 @@ export function unknownRequiredTech(text: string, cannotDo: readonly string[]): 
     const i = m.index ?? 0;
     const window = t.slice(Math.max(0, i - TECH_WINDOW), i + m[0].length + TECH_WINDOW);
     if (OPTIONAL_TECH.test(window)) continue;
+    if (ALSO_A_PLAIN_WORD.has(m[0]) && !namedAsTechnology(t, i, m[0].length)) continue;
     if (isAlternativeToKnownTech(t, i, m[0].length)) continue;
     if (MIGRATION_CONTEXT.test(window)) continue;
     return m[0];

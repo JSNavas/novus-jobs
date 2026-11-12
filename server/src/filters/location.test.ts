@@ -141,6 +141,40 @@ describe('classifyLocation — región contra modalidad', () => {
     assert.equal(classifyLocation('Remoto desde Caracas.', HOGAR), JobLocation.HomeCountry);
   });
 
+  it('EL CASO REAL (hackernews): "REMOTE (US)" dice remoto y dice dónde, y el dónde manda', () => {
+    assert.equal(
+      classifyLocation('Sphinx Defense | Software Engineering | Remote (US Only)', HOGAR),
+      JobLocation.OtherCountry,
+    );
+    assert.equal(
+      classifyLocation('Opsfleet | AI Engineer | REMOTE (EEA) | Full-time', HOGAR),
+      JobLocation.OtherCountry,
+    );
+  });
+
+  it('y el sitio se mira antes que el reloj: "(US, East Coast hours)" es un sitio', () => {
+    assert.equal(
+      classifyLocation('VALIS | Software Engineer | REMOTE (US, East Coast hours)', HOGAR),
+      JobLocation.OtherCountry,
+    );
+    assert.equal(
+      classifyLocation('PlantingSpace | Full-time | Remote (EU time zone)', HOGAR),
+      JobLocation.OtherCountry,
+    );
+  });
+
+  it('pero el paréntesis puede no hablar de sitios, y entonces no dice nada', () => {
+    assert.equal(
+      classifyLocation('BuildQ | Founding Engineer | REMOTE (PT to ET overlap preferred)', HOGAR),
+      JobLocation.Global,
+    );
+    assert.equal(
+      classifyLocation('Collabify | Senior Full-Stack Engineer | REMOTE (worldwide)', HOGAR),
+      JobLocation.Global,
+    );
+    assert.equal(classifyLocation('Acme | REMOTE (LATAM) | Full-time', HOGAR), JobLocation.Global);
+  });
+
   it('la restricción tiene que estar junto al país: "revisa" no es "visa"', () => {
     const oferta = 'Remoto global. Hay que revisar el código del equipo. Nuestra matriz está en Sweden.';
     assert.equal(classifyLocation(oferta, HOGAR), JobLocation.Global);

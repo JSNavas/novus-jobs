@@ -50,6 +50,21 @@ describe('englishDemand', () => {
   });
 });
 
+describe('englishDemand — lo que de verdad piden', () => {
+  it('"intermediate-advanced" es B2, no C1: el "advanced" va pegado al "intermediate"', () => {
+    assert.equal(englishDemand('Required: Intermediate-advanced English.').level, 'b2');
+    assert.equal(englishDemand('Inglés intermedio-avanzado requerido.').level, 'b2');
+  });
+
+  it('"professional English" es B2: nombra el uso, no el nivel', () => {
+    assert.equal(englishDemand('Professional English communication skills required.').level, 'b2');
+  });
+
+  it('pero "advanced English" sigue siendo C1', () => {
+    assert.equal(englishDemand('Advanced English (written and spoken) required.').level, 'c1');
+  });
+});
+
 describe('unknownRequiredTech', () => {
   const veto = (t: string) => unknownRequiredTech(t, PROFILE.cannotDo);
 
@@ -84,5 +99,24 @@ describe('unknownRequiredTech', () => {
     assert.equal(veto('Node.js remoto. Deseable: conocimientos de Go.'), null);
     assert.equal(veto('Backend: Node.js, TypeScript, Python o Go.'), null);
     assert.equal(veto('Node.js para migrar un legacy Java a microservicios.'), null);
+  });
+
+  it('EL CASO REAL: 23 de 24 vetos por "go" eran la palabra inglesa, no el lenguaje', () => {
+    assert.equal(veto('You think about what can go wrong. Failing dependencies, bad data.'), null);
+    assert.equal(veto('Our technology helps Go-To-Market teams build the skills they need.'), null);
+    assert.equal(veto('Acts as go-to for go-live off-hours help for clients.'), null);
+  });
+
+  it('las demás que también son palabras corrientes: backbone, phoenix, spark, rails', () => {
+    assert.equal(veto('Bubbly but with a backbone, who can handle a tough client.'), null);
+    assert.equal(veto('NIKSI is a Phoenix, Arizona-based real estate company.'), null);
+    assert.equal(veto('Reach out by email to spark interest and generate leads.'), null);
+    assert.equal(veto('Third-party financial rails are fundamental to the product.'), null);
+  });
+
+  it('pero nombradas como tecnología siguen vetando: lo que decide es la compañía que llevan', () => {
+    assert.equal(veto('Senior Full-Stack Engineer (Go + Next.JS). Requisitos del puesto.'), 'go');
+    assert.equal(veto('Buscamos un iOS Engineer con Swift y experiencia en apps nativas.'), 'swift');
+    assert.equal(veto('Se requiere experiencia desarrollando con Ruby on Rails.'), 'ruby on rails');
   });
 });

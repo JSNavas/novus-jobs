@@ -224,7 +224,7 @@ export const COUNTRIES: readonly Country[] = [
 ];
 
 export const REGION_MARKS: Readonly<Record<Region, readonly string[]>> = {
-  latam: ['latam', 'latinoamérica', 'latinoamerica', 'latin america', 'américa latina', 'america latina', 'hispanoamérica', 'hispanoamerica', 'sudamérica', 'sudamerica', 'south america'],
+  latam: ['latam', 'latinoamérica', 'latinoamerica', 'latin america', 'américa latina', 'america latina', 'hispanoamérica', 'hispanoamerica', 'sudamérica', 'sudamerica', 'south america', 'américas', 'americas'],
   iberia: ['península ibérica', 'peninsula iberica', 'iberia'],
   'north-america': ['norteamérica', 'norteamerica', 'north america'],
   europe: ['europa', 'europe', 'unión europea', 'union europea', 'european union', 'emea'],
