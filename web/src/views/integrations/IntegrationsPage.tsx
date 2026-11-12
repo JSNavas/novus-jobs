@@ -19,7 +19,7 @@ const POLL_INTERVAL_MS = 30_000;
 
 export interface CardProps {
   integration: Integration;
-  onSaved: (next: Integration) => void;
+  onSaved: (next: Integration, message?: string) => void;
 }
 
 /** El editor que se enseña tras cambiar de modo sin guardar: nada se ha escrito todavía. */
@@ -40,7 +40,7 @@ export const IntervalEditor = ({ integration, onSaved, pending, onCancel }: Edit
     setSaving(true);
     setError(null);
     updateIntegrationSchedule(integration.name, { minutes: value })
-      .then((next) => onSaved(next))
+      .then((next) => onSaved(next, t('int.saved', { name: integration.label })))
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setSaving(false));
   };
@@ -111,7 +111,7 @@ export const HoursEditor = ({ integration, onSaved, pending, onCancel }: EditorP
     setSaving(true);
     setError(null);
     updateIntegrationSchedule(integration.name, { hours })
-      .then((next) => onSaved(next))
+      .then((next) => onSaved(next, t('int.saved', { name: integration.label })))
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setSaving(false));
   };
@@ -168,7 +168,7 @@ const EnabledSwitch = ({ integration, onSaved }: CardProps) => {
     setSaving(true);
     setError(null);
     updateIntegrationEnabled(integration.name, next)
-      .then((saved) => onSaved(saved))
+      .then((saved) => onSaved(saved, t(next ? 'int.savedOn' : 'int.savedOff', { name: integration.label })))
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setSaving(false));
   };
@@ -295,8 +295,18 @@ const IntegrationsPage = () => {
     return () => clearInterval(timer);
   }, [load]);
 
-  const replace = (saved: Integration): void => {
+  /** El aviso de guardado va arriba de la página, donde salen los demás: nada de toast. */
+  const [notice, setNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 6000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  const replace = (saved: Integration, message?: string): void => {
     setIntegrations((prev) => prev?.map((item) => (item.name === saved.name ? saved : item)) ?? null);
+    if (message) setNotice(message);
   };
 
   return (
@@ -310,6 +320,7 @@ const IntegrationsPage = () => {
       ) : null}
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
+      {notice ? <AppAlert severity="success" onClose={() => setNotice(null)}>{notice}</AppAlert> : null}
       {!integrations && !error ? (
         <Box sx={{ minHeight: 'max(240px, calc(100vh - 320px))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress /></Box>
       ) : null}
