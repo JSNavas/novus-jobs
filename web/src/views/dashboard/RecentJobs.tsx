@@ -26,7 +26,7 @@ const RecentJobs = ({ jobs }: { jobs: Job[] }) => {
         <Stack
           key={job.id}
           component={NavLink}
-          to="/nuevas"
+          to={`/nuevas?oferta=${job.id}`}
           direction="row"
           spacing={1.625}
           alignItems="center"

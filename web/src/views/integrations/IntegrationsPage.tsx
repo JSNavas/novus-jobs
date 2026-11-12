@@ -6,7 +6,7 @@ import {
 import {
   listIntegrations, updateIntegrationEnabled, updateIntegrationSchedule, type Integration,
 } from '../../api/client';
-import { AppAlert, AppSnackbar, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
+import { AppAlert, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { PlatformIcon } from '../dashboard/panels';
 import { t } from '../../i18n';
 import { formatDateTime } from '../../format';
@@ -19,10 +19,16 @@ const POLL_INTERVAL_MS = 30_000;
 
 export interface CardProps {
   integration: Integration;
-  onSaved: (next: Integration, message?: string) => void;
+  onSaved: (next: Integration) => void;
 }
 
-export const IntervalEditor = ({ integration, onSaved }: CardProps) => {
+/** El editor que se enseña tras cambiar de modo sin guardar: nada se ha escrito todavía. */
+export interface EditorProps extends CardProps {
+  pending?: boolean;
+  onCancel?: () => void;
+}
+
+export const IntervalEditor = ({ integration, onSaved, pending, onCancel }: EditorProps) => {
   const current = integration.schedule.kind === 'every-minutes' ? integration.schedule.minutes : 60;
   const [minutes, setMinutes] = useState(String(current));
   const [saving, setSaving] = useState(false);
@@ -34,7 +40,7 @@ export const IntervalEditor = ({ integration, onSaved }: CardProps) => {
     setSaving(true);
     setError(null);
     updateIntegrationSchedule(integration.name, { minutes: value })
-      .then((next) => onSaved(next, t('int.saved', { name: integration.label })))
+      .then((next) => onSaved(next))
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setSaving(false));
   };
@@ -73,7 +79,7 @@ export const IntervalEditor = ({ integration, onSaved }: CardProps) => {
         />
         <Button
           variant="contained"
-          disabled={saving || Boolean(invalid) || Number(minutes) === current}
+          disabled={saving || Boolean(invalid) || (!pending && Number(minutes) === current)}
           onClick={() => save(Number(minutes))}
           sx={{ mt: 0.5 }}
         >
@@ -81,8 +87,8 @@ export const IntervalEditor = ({ integration, onSaved }: CardProps) => {
         </Button>
         <Button
           variant="text"
-          disabled={saving || Number(minutes) === current}
-          onClick={() => setMinutes(String(current))}
+          disabled={saving || (!pending && Number(minutes) === current)}
+          onClick={() => { setMinutes(String(current)); onCancel?.(); }}
           sx={{ mt: 0.5 }}
         >
           {t('int.cancel')}
@@ -93,7 +99,7 @@ export const IntervalEditor = ({ integration, onSaved }: CardProps) => {
   );
 };
 
-export const HoursEditor = ({ integration, onSaved }: CardProps) => {
+export const HoursEditor = ({ integration, onSaved, pending, onCancel }: EditorProps) => {
   const current = integration.schedule.kind === 'configured-hours' ? integration.schedule.hours : [];
   const [hours, setHours] = useState<number[]>(current);
   const [saving, setSaving] = useState(false);
@@ -105,7 +111,7 @@ export const HoursEditor = ({ integration, onSaved }: CardProps) => {
     setSaving(true);
     setError(null);
     updateIntegrationSchedule(integration.name, { hours })
-      .then((next) => onSaved(next, t('int.saved', { name: integration.label })))
+      .then((next) => onSaved(next))
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setSaving(false));
   };
@@ -137,10 +143,10 @@ export const HoursEditor = ({ integration, onSaved }: CardProps) => {
         })}
       </Box>
       <Stack direction="row" spacing={2} alignItems="center">
-        <Button variant="contained" disabled={saving || !changed || hours.length === 0} onClick={save}>
+        <Button variant="contained" disabled={saving || (!pending && !changed) || hours.length === 0} onClick={save}>
           {t('int.save')}
         </Button>
-        <Button variant="text" disabled={saving || !changed} onClick={() => setHours(current)}>
+        <Button variant="text" disabled={saving || (!pending && !changed)} onClick={() => { setHours(current); onCancel?.(); }}>
           {t('int.cancel')}
         </Button>
         {hours.length === 0 ? (
@@ -162,7 +168,7 @@ const EnabledSwitch = ({ integration, onSaved }: CardProps) => {
     setSaving(true);
     setError(null);
     updateIntegrationEnabled(integration.name, next)
-      .then((saved) => onSaved(saved, t(next ? 'int.savedOn' : 'int.savedOff', { name: integration.label })))
+      .then((saved) => onSaved(saved))
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setSaving(false));
   };
@@ -200,16 +206,10 @@ const IntegrationCard = ({ integration, onSaved }: CardProps) => {
   const off = !integration.enabled;
   const kind = integration.schedule.kind;
 
-  const [kindError, setKindError] = useState<string | null>(null);
-
-  const switchKind = (mode: 'every-minutes' | 'configured-hours'): void => {
-    if (mode === kind) return;
-    setKindError(null);
-    const body = mode === 'every-minutes' ? { minutes: 360 } : { hours: [9, 13, 18] };
-    updateIntegrationSchedule(integration.name, body)
-      .then((next) => onSaved(next, t('int.saved', { name: integration.label })))
-      .catch((cause: unknown) => setKindError(cause instanceof Error ? cause.message : String(cause)));
-  };
+  /** Elegir el modo no guarda nada: solo cambia el formulario hasta que se pulse Guardar. */
+  const [mode, setMode] = useState(kind);
+  useEffect(() => { setMode(kind); }, [kind]);
+  const pending = mode !== kind;
 
   return (
     <BlankCard>
@@ -256,8 +256,8 @@ const IntegrationCard = ({ integration, onSaved }: CardProps) => {
           <ToggleButtonGroup
             size="small"
             exclusive
-            value={kind}
-            onChange={(_, mode: 'every-minutes' | 'configured-hours' | null) => { if (mode) switchKind(mode); }}
+            value={mode}
+            onChange={(_, next: 'every-minutes' | 'configured-hours' | null) => { if (next) setMode(next); }}
             sx={{ mb: 2 }}
           >
             <ToggleButton value="every-minutes" sx={{ textTransform: 'none', fontSize: 12 }}>
@@ -268,11 +268,9 @@ const IntegrationCard = ({ integration, onSaved }: CardProps) => {
             </ToggleButton>
           </ToggleButtonGroup>
 
-          {kindError ? <Box mb={2}><AppAlert severity="error">{kindError}</AppAlert></Box> : null}
-
-          {kind === 'every-minutes'
-            ? <IntervalEditor integration={integration} onSaved={onSaved} />
-            : <HoursEditor integration={integration} onSaved={onSaved} />}
+          {mode === 'every-minutes'
+            ? <IntervalEditor integration={integration} onSaved={onSaved} pending={pending} onCancel={() => setMode(kind)} />
+            : <HoursEditor integration={integration} onSaved={onSaved} pending={pending} onCancel={() => setMode(kind)} />}
         </Box>
       </Box>
     </BlankCard>
@@ -297,11 +295,8 @@ const IntegrationsPage = () => {
     return () => clearInterval(timer);
   }, [load]);
 
-  const [notice, setNotice] = useState<string | null>(null);
-
-  const replace = (saved: Integration, message?: string): void => {
+  const replace = (saved: Integration): void => {
     setIntegrations((prev) => prev?.map((item) => (item.name === saved.name ? saved : item)) ?? null);
-    if (message) setNotice(message);
   };
 
   return (
@@ -331,8 +326,6 @@ const IntegrationsPage = () => {
           <IntegrationCard key={integration.name} integration={integration} onSaved={replace} />
         ))}
       </Box>
-
-      <AppSnackbar message={notice} severity="success" onClose={() => setNotice(null)} />
     </PageContainer>
   );
 };

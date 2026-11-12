@@ -116,6 +116,8 @@ const DashboardPage = () => {
   const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
   const [recent, setRecent] = useState<Job[]>([]);
   const [runsTotal, setRunsTotal] = useState(0);
+  /** Cuántas pasadas hay en total: sin esto, «Todo el historial» no sabe si hay algo más que enseñar. */
+  const [runsEver, setRunsEver] = useState(0);
   const [page, setPage] = useState(1);
   const [period, setPeriod] = useState<'48h' | 'today' | 'week' | 'all'>('48h');
   const [error, setError] = useState<string | null>(null);
@@ -133,6 +135,9 @@ const DashboardPage = () => {
         .catch((cause: unknown) => {
           if (!cancelled) setError(cause instanceof Error ? cause.message : 'Error desconocido');
         });
+      listRuns(1, 0, null)
+        .then((all) => { if (!cancelled) setRunsEver(all.total); })
+        .catch(() => undefined);
     };
     load();
     const timer = setInterval(() => {
@@ -382,7 +387,7 @@ const DashboardPage = () => {
                 >
                   {t('dash.runs.footer', { count: runsTotal })}
                 </Typography>
-                {period === 'all' ? null : (
+                {period === 'all' || runsEver <= runsTotal ? null : (
                   <Box
                     component="button"
                     type="button"
