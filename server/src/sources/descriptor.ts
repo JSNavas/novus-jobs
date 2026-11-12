@@ -44,6 +44,7 @@ export interface SourceDescriptor {
   readonly label: string;
   readonly author: string | null;
   readonly homepage: string | null;
+  readonly allowEmpty: boolean;
   readonly request: DescriptorRequest;
   readonly fields: DescriptorFields;
 }
@@ -215,6 +216,7 @@ export function parseDescriptor(input: unknown): SourceDescriptor {
     name,
     label: optionalText(raw.label) ?? name,
     author: optionalText(raw.author),
+    allowEmpty: raw.allowEmpty === true,
     homepage: raw.homepage === undefined || raw.homepage === null
       ? null
       : parseHttpsUrl(raw.homepage, 'homepage'),

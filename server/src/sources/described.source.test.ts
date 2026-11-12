@@ -257,6 +257,21 @@ describe('DescribedSource', () => {
     assert.match(post.text, /^Permits Coordinator\n/);
   });
 
+  it('cero vacantes es un fallo, salvo que el descriptor diga que ese tablero suele estar vacío', async () => {
+    reply({ jobs: [] });
+    await assert.rejects(() => describedFrom(REMOTIVE).fetch(() => []), /sin vacantes utilizables/);
+
+    reply([]);
+    const posts = await describedFrom({
+      name: 'tlnt',
+      label: 'TLNT Group',
+      allowEmpty: true,
+      request: { url: 'https://api.lever.co/v0/postings/tlnt' },
+      fields: { list: null, title: 'text', description: 'descriptionPlain' },
+    }).fetch(() => []);
+    assert.deepEqual(posts, [], 'una empresa sin vacantes abiertas no es una fuente rota');
+  });
+
   it('no pide sesión ni navegador: por eso una fuente descrita funciona el primer día', () => {
     const source = describedFrom(REMOTIVE);
     assert.equal(source.profileId, null);

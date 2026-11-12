@@ -159,7 +159,7 @@ export class DescribedSource implements JobSource {
       if (isFresh && !pagePosts.some((post) => isFresh(post.text))) break;
     }
 
-    if (posts.length === 0) {
+    if (posts.length === 0 && !this.descriptor.allowEmpty) {
       throw new Error(
         `${this.descriptor.request.url} respondió sin vacantes utilizables: ` +
         'o cambió la forma de la respuesta, o el descriptor apunta a campos que ya no existen.',

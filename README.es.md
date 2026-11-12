@@ -439,7 +439,7 @@ los descriptores en [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md).
 
 ### Plataformas soportadas
 
-Ocho, y cinco de ellas no tienen código propio. Cada una se enciende, se apaga
+Nueve, y seis de ellas no tienen código propio. Cada una se enciende, se apaga
 y se le pone su ritmo desde Integraciones.
 
 | Plataforma | Cómo lee | Cuenta | Cómo está hecha |
@@ -452,8 +452,9 @@ y se le pone su ritmo desde Integraciones.
 | **Himalayas** | `GET /jobs/api` | ninguna | descriptor |
 | **We Work Remotely** | RSS de empleo en programación | ninguna | descriptor |
 | **Puente Talent** | `GET /api/jobs` | ninguna | descriptor |
+| **TLNT Group** | su tablero de Lever | ninguna | descriptor |
 
-Las siete sin cuenta funcionan **el primer día, sin configurar nada**: vienen
+Las ocho sin cuenta funcionan **el primer día, sin configurar nada**: vienen
 encendidas y no piden iniciar sesión en ningún sitio. LinkedIn es la única que
 exige algo tuyo, y por eso no es el punto de entrada del proyecto.
 
@@ -465,6 +466,11 @@ Tres cosas que se aprendieron montándolas, y que valen para la siguiente:
   `Empresa: Puesto`. De ahí `companySeparator`.
 - **Hacker News** no es una bolsa de empleo sino un hilo de comentarios, y el
   hilo cambia cada mes. Por eso es la única de las nuevas con clase propia.
+- **TLNT Group** es una empresa, no un portal: su tablero puede estar vacío un
+  mes entero, y eso no es una pasada fallida. Lleva `allowEmpty` en su
+  descriptor. Y como está en Lever, el mismo patrón sirve para cualquier empresa
+  que use Lever, Greenhouse o Ashby — las recetas están en
+  [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md).
 - **Puente Talent** publica `applicantCountries`, la lista de países desde los
   que se puede trabajar. Es el dato que a Get on Board le falta, así que su
   descriptor lo pone en la línea de ubicación: el filtro ve «Venezuela» escrito

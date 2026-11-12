@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "name": "tlnt",
+  "label": "TLNT Group",
+  "homepage": "https://trytlnt.com",
+  "allowEmpty": true,
+  "request": {
+    "url": "https://api.lever.co/v0/postings/tlnt",
+    "method": "GET",
+    "query": { "mode": "json" }
+  },
+  "fields": {
+    "list": null,
+    "title": "text",
+    "company": "categories.team",
+    "description": "descriptionPlain",
+    "url": ["hostedUrl", "applyUrl"],
+    "location": "categories.location",
+    "postedAt": "createdAt",
+    "salary": "salaryRange.text"
+  }
+}

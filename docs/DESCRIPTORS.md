@@ -39,6 +39,7 @@ Integrations with its own switch and its own rhythm.
 - [Reading a feed instead of JSON](#reading-a-feed-instead-of-json)
 - [When the title carries the company](#when-the-title-carries-the-company)
 - [What a descriptor cannot do](#what-a-descriptor-cannot-do)
+- [Recipes: a company's own board](#recipes-a-companys-own-board)
 - [Sharing one](#sharing-one)
 
 ## Why this exists
@@ -163,6 +164,34 @@ Be honest about the edge, so nobody debugs a wall:
 
 The dividing line is the one the project already draws: a descriptor covers the
 boring case, and anything with logic in it earns a class and a test.
+
+## Recipes: a company's own board
+
+Most companies do not write their careers page: they rent an ATS, and the big
+ones all answer a public `GET` with JSON. So "watch the company I want to work
+at" is a descriptor, not a project. Swap `COMPANY` for the slug in their board
+URL — all three were checked against live boards on 12 Nov 2026.
+
+| ATS | Their board looks like | The endpoint | The list |
+|---|---|---|---|
+| **Lever** | `jobs.lever.co/COMPANY` | `https://api.lever.co/v0/postings/COMPANY?mode=json` | the response itself (`"list": null`) |
+| **Greenhouse** | `boards.greenhouse.io/COMPANY` | `https://boards-api.greenhouse.io/v1/boards/COMPANY/jobs?content=true` | `jobs` |
+| **Ashby** | `jobs.ashbyhq.com/COMPANY` | `https://api.ashbyhq.com/posting-api/job-board/COMPANY` | `jobs` |
+
+The field names, measured:
+
+| | Lever | Greenhouse | Ashby |
+|---|---|---|---|
+| title | `text` | `title` | `title` |
+| description | `descriptionPlain` | `content` (HTML) | `descriptionPlain` |
+| url | `hostedUrl` | `absolute_url` | `jobUrl` |
+| location | `categories.location` | `location.name` | `location` |
+| posted | `createdAt` | `first_published` | `publishedAt` |
+
+**Use `"allowEmpty": true` for a single company.** A job board with nothing in it
+is broken; a company with no openings this month is normal, and without the flag
+every pass would be logged as a failure. Keep the flag off for a real board —
+that is the rule about never dressing a failure as an empty read.
 
 ## Sharing one
 
