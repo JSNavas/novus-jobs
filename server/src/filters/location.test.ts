@@ -90,4 +90,37 @@ describe('classifyLocation — región contra modalidad', () => {
   it('sin ninguna pista, por confirmar', () => {
     assert.equal(classifyLocation('Buscamos backend Node.js con experiencia.', HOGAR), JobLocation.Unknown);
   });
+
+  it('EL CASO REAL: un país que el catálogo no conocía ya no pasa por remoto global', () => {
+    const oferta = [
+      'Praktika busca: Lead DevOps Engineer',
+      'Ubicación: Belarus, Moldova, Ukraine, United Arab Emirates',
+      'We are hiring for this position to be based in Dubai (UAE) or Eastern Europe.',
+    ].join('\n');
+    assert.equal(classifyLocation(oferta, HOGAR), JobLocation.OtherCountry);
+  });
+
+  it('una línea de ubicación con sitios concretos y ajenos basta, aunque diga remoto el resto', () => {
+    assert.equal(
+      classifyLocation('Ubicación: Warsaw\nFully remote engineer.', HOGAR),
+      JobLocation.OtherCountry,
+    );
+  });
+
+  it('pero esa misma línea puede decir que no hay sitio concreto, y entonces es global', () => {
+    assert.equal(
+      classifyLocation('Ubicación: Anywhere in the World\nHeadquarters: Sweden', HOGAR),
+      JobLocation.Global,
+    );
+  });
+
+  it('nombrar la región de casa pesa más que cuántos países se mencionen de paso', () => {
+    const oferta = 'Remoto para LATAM. Tenemos oficinas en Berlin, Tokyo y Lagos.';
+    assert.equal(classifyLocation(oferta, HOGAR), JobLocation.Global);
+  });
+
+  it('la restricción tiene que estar junto al país: "revisa" no es "visa"', () => {
+    const oferta = 'Remoto global. Hay que revisar el código del equipo. Nuestra matriz está en Sweden.';
+    assert.equal(classifyLocation(oferta, HOGAR), JobLocation.Global);
+  });
 });

@@ -1,5 +1,5 @@
 import { JobLocation } from '../types.js';
-import { COUNTRIES, REGION_MARKS, type Country } from './countries.js';
+import { COUNTRIES, REGION_MARKS, worldNamesExcept, type Country } from './countries.js';
 import { wordIn } from './text-match.js';
 
 export interface HomeGeo {
@@ -21,6 +21,14 @@ const PLACE_LABEL = /(?:ubicaci[óo]n|localizaci[óo]n|cobertura|pa[íi]s|sede|v
 const ANYWHERE_MARKS = [
   'remoto global', 'remote global', 'fully remote', '100% remoto', '100% remote',
   'worldwide', 'work from anywhere', 'anywhere in the world', 'desde cualquier lugar',
+];
+
+const PLACE_LINE = /^[ \t]*(?:ubicaci[óo]n|localizaci[óo]n|location|pa[íi]s|country)[ \t]*:[ \t]*(.+)$/im;
+
+const NO_PLACE_IN_LINE = [
+  'global', 'anywhere', 'worldwide', 'internacional', 'international', 'mundial',
+  'todo el mundo', 'cualquier lugar', 'varios', 'multiple', 'n/a', 'sin especificar',
+  'no especificada', 'not specified', 'flexible',
 ];
 
 const TECHNICAL_HYBRID = /(?:b[úu]squeda|search|retrieval|recuperaci[óo]n|nube|cloud|aplicaci[óo]n(?:es)?|apps?|arquitectura|perfil|[íi]ndice|embedding|rag|m[óo]vil(?:es)?|nativa|nativas)\s+(?:h[ií]brid\w*|hybrid\w*)|(?:h[ií]brid\w*|hybrid\w*)\s+(?:search|retrieval|rag|cloud)/i;
@@ -90,13 +98,51 @@ function namesOf(countries: readonly Country[]): string[] {
   return countries.flatMap((c) => c.names);
 }
 
-function restrictsToForeignCountry(t: string, home: HomeGeo): boolean {
-  const country = namesOf(foreignCountries(home)).find((c) => wordIn(t, c));
-  if (!country) return false;
-  return RESTRICTION_MARKS.some((m) => t.includes(m))
-    || labelledWithCountry(t, country)
-    || nearRemote(t, REMOTE, country)
-    || nearRemote(t, country, REMOTE);
+function foreignNames(home: HomeGeo): string[] {
+  const catalogued = namesOf(foreignCountries(home));
+  return home.country ? [...catalogued, ...worldNamesExcept(home.country.code)] : catalogued;
+}
+
+function placeLine(t: string): string | null {
+  const line = PLACE_LINE.exec(t)?.[1]?.trim();
+  return line ? line : null;
+}
+
+type PlaceReading = 'reachable' | 'foreign' | null;
+
+function readPlaceLine(t: string, home: HomeGeo): PlaceReading {
+  const line = placeLine(t);
+  if (line === null) return null;
+  if (homeMarks(home).some((m) => line.includes(m))) return 'reachable';
+  if (homeCities(home).some((c) => line.includes(c))) return 'reachable';
+  const region = home.country ? REGION_MARKS[home.country.region] : [];
+  if (region.some((m) => line.includes(m))) return 'reachable';
+  if (NO_PLACE_IN_LINE.some((m) => line.includes(m))) return 'reachable';
+  if (ANYWHERE_MARKS.some((m) => line.includes(m)) || REMOTE_RE.test(line)) return 'reachable';
+  return 'foreign';
+}
+
+const LETTER = '[a-záéíóúñ]';
+const RESTRICTION_RE = new RegExp(
+  `(?<!${LETTER})(?:${RESTRICTION_MARKS.map(escapeForCountry).join('|')})(?!${LETTER})`,
+  'i',
+);
+
+function restrictionNear(t: string, country: string): boolean {
+  const matches = t.matchAll(new RegExp(escapeForCountry(country), 'g'));
+  for (const match of matches) {
+    const before = t.slice(Math.max(0, (match.index ?? 0) - 60), match.index ?? 0);
+    if (RESTRICTION_RE.test(before)) return true;
+  }
+  return false;
+}
+
+function restrictsToForeignCountry(t: string, home: HomeGeo, spelled: boolean): boolean {
+  const named = foreignNames(home).filter((c) => wordIn(t, c));
+  return named.some((country) => restrictionNear(t, country)
+    || (!spelled && (labelledWithCountry(t, country)
+      || nearRemote(t, REMOTE, country)
+      || nearRemote(t, country, REMOTE))));
 }
 
 export function classifyLocation(text: string, home: HomeGeo): JobLocation {
@@ -107,9 +153,17 @@ export function classifyLocation(text: string, home: HomeGeo): JobLocation {
   const marks = homeMarks(home);
   if (marks.some((m) => t.includes(m))) return JobLocation.HomeCountry;
 
-  if (home.country) {
-    if (restrictsToForeignCountry(t, home)) return JobLocation.OtherCountry;
-    if (namesOf(foreignCountries(home)).filter((c) => wordIn(t, c)).length >= 3) return JobLocation.OtherCountry;
+  const line = readPlaceLine(t, home);
+  if (line === 'foreign') return JobLocation.OtherCountry;
+  if (home.country && restrictsToForeignCountry(t, home, line !== null)) return JobLocation.OtherCountry;
+  if (line === 'reachable') return JobLocation.Global;
+
+  const homeRegion = home.country ? REGION_MARKS[home.country.region] : [];
+  if (homeRegion.some((m) => t.includes(m)) && REMOTE_RE.test(t)) return JobLocation.Global;
+  if (ANYWHERE_MARKS.some((m) => t.includes(m))) return JobLocation.Global;
+
+  if (home.country && foreignNames(home).filter((c) => wordIn(t, c)).length >= 3) {
+    return JobLocation.OtherCountry;
   }
 
   const saysRemote = REMOTE_RE.test(t) || ANYWHERE_MARKS.some((m) => t.includes(m));
@@ -117,8 +171,6 @@ export function classifyLocation(text: string, home: HomeGeo): JobLocation {
   if (foreignCity && !saysRemote && !homeCities(home).some((c) => wordIn(t, c))) return JobLocation.OtherCountry;
 
   if (ANYWHERE_MARKS.some((m) => t.includes(m))) return JobLocation.Global;
-  const homeRegion = home.country ? REGION_MARKS[home.country.region] : [];
-  if (homeRegion.some((m) => t.includes(m)) && REMOTE_RE.test(t)) return JobLocation.Global;
   if (REMOTE_RE.test(t)) return JobLocation.Global;
   return JobLocation.Unknown;
 }
