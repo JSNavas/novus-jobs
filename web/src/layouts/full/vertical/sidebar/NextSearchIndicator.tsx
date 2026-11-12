@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { getSchedule, type Schedule } from '../../../../api/client';
 import { formatNextSearch, nextSearchAt, nextSearchIn } from '../../../../views/jobs/scheduleText';
+import { t } from '../../../../i18n';
 
 /** The countdown is read in minutes, so refreshing every 30 s is plenty. */
 const TICK_INTERVAL_MS = 30_000;
@@ -47,7 +48,7 @@ const NextSearchIndicator = ({ lastRunFailed }: NextSearchIndicatorProps) => {
     <Box component="li" sx={{ pl: 6.5, pr: 2, pb: 1 }}>
       {lastRunFailed ? (
         <Typography variant="body2" sx={{ color: 'error.main', fontWeight: 600 }}>
-          La última búsqueda falló
+          {t('sidebar.lastRunFailed')}
         </Typography>
       ) : null}
       {next ? (

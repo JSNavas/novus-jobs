@@ -7,6 +7,7 @@ import {
   listIntegrations, updateIntegrationEnabled, updateIntegrationSchedule, type Integration,
 } from '../../api/client';
 import { AppAlert, AppChip, BlankCard, PageContainer } from '../../components/ui';
+import { t } from '../../i18n';
 import { formatDateTime } from '../../format';
 import { formatNextSearch, nextSearchAt } from '../jobs/scheduleText';
 import {
@@ -57,8 +58,7 @@ const IntervalEditor = ({ integration, onSaved }: CardProps) => {
   return (
     <Stack spacing={2}>
       <Typography variant="body2" color="textSecondary">
-        Cada cuánto se lee. Es una API pública, así que no hay cuenta que cuidar: el único
-        motivo para no bajarlo a cero es no castigar un servidor ajeno.
+        {t('int.interval.help')}
       </Typography>
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
         {INTERVAL_PRESETS.map((preset) => (
@@ -78,7 +78,7 @@ const IntervalEditor = ({ integration, onSaved }: CardProps) => {
       <Stack direction="row" spacing={1} alignItems="flex-start">
         <TextField
           size="small"
-          label="Minutos"
+          label={t('int.minutes')}
           value={minutes}
           onChange={(event) => setMinutes(event.target.value)}
           error={Boolean(invalid)}
@@ -91,7 +91,7 @@ const IntervalEditor = ({ integration, onSaved }: CardProps) => {
           onClick={() => save(Number(minutes))}
           sx={{ mt: 0.5 }}
         >
-          Guardar
+          {t('int.save')}
         </Button>
       </Stack>
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
@@ -121,9 +121,7 @@ const HoursEditor = ({ integration, onSaved }: CardProps) => {
   return (
     <Stack spacing={2}>
       <Typography variant="body2" color="textSecondary">
-        A qué horas se lee ({integration.timezone}). Son franjas y no un intervalo a propósito:
-        una cuenta vigilada se quema por el patrón, no por el número de lecturas, y tres visitas
-        a horas de persona es lo que lleva meses sin dar problemas.
+        {t('int.hours.help', { timezone: integration.timezone })}
       </Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(84px, 1fr))', gap: 1 }}>
         {ALL_HOURS.map((hour) => {
@@ -146,11 +144,11 @@ const HoursEditor = ({ integration, onSaved }: CardProps) => {
       </Box>
       <Stack direction="row" spacing={2} alignItems="center">
         <Button variant="contained" disabled={saving || !changed || hours.length === 0} onClick={save}>
-          Guardar
+          {t('int.save')}
         </Button>
         {hours.length === 0 ? (
           <Typography variant="caption" color="error.main">
-            Deja al menos una hora: sin ninguna, esta integración no buscaría nunca.
+            {t('int.hours.atLeastOne')}
           </Typography>
         ) : null}
       </Stack>
@@ -179,12 +177,14 @@ const EnabledSwitch = ({ integration, onSaved }: CardProps) => {
   };
 
   return (
-    <Tooltip title={error ?? (integration.enabled ? 'Dejar de buscar aquí' : 'Volver a buscar aquí')}>
+    <Tooltip title={error ?? t(integration.enabled ? 'int.turnOff' : 'int.turnOn')}>
       <Switch
         checked={integration.enabled}
         disabled={saving}
         onChange={(event) => toggle(event.target.checked)}
-        inputProps={{ 'aria-label': `${integration.enabled ? 'Apagar' : 'Encender'} ${integration.label}` }}
+        inputProps={{
+          'aria-label': t(integration.enabled ? 'int.switch.off' : 'int.switch.on', { name: integration.label }),
+        }}
         color={error ? 'error' : 'primary'}
       />
     </Tooltip>
@@ -201,20 +201,22 @@ const IntegrationCard = ({ integration, onSaved }: CardProps) => {
           <Typography variant="h6" sx={{ opacity: off ? 0.6 : 1 }}>{integration.label}</Typography>
           <AppChip
             label={integration.schedule.kind === 'every-minutes'
-              ? `cada ${intervalLabel(integration.schedule.minutes)}`
-              : `${integration.schedule.hours.length} franja(s) al día`}
+              ? t('int.everyInterval', { interval: intervalLabel(integration.schedule.minutes) })
+              : t('int.slotsPerDay', { count: integration.schedule.hours.length })}
             tone="neutral"
           />
-          {integration.needsLogin ? <AppChip label="con sesión" tone="neutral" /> : null}
-          {off ? <AppChip label="apagada" tone="neutral" /> : null}
+          {integration.needsLogin ? <AppChip label={t('int.needsLogin')} tone="neutral" /> : null}
+          {off ? <AppChip label={t('int.off')} tone="neutral" /> : null}
           <Box flexGrow={1} />
           <EnabledSwitch integration={integration} onSaved={onSaved} />
         </Stack>
         <Typography variant="caption" color="textSecondary" display="block" mb={2.5}>
           {off
-            ? 'Apagada: no se lee ni entra en las búsquedas. Lo que ya encontró sigue en la bandeja.'
-            : `${next ? formatNextSearch(next) : 'Sin próxima búsqueda programada'}${
-              integration.lastRunAt ? ` · última: ${formatDateTime(integration.lastRunAt)}` : ' · todavía no ha leído'}`}
+            ? t('int.off.explain')
+            : `${next ? formatNextSearch(next) : t('int.noNext')}${
+              integration.lastRunAt
+                ? t('int.lastRun', { date: formatDateTime(integration.lastRunAt) })
+                : t('int.neverRun')}`}
         </Typography>
         <Box sx={{ opacity: off ? 0.45 : 1, pointerEvents: off ? 'none' : 'auto' }}>
           {integration.schedule.kind === 'every-minutes'
@@ -253,12 +255,12 @@ const IntegrationsPage = () => {
   };
 
   const shown = name ? integrations?.filter((item) => item.name === name) ?? null : integrations;
-  const title = (name && shown?.length === 1 ? shown[0]!.label : 'Integraciones');
+  const title = (name && shown?.length === 1 ? shown[0]!.label : t('int.title'));
 
   return (
     <PageContainer
       title={title}
-      subtitle="De dónde salen las ofertas y cada cuánto se mira cada sitio"
+      subtitle={t('int.subtitle')}
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
       {!integrations && !error ? (
@@ -267,8 +269,8 @@ const IntegrationsPage = () => {
       {shown?.length === 0 ? (
         <AppAlert severity="info">
           {name
-            ? `No hay ninguna integración llamada "${name}".`
-            : 'Este servidor no trae ninguna plataforma. Se añaden en server/src/sources/ y aparecen aquí solas.'}
+            ? t('int.notFound', { name })
+            : t('int.none')}
         </AppAlert>
       ) : null}
       <Stack spacing={2}>

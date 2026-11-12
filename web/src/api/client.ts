@@ -254,6 +254,8 @@ export function updateIntegrationSchedule(
 export type EnglishLevel = 'none' | 'a1' | 'a2' | 'b1' | 'b2' | 'c1' | 'c2' | 'native';
 
 export interface CandidateProfile {
+  /** En qué idioma habla la aplicación: la interfaz y lo que escribe el servidor. */
+  language: 'es' | 'en';
   stack: string[];
   core: string[];
   cannotDo: string[];
@@ -315,6 +317,7 @@ export async function readCv(file: File, enhance: boolean): Promise<CvReading> {
 
 /** Guarda un paso. Lo que no se manda no se toca. */
 export function saveOnboardingStep(changes: {
+  language?: 'es' | 'en';
   stack?: string[];
   core?: string[];
   cannotDo?: string[];

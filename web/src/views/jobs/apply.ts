@@ -1,15 +1,16 @@
+import { t } from '../../i18n';
 import { JobSeniority, type Job } from '../../types';
 
 /**
- * LA CANDIDATURA, tal y como la escribe él.
+ * LA CANDIDATURA, en el idioma de quien la manda.
  *
- * Plantilla suya, literal. El título de la vacante se sustituye pero el resto
- * no se toca: un correo de presentación con palabras que no son las tuyas se
- * nota, y quien lo recibe también lo nota.
+ * Corta y sin adornos: solo el puesto cambia. Un correo de presentación con
+ * palabras que no son las tuyas se nota, y quien lo recibe también lo nota, así
+ * que esto es el esqueleto y el texto que de verdad convence es el párrafo de
+ * motivación que se edita en Configuración.
  */
-const GREETING = 'Hola, un gusto saludarte!';
-const BODY = (vacancy: string): string =>
-  `Estoy interesado en la vacante de ${vacancy}. Le adjunto mi cv para que pueda ver mis habilidades y experiencia. Saludos!`;
+const GREETING = (): string => t('apply.greeting');
+const BODY = (vacancy: string): string => t('apply.body', { vacancy });
 
 /**
  * ¿Se le escribe a esta oferta?
@@ -34,7 +35,7 @@ function vacancyName(job: Job): string {
   const role = job.role?.trim();
   if (role) return role;
   const title = job.title?.trim();
-  if (!title || title.length > 80) return 'la publicación que compartiste en LinkedIn';
+  if (!title || title.length > 80) return t('apply.thePosting');
   return title;
 }
 
@@ -50,7 +51,7 @@ export function applicationSubject(job: Job): string {
 }
 
 export function applicationBody(job: Job): string {
-  return `${GREETING}\n\n${BODY(vacancyName(job))}`;
+  return `${GREETING()}\n\n${BODY(vacancyName(job))}`;
 }
 
 /**

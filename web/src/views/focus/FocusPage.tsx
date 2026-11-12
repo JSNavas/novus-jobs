@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box, LinearProgress, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import { getFocus, markFocusSeen, type Focus, type FocusTopic } from '../../api/client';
+import { t } from '../../i18n';
 import { AppAlert, AppChip, BlankCard, PageContainer } from '../../components/ui';
 
 /**
@@ -19,11 +20,11 @@ const TopicRow = ({ topic, total }: { topic: FocusTopic; total: number }) => (
   <Box sx={topic.isNew ? { pl: 1.5, py: 1, borderLeft: 3, borderColor: 'success.main', bgcolor: 'action.hover', borderRadius: 1 } : undefined}>
     <Stack direction="row" spacing={1} alignItems="baseline" flexWrap="wrap" useFlexGap>
       <Typography variant="subtitle1">{topic.name}</Typography>
-      {topic.isNew ? <AppChip label="nuevo" tone="success" /> : null}
+      {topic.isNew ? <AppChip label={t('focus.new')} tone="success" /> : null}
       {/* El mismo número estaba escrito tres veces: «9 de 15», «60% de las
           vacantes» y la barra. Se queda el dato exacto y la barra, que es lo
           que deja comparar 39 filas de un vistazo sin leer ninguna. */}
-      <AppChip label={`${topic.vacancies} de ${total}`} tone={topic.vacancies >= total / 3 ? 'success' : 'neutral'} />
+      <AppChip label={t('focus.outOf', { count: topic.vacancies, total })} tone={topic.vacancies >= total / 3 ? 'success' : 'neutral'} />
     </Stack>
     <LinearProgress variant="determinate" value={topic.share} sx={{ my: 0.75, height: 6, borderRadius: 3 }} />
     {topic.examples.map((example) => (
@@ -66,17 +67,16 @@ const FocusPage = () => {
 
   return (
     <PageContainer
-      title="Enfoque"
-      subtitle="Lo que piden en común las vacantes que te sirven"
-      breadcrumbs={[{ title: 'Enfoque' }]}
+      title={t('focus.title')}
+      subtitle={t('focus.subtitle')}
+      breadcrumbs={[{ title: t('focus.title') }]}
     >
       <Stack spacing={3}>
         {error ? <AppAlert severity="error">{error}</AppAlert> : null}
 
         {focus && focus.analysed === 0 ? (
           <AppAlert severity="info">
-            Todavía no hay ofertas aceptadas de los últimos meses que analizar. Esto se llena solo
-            con las búsquedas.
+            {t('focus.empty')}
           </AppAlert>
         ) : null}
 
@@ -87,23 +87,22 @@ const FocusPage = () => {
             <Stack direction="row" spacing={2} alignItems="flex-start" justifyContent="space-between" flexWrap="wrap" useFlexGap>
               <Stack spacing={0.5}>
                 <Typography variant="body2" color="textSecondary">
-                  Sobre <strong>{focus.analysed} vacantes aceptadas</strong>, contando cada tema una
-                  vez por vacante.
+                  {t('focus.basis', { count: focus.analysed })}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
-                  Las frases son de los anuncios, tal cual las escribieron.
+                  {t('focus.verbatim')}
                 </Typography>
               </Stack>
               <TextField
                 select
                 size="small"
-                label="Ventana"
+                label={t('focus.window')}
                 value={months}
                 onChange={(event) => setMonths(Number(event.target.value))}
                 sx={{ minWidth: 160 }}
               >
                 {WINDOWS.map((option) => (
-                  <MenuItem key={option} value={option}>{`Últimos ${option} meses`}</MenuItem>
+                  <MenuItem key={option} value={option}>{t('focus.lastMonths', { months: option })}</MenuItem>
                 ))}
               </TextField>
             </Stack>
@@ -115,10 +114,10 @@ const FocusPage = () => {
                 a ver aquí es qué piden los requisitos, lo sepa o no. */}
             <BlankCard>
               <Stack spacing={2.5} p={3}>
-                <Typography variant="h5">Qué están pidiendo las vacantes</Typography>
+                <Typography variant="h5">{t('focus.topics')}</Typography>
                 {focus.topics.length
                   ? focus.topics.map((topic) => <TopicRow key={topic.name} topic={topic} total={focus.analysed} />)
-                  : <Typography variant="body2">Nada se repite en dos vacantes todavía.</Typography>}
+                  : <Typography variant="body2">{t('focus.topics.empty')}</Typography>}
               </Stack>
             </BlankCard>
             {/* ═══ LO QUE NADIE CLASIFICÓ ═══
@@ -131,11 +130,9 @@ const FocusPage = () => {
               <BlankCard>
                 <Stack spacing={2} p={3}>
                   <Box>
-                    <Typography variant="h5">Apareciendo</Typography>
+                    <Typography variant="h5">{t('focus.emerging')}</Typography>
                     <Typography variant="body2" color="textSecondary">
-                      Palabras que se repiten en los requisitos y que todavía no se miden arriba. Esto
-                      sale solo, sin que nadie las haya previsto: si algo nuevo empieza a pedirse,
-                      asoma aquí primero.
+                      {t('focus.emerging.help')}
                     </Typography>
                   </Box>
                   {focus.emerging.map((item) => (
@@ -145,8 +142,8 @@ const FocusPage = () => {
                     >
                       <Stack direction="row" spacing={1} alignItems="baseline">
                         <Typography variant="subtitle1">{item.term}</Typography>
-                        <AppChip label={`${item.vacancies} de ${focus.analysed}`} tone="neutral" />
-                        {item.isNew ? <AppChip label="nuevo" tone="success" /> : null}
+                        <AppChip label={t('focus.outOf', { count: item.vacancies, total: focus.analysed })} tone="neutral" />
+                        {item.isNew ? <AppChip label={t('focus.new')} tone="success" /> : null}
                       </Stack>
                       {item.example ? (
                         <Typography variant="body2" color="textSecondary" sx={{ pl: 1.5, borderLeft: 2, borderColor: 'divider' }}>

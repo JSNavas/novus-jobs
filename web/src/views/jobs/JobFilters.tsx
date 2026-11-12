@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { Checkbox, FormControlLabel, Stack, TextField } from '@mui/material';
 
 /**
@@ -19,7 +20,7 @@ const JobFilters = ({ values, onChange }: JobFiltersProps) => (
   <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'center' }} mb={2}>
     <TextField
       size="small"
-      label="Buscar en el texto"
+      label={t('filters.search')}
       value={values.q}
       onChange={(event) => onChange({ ...values, q: event.target.value })}
       sx={{ minWidth: 240 }}
@@ -32,7 +33,7 @@ const JobFilters = ({ values, onChange }: JobFiltersProps) => (
           onChange={(event) => onChange({ ...values, hasApply: event.target.checked })}
         />
       }
-      label="Solo con vía de postulación"
+      label={t('filters.onlyApplicable')}
     />
   </Stack>
 );

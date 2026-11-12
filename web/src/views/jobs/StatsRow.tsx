@@ -1,13 +1,14 @@
 import { Box, Typography } from '@mui/material';
 import { BlankCard } from '../../components/ui';
 import { formatDateTime } from '../../format';
+import { plural, t } from '../../i18n';
 import type { Stats } from '../../api/client';
 
 interface StatsRowProps {
   stats: Stats;
 }
 
-const readText = (count: number): string => (count === 1 ? '1 publicación leída' : `${count} publicaciones leídas`);
+const readText = (count: number): string => plural(count, 'stats.read.one', 'stats.read.many');
 
 /**
  * La última búsqueda dice CUÁNTO LEYÓ, no cuántas aceptó.
@@ -21,11 +22,11 @@ const readText = (count: number): string => (count === 1 ? '1 publicación leíd
  */
 const StatsRow = ({ stats }: StatsRowProps) => {
   const counters = [
-    { label: 'Nuevas', value: stats.new, hint: 'Sin mirar todavía', positive: true },
-    { label: 'Guardadas', value: stats.saved, hint: 'Para postularte', positive: false },
+    { label: t('stats.new'), value: stats.new, hint: t('stats.new.hint'), positive: true },
+    { label: t('stats.saved'), value: stats.saved, hint: t('stats.saved.hint'), positive: false },
     // 'Para ti' y no 'aceptadas': las junior quedan fuera del recuento. Sin
     // pie: el nombre ya lo dice, y la aclaración solo nombraba lo que falta.
-    { label: 'Total para ti', value: stats.total, hint: null, positive: false },
+    { label: t('stats.total'), value: stats.total, hint: null, positive: false },
   ];
 
   return (
@@ -55,7 +56,7 @@ const StatsRow = ({ stats }: StatsRowProps) => {
       <BlankCard>
         <Box p={2.5}>
           <Typography variant="overline" component="div" color="textSecondary">
-            Última búsqueda
+            {t('stats.lastRun')}
           </Typography>
           {stats.lastRun ? (
             <>
@@ -68,7 +69,7 @@ const StatsRow = ({ stats }: StatsRowProps) => {
             </>
           ) : (
             <Typography variant="body1" component="div" color="textSecondary" mt={1.5}>
-              Sin búsquedas todavía
+              {t('stats.noRuns')}
             </Typography>
           )}
         </Box>

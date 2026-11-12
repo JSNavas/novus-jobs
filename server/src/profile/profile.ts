@@ -24,6 +24,7 @@ import type { CandidateProfile } from './types.js';
  * - `cannotDo`: si una oferta EXIGE alguna de estas, no sirve.
  */
 export const PROFILE: CandidateProfile = {
+  language: 'es',
   stack: [
     // Lenguajes y runtime
     'TypeScript', 'JavaScript', 'Node.js', 'NodeJS', 'Node', 'Python', 'PHP',

@@ -27,10 +27,10 @@ const LastRunAlert = ({ lastRun }: LastRunAlertProps) => {
     <Box mb={2}>
       <AppAlert severity={failed ? 'error' : 'warning'}>
         <Typography variant="subtitle2" component="span" fontWeight={600}>
-          {runFailureLabel[lastRun.failure]}
+          {runFailureLabel(lastRun.failure)}
         </Typography>
         {' — '}
-        {runFailureAdvice[lastRun.failure]}
+        {runFailureAdvice(lastRun.failure, lastRun.source)}
         {lastRun.error ? (
           <Typography variant="caption" display="block" mt={0.5} sx={{ opacity: 0.8, wordBreak: 'break-word' }}>
             {lastRun.error}

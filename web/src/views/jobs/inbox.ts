@@ -1,3 +1,4 @@
+import { t, type TranslationKey } from '../../i18n';
 import { JobStatus } from '../../types';
 
 /**
@@ -13,42 +14,46 @@ import { JobStatus } from '../../types';
 export interface InboxView {
   status: JobStatus;
   path: string;
-  title: string;
-  /** Qué significa esta lista, en una línea bajo el título. */
-  subtitle: string;
+  /**
+   * Las tres cadenas van como CLAVE y no como texto: esta lista se construye al
+   * importar el módulo, cuando todavía no se sabe en qué idioma habla el
+   * usuario. El texto se resuelve al pintar, con `titleOf` y compañía.
+   */
+  titleKey: TranslationKey;
+  subtitleKey: TranslationKey;
   /** Lo que se enseña cuando la lista está vacía. Distinto para cada una. */
-  empty: string;
+  emptyKey: TranslationKey;
 }
 
 export const INBOX_VIEWS: readonly InboxView[] = [
   {
     status: JobStatus.New,
     path: '/nuevas',
-    title: 'Nuevas',
-    subtitle: 'Ofertas recién encontradas que todavía no has mirado',
+    titleKey: 'inbox.new.title',
+    subtitleKey: 'inbox.new.subtitle',
     // Sin las horas escritas a mano: las pone la página con lo que diga la API.
-    empty: 'No hay ofertas nuevas.',
+    emptyKey: 'inbox.new.empty',
   },
   {
     status: JobStatus.Seen,
     path: '/vistas',
-    title: 'Vistas',
-    subtitle: 'Las que ya leíste y dejaste pendientes de decidir',
-    empty: 'Aquí van las que marcas como vistas: leídas, pero sin decidir todavía.',
+    titleKey: 'inbox.seen.title',
+    subtitleKey: 'inbox.seen.subtitle',
+    emptyKey: 'inbox.seen.empty',
   },
   {
     status: JobStatus.Saved,
     path: '/guardadas',
-    title: 'Guardadas',
-    subtitle: 'Las que te interesan y en las que vas a postularte',
-    empty: 'Aquí van las que guardas para postularte. Todavía no has guardado ninguna.',
+    titleKey: 'inbox.saved.title',
+    subtitleKey: 'inbox.saved.subtitle',
+    emptyKey: 'inbox.saved.empty',
   },
   {
     status: JobStatus.Dismissed,
     path: '/descartadas',
-    title: 'Descartadas',
-    subtitle: 'Las que apartaste. No se borran: puedes devolverlas a nuevas',
-    empty: 'Aquí van las que descartas. No se borran: puedes devolverlas a nuevas.',
+    titleKey: 'inbox.dismissed.title',
+    subtitleKey: 'inbox.dismissed.subtitle',
+    emptyKey: 'inbox.dismissed.empty',
   },
 ];
 
@@ -71,3 +76,8 @@ export function showsCount(view: InboxView): boolean {
 export function viewByPath(pathname: string): InboxView {
   return INBOX_VIEWS.find((v) => v.path === pathname) ?? INBOX_VIEWS[0]!;
 }
+
+/** El texto de una vista, ya en el idioma del usuario. */
+export const titleOf = (view: InboxView): string => t(view.titleKey);
+export const subtitleOf = (view: InboxView): string => t(view.subtitleKey);
+export const emptyOf = (view: InboxView): string => t(view.emptyKey);

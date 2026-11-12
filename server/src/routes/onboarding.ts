@@ -9,7 +9,7 @@ import { ACCEPTED_EXTENSIONS, extractCvText, UnsupportedCvError } from '../cv/te
 import { COUNTRIES } from '../filters/countries.js';
 import { ECOSYSTEM_LABELS, VETOABLE_ECOSYSTEMS, type Ecosystem } from '../profile/technologies.js';
 import type { ProfileRepository } from '../profile/profile.repository.js';
-import { ENGLISH_LEVELS, type CandidateProfile, type EnglishLevel } from '../profile/types.js';
+import { ENGLISH_LEVELS, LANGUAGES, type CandidateProfile, type EnglishLevel, type Language } from '../profile/types.js';
 
 /**
  * EL ALTA. Lo que convierte este proyecto en algo que puede usar cualquiera.
@@ -52,6 +52,7 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
     catalogue: {
       countries: COUNTRIES.map((c) => ({ code: c.code, label: c.label })),
       englishLevels: ENGLISH_LEVELS,
+      languages: LANGUAGES,
       ecosystems: VETOABLE_ECOSYSTEMS.map((eco) => ({ id: eco, label: ECOSYSTEM_LABELS[eco] })),
     },
     /** Si se puede ofrecer la mejora con el modelo, que exige clave propia. */
@@ -136,6 +137,12 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
         });
       }
       changes.cannotDo = vetoesOf(ids as Ecosystem[]);
+    }
+
+    if (body.language !== undefined) {
+      const language = LANGUAGES.find((l) => l === body.language);
+      if (!language) return reply.code(400).send({ error: `idioma inválido. Son: ${LANGUAGES.join(', ')}` });
+      changes.language = language as Language;
     }
 
     if (body.english !== undefined) {

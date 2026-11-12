@@ -78,3 +78,18 @@ export function formatDate(iso: string | null): string {
   const p = partsOf(date);
   return `${p.day} ${p.month} ${p.year}`;
 }
+
+/**
+ * La hora del día (0-23) de un instante, en la zona del usuario.
+ *
+ * La necesita la cuenta atrás de la próxima búsqueda para decir "a las 9:00 am"
+ * en SU reloj. Antes se calculaba restando cuatro horas fijas, que era el
+ * desfase de Venezuela escrito a mano en el frontend — la misma suposición que
+ * había en el servidor y que ya no está.
+ */
+export function hourInUserZone(instant: Date): number {
+  const hour = new Intl.DateTimeFormat('en-US', { timeZone, hour: 'numeric', hour12: false })
+    .formatToParts(instant)
+    .find((part) => part.type === 'hour')?.value;
+  return Number(hour ?? 0) % 24;
+}

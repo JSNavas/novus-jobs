@@ -8,6 +8,7 @@ import {
   type CvReading, type EnglishLevel, type Integration, type OnboardingState,
 } from '../../api/client';
 import { AppAlert, AppChip } from '../../components/ui';
+import { t, type TranslationKey } from '../../i18n';
 import type { Draft } from './steps';
 
 /**
@@ -24,16 +25,12 @@ export interface PanelProps {
 }
 
 /** Cómo se lee cada nivel. La sigla sola no dice nada a quien no la conoce. */
-const ENGLISH_LABELS: Record<EnglishLevel, string> = {
-  none: 'Ninguno',
-  a1: 'A1 — algunas palabras',
-  a2: 'A2 — básico, leo documentación',
-  b1: 'B1 — intermedio, me defiendo por escrito',
-  b2: 'B2 — intermedio alto, reuniones con esfuerzo',
-  c1: 'C1 — avanzado, trabajo en inglés sin problema',
-  c2: 'C2 — casi nativo',
-  native: 'Nativo o bilingüe',
+const ENGLISH_KEYS: Record<EnglishLevel, TranslationKey> = {
+  none: 'eng.none', a1: 'eng.a1', a2: 'eng.a2', b1: 'eng.b1',
+  b2: 'eng.b2', c1: 'eng.c1', c2: 'eng.c2', native: 'eng.native',
 };
+
+const englishLabel = (level: EnglishLevel): string => t(ENGLISH_KEYS[level]);
 
 /* ── Paso 1: el CV ───────────────────────────────────────────────────────── */
 
@@ -41,7 +38,29 @@ interface CvPanelProps extends PanelProps {
   onRead: (cv: CvReading) => void;
 }
 
-export const CvStep = ({ state, onRead }: CvPanelProps) => {
+/**
+ * EL IDIOMA, EN EL PRIMER PASO Y ANTES QUE NADA.
+ *
+ * Va aquí arriba y no en un paso propio porque quien abre esto por primera vez
+ * y no lee español necesita cambiarlo ANTES de entender qué le están
+ * preguntando. Un paso dedicado llegaría tarde: para verlo ya habría tenido
+ * que leer el anterior.
+ */
+const LanguagePicker = ({ draft, onChange }: PanelProps) => (
+  <TextField
+    select
+    size="small"
+    label={t('wiz.language')}
+    value={draft.language}
+    onChange={(event) => onChange({ ...draft, language: event.target.value as Draft['language'] })}
+    sx={{ maxWidth: 220 }}
+  >
+    <MenuItem value="es">Español</MenuItem>
+    <MenuItem value="en">English</MenuItem>
+  </TextField>
+);
+
+export const CvStep = ({ state, draft, onChange, onRead }: CvPanelProps) => {
   const input = useRef<HTMLInputElement>(null);
   const [enhance, setEnhance] = useState(false);
   const [reading, setReading] = useState(false);
@@ -60,10 +79,9 @@ export const CvStep = ({ state, onRead }: CvPanelProps) => {
 
   return (
     <Stack spacing={2.5}>
+      <LanguagePicker state={state} draft={draft} onChange={onChange} />
       <Typography variant="body2" color="textSecondary">
-        El CV se lee <strong>en esta máquina</strong> y se guarda junto a tus datos, fuera del
-        proyecto. No se sube a ningún servidor ni se manda a nadie: es la razón por la que esto
-        existe. Acepta {state.acceptedFiles.join(', ')}.
+        {t('cv.privacy', { formats: state.acceptedFiles.join(', ') })}
       </Typography>
 
       <Box>
@@ -75,7 +93,7 @@ export const CvStep = ({ state, onRead }: CvPanelProps) => {
           onChange={(event) => pick(event.target.files?.[0])}
         />
         <Button variant="contained" disabled={reading} onClick={() => input.current?.click()}>
-          {reading ? 'Leyendo…' : 'Elegir mi CV'}
+          {reading ? t('cv.reading') : t('cv.choose')}
         </Button>
         {reading ? <CircularProgress size={18} sx={{ ml: 2, verticalAlign: 'middle' }} /> : null}
       </Box>
@@ -84,17 +102,12 @@ export const CvStep = ({ state, onRead }: CvPanelProps) => {
         <FormControlLabel
           control={<Switch checked={enhance} onChange={(event) => setEnhance(event.target.checked)} />}
           label={
-            <Typography variant="body2">
-              Leerlo también con el modelo (Gemini). Encuentra lo que no está escrito con sus
-              palabras exactas, pero <strong>manda el texto de tu CV a Google</strong>. Sin esto,
-              el CV no sale de aquí.
-            </Typography>
+            <Typography variant="body2">{t('cv.enhance')}</Typography>
           }
         />
       ) : (
         <Typography variant="caption" color="textSecondary">
-          La lectura con modelo no está disponible: hace falta una GEMINI_API_KEY en el `.env` del
-          servidor. Con las reglas locales basta para empezar.
+          {t('cv.noKey')}
         </Typography>
       )}
 
@@ -103,17 +116,17 @@ export const CvStep = ({ state, onRead }: CvPanelProps) => {
       {result ? (
         result.foundInCv ? (
           <AppAlert severity="info">
-            Leí {result.stack.length} tecnologías
-            {result.english ? `, inglés ${result.english.toUpperCase()}` : ''}
-            {result.country ? `, ${result.city ?? result.country}` : ''}
-            {result.years ? ` y ${result.years} años de experiencia` : ''}
-            {result.enhanced ? ' (con el modelo)' : ''}. Revísalo en los pasos siguientes: lo que
-            no reconocí lo rellenas tú.
+            {t('cv.read', {
+              count: result.stack.length,
+              english: result.english ? t('cv.read.english', { level: result.english.toUpperCase() }) : '',
+              place: result.country ? `, ${result.city ?? result.country}` : '',
+              years: result.years ? t('cv.read.years', { years: result.years }) : '',
+              model: result.enhanced ? t('cv.read.model') : '',
+            })}
           </AppAlert>
         ) : (
           <AppAlert severity="info">
-            No reconocí nada en el fichero. Si es un PDF escaneado no hay texto que leer: sigue al
-            paso siguiente y escríbelo a mano, que es igual de válido.
+            {t('cv.nothing')}
           </AppAlert>
         )
       ) : null}
@@ -126,9 +139,9 @@ export const CvStep = ({ state, onRead }: CvPanelProps) => {
 export const StackStep = ({ state, draft, onChange }: PanelProps) => (
   <Stack spacing={3}>
     <Box>
-      <Typography variant="subtitle2" mb={0.5}>Todo lo que sabes</Typography>
+      <Typography variant="subtitle2" mb={0.5}>{t('stack.all')}</Typography>
       <Typography variant="caption" color="textSecondary" display="block" mb={1.5}>
-        Enriquece el «Coincide con» de cada oferta. No abre la puerta por sí solo.
+        {t('stack.all.help')}
       </Typography>
       <Autocomplete
         multiple
@@ -143,17 +156,15 @@ export const StackStep = ({ state, draft, onChange }: PanelProps) => (
           core: draft.core.filter((tech) => (value as string[]).includes(tech)),
         })}
         renderInput={(params) => (
-          <TextField {...params} placeholder="TypeScript, PostgreSQL, Docker…" size="small" />
+          <TextField {...params} placeholder={t('stack.all.placeholder')} size="small" />
         )}
       />
     </Box>
 
     <Box>
-      <Typography variant="subtitle2" mb={0.5}>Tu núcleo</Typography>
+      <Typography variant="subtitle2" mb={0.5}>{t('stack.core')}</Typography>
       <Typography variant="caption" color="textSecondary" display="block" mb={1.5}>
-        Las que definen tu oficio. Al menos una tiene que aparecer en la oferta para que te llegue:
-        es el corte que evita que una vacante de Java te llegue por mencionar Docker. Elígelas de
-        tu stack.
+        {t('stack.core.help')}
       </Typography>
       <Autocomplete
         multiple
@@ -161,18 +172,15 @@ export const StackStep = ({ state, draft, onChange }: PanelProps) => (
         value={draft.core}
         onChange={(_event, value) => onChange({ ...draft, core: value })}
         renderInput={(params) => (
-          <TextField {...params} placeholder="Las tres o cuatro que te definen" size="small" />
+          <TextField {...params} placeholder={t('stack.core.placeholder')} size="small" />
         )}
       />
     </Box>
 
     <Box>
-      <Typography variant="subtitle2" mb={0.5}>Lo que no quieres que te ofrezcan</Typography>
+      <Typography variant="subtitle2" mb={0.5}>{t('stack.vetoes')}</Typography>
       <Typography variant="caption" color="textSecondary" display="block" mb={1.5}>
-        Si una oferta <strong>exige</strong> algo de aquí, se descarta. Marcado por ecosistemas
-        enteros, que es como funciona en la práctica: quien no toca la JVM no quiere Spring ni
-        Kotlin ni Hibernate. Revisa esto con calma —marcar algo que sí sabes tira ofertas buenas
-        sin que te enteres— y déjalo vacío si no lo tienes claro.
+        {t('stack.vetoes.help')}
       </Typography>
       <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 0.5 }}>
         {state.catalogue.ecosystems.map((eco) => {
@@ -208,7 +216,7 @@ export const EnglishStep = ({ state, draft, onChange }: PanelProps) => (
     <TextField
       select
       size="small"
-      label="Tu nivel"
+      label={t('eng.yourLevel')}
       value={draft.english.level}
       onChange={(event) => onChange({
         ...draft,
@@ -217,7 +225,7 @@ export const EnglishStep = ({ state, draft, onChange }: PanelProps) => (
       sx={{ maxWidth: 420 }}
     >
       {state.catalogue.englishLevels.map((level) => (
-        <MenuItem key={level} value={level}>{ENGLISH_LABELS[level]}</MenuItem>
+        <MenuItem key={level} value={level}>{englishLabel(level)}</MenuItem>
       ))}
     </TextField>
 
@@ -232,15 +240,11 @@ export const EnglishStep = ({ state, draft, onChange }: PanelProps) => (
         />
       }
       label={
-        <Typography variant="body2">
-          Descartar las ofertas que exijan <strong>más</strong> nivel del que tengo
-        </Typography>
+        <Typography variant="body2">{t('eng.filter')}</Typography>
       }
     />
     <Typography variant="caption" color="textSecondary">
-      Lo que descarta no es que pidan inglés: es que pidan más del que tienes. Un «inglés A2
-      excluyente» con B1 te llega igual, porque lo cumples. Apagado, el idioma no esconde nada —útil
-      si quieres ver cuánto te cierra y decidir si estudiarlo.
+      {t('eng.filter.help')}
     </Typography>
   </Stack>
 );
@@ -259,11 +263,11 @@ function timeZones(): string[] {
   return all.includes(own) ? all : [own, ...all];
 }
 
-const MODALITIES: { key: keyof Draft['modality']; label: string; hint: string }[] = [
-  { key: 'remoteGlobal', label: 'Remoto global', hint: 'Sin restricción de residencia, o para toda tu región.' },
-  { key: 'remoteHomeCountry', label: 'Remoto en tu país', hint: 'Remoto, pero solo para quien vive donde tú.' },
-  { key: 'hybrid', label: 'Híbrido', hint: 'Oficina algunos días. Solo tiene sentido si la oficina te pilla cerca.' },
-  { key: 'onsite', label: 'Presencial', hint: 'Oficina todos los días.' },
+const MODALITIES: { key: keyof Draft['modality']; label: TranslationKey; hint: TranslationKey }[] = [
+  { key: 'remoteGlobal', label: 'mod.remoteGlobal', hint: 'mod.remoteGlobal.hint' },
+  { key: 'remoteHomeCountry', label: 'mod.remoteHome', hint: 'mod.remoteHome.hint' },
+  { key: 'hybrid', label: 'mod.hybrid', hint: 'mod.hybrid.hint' },
+  { key: 'onsite', label: 'mod.onsite', hint: 'mod.onsite.hint' },
 ];
 
 export const PlaceStep = ({ state, draft, onChange }: PanelProps) => (
@@ -272,19 +276,19 @@ export const PlaceStep = ({ state, draft, onChange }: PanelProps) => (
       <TextField
         select
         size="small"
-        label="País donde vives"
+        label={t('geo.country')}
         value={draft.geo.country}
         onChange={(event) => onChange({ ...draft, geo: { ...draft.geo, country: event.target.value } })}
         sx={{ minWidth: 240 }}
       >
-        <MenuItem value="">No está el mío</MenuItem>
+        <MenuItem value="">{t('geo.noCountry')}</MenuItem>
         {state.catalogue.countries.map((country) => (
           <MenuItem key={country.code} value={country.code}>{country.label}</MenuItem>
         ))}
       </TextField>
       <TextField
         size="small"
-        label="Tu ciudad (opcional)"
+        label={t('geo.city')}
         value={draft.geo.city ?? ''}
         onChange={(event) => onChange({
           ...draft,
@@ -299,26 +303,22 @@ export const PlaceStep = ({ state, draft, onChange }: PanelProps) => (
         value={draft.geo.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone}
         onChange={(_event, value) => onChange({ ...draft, geo: { ...draft.geo, timezone: value ?? '' } })}
         disableClearable
-        renderInput={(params) => <TextField {...params} size="small" label="Tu zona horaria" />}
+        renderInput={(params) => <TextField {...params} size="small" label={t('geo.timezone')} />}
         sx={{ maxWidth: 420 }}
       />
       <Typography variant="caption" color="textSecondary" display="block" mt={1}>
-        Las franjas de búsqueda son horas de tu reloj —«a las 9, a la 1 y a las 6»— y el dashboard
-        pinta todas las fechas en esta zona. Viene puesta la de este ordenador; cámbiala si el
-        servidor corre en un sitio y tú vives en otro.
+        {t('geo.timezone.help')}
       </Typography>
     </Box>
 
     {!draft.geo.country ? (
       <AppAlert severity="info">
-        Sin país no se aplica ninguna regla de ubicación: te llegarán también las ofertas
-        restringidas a otros países. Es a propósito —sin saber desde dónde buscas, descartarlas
-        sería tirarlas por una suposición.
+        {t('geo.noCountry.warning')}
       </AppAlert>
     ) : null}
 
     <Box>
-      <Typography variant="subtitle2" mb={1.5}>Qué modalidades aceptas</Typography>
+      <Typography variant="subtitle2" mb={1.5}>{t('mod.title')}</Typography>
       <Stack spacing={0.5}>
         {MODALITIES.map((modality) => (
           <FormControlLabel
@@ -335,8 +335,8 @@ export const PlaceStep = ({ state, draft, onChange }: PanelProps) => (
             }
             label={
               <Typography variant="body2">
-                {modality.label}
-                <Typography component="span" variant="caption" color="textSecondary"> — {modality.hint}</Typography>
+                {t(modality.label)}
+                <Typography component="span" variant="caption" color="textSecondary"> — {t(modality.hint)}</Typography>
               </Typography>
             }
           />
@@ -372,8 +372,7 @@ export const SourcesStep = () => {
   return (
     <Stack spacing={2}>
       <Typography variant="body2" color="textSecondary">
-        De dónde se leen las ofertas. Puedes cambiarlo cuando quieras en Integraciones, junto con el
-        ritmo de cada una.
+        {t('src.help')}
       </Typography>
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
       {!integrations && !error ? <CircularProgress size={20} /> : null}
@@ -384,14 +383,12 @@ export const SourcesStep = () => {
             onChange={(event) => toggle(integration, event.target.checked)}
           />
           <Typography variant="body2">{integration.label}</Typography>
-          {integration.needsLogin ? <AppChip label="pide iniciar sesión" tone="neutral" /> : null}
+          {integration.needsLogin ? <AppChip label={t('src.needsLogin')} tone="neutral" /> : null}
         </Stack>
       ))}
       {integrations?.some((i) => i.enabled && i.needsLogin) ? (
         <AppAlert severity="info">
-          Las que piden sesión necesitan que inicies sesión una vez, desde la terminal del servidor
-          (<code>npm run login -- linkedin</code>). Hasta entonces esa plataforma no devolverá nada,
-          y el dashboard te lo dirá con su motivo.
+          {t('src.loginHint')}
         </AppAlert>
       ) : null}
     </Stack>
@@ -403,42 +400,39 @@ export const SourcesStep = () => {
 export const DoneStep = ({ draft }: PanelProps) => (
   <Stack spacing={2}>
     <Typography variant="body2" color="textSecondary">
-      Con esto ya se puede buscar. Lo que falta tiene valores por defecto y se cambia sin reiniciar
-      nada: el párrafo de motivación y la antigüedad máxima de las vacantes viven en Configuración,
-      y el ritmo de cada plataforma en Integraciones.
+      {t('done.help')}
     </Typography>
     <Box>
-      <Typography variant="subtitle2" mb={1}>Lo que queda guardado</Typography>
+      <Typography variant="subtitle2" mb={1}>{t('done.summary')}</Typography>
       <Stack spacing={1}>
         <Typography variant="body2">
-          <strong>Núcleo:</strong>{' '}
+          <strong>{t('done.core')}</strong>{' '}
           {draft.core.length
             ? draft.core.map((tech) => <Chip key={tech} size="small" label={tech} sx={{ mr: 0.5 }} />)
             : '—'}
         </Typography>
         <Typography variant="body2">
-          <strong>Stack:</strong> {draft.stack.length} tecnologías
+          <strong>{t('done.stack')}</strong> {t('done.stackCount', { count: draft.stack.length })}
         </Typography>
         <Typography variant="body2">
-          <strong>Inglés:</strong> {ENGLISH_LABELS[draft.english.level]}
-          {draft.english.filter ? ' · filtra lo que pide más' : ' · sin filtrar por idioma'}
+          <strong>{t('done.english')}</strong> {englishLabel(draft.english.level)}
+          {t(draft.english.filter ? 'done.english.filters' : 'done.english.noFilter')}
         </Typography>
         <Typography variant="body2">
-          <strong>Dónde:</strong> {draft.geo.country || 'sin país'}
+          <strong>{t('done.where')}</strong> {draft.geo.country || t('done.noCountry')}
           {draft.geo.city ? ` · ${draft.geo.city}` : ''}
           {' · '}
-          {MODALITIES.filter((m) => draft.modality[m.key]).map((m) => m.label).join(', ') || 'ninguna modalidad marcada'}
+          {MODALITIES.filter((m) => draft.modality[m.key]).map((m) => t(m.label)).join(', ') || t('done.noModality')}
         </Typography>
         <Typography variant="body2">
-          <strong>Vetos:</strong>{' '}
-          {draft.vetoEcosystems.length ? `${draft.vetoEcosystems.length} ecosistemas` : 'ninguno'}
+          <strong>{t('done.vetoes')}</strong>{' '}
+          {draft.vetoEcosystems.length ? t('done.vetoCount', { count: draft.vetoEcosystems.length }) : t('done.none')}
         </Typography>
       </Stack>
     </Box>
     {!MODALITIES.some((m) => draft.modality[m.key]) ? (
       <AppAlert severity="error">
-        No has dejado ninguna modalidad marcada: así no entraría ninguna oferta. Vuelve al paso
-        «Dónde» y marca al menos una.
+        {t('done.noModality.error')}
       </AppAlert>
     ) : null}
   </Stack>

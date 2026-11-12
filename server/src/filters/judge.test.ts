@@ -4,6 +4,7 @@ import { LlmJudge } from './judge.js';
 import type { CandidateProfile, Offer } from './decide.js';
 
 const PERFIL: CandidateProfile = {
+  language: 'es',
   stack: ['Node.js'], core: ['Node.js'], cannotDo: ['Java'],
   english: { level: 'b1', filter: true },
   geo: { country: 'VE', city: null, timezone: 'America/Caracas', excludeLocalEmployers: true },

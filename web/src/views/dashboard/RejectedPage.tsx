@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useMemo } from 'react';
 import type { JobQuery } from '../../api/client';
 import { PageContainer } from '../../components/ui';
@@ -20,11 +21,11 @@ const RejectedPage = () => {
 
   return (
     <PageContainer
-      title="Descartadas por el filtro"
-      subtitle="No encajaban con tu perfil. Cada una dice por qué se descartó"
-      breadcrumbs={[{ title: 'Dashboard', to: '/' }, { title: 'Descartadas por el filtro' }]}
+      title={t('rejected.title')}
+      subtitle={t('rejected.subtitle')}
+      breadcrumbs={[{ title: t('dash.title'), to: '/' }, { title: t('rejected.title') }]}
     >
-      <JobList query={query} empty="El filtro no ha descartado nada todavía." />
+      <JobList query={query} empty={t('rejected.empty')} />
     </PageContainer>
   );
 };

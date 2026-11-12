@@ -1,3 +1,4 @@
+import { plural, t } from '../../i18n';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router';
 import { Box, Typography } from '@mui/material';
@@ -27,7 +28,7 @@ const RunPage = () => {
     getRun(runId)
       .then((next) => { if (!cancelled) { setRun(next); setError(null); } })
       .catch((cause: unknown) => {
-        if (!cancelled) setError(cause instanceof Error ? cause.message : 'Error desconocido');
+        if (!cancelled) setError(cause instanceof Error ? cause.message : t('run.unknownError'));
       });
     return () => { cancelled = true; };
   }, [runId]);
@@ -37,22 +38,22 @@ const RunPage = () => {
   const query = useMemo<JobQuery>(() => ({ verdict: ALL_VERDICTS, runId }), [runId]);
 
   const summary = (current: RunInfo): string => {
-    const read = current.fetched === 1 ? '1 publicación leída' : `${current.fetched} publicaciones leídas`;
-    return `${read} · ${current.accepted} encajaron · ${current.rejected} descartadas`;
+    const read = plural(current.fetched, 'stats.read.one', 'stats.read.many');
+    return t('run.summary', { read, accepted: current.accepted, rejected: current.rejected });
   };
 
   return (
     <PageContainer
-      title={run ? `Búsqueda del ${formatDateTime(run.startedAt)}` : 'Búsqueda'}
-      subtitle={run ? summary(run) : 'Cargando…'}
-      breadcrumbs={[{ title: 'Dashboard', to: '/' }, { title: `Búsqueda ${runId}` }]}
+      title={run ? t('run.title', { date: formatDateTime(run.startedAt) }) : t('run.title.loading')}
+      subtitle={run ? summary(run) : t('run.loading')}
+      breadcrumbs={[{ title: t('dash.title'), to: '/' }, { title: t('run.breadcrumb', { id: runId }) }]}
       action={run ? <AppStatusPilot label={runStatusLabel(run)} tone={runStatusTone(run)} /> : null}
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
 
       {run?.status === RunStatus.Error && run.error ? (
         <AppAlert severity="error">
-          <Typography variant="body2" fontWeight={600} component="div">Falló la búsqueda</Typography>
+          <Typography variant="body2" fontWeight={600} component="div">{t('run.failed.heading')}</Typography>
           <Typography variant="caption" component="div" sx={{ opacity: 0.8 }}>{run.error}</Typography>
         </AppAlert>
       ) : null}
@@ -70,11 +71,11 @@ const RunPage = () => {
         </BlankCard>
       ) : null}
 
-      <Typography variant="h6" mt={3} mb={1}>Ofertas de esta búsqueda</Typography>
+      <Typography variant="h6" mt={3} mb={1}>{t('run.offers')}</Typography>
       <Typography variant="body2" color="textSecondary" mb={2}>
         Aceptadas y descartadas juntas. Cada tarjeta dice en qué lado cayó y por qué.
       </Typography>
-      <JobList query={query} empty="Esta búsqueda no guardó ninguna oferta nueva." />
+      <JobList query={query} empty={t('run.offers.empty')} />
     </PageContainer>
   );
 };

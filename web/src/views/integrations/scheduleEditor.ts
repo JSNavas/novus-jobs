@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 /**
  * Las reglas del horario, fuera de la pantalla que las usa.
  *
@@ -12,18 +13,18 @@ export const MAX_INTERVAL_MINUTES = 24 * 60;
 export const INTERVAL_PRESETS = [15, 30, 60, 120, 180, 360, 720] as const;
 
 export function intervalLabel(minutes: number): string {
-  if (minutes < 60) return `${minutes} min`;
+  if (minutes < 60) return t('interval.minutes', { minutes });
   const hours = Math.floor(minutes / 60);
   const rest = minutes % 60;
-  if (rest === 0) return hours === 1 ? '1 hora' : `${hours} horas`;
-  return `${hours} h ${rest} min`;
+  if (rest === 0) return hours === 1 ? t('interval.hour') : t('interval.hours', { hours });
+  return t('interval.hoursMinutes', { hours, rest });
 }
 
 export function intervalError(raw: string): string | null {
   const minutes = Number(raw);
-  if (!Number.isInteger(minutes)) return 'Escribe un número entero de minutos.';
-  if (minutes < MIN_INTERVAL_MINUTES) return `Mínimo ${MIN_INTERVAL_MINUTES} minutos: por debajo es martillear la plataforma.`;
-  if (minutes > MAX_INTERVAL_MINUTES) return 'Máximo 24 horas.';
+  if (!Number.isInteger(minutes)) return t('interval.notInteger');
+  if (minutes < MIN_INTERVAL_MINUTES) return t('interval.tooLow', { min: MIN_INTERVAL_MINUTES });
+  if (minutes > MAX_INTERVAL_MINUTES) return t('interval.tooHigh');
   return null;
 }
 

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router';
-import { Box, Button, Stack, TextField, Typography } from '@mui/material';
-import { getSettings, updateSettings, type Settings } from '../../api/client';
+import { Box, Button, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { language, t, type Language, type TranslationKey } from '../../i18n';
+import { getSettings, saveOnboardingStep, updateSettings, type Settings } from '../../api/client';
 import { AppAlert, BlankCard, PageContainer } from '../../components/ui';
 
 /**
@@ -14,9 +15,9 @@ import { AppAlert, BlankCard, PageContainer } from '../../components/ui';
  */
 
 const PLACEHOLDERS = [
-  { token: '{puesto}', help: 'el rol de la oferta, p. ej. «Developer Full-Stack»' },
-  { token: '{empresa}', help: 'quién contrata. En LinkedIn no siempre se sabe: ahí pone «la empresa»' },
-  { token: '{tecnologias}', help: 'hasta cuatro coincidencias reales con tu stack' },
+  { token: '{puesto}', help: 'set.placeholder.role' },
+  { token: '{empresa}', help: 'set.placeholder.company' },
+  { token: '{tecnologias}', help: 'set.placeholder.tech' },
 ];
 
 const MIN_CHARS = 50;
@@ -39,6 +40,16 @@ const SettingsPage = () => {
       })
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
   }, []);
+
+  /**
+   * Guarda el idioma y recarga. La recarga es la parte importante: el texto ya
+   * pintado no se vuelve a pedir solo, y media pantalla en un idioma y media en
+   * otro es peor que esperar un segundo.
+   */
+  const changeLanguage = async (next: Language): Promise<void> => {
+    await saveOnboardingStep({ language: next });
+    window.location.reload();
+  };
 
   const save = async (): Promise<void> => {
     setSaving(true);
@@ -81,21 +92,20 @@ const SettingsPage = () => {
 
   return (
     <PageContainer
-      title="Configuración"
-      subtitle="Lo que puedes cambiar sin tocar el código"
-      breadcrumbs={[{ title: 'Configuración' }]}
+      title={t('set.title')}
+      subtitle={t('set.subtitle')}
+      breadcrumbs={[{ title: t('set.title') }]}
     >
       <Stack spacing={3}>
         {error ? <AppAlert severity="error">{error}</AppAlert> : null}
-        {saved ? <AppAlert severity="info">Guardado. Las ofertas ya usan este texto.</AppAlert> : null}
+        {saved ? <AppAlert severity="info">{t('set.saved')}</AppAlert> : null}
 
         <BlankCard>
           <Stack spacing={2} p={3}>
             <Box>
-              <Typography variant="h5">Motivación de las postulaciones</Typography>
+              <Typography variant="h5">{t('set.motivation')}</Typography>
               <Typography variant="body2" color="textSecondary">
-                El texto que copia el botón «Copiar motivación» de cada oferta, para pegarlo en el
-                «¿por qué te interesa trabajar aquí?». Lo que escribas aquí es lo que se pega.
+                {t('set.motivation.help')}
               </Typography>
             </Box>
 
@@ -109,21 +119,21 @@ const SettingsPage = () => {
               error={tooShort || tooLong}
               helperText={
                 tooLong
-                  ? `${length} caracteres: el formulario admite ${MAX_CHARS} como mucho`
+                  ? t('set.chars.tooLong', { length, max: MAX_CHARS })
                   : tooShort
-                    ? `${length} caracteres: el formulario pide al menos ${MIN_CHARS}`
-                    : `${length} caracteres. Al rellenar los huecos crece un poco.`
+                    ? t('set.chars.tooShort', { length, min: MIN_CHARS })
+                    : t('set.chars.ok', { length })
               }
             />
 
             <Box>
               <Typography variant="body2" gutterBottom>
-                Huecos que se rellenan con los datos de cada oferta:
+                {t('set.placeholders')}
               </Typography>
               {PLACEHOLDERS.map((placeholder) => (
                 <Typography key={placeholder.token} variant="body2" color="textSecondary">
                   <Typography component="span" variant="mono">{placeholder.token}</Typography>
-                  {` — ${placeholder.help}`}
+                  {` — ${t(placeholder.help as TranslationKey)}`}
                 </Typography>
               ))}
               {/* Que una frase entera desaparezca no es obvio, y si no se dice
@@ -137,14 +147,14 @@ const SettingsPage = () => {
 
             <Stack direction="row" spacing={1}>
               <Button variant="contained" disabled={!dirty || saving || tooShort || tooLong} onClick={() => void save()}>
-                {saving ? 'Guardando…' : 'Guardar'}
+                {saving ? t('set.saving') : t('set.save')}
               </Button>
               <Button
                 variant="outlined"
                 disabled={saving || settings === null || template === settings.defaultMotivationTemplate}
                 onClick={() => setTemplate(settings?.defaultMotivationTemplate ?? '')}
               >
-                Volver a la de fábrica
+                {t('set.resetDefault')}
               </Button>
             </Stack>
           </Stack>
@@ -156,20 +166,19 @@ const SettingsPage = () => {
         <BlankCard>
           <Stack spacing={2} p={3}>
             <Box>
-              <Typography variant="h5">Antigüedad máxima de las vacantes</Typography>
+              <Typography variant="h5">{t('set.maxAge')}</Typography>
               <Typography variant="body2" color="textSecondary">
-                Una vacante publicada hace más de esto no entra. Con 969 postulaciones acumuladas,
-                escribirle a una oferta de hace un año es tirar el tiempo — y entierra la de ayer.
+                {t('set.maxAge.help')}
               </Typography>
             </Box>
             <TextField
               type="number"
-              label="Meses"
+              label={t('set.months')}
               value={months}
               onChange={(event) => setMonths(event.target.value)}
               disabled={settings === null || saving}
               error={badMonths}
-              helperText={badMonths ? 'Entre 1 y 24 meses' : 'Se aplica desde la siguiente búsqueda.'}
+              helperText={badMonths ? t('set.months.invalid') : t('set.months.hint')}
               sx={{ maxWidth: 200 }}
             />
             <Box>
@@ -178,37 +187,55 @@ const SettingsPage = () => {
                 disabled={saving || badMonths || settings === null || Number(months) === settings.maxAgeMonths}
                 onClick={() => void saveMonths()}
               >
-                Guardar antigüedad
+                {t('set.saveMaxAge')}
               </Button>
             </Box>
           </Stack>
         </BlankCard>
 
+        {/* EL IDIOMA RECARGA LA PÁGINA al cambiar, a propósito: es un cambio de
+            dos veces en la vida de una instalación, y una recarga es más
+            honesta que repintar media aplicación desde un estado global que
+            existiría solo para esto. */}
         <BlankCard>
           <Stack spacing={1.5} p={3} alignItems="flex-start">
-            <Typography variant="h5">Tu perfil</Typography>
+            <Typography variant="h5">{t('set.language')}</Typography>
+            <Typography variant="body2" color="textSecondary">{t('set.language.help')}</Typography>
+            <TextField
+              select
+              size="small"
+              value={language()}
+              onChange={(event) => void changeLanguage(event.target.value as Language)}
+              sx={{ minWidth: 200 }}
+            >
+              <MenuItem value="es">Español</MenuItem>
+              <MenuItem value="en">English</MenuItem>
+            </TextField>
+          </Stack>
+        </BlankCard>
+
+        <BlankCard>
+          <Stack spacing={1.5} p={3} alignItems="flex-start">
+            <Typography variant="h5">{t('set.profile')}</Typography>
             <Typography variant="body2" color="textSecondary">
-              Tu stack, tu núcleo, los vetos, el inglés y desde dónde buscas. Es lo que decide qué
-              oferta te llega y qué se descarta, y se edita en la misma pantalla del alta: así no
-              hay dos formularios que puedan decir cosas distintas. Los cambios se aplican en la
-              siguiente búsqueda, sin reiniciar nada.
+              {t('set.profile.help')}
             </Typography>
             <Button variant="outlined" component={RouterLink} to="/bienvenida?editar=1">
-              Editar mi perfil
+              {t('set.profile.edit')}
             </Button>
           </Stack>
         </BlankCard>
 
         <BlankCard>
           <Stack spacing={1} p={3}>
-            <Typography variant="h5">Cuenta de postulación</Typography>
+            <Typography variant="h5">{t('set.account')}</Typography>
             <Typography variant="body2" color="textSecondary">
               Desde dónde se abre Gmail al escribirle a quien contrata. Se cambia en el{' '}
               <Typography component="span" variant="mono">.env</Typography> del servidor
               (<Typography component="span" variant="mono">GMAIL_ACCOUNT</Typography>), porque es una
               credencial y no un texto.
             </Typography>
-            <Typography variant="body2">{settings?.gmailAccount ?? 'sin configurar'}</Typography>
+            <Typography variant="body2">{settings?.gmailAccount ?? t('set.account.unset')}</Typography>
           </Stack>
         </BlankCard>
       </Stack>

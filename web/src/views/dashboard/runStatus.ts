@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { RunStatus, type RunInfo } from '../../types';
 import type { AppStatusTone } from '../../components/ui';
 
@@ -8,7 +9,7 @@ export const runStatusTone = (run: RunInfo): AppStatusTone => {
 };
 
 export const runStatusLabel = (run: RunInfo): string => {
-  if (run.status === RunStatus.Error) return 'Falló';
-  if (run.status === RunStatus.Running) return 'En curso';
-  return 'Correcta';
+  if (run.status === RunStatus.Error) return t('run.failed');
+  if (run.status === RunStatus.Running) return t('run.running');
+  return t('run.ok');
 };

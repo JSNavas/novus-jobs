@@ -11,6 +11,8 @@ import type { CandidateProfile } from './types.js';
  * objeto es solo con qué llega el formulario cuando el CV no trajo un campo.
  */
 export const DEFAULT_PROFILE: CandidateProfile = {
+  // El del proyecto cuando nadie ha elegido: el alta propone el del navegador.
+  language: 'es',
   stack: [],
   core: [],
   cannotDo: [],

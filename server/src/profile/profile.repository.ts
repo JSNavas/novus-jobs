@@ -1,6 +1,6 @@
 import type { SettingsRepository } from '../db/settings.repository.js';
 import { DEFAULT_PROFILE } from './defaults.js';
-import { ENGLISH_LEVELS, type CandidateProfile, type EnglishLevel } from './types.js';
+import { ENGLISH_LEVELS, LANGUAGES, type CandidateProfile, type EnglishLevel, type Language } from './types.js';
 
 /** El perfil entero, como un JSON en `settings`. */
 export const PROFILE_KEY = 'candidateProfile';
@@ -55,6 +55,7 @@ function parseProfile(raw: string | null): CandidateProfile {
   const stored = safeParse(raw);
   if (!stored) return DEFAULT_PROFILE;
   return {
+    language: LANGUAGES.find((l) => l === stored.language) ?? DEFAULT_PROFILE.language,
     stack: strings(stored.stack) ?? DEFAULT_PROFILE.stack,
     core: strings(stored.core) ?? DEFAULT_PROFILE.core,
     cannotDo: strings(stored.cannotDo) ?? DEFAULT_PROFILE.cannotDo,

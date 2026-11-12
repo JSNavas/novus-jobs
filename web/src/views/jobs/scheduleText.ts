@@ -1,4 +1,6 @@
 import type { Schedule } from '../../api/client';
+import { hourInUserZone } from '../../format';
+import { t } from '../../i18n';
 
 /**
  * Las horas, como las dice una persona: "9:00 am, 1:00 pm o 6:00 pm".
@@ -16,25 +18,22 @@ function hourLabel(hour: number): string {
 }
 
 /**
- * "a las 9:00 am, 1:00 pm o 6:00 pm (hora de Venezuela)".
+ * "La siguiente búsqueda es a las 9:00 am, 1:00 pm o 6:00 pm (Europe/Madrid)".
  *
- * Las horas venían escritas a mano en la interfaz, y son configurables con
- * `SCHEDULE_HOURS`: era una frase que dejaba de ser verdad en cuanto alguien
- * tocaba el `.env`. Y sin la zona, un "6:00 pm" no dice nada — el servidor
- * trabaja en hora de Venezuela y quien mira el dashboard necesita saberlo.
+ * Las horas venían escritas a mano en la interfaz, y son configurables: era una
+ * frase que dejaba de ser verdad en cuanto alguien las cambiaba. Y sin la zona,
+ * un "6:00 pm" no dice nada: el dashboard lo puede abrir alguien que no está
+ * donde corre el servidor.
  */
 export function nextSearchSentence(schedule: Schedule | null): string {
   if (!schedule || schedule.hours.length === 0) return '';
   const times = schedule.hours.map(hourLabel);
   const list = times.length === 1
     ? times[0]!
-    : `${times.slice(0, -1).join(', ')} o ${times[times.length - 1]!}`;
-  return `La siguiente búsqueda es a las ${list} (${schedule.timezone}).`;
+    : `${times.slice(0, -1).join(', ')} ${t('schedule.or')} ${times[times.length - 1]!}`;
+  return t('schedule.nextSentence', { hours: list, timezone: schedule.timezone });
 }
 
-// Venezuela has no daylight saving time, so the searcher's clock is a fixed
-// UTC-4. Only this constant changes if the searcher ever moves to another zone.
-const VET_OFFSET_HOURS = -4;
 const SECONDS_PER_HOUR = 3_600;
 const SECONDS_PER_DAY = 86_400;
 const SIX_HOURS_IN_MINUTES = 360;
@@ -45,7 +44,7 @@ export interface NextSearch {
 }
 
 /**
- * The first scheduled hour strictly after `now`, read on the Venezuelan clock.
+ * The first scheduled hour strictly after `now`, read on the user's clock.
  * If today has no hour left, it is the earliest one of tomorrow. Null when the
  * schedule is empty: there is nothing to count down to.
  */
@@ -54,11 +53,10 @@ export function nextSearchIn(hours: number[], now: Date): NextSearch | null {
   const earliest = sorted[0];
   if (earliest === undefined) return null;
 
-  const nowSeconds = (now.getUTCHours() * SECONDS_PER_HOUR
+  // La hora del usuario, no la de UTC ni la del navegador: la del perfil.
+  const nowSeconds = (hourInUserZone(now) * SECONDS_PER_HOUR
     + now.getUTCMinutes() * 60
-    + now.getUTCSeconds()
-    + VET_OFFSET_HOURS * SECONDS_PER_HOUR
-    + SECONDS_PER_DAY) % SECONDS_PER_DAY;
+    + now.getUTCSeconds()) % SECONDS_PER_DAY;
   const following = sorted.find((hour) => hour * SECONDS_PER_HOUR > nowSeconds);
   const targetSeconds = following === undefined
     ? earliest * SECONDS_PER_HOUR + SECONDS_PER_DAY
@@ -81,9 +79,8 @@ export function nextSearchIn(hours: number[], now: Date): NextSearch | null {
 export function nextSearchAt(nextAt: string, now: Date): NextSearch | null {
   const target = Date.parse(nextAt);
   if (Number.isNaN(target)) return null;
-  const vetHour = new Date(target + VET_OFFSET_HOURS * 3_600_000).getUTCHours();
   return {
-    hour: vetHour,
+    hour: hourInUserZone(new Date(target)),
     minutesLeft: Math.max(0, Math.floor((target - now.getTime()) / 60_000)),
   };
 }
@@ -93,12 +90,12 @@ export function nextSearchAt(nextAt: string, now: Date): NextSearch | null {
  * far, because a countdown of 14 hours is noise and the clock time is the fact.
  */
 export function formatNextSearch(next: NextSearch): string {
-  if (next.minutesLeft < 1) return 'Próxima en menos de 1 min';
-  if (next.minutesLeft >= SIX_HOURS_IN_MINUTES) return `Próxima a las ${hourLabel(next.hour)}`;
+  if (next.minutesLeft < 1) return t('schedule.nextUnderMinute');
+  if (next.minutesLeft >= SIX_HOURS_IN_MINUTES) return t('schedule.nextAtHour', { hour: hourLabel(next.hour) });
 
   const hours = Math.floor(next.minutesLeft / 60);
   const minutes = next.minutesLeft % 60;
-  if (hours === 0) return `Próxima en ${minutes} min`;
-  if (minutes === 0) return `Próxima en ${hours} h`;
-  return `Próxima en ${hours} h ${minutes} min`;
+  if (hours === 0) return t('schedule.nextInMinutes', { minutes });
+  if (minutes === 0) return t('schedule.nextInHours', { hours });
+  return t('schedule.nextInHoursMinutes', { hours, minutes });
 }

@@ -1,4 +1,5 @@
 import type { CandidateProfile, CvReading, OnboardingState } from '../../api/client';
+import { t, type TranslationKey } from '../../i18n';
 
 /**
  * LOS PASOS DEL ALTA, en un sitio y no repartidos por el componente.
@@ -10,24 +11,25 @@ import type { CandidateProfile, CvReading, OnboardingState } from '../../api/cli
  */
 export interface StepDefinition {
   /** Lo que se lee en el indicador de pasos. Corto: es una línea apretada. */
-  label: string;
+  label: TranslationKey;
   /** La frase bajo el título. Dice qué decide este paso. */
-  hint: string;
+  hint: TranslationKey;
   /** Si se puede pasar al siguiente sin tocar nada. */
   optional: boolean;
 }
 
 export const STEPS: readonly StepDefinition[] = [
-  { label: 'Tu CV', hint: 'Súbelo y se rellena lo que se pueda leer. También puedes saltarlo y escribirlo a mano.', optional: true },
-  { label: 'Tu stack', hint: 'Lo que sabes, lo que define tu oficio y lo que no quieres que te ofrezcan.', optional: false },
-  { label: 'Inglés', hint: 'Tu nivel, y si quieres que las ofertas que piden más no te lleguen.', optional: true },
-  { label: 'Dónde', hint: 'Desde dónde buscas y qué modalidades aceptas.', optional: true },
-  { label: 'Plataformas', hint: 'De dónde salen las ofertas. Se pueden cambiar después en Integraciones.', optional: true },
-  { label: 'Listo', hint: 'Lo que queda tiene valores por defecto: puedes afinarlo cuando quieras.', optional: true },
+  { label: 'wiz.step.cv', hint: 'wiz.step.cv.hint', optional: true },
+  { label: 'wiz.step.stack', hint: 'wiz.step.stack.hint', optional: false },
+  { label: 'wiz.step.english', hint: 'wiz.step.english.hint', optional: true },
+  { label: 'wiz.step.where', hint: 'wiz.step.where.hint', optional: true },
+  { label: 'wiz.step.platforms', hint: 'wiz.step.platforms.hint', optional: true },
+  { label: 'wiz.step.done', hint: 'wiz.step.done.hint', optional: true },
 ];
 
 /** El estado del formulario mientras se rellena. Se guarda paso a paso. */
 export interface Draft {
+  language: CandidateProfile['language'];
   stack: string[];
   core: string[];
   /** Los ecosistemas marcados para vetar. El servidor los traduce a tecnologías. */
@@ -39,6 +41,7 @@ export interface Draft {
 
 export function draftFrom(state: OnboardingState): Draft {
   return {
+    language: state.profile.language,
     stack: [...state.profile.stack],
     core: [...state.profile.core],
     vetoEcosystems: [],
@@ -74,7 +77,7 @@ export function applyReading(draft: Draft, cv: CvReading): Draft {
 export function blockingError(step: number, draft: Draft): string | null {
   if (step !== 1) return null;
   if (!draft.core.length) {
-    return 'Elige al menos una tecnología de tu núcleo. Sin ninguna, la búsqueda descartaría todo lo que encuentre.';
+    return t('wiz.needCore');
   }
   return null;
 }

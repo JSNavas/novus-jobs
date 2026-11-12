@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
 import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
+import { t } from '../../i18n';
 import { PAGE_SIZE, startRun, updateJobStatus, type JobQuery } from '../../api/client';
 import { AppAlert, AppChip, AppPagination, AppSnackbar, AppTabs, PageContainer } from '../../components/ui';
 import { findEnumValue } from '../../enumValue';
 import { jobSeniorityLabel } from '../../labels';
 import { JobSeniority, JobStatus, type Job } from '../../types';
 import JobCard from './JobCard';
-import { viewByPath } from './inbox';
+import { viewByPath, emptyOf, subtitleOf, titleOf } from './inbox';
 import { nextSearchSentence } from './scheduleText';
 import JobFilters, { type FilterValues } from './JobFilters';
 import LastRunAlert from './LastRunAlert';
@@ -29,7 +30,7 @@ interface Notice {
 const seniorityTabs = (counts: Record<JobSeniority, number> | undefined) =>
   Object.values(JobSeniority).map((seniority) => ({
     value: seniority,
-    label: counts ? `${jobSeniorityLabel[seniority]} (${counts[seniority]})` : jobSeniorityLabel[seniority],
+    label: counts ? `${jobSeniorityLabel(seniority)} (${counts[seniority]})` : jobSeniorityLabel(seniority),
   }));
 
 /** La otra pestaña, para poder mandar allí cuando esta está vacía y aquella no. */
@@ -38,7 +39,7 @@ const otherSeniority = (current: JobSeniority): JobSeniority =>
 
 const newCountText = (count: number): string => (count === 1 ? '1 oferta nueva' : `${count} ofertas nuevas`);
 
-const errorMessage = (cause: unknown): string => (cause instanceof Error ? cause.message : 'Error desconocido');
+const errorMessage = (cause: unknown): string => (cause instanceof Error ? cause.message : t('run.unknownError'));
 
 const JobsPage = () => {
   // Qué lista se está mirando lo dice la URL, no un estado interno: así el
@@ -74,7 +75,7 @@ const JobsPage = () => {
     setStarting(true);
     try {
       await startRun();
-      setNotice({ message: 'Búsqueda iniciada. Las ofertas nuevas aparecerán al terminar.', severity: 'success' });
+      setNotice({ message: t('jobs.runStarted'), severity: 'success' });
       reload();
     } catch (cause: unknown) {
       // El servidor ya dice el motivo exacto —el tope del día, los minutos que
@@ -105,28 +106,28 @@ const JobsPage = () => {
    * hace dudar de todo lo demás.
    */
   const emptyMessage = (): string => {
-    if (filters.q || filters.hasApply) return 'No hay ofertas con estos filtros.';
+    if (filters.q || filters.hasApply) return t('jobs.empty.filters');
     const elsewhere = page?.bySeniority[otherSeniority(seniority)] ?? 0;
     if (elsewhere > 0) {
-      const label = jobSeniorityLabel[otherSeniority(seniority)];
-      return elsewhere === 1
-        ? `Aquí no hay ninguna, pero tienes 1 en «${label}».`
-        : `Aquí no hay ninguna, pero tienes ${elsewhere} en «${label}».`;
+      return t('jobs.empty.elsewhere', {
+        count: elsewhere,
+        tab: jobSeniorityLabel(otherSeniority(seniority)),
+      });
     }
     const next = view.status === JobStatus.New ? nextSearchSentence(schedule) : '';
-    return [view.empty, next].filter(Boolean).join(' ');
+    return [emptyOf(view), next].filter(Boolean).join(' ');
   };
 
   const searchButton = (
     <Button variant="contained" onClick={handleStartRun} disabled={starting}>
-      Buscar ahora
+      {t('jobs.searchNow')}
     </Button>
   );
 
   return (
     <PageContainer
-      title={view.title}
-      subtitle={view.subtitle}
+      title={titleOf(view)}
+      subtitle={subtitleOf(view)}
       action={searchButton}
     >
       <Stack direction="row" spacing={1} alignItems="center" mb={2}>

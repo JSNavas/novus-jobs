@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { Box, CircularProgress, Stack, Typography } from '@mui/material';
 import { getSettings, listJobs, PAGE_SIZE, updateJobStatus, type JobQuery, type JobsPage, type Settings } from '../../api/client';
@@ -20,7 +21,7 @@ interface JobListProps {
   empty: string;
 }
 
-const errorMessage = (cause: unknown): string => (cause instanceof Error ? cause.message : 'Error desconocido');
+const errorMessage = (cause: unknown): string => (cause instanceof Error ? cause.message : t('run.unknownError'));
 
 const JobList = ({ query, empty }: JobListProps) => {
   const [result, setResult] = useState<JobsPage | null>(null);

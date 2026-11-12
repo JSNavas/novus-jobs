@@ -10,7 +10,8 @@ import { AppChip, AppStatusPilot } from '../../../../components/ui';
 import { useEffect, useState } from 'react';
 import { JobStatus } from '../../../../types';
 import { runStatusLabel, runStatusTone } from '../../../../views/dashboard/runStatus';
-import { INBOX_VIEWS, showsCount } from '../../../../views/jobs/inbox';
+import { INBOX_VIEWS, showsCount, titleOf } from '../../../../views/jobs/inbox';
+import { t } from '../../../../i18n';
 import NextSearchIndicator from './NextSearchIndicator';
 
 /**
@@ -84,7 +85,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
           <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
             <IconLayoutDashboard size="20" stroke={1.5} />
           </ListItemIcon>
-          <ListItemText primary="Dashboard" />
+          <ListItemText primary={t('nav.dashboard')} />
           {stats?.lastRun ? (
             <AppStatusPilot tone={runStatusTone(stats.lastRun)} srLabel={runStatusLabel(stats.lastRun)} />
           ) : null}
@@ -92,7 +93,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
         <NextSearchIndicator lastRunFailed={lastRunFailed} />
       </List>
 
-    <List sx={{ px: 2 }} subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>Ofertas</ListSubheader>}>
+    <List sx={{ px: 2 }} subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>{t('nav.group.offers')}</ListSubheader>}>
       {INBOX_VIEWS.map((view) => {
         const Icon = ICONS[view.path] ?? IconInbox;
         const count = countOf(view);
@@ -108,7 +109,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
             <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
               <Icon size="20" stroke={1.5} />
             </ListItemIcon>
-            <ListItemText primary={view.title} />
+            <ListItemText primary={titleOf(view)} />
             {count ? (
               <AppChip label={String(count)} tone={view.status === JobStatus.New ? 'success' : 'neutral'} />
             ) : null}
@@ -119,7 +120,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
 
       {/* The filter's archive. Kept apart from the inbox because it is not pending
           work: it is what you check when you suspect it discarded something good. */}
-      <List sx={{ px: 2 }} subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>Auditoría</ListSubheader>}>
+      <List sx={{ px: 2 }} subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>{t('nav.group.audit')}</ListSubheader>}>
         <ListItemButton
           component={NavLink}
           to="/rechazadas"
@@ -130,7 +131,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
           <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
             <IconFilterOff size="20" stroke={1.5} />
           </ListItemIcon>
-          <ListItemText primary="Descartadas por el filtro" />
+          <ListItemText primary={t('nav.rejected')} />
           {stats?.rejected ? <AppChip label={String(stats.rejected)} tone="neutral" /> : null}
         </ListItemButton>
       </List>
@@ -148,7 +149,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
           <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
             <IconTargetArrow size="20" stroke={1.5} />
           </ListItemIcon>
-          <ListItemText primary="Enfoque" />
+          <ListItemText primary={t('nav.focus')} />
           {/* Lo que apareció desde la última vez que entró. Sin esto, una
               tendencia nueva solo se descubre abriendo la página a ver si
               acaso — que es pedirle que recuerde cómo estaba la lista. */}
@@ -162,7 +163,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
       {integrations.length ? (
         <List
           sx={{ px: 2 }}
-          subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>Integraciones</ListSubheader>}
+          subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>{t('nav.group.integrations')}</ListSubheader>}
         >
           {integrations.map((integration) => (
             <ListItemButton
@@ -179,8 +180,8 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
               <ListItemText
                 primary={integration.label}
                 secondary={integration.schedule.kind === 'every-minutes'
-                  ? `cada ${integration.schedule.minutes} min`
-                  : `${integration.schedule.hours.length} franja(s)`}
+                  ? t('schedule.everyMinutes', { minutes: integration.schedule.minutes })
+                  : t('schedule.slots', { count: integration.schedule.hours.length })}
                 secondaryTypographyProps={{ variant: 'caption' }}
               />
             </ListItemButton>
@@ -199,7 +200,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
           <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
             <IconSettings size="20" stroke={1.5} />
           </ListItemIcon>
-          <ListItemText primary="Configuración" />
+          <ListItemText primary={t('nav.settings')} />
         </ListItemButton>
       </List>
     </>

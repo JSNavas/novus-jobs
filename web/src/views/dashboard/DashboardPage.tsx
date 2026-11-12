@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 import { getStats, listRuns, PAGE_SIZE, type Stats } from '../../api/client';
 import { AppAlert, AppPagination, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
+import { t } from '../../i18n';
 import { formatDateTime } from '../../format';
 import { RunStatus, type RunInfo } from '../../types';
 import { runStatusLabel, runStatusTone } from './runStatus';
@@ -37,37 +38,37 @@ interface Tile {
 
 const tilesOf = (stats: Stats): Tile[] => [
   {
-    label: 'Nuevas',
+    label: t('dash.tile.new'),
     value: stats.new,
-    hint: 'Sin mirar todavía',
+    hint: t('dash.tile.new.hint'),
     to: '/nuevas',
     tone: 'success',
   },
   {
-    label: 'Vistas',
+    label: t('dash.tile.seen'),
     value: stats.byStatus.seen,
-    hint: 'Leídas, sin decidir',
+    hint: t('dash.tile.seen.hint'),
     to: '/vistas',
     tone: 'neutral',
   },
   {
-    label: 'Guardadas',
+    label: t('dash.tile.saved'),
     value: stats.byStatus.saved,
-    hint: 'Para postularte',
+    hint: t('dash.tile.saved.hint'),
     to: '/guardadas',
     tone: 'neutral',
   },
   {
-    label: 'Descartadas por ti',
+    label: t('dash.tile.dismissed'),
     value: stats.byStatus.dismissed,
-    hint: 'Apartadas a mano',
+    hint: t('dash.tile.dismissed.hint'),
     to: '/descartadas',
     tone: 'neutral',
   },
   {
-    label: 'Descartadas por el filtro',
+    label: t('dash.tile.rejected'),
     value: stats.rejected,
-    hint: 'No encajaban: mira el motivo',
+    hint: t('dash.tile.rejected.hint'),
     to: '/rechazadas',
     tone: 'neutral',
     audit: true,
@@ -117,8 +118,8 @@ const DashboardPage = () => {
 
   return (
     <PageContainer
-      title="Dashboard"
-      subtitle="Qué ha buscado, qué ha encontrado y dónde está cada oferta"
+      title={t('dash.title')}
+      subtitle={t('dash.subtitle')}
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
 
@@ -149,7 +150,7 @@ const DashboardPage = () => {
         </Box>
       ) : null}
 
-      <Typography variant="h6" mb={1}>Búsquedas</Typography>
+      <Typography variant="h6" mb={1}>{t('dash.runs')}</Typography>
       <Typography variant="body2" color="textSecondary" mb={2}>
         Cada búsqueda, con lo que leyó y lo que hizo con ello. Pulsa una fila para ver sus ofertas.
       </Typography>
@@ -158,11 +159,11 @@ const DashboardPage = () => {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell>Cuándo</TableCell>
-              <TableCell align="right">Leídas</TableCell>
-              <TableCell align="right">Encajaron</TableCell>
-              <TableCell align="right">Descartadas</TableCell>
-              <TableCell>Estado</TableCell>
+              <TableCell>{t('dash.runs.when')}</TableCell>
+              <TableCell align="right">{t('dash.runs.read')}</TableCell>
+              <TableCell align="right">{t('dash.runs.accepted')}</TableCell>
+              <TableCell align="right">{t('dash.runs.rejected')}</TableCell>
+              <TableCell>{t('dash.runs.status')}</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -196,7 +197,7 @@ const DashboardPage = () => {
               <TableRow>
                 <TableCell colSpan={5}>
                   <Typography color="textSecondary" py={2} textAlign="center">
-                    Todavía no se ha buscado ninguna vez.
+                    {t('dash.runs.empty')}
                   </Typography>
                 </TableCell>
               </TableRow>
@@ -210,7 +211,7 @@ const DashboardPage = () => {
         pageSize={PAGE_SIZE}
         total={runsTotal}
         onChange={setPage}
-        noun="búsquedas"
+        noun={t('dash.runs.noun')}
       />
     </PageContainer>
   );

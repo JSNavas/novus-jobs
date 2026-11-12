@@ -3,6 +3,7 @@ import { Navigate } from 'react-router';
 import { Box, CircularProgress } from '@mui/material';
 import { getOnboarding } from '../../api/client';
 import { setDisplayTimeZone } from '../../format';
+import { setLanguage } from '../../i18n';
 import FullLayout from '../../layouts/full/FullLayout';
 
 /**
@@ -28,6 +29,7 @@ const OnboardingGate = () => {
         // del perfil: se aprovecha, y así no hay una petición extra solo para
         // saber en qué hora pintar las fechas.
         setDisplayTimeZone(state.profile.geo.timezone);
+        setLanguage(state.profile.language);
         setNeedsOnboarding(!state.completed);
       })
       .catch(() => setNeedsOnboarding(false));

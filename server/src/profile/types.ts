@@ -91,7 +91,21 @@ export interface GeoPreference {
   excludeLocalEmployers: boolean;
 }
 
+/**
+ * En qué idioma habla el programa: la interfaz, los correos y los motivos de
+ * descarte que escribe el filtro.
+ *
+ * Va en el perfil y no en un fichero de configuración por lo mismo que todo lo
+ * demás del perfil: es de la persona, no de la instalación, y cambiarlo no
+ * puede pedir reiniciar un servicio. El alta lo propone según el idioma del
+ * navegador y se cambia cuando se quiera.
+ */
+export const LANGUAGES = ['es', 'en'] as const;
+
+export type Language = (typeof LANGUAGES)[number];
+
 export interface CandidateProfile {
+  readonly language: Language;
   readonly stack: readonly string[];
   readonly core: readonly string[];
   readonly cannotDo: readonly string[];

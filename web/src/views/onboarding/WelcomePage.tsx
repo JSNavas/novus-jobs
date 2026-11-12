@@ -8,6 +8,7 @@ import {
   type CvReading, type OnboardingState,
 } from '../../api/client';
 import { AppAlert, BlankCard } from '../../components/ui';
+import { setLanguage, t } from '../../i18n';
 import { CvStep, DoneStep, EnglishStep, PlaceStep, SourcesStep, StackStep } from './StepPanels';
 import { applyReading, blockingError, draftFrom, STEPS, type Draft } from './steps';
 
@@ -41,6 +42,7 @@ const WelcomePage = () => {
       .then((next) => {
         setState(next);
         setDraft(draftFrom(next));
+        setLanguage(next.profile.language);
         // Ya dado de alta: aquí no hay nada que hacer. Se puede volver a esta
         // pantalla a propósito desde Configuración, pero no por accidente.
         if (next.completed && !editing) navigate('/', { replace: true });
@@ -51,11 +53,12 @@ const WelcomePage = () => {
   /** Lo que se manda al servidor en cada paso. Solo lo que ese paso decide. */
   const changesOf = useCallback((index: number, current: Draft) => {
     switch (index) {
+      case 0: return { language: current.language };
       case 1: return { stack: current.stack, core: current.core, vetoEcosystems: current.vetoEcosystems };
       case 2: return { english: current.english };
       case 3: return { geo: current.geo, modality: current.modality };
-      // El CV y las plataformas no tienen nada propio que guardar: el primero
-      // solo rellena el borrador y el segundo escribe directo.
+      // Las plataformas no tienen nada propio que guardar: el interruptor de
+      // cada una escribe directo.
       default: return null;
     }
   }, []);
@@ -87,6 +90,7 @@ const WelcomePage = () => {
     // Se vuelven a mandar los pasos con valores por defecto: quien llegó al
     // final saltándoselos tiene que acabar igual con un perfil coherente.
     saveOnboardingStep({
+      language: draft.language,
       stack: draft.stack, core: draft.core, vetoEcosystems: draft.vetoEcosystems,
       english: draft.english, geo: draft.geo, modality: draft.modality,
     })
@@ -96,6 +100,17 @@ const WelcomePage = () => {
       .then(() => navigate(editing ? '/configuracion' : '/', { replace: true }))
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setSaving(false));
+  };
+
+  /**
+   * El idioma se aplica EN EL ACTO, sin esperar a guardar: quien lo cambia es
+   * porque no entiende lo que está leyendo, y pedirle que pulse «Siguiente»
+   * para verlo en su idioma es pedirle que avance a ciegas. El guardado va
+   * igualmente al pasar de paso.
+   */
+  const changeDraft = (next: Draft): void => {
+    if (draft && next.language !== draft.language) setLanguage(next.language);
+    setDraft(next);
   };
 
   const onRead = (cv: CvReading): void => {
@@ -110,30 +125,30 @@ const WelcomePage = () => {
   }
 
   const definition = STEPS[step]!;
-  const panel = { state, draft, onChange: setDraft };
+  const panel = { state, draft, onChange: changeDraft };
   const last = step === STEPS.length - 1;
 
   return (
     <Container maxWidth="md" sx={{ py: 5 }}>
       <Typography variant="h4" mb={0.5}>
-        {editing ? 'Tu perfil' : 'Bienvenido a Novus Jobs'}
+        {t(editing ? 'wiz.title.edit' : 'wiz.title.welcome')}
       </Typography>
       <Typography variant="subtitle1" color="textSecondary" mb={4}>
         {editing
-          ? 'Lo que decide qué oferta te llega. Cada paso se guarda al pasar al siguiente y se aplica en la próxima búsqueda.'
-          : 'Tu CV y tus postulaciones se quedan en tu máquina. Para empezar, cuéntale al filtro qué buscas: son cinco minutos y se puede cambiar todo después.'}
+          ? t('wiz.subtitle.edit')
+          : t('wiz.subtitle.welcome')}
       </Typography>
 
       <Stepper activeStep={step} alternativeLabel sx={{ mb: 4 }}>
         {STEPS.map((item) => (
-          <Step key={item.label}><StepLabel>{item.label}</StepLabel></Step>
+          <Step key={item.label}><StepLabel>{t(item.label)}</StepLabel></Step>
         ))}
       </Stepper>
 
       <BlankCard>
         <Box p={3}>
-          <Typography variant="h6" mb={0.5}>{definition.label}</Typography>
-          <Typography variant="body2" color="textSecondary" mb={3}>{definition.hint}</Typography>
+          <Typography variant="h6" mb={0.5}>{t(definition.label)}</Typography>
+          <Typography variant="body2" color="textSecondary" mb={3}>{t(definition.hint)}</Typography>
 
           {step === 0 ? <CvStep {...panel} onRead={onRead} /> : null}
           {step === 1 ? <StackStep {...panel} /> : null}
@@ -146,16 +161,16 @@ const WelcomePage = () => {
 
           <Stack direction="row" spacing={2} alignItems="center" mt={4}>
             <Button variant="text" disabled={step === 0 || saving} onClick={() => go(step - 1)}>
-              Atrás
+              {t('wiz.back')}
             </Button>
             <Box flexGrow={1} />
             {last ? (
               <Button variant="contained" disabled={saving} onClick={finish}>
-                {saving ? 'Guardando…' : editing ? 'Guardar cambios' : 'Empezar a buscar'}
+                {saving ? t('wiz.saving') : t(editing ? 'wiz.saveChanges' : 'wiz.start')}
               </Button>
             ) : (
               <Button variant="contained" disabled={saving} onClick={() => go(step + 1)}>
-                {definition.optional ? 'Siguiente' : 'Guardar y seguir'}
+                {t(definition.optional ? 'wiz.next' : 'wiz.saveNext')}
               </Button>
             )}
           </Stack>

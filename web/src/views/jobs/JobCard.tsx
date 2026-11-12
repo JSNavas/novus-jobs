@@ -3,6 +3,7 @@ import { Box, Button, Stack, Typography } from '@mui/material';
 import { AppAlert, AppChip, BlankCard } from '../../components/ui';
 import { formatDate, formatDateTime } from '../../format';
 import { jobLocationLabel, jobSourceLabel, jobStatusLabel } from '../../labels';
+import { plural, t, type TranslationKey } from '../../i18n';
 import { JobLocation, JobSeniority, JobStatus, JobVerdict, type Job } from '../../types';
 import type { Settings } from '../../api/client';
 import { gmailComposeUrl, motivationLetter, shouldOfferApplication } from './apply';
@@ -15,14 +16,14 @@ interface JobCardProps {
   onStatusChange: (status: JobStatus) => void;
 }
 
-const statusActions: { status: JobStatus; label: string; variant: 'contained' | 'outlined' | 'text' }[] = [
-  { status: JobStatus.New, label: 'Marcar como nueva', variant: 'text' },
-  { status: JobStatus.Seen, label: 'Marcar como vista', variant: 'outlined' },
+const statusActions: { status: JobStatus; label: TranslationKey; variant: 'contained' | 'outlined' | 'text' }[] = [
+  { status: JobStatus.New, label: 'card.action.new', variant: 'text' },
+  { status: JobStatus.Seen, label: 'card.action.seen', variant: 'outlined' },
   // Con borde como el resto, y no relleno. En su bloque de antes era la acción
   // principal; en la fila común el relleno es de "Postularse", y dos botones
   // rellenos compiten por el mismo sitio en la mirada.
-  { status: JobStatus.Saved, label: 'Guardar', variant: 'outlined' },
-  { status: JobStatus.Dismissed, label: 'Descartar', variant: 'text' },
+  { status: JobStatus.Saved, label: 'card.action.save', variant: 'outlined' },
+  { status: JobStatus.Dismissed, label: 'card.action.dismiss', variant: 'text' },
 ];
 
 /**
@@ -35,15 +36,15 @@ const statusActions: { status: JobStatus; label: string; variant: 'contained' | 
  * él, no.
  */
 const linkLabel = (url: string): string => {
-  if (/\/(feed\/update|posts)\//.test(url)) return 'Ver publicación';
-  if (/linkedin\.com\/in\//.test(url)) return 'Ver perfil de quien publica';
-  if (/linkedin\.com\/(company|school)\//.test(url)) return 'Ver página de la empresa';
-  return 'Abrir enlace de la oferta';
+  if (/\/(feed\/update|posts)\//.test(url)) return t('card.link.post');
+  if (/linkedin\.com\/in\//.test(url)) return t('card.link.profile');
+  if (/linkedin\.com\/(company|school)\//.test(url)) return t('card.link.company');
+  return t('card.link.other');
 };
 
 const locationText = (job: Job): string => {
   const hasReason = job.locationKind === JobLocation.OtherCountry || job.locationKind === JobLocation.Onsite;
-  return hasReason ? (job.location ?? jobLocationLabel[job.locationKind]) : jobLocationLabel[job.locationKind];
+  return hasReason ? (job.location ?? jobLocationLabel(job.locationKind)) : jobLocationLabel(job.locationKind);
 };
 
 const COLLAPSED_HEIGHT = 140;
@@ -132,14 +133,14 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
   const responseText = (): string | null => {
     const days = job.responseDays;
     if (!days) return null;
-    if (days.min && days.max) return `responde entre ${days.min} y ${days.max} días`;
+    if (days.min && days.max) return t('card.responseRange', { min: days.min, max: days.max });
     const one = days.max ?? days.min;
-    return one ? `responde en unos ${one} días` : null;
+    return one ? t('card.responseAbout', { days: one }) : null;
   };
   const competition = [
     job.applications === null
       ? null
-      : `${job.applications} ${job.applications === 1 ? 'postulación' : 'postulaciones'}`,
+      : plural(job.applications, 'card.applications.one', 'card.applications.many'),
     responseText(),
   ].filter(Boolean).join(' · ');
   const canApplyByEmail = !job.applyUrl && shouldOfferApplication(job);
@@ -150,17 +151,17 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
    * anuncio trae uno era mentirle justo en la oferta que pide pasarla a otro.
    */
   const contactLine = job.applyUrl
-    ? `Postularse en: ${job.applyUrl}`
+    ? t('card.applyAt', { url: job.applyUrl })
     : job.contactEmail
-      ? `${canApplyByEmail ? 'Enviar CV a' : 'Contacto'}: ${job.contactEmail}`
-      : 'Sin enlace ni correo — hay que responder por LinkedIn';
+      ? t(canApplyByEmail ? 'card.sendCvTo' : 'card.contact', { email: job.contactEmail })
+      : t('card.noContact');
 
   return (
     <BlankCard>
       <Stack spacing={1.5} p={3}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2} flexWrap="wrap">
           <Box>
-            <Typography variant="h5">{job.title ?? 'Sin título'}</Typography>
+            <Typography variant="h5">{job.title ?? t('card.untitled')}</Typography>
             {/* DE DÓNDE SALIÓ y DE CUÁNDO ES.
                 La fecha era la de nuestra lectura, y con una pasada cada media
                 hora eso siempre dice «hace un rato»: no informa de nada. La que
@@ -173,15 +174,15 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
                 jobSourceLabel(job.source),
                 job.company,
                 job.postedAt
-                  ? `publicada el ${formatDate(job.postedAt)}`
-                  : `encontrada el ${formatDateTime(job.foundAt)}`,
+                  ? t('card.postedOn', { date: formatDate(job.postedAt) })
+                  : t('card.foundOn', { date: formatDateTime(job.foundAt) }),
               ].filter(Boolean).join(' · ')}
             </Typography>
           </Box>
           <Stack direction="row" spacing={1}>
             {job.isUncertain ? <AppChip label="Por confirmar" tone="warning" /> : null}
             {job.verdict === JobVerdict.Rejected ? <AppChip label="Descartada por el filtro" tone="error" /> : null}
-            <AppChip label={jobStatusLabel[job.status]} />
+            <AppChip label={jobStatusLabel(job.status)} />
           </Stack>
         </Stack>
 
@@ -192,11 +193,11 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
             only visible here. */}
         {job.rejectionReason ? <RejectionBadge reason={job.rejectionReason} /> : null}
 
-        <Typography variant="body2">Publicado por {job.author ?? 'autor desconocido'}</Typography>
+        <Typography variant="body2">{t('card.postedBy', { author: job.author ?? t('card.unknownAuthor') })}</Typography>
         {job.stackMatch.length > 0 ? (
-          <Typography variant="body2">Coincide con: {job.stackMatch.join(', ')}</Typography>
+          <Typography variant="body2">{t('card.matches', { list: job.stackMatch.join(', ') })}</Typography>
         ) : null}
-        <Typography variant="body2">Ubicación: {locationText(job)}</Typography>
+        <Typography variant="body2">{t('card.location', { place: locationText(job) })}</Typography>
         {/* LO QUE DICE SI VALE LA PENA. Un puesto con 298 postulaciones y una
             empresa que tarda un mes en contestar no se trabaja igual que uno
             recién publicado con cuatro. Solo se enseña lo que la plataforma
@@ -248,15 +249,15 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
                 vacío sin decir nada. */}
             {job.seniority !== JobSeniority.Junior && settings?.motivationTemplate ? (
               <Button variant="outlined" onClick={() => void copyLetter()}>
-                {lettered ? '✓ Copiada' : 'Copiar motivación'}
+                {lettered ? t('card.copiedLetter') : t('card.copyLetter')}
               </Button>
             ) : null}
             <Button variant="outlined" onClick={() => void share()}>
-              {shared ? '✓ Copiado' : 'Copiar enlace'}
+              {shared ? t('card.copied') : t('card.copyLink')}
             </Button>
             {job.contactEmail ? (
               <Button variant="outlined" onClick={() => void copyEmail()}>
-                {copied ? '✓ Copiado' : 'Copiar correo'}
+                {copied ? t('card.copied') : t('card.copyEmail')}
               </Button>
             ) : null}
             {/* Mover la oferta por la bandeja va en la MISMA fila. Estaba
@@ -272,14 +273,14 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
                 disabled={busy}
                 onClick={() => onStatusChange(action.status)}
               >
-                {action.label}
+                {t(action.label)}
               </Button>
             ))}
           </Stack>
         </Stack>
 
         {job.isAggregator ? (
-          <AppAlert severity="warning">VÍA AGREGADOR — no la publica quien contrata</AppAlert>
+          <AppAlert severity="warning">{t('card.aggregator')}</AppAlert>
         ) : null}
 
         <Typography
@@ -300,7 +301,7 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
         </Typography>
         {overflows ? (
           <Button variant="text" onClick={() => setExpanded((value) => !value)} sx={{ alignSelf: 'flex-start' }}>
-            {expanded ? 'Ver menos' : 'Ver más'}
+            {expanded ? t('card.showLess') : t('card.showMore')}
           </Button>
         ) : null}
 
