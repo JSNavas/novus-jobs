@@ -154,7 +154,8 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
 
       {error ? <Box mb={2}><AppAlert severity="error">{error}</AppAlert></Box> : null}
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5, alignItems: 'start' }}>
+        <Box>
         <Field label={t('set.profile.english')}>
           <Stack spacing={1} alignItems="flex-start">
             <TextField
@@ -189,6 +190,29 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
           </Stack>
         </Field>
 
+        <Field label={t('set.profile.modality')}>
+          <Stack>
+            {MODALITIES.map((option) => (
+              <FormControlLabel
+                key={option.key}
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={lists.modality[option.key]}
+                    onChange={(event) => setLists((prev) => ({
+                      ...prev,
+                      modality: { ...prev.modality, [option.key]: event.target.checked },
+                    }))}
+                  />
+                }
+                label={t(option.label)}
+              />
+            ))}
+          </Stack>
+        </Field>
+        </Box>
+
+        <Box>
         <Field label={t('set.profile.where')}>
           <Stack spacing={1.5} alignItems="flex-start">
             <TextField
@@ -250,26 +274,6 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
           </Stack>
         </Field>
 
-        <Field label={t('set.profile.modality')}>
-          <Stack>
-            {MODALITIES.map((option) => (
-              <FormControlLabel
-                key={option.key}
-                control={
-                  <Checkbox
-                    size="small"
-                    checked={lists.modality[option.key]}
-                    onChange={(event) => setLists((prev) => ({
-                      ...prev,
-                      modality: { ...prev.modality, [option.key]: event.target.checked },
-                    }))}
-                  />
-                }
-                label={t(option.label)}
-              />
-            ))}
-          </Stack>
-        </Field>
 
         <Field label={t('set.profile.localOut')}>
           <FormControlLabel
@@ -286,6 +290,7 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
             label={t('set.profile.localOut.on')}
           />
         </Field>
+        </Box>
       </Box>
 
       <Stack direction="row" spacing={1} mb={3}>

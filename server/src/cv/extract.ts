@@ -1,5 +1,5 @@
 import { COUNTRIES } from '../filters/countries.js';
-import { wordIn } from '../filters/text-match.js';
+import { escapeRegex, wordIn } from '../filters/text-match.js';
 import {
   ECOSYSTEM_LABELS, TECHNOLOGIES, VETOABLE_ECOSYSTEMS, spellingsOf, technologiesOf,
   type Ecosystem,
@@ -46,7 +46,9 @@ function suggestVetoes(present: readonly Ecosystem[]): CvExtraction['suggestedVe
 }
 
 const ENGLISH_PATTERNS: ReadonlyArray<readonly [EnglishLevel, RegExp]> = [
-  ['native', /ingl[ée]s[^.\n]{0,30}(nativ\w*|biling[üu]e)|(nativ\w*|biling[üu]e)[^.\n]{0,20}ingl[ée]s|english[^.\n]{0,30}(native|bilingual)/i],
+  // «nativo» pegado a «inglés», sin nada en medio: en «español nativo · inglés B1»
+  // el nativo es del español, y leerlo como inglés nativo apaga el filtro entero.
+  ['native', /ingl[ée]s[^.\n]{0,30}(nativ\w*|biling[üu]e)|(nativ\w*|biling[üu]e)\s+(en\s+)?ingl[ée]s|english[^.\n]{0,30}(native|bilingual)/i],
   ['c2', /ingl[ée]s[^.\n]{0,30}\bc2\b|english[^.\n]{0,30}\bc2\b|proficiency/i],
   ['c1', /ingl[ée]s[^.\n]{0,30}(\bc1\b|avanzad\w*|fluid\w*)|english[^.\n]{0,30}(\bc1\b|advanced|fluent)/i],
   ['b2', /ingl[ée]s[^.\n]{0,30}(\bb2\b|intermedio\s+alto|upper)|english[^.\n]{0,30}(\bb2\b|upper)/i],
@@ -55,10 +57,37 @@ const ENGLISH_PATTERNS: ReadonlyArray<readonly [EnglishLevel, RegExp]> = [
   ['a1', /ingl[ée]s[^.\n]{0,30}(\ba1\b|principiante)|english[^.\n]{0,30}(\ba1\b|beginner)/i],
 ];
 
+/** Un código del marco europeo escrito al lado de «inglés» vale más que cualquier adjetivo. */
+const EXPLICIT_ENGLISH = /ingl[ée]s[^.\n]{0,30}\b([abc][12])\b|english[^.\n]{0,30}\b([abc][12])\b/gi;
+
 function findEnglish(t: string): EnglishLevel | null {
+  const explicit = [...t.matchAll(EXPLICIT_ENGLISH)]
+    .map((match) => (match[1] ?? match[2] ?? '').toLowerCase())
+    .filter((code): code is EnglishLevel => (ENGLISH_LEVELS as readonly string[]).includes(code));
+  if (explicit.length) {
+    return explicit.reduce((a, b) => (ENGLISH_LEVELS.indexOf(a) >= ENGLISH_LEVELS.indexOf(b) ? a : b));
+  }
+
   const matches = ENGLISH_PATTERNS.filter(([, re]) => re.test(t)).map(([level]) => level);
   if (!matches.length) return null;
   return matches.reduce((a, b) => (ENGLISH_LEVELS.indexOf(a) >= ENGLISH_LEVELS.indexOf(b) ? a : b));
+}
+
+/**
+ * «español», «inglés» o «portugués» son gentilicio e idioma a la vez. En la línea
+ * de idiomas de un CV son idioma, y leerlos como país manda a buscar al sitio
+ * equivocado: el CV de un venezolano que escribe «español nativo» decía España.
+ */
+const LANGUAGE_CONTEXT = /idiom|lengua|nativ|biling|nivel\s+de|lectura/i;
+
+function adjectiveMeansCountry(t: string, adjective: string): boolean {
+  const re = new RegExp(`(?<![a-záéíóúñ])${escapeRegex(adjective)}(?![a-záéíóúñ])`, 'gi');
+  for (const match of t.matchAll(re)) {
+    const from = Math.max(0, (match.index ?? 0) - 40);
+    const window = t.slice(from, (match.index ?? 0) + adjective.length + 40);
+    if (!LANGUAGE_CONTEXT.test(window)) return true;
+  }
+  return false;
 }
 
 function findPlace(t: string): { code: string; city: string | null } | null {
@@ -68,7 +97,9 @@ function findPlace(t: string): { code: string; city: string | null } | null {
   }
   for (const country of COUNTRIES) {
     if (country.names.some((n) => wordIn(t, n))) return { code: country.code, city: null };
-    if (country.adjectives.some((a) => wordIn(t, a))) return { code: country.code, city: null };
+  }
+  for (const country of COUNTRIES) {
+    if (country.adjectives.some((a) => adjectiveMeansCountry(t, a))) return { code: country.code, city: null };
   }
   return null;
 }

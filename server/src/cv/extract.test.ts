@@ -28,6 +28,36 @@ describe('extractFromCv', () => {
     assert.equal(extractFromCv(CV).english, 'b1');
   });
 
+
+  it('el «nativo» de otro idioma no es inglés nativo', () => {
+    // Caso real: CV de Jesús Navas, 12 nov 2026. La línea decía
+    // «Idiomas: español nativo · inglés B1 en progreso, lectura técnica fluida»
+    // y salía inglés NATIVE, que apaga el filtro de inglés entero.
+    const linea = 'Idiomas: español nativo · inglés B1 en progreso, lectura técnica fluida.';
+    assert.equal(extractFromCv(linea).english, 'b1');
+  });
+
+  it('«inglés nativo» sí es nativo, en los dos órdenes', () => {
+    assert.equal(extractFromCv('Idiomas: inglés nativo, español avanzado.').english, 'native');
+    assert.equal(extractFromCv('Idiomas: nativo en inglés.').english, 'native');
+  });
+
+  it('«español nativo» es un idioma, no España', () => {
+    // Mismo CV: un venezolano que escribe «español nativo» salía con país España,
+    // porque «español» es gentilicio e idioma a la vez.
+    const linea = 'Idiomas: español nativo · inglés B1 en progreso, lectura técnica fluida.';
+    assert.equal(extractFromCv(linea).country, null);
+  });
+
+  it('el gentilicio fuera de la línea de idiomas sí dice el país', () => {
+    assert.equal(extractFromCv('Desarrollador español, 9 años de experiencia.').country, 'ES');
+  });
+
+  it('un código del marco europeo manda sobre los adjetivos sueltos', () => {
+    const texto = 'Inglés B1. Comunicación fluida con equipos distribuidos.';
+    assert.equal(extractFromCv(texto).english, 'b1');
+  });
+
   it('deduce el país de la ciudad', () => {
     const cv = extractFromCv(CV);
     assert.equal(cv.country, 'VE');

@@ -114,6 +114,7 @@ const SettingsPage = () => {
               <CvSection
                 onboarding={onboarding}
                 onApplied={(message) => { setNotice(message); reloadOnboarding(); }}
+                onUploaded={reloadOnboarding}
               />
             ) : null}
           </Stack>
@@ -204,6 +205,13 @@ const SettingsPage = () => {
                 onClick={() => setTemplate(settings?.defaultMotivationTemplate ?? '')}
               >
                 {t('set.resetDefault')}
+              </Button>
+              <Button
+                variant="text"
+                disabled={saving || !dirty}
+                onClick={() => setTemplate(settings?.motivationTemplate ?? '')}
+              >
+                {t('int.cancel')}
               </Button>
             </Stack>
           </Stack>

@@ -13,12 +13,14 @@ import { t } from '../../i18n';
 interface CvSectionProps {
   onboarding: OnboardingState;
   onApplied: (message: string) => void;
+  /** El fichero ya quedó guardado en cuanto se leyó, aunque no se aplique nada. */
+  onUploaded: () => void;
 }
 
 const sameTech = (a: string, b: string): boolean =>
   a.toLowerCase().replace(/[.\s_-]/g, '') === b.toLowerCase().replace(/[.\s_-]/g, '');
 
-const CvSection = ({ onboarding, onApplied }: CvSectionProps) => {
+const CvSection = ({ onboarding, onApplied, onUploaded }: CvSectionProps) => {
   const input = useRef<HTMLInputElement>(null);
   const [reading, setReading] = useState<CvReading | null>(null);
   const [busy, setBusy] = useState(false);
@@ -46,7 +48,7 @@ const CvSection = ({ onboarding, onApplied }: CvSectionProps) => {
     setError(null);
     setReading(null);
     uploadCv(file, enhance)
-      .then(setReading)
+      .then((next) => { setReading(next); onUploaded(); })
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setBusy(false));
   };
