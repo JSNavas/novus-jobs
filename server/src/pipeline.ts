@@ -191,6 +191,7 @@ function applyJudgment(rules: Verdict, judgment: JudgeVerdict | undefined, langu
   };
   if (rules.accepted) return refined;
   if (rules.rejectedBy === 'stack') return rules;
+  if (rules.rejectedBy === 'location' && rules.location === JobLocation.OtherCountry) return rules;
 
   return {
     ...refined,

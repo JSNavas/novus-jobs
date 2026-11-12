@@ -24,6 +24,9 @@ const PRESENCIAL =
 const SEGURIDAD_DE_RED =
   'Freelanly | Ingeniero de Seguridad de Red. Estados Unidos. USD 102000-138000/ano. El cliente necesita un Ingeniero de Seguridad de Red para firewalls, VPN y segmentacion. Scripting en Python deseable. Remoto. Postula: https://lnkd.in/dseg';
 
+const REMOTO_SOLO_ESPANA =
+  'TECDATA ENGINEERING busca: Desarrollador/a Front-End Vue.js - Remoto\nUbicacion: Spain\nPostular: https://himalayas.app/companies/tecdata-engineering/jobs/desarrollador-a-front-end-vue-js-remoto\n\nEn TecData Engineering buscamos un/a Desarrollador/a Front-End Vue.js para un cliente del sector eCommerce.\nUbicacion: Madrid\nModalidad: Teletrabajo\nMinimo 3 anos de experiencia en desarrollo Front-End con Vue.js. Valorable experiencia con Node.js.';
+
 const SIN_STACK =
   'Buscamos Contador Senior 100% remoto para LATAM. Responsabilidades: conciliaciones, impuestos y cierres mensuales. Sueldo USD 2000. Postula en jobs@acme.com';
 
@@ -146,6 +149,22 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     const job = stored.items[0]!;
     assert.equal(job.locationKind, JobLocation.Unknown, 'ya no es "presencial": nadie lo sabe');
     assert.equal(job.isUncertain, true, 'entra marcada como por confirmar, no como oferta limpia');
+  });
+
+  it('EL CASO REAL (himalayas, 12 nov 2026): un remoto solo para España no lo rescata el juez', async () => {
+    const { judge } = fakeJudge(() => ({ isOffer: true, rejection: null }));
+    const result = await run([REMOTO_SOLO_ESPANA], judge);
+
+    assert.equal(result.outcome.accepted, 0, 'teletrabajo desde Madrid no es teletrabajo desde Caracas');
+    assert.equal(result.outcome.rejected, 1);
+
+    const stored = jobs.list({
+      status: null, verdict: null, runId: null,
+      source: null, search: null, hasApply: null, limit: 10, offset: 0,
+    });
+    const job = stored.items[0]!;
+    assert.equal(job.verdict, JobVerdict.Rejected);
+    assert.equal(job.locationKind, JobLocation.OtherCountry, 'el país lo dice el anuncio: no hay nada que revocar');
   });
 
   it('lo descartado por el stack NO lo rescata el juez, ni aunque diga que sirve', async () => {
