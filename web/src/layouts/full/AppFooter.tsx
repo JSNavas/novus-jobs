@@ -1,5 +1,5 @@
 import { Stack, Typography } from '@mui/material';
-import { IconCheck, IconLock } from '@tabler/icons-react';
+import { IconCheck } from '@tabler/icons-react';
 import { formatTime } from '../../format';
 import { t } from '../../i18n';
 import { useNotifications } from '../../notifications';
@@ -29,10 +29,7 @@ const AppFooter = () => {
         borderColor: 'divider',
       }}
     >
-      <Stack direction="row" spacing={0.75} alignItems="center" sx={{ color: 'text.secondary' }}>
-        <IconLock size={11} stroke={1.6} />
-        <Typography component="span" sx={monoSx}>{t('footer.local')}</Typography>
-      </Stack>
+      <span />
 
       {syncedAt ? (
         <Stack direction="row" spacing={0.75} alignItems="center" sx={{ color: 'text.secondary' }}>

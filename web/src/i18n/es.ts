@@ -48,6 +48,7 @@ export const es = {
   'schedule.slots': '{count} franja(s)',
 
   'jobs.runStarted': 'Búsqueda iniciada. Las ofertas nuevas aparecerán al terminar.',
+  'jobs.empty.filters.hint': 'Prueba con otro puesto, plataforma o fecha.',
   'jobs.empty.filters': 'No hay ofertas con estos filtros.',
   'jobs.searchNow': 'Buscar ahora',
 
@@ -141,7 +142,6 @@ export const es = {
   'dash.period.week': 'Últimos 7 días',
   'dash.period.all': 'Todo el historial',
   'dash.runs.allHistory': 'Todo el historial',
-  'footer.local': 'Todos los datos permanecen en tu equipo.',
   'footer.sync': 'Última sincronización: {time}',
   'dash.runs.noun': 'búsquedas',
 

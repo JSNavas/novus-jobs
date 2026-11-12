@@ -50,6 +50,7 @@ export const en: Record<keyof typeof es, string> = {
   'schedule.slots': '{count} slot(s)',
 
   'jobs.runStarted': 'Search started. New postings will show up when it finishes.',
+  'jobs.empty.filters.hint': 'Try another role, platform or date.',
   'jobs.empty.filters': 'No postings match these filters.',
   'jobs.searchNow': 'Search now',
 
@@ -143,7 +144,6 @@ export const en: Record<keyof typeof es, string> = {
   'dash.period.week': 'Last 7 days',
   'dash.period.all': 'All history',
   'dash.runs.allHistory': 'All history',
-  'footer.local': 'All your data stays on your machine.',
   'footer.sync': 'Last sync: {time}',
   'dash.runs.noun': 'searches',
 

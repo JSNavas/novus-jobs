@@ -10,7 +10,7 @@ import { JobStatus, type Job } from '../../types';
 import JobCard from './JobCard';
 import { viewByPath, emptyOf, subtitleOf, titleOf } from './inbox';
 import { nextSearchSentence } from './scheduleText';
-import { IconRefresh } from '@tabler/icons-react';
+import { IconInbox, IconRefresh } from '@tabler/icons-react';
 import JobFilters, { sinceOfWindow, type FilterValues } from './JobFilters';
 import LastRunAlert from './LastRunAlert';
 import { useDashboardData } from './useDashboardData';
@@ -65,10 +65,13 @@ const JobsPage = () => {
     }
   };
 
-  const emptyMessage = (): string => {
-    if (filters.q || filters.hasApply) return t('jobs.empty.filters');
-    const next = view.status === JobStatus.New ? nextSearchSentence(schedule) : '';
-    return [emptyOf(view), next].filter(Boolean).join(' ');
+  const filtering = Boolean(filters.q || filters.hasApply || filters.source !== 'all' || filters.date !== 'all');
+
+  const emptyTitle = (): string => (filtering ? t('jobs.empty.filters') : emptyOf(view));
+
+  const emptyHint = (): string => {
+    if (filtering) return t('jobs.empty.filters.hint');
+    return view.status === JobStatus.New ? nextSearchSentence(schedule) : '';
   };
 
   const refreshButton = (
@@ -102,9 +105,18 @@ const JobsPage = () => {
       ) : null}
 
       {page && page.items.length === 0 ? (
-        <Typography color="textSecondary" py={4} textAlign="center">
-          {emptyMessage()}
-        </Typography>
+        <Stack
+          alignItems="center"
+          justifyContent="center"
+          spacing={1.5}
+          sx={{ minHeight: 320, border: 1, borderColor: 'divider', borderRadius: 1, px: 3, textAlign: 'center' }}
+        >
+          <IconInbox size={30} stroke={1.3} color="currentColor" style={{ opacity: 0.5 }} />
+          <Typography sx={{ fontSize: 16, fontWeight: 500, mt: 0.625 }}>{emptyTitle()}</Typography>
+          {emptyHint() ? (
+            <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>{emptyHint()}</Typography>
+          ) : null}
+        </Stack>
       ) : null}
 
       <Stack spacing={1.5}>
