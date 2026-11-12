@@ -127,7 +127,7 @@ Variables de entorno (`server/.env`, todas opcionales):
 | `PORT` | `47831` | Puerto de la API y de la UI |
 | `SCHEDULE_HOURS` | `9,13,18` | Franjas de pasada por defecto, en la zona horaria de tu perfil |
 | `SCHEDULER_ENABLED` | `true` | `false` apaga las pasadas automáticas |
-| `JOB_SOURCES` | `linkedin,getonbrd` | Qué plataformas vienen encendidas **el primer arranque**. Después manda el interruptor de Integraciones y esto se ignora |
+| `JOB_SOURCES` | `linkedin,getonbrd,hackernews` | Qué plataformas **escritas en código** vienen encendidas el primer arranque. Las descritas en `server/descriptors/` se encienden solas, para que añadir un JSON no obligue a tocar también el `.env`. Después manda el interruptor de Integraciones |
 | `BROWSER_PROFILES_DIR` | `~/.novus-jobs/browser-profiles` | Dónde viven las sesiones del navegador |
 | `BROWSER_HEADLESS` | `true` | `false` abre el navegador con ventana en las pasadas (para depurar) |
 | `LINKEDIN_FEED_URL` | `https://www.linkedin.com/feed/` | Feed que se lee |
@@ -431,8 +431,9 @@ se construye no existe para la interfaz, y entonces no habría desde dónde
 encenderla.
 
 Para dejar de usarla, el interruptor. Para quitarla del todo, borrar su fichero
-(y su línea, si era una clase); nada más la nombra. `JOB_SOURCES` solo decide
-cuáles vienen encendidas el primer arranque.
+(y su línea, si era una clase); nada más la nombra. Un descriptor del catálogo
+viene encendido el primer arranque sin que nadie lo apunte en ningún sitio:
+añadir una fuente es un fichero, y solo uno.
 
 El contrato completo está en [docs/SOURCES.md](docs/SOURCES.md), y el formato de
 los descriptores en [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md).

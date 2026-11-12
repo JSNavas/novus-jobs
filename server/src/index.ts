@@ -62,7 +62,7 @@ async function main(): Promise<void> {
       + `${mailer.warnsEnabled() ? '' : ' (solo ofertas nuevas)'}`
     : '[arranque] sin RESEND_API_KEY / MAIL_FROM o sin destinatario: no se mandan correos');
 
-  const toggles = new SourceToggles(settings, config.enabledSources);
+  const toggles = new SourceToggles(settings, [...config.enabledSources, ...catalog.map((d) => d.name)]);
   const enabled = (name: string): boolean => toggles.isEnabled(name);
   console.log(`[arranque] plataformas: ${sources.map((s) => `${s.label}${enabled(s.name) ? '' : ' (apagada)'}`).join(', ') || 'ninguna'}`);
   const profiles = new ProfileRepository(settings);

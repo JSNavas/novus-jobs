@@ -33,7 +33,7 @@ function mailConfig(): Config['mail'] {
 const SERVER_ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 
 const DEFAULT_SCHEDULE_HOURS = '9,13,18';
-const DEFAULT_SOURCES = 'linkedin,getonbrd,remotive,remoteok,himalayas,weworkremotely,hackernews';
+const DEFAULT_SOURCES = 'linkedin,getonbrd,hackernews';
 const DEFAULT_FEED_URL = 'https://www.linkedin.com/feed/';
 const DEFAULT_JUDGE_MODEL = 'gemini-3.5-flash';
 const HOME_DIR = join(homedir(), '.novus-jobs');
