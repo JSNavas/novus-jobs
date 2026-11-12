@@ -215,6 +215,41 @@ describe('DescribedSource', () => {
     assert.equal(posts.length, 1);
   });
 
+  it('si una página entera ya se leyó, no se piden las siguientes: leer dos veces lo mismo no trae nada', async () => {
+    let pages = 0;
+    globalThis.fetch = (async () => {
+      pages++;
+      return new Response(
+        JSON.stringify({ jobs: [{ title: `Dev ${pages}`, company_name: 'Acme', description: 'Node', url: `https://x.test/${pages}` }] }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      );
+    }) as typeof fetch;
+
+    const source = describedFrom({
+      ...REMOTIVE,
+      request: { ...REMOTIVE.request, paging: { param: 'page', max: 5 } },
+    });
+    await source.fetch(() => [], () => false);
+    assert.equal(pages, 1, 'la primera página ya era conocida entera: no hay por qué pedir la segunda');
+  });
+
+  it('sin saber qué es nuevo se piden todas las páginas, como hasta ahora', async () => {
+    let pages = 0;
+    globalThis.fetch = (async () => {
+      pages++;
+      return new Response(
+        JSON.stringify({ jobs: [{ title: `Dev ${pages}`, company_name: 'Acme', description: 'Node', url: `https://x.test/${pages}` }] }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      );
+    }) as typeof fetch;
+
+    await describedFrom({
+      ...REMOTIVE,
+      request: { ...REMOTIVE.request, paging: { param: 'page', max: 3 } },
+    }).fetch(() => []);
+    assert.equal(pages, 3);
+  });
+
   it('no pide sesión ni navegador: por eso una fuente descrita funciona el primer día', () => {
     const source = describedFrom(REMOTIVE);
     assert.equal(source.profileId, null);

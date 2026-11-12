@@ -59,7 +59,7 @@ export async function runPasses(sources: readonly JobSource[], deps: PipelineDep
 async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outcome: RunOutcome; fresh: NewJob[] }> {
   const seen = deps.jobs.fingerprintsOf(source.name);
   const isFresh = (text: string) => !seen.has(fingerprint(text));
-  const posts = await source.fetch((list) => indicesToFetchPermalink(list, deps.profile, isFresh));
+  const posts = await source.fetch((list) => indicesToFetchPermalink(list, deps.profile, isFresh), isFresh);
   const offers: Offer[] = posts.map(toOffer);
   const metricsOf = new Map(posts.map((post) => [fingerprint(post.text), post.metrics ?? null]));
   const employerOf = new Map(posts.map((post) => [fingerprint(post.text), post.employer ?? null]));

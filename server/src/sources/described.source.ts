@@ -7,7 +7,7 @@ import {
 import { plainText } from './html.js';
 import { parseFeed } from './rss.js';
 import { OPEN_API_POLICY } from './policy.js';
-import type { JobSource, PermalinkSelector, PostMetrics, RawPost } from './types.js';
+import type { FreshnessCheck, JobSource, PermalinkSelector, PostMetrics, RawPost } from './types.js';
 
 const TIMEOUT_MS = 20_000;
 const USER_AGENT = 'novus-jobs (https://github.com/novus-jobs)';
@@ -122,7 +122,7 @@ export class DescribedSource implements JobSource {
     return this.descriptor.label;
   }
 
-  async fetch(_selectPermalinks: PermalinkSelector): Promise<RawPost[]> {
+  async fetch(_selectPermalinks: PermalinkSelector, isFresh?: FreshnessCheck): Promise<RawPost[]> {
     const { paging } = this.descriptor.request;
     const posts: RawPost[] = [];
     const seen = new Set<string>();
@@ -138,6 +138,7 @@ export class DescribedSource implements JobSource {
         if (total !== null) pages = Math.min(paging.max, total);
       }
 
+      const pagePosts: RawPost[] = [];
       for (const entry of entries) {
         const post = toRawPost(entry, this.descriptor.fields);
         if (!post) continue;
@@ -145,9 +146,11 @@ export class DescribedSource implements JobSource {
         if (seen.has(key)) continue;
         seen.add(key);
         posts.push(post);
+        pagePosts.push(post);
       }
 
       if (entries.length === 0) break;
+      if (isFresh && !pagePosts.some((post) => isFresh(post.text))) break;
     }
 
     if (posts.length === 0) {

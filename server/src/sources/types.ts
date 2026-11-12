@@ -25,6 +25,8 @@ export interface RawPost {
 
 export type PermalinkSelector = (posts: readonly RawPost[]) => number[];
 
+export type FreshnessCheck = (text: string) => boolean;
+
 export class LoginRequiredError extends Error {
   constructor(readonly source: string, readonly wall: LoginWall, advice: string) {
     super(advice);
@@ -38,7 +40,7 @@ export interface JobSource {
   readonly profileId: string | null;
   readonly loginUrl: string | null;
   readonly policy: SourcePolicy;
-  fetch(selectPermalinks: PermalinkSelector): Promise<RawPost[]>;
+  fetch(selectPermalinks: PermalinkSelector, isFresh?: FreshnessCheck): Promise<RawPost[]>;
   close(): Promise<void>;
 }
 

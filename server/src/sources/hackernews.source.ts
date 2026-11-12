@@ -1,6 +1,6 @@
 import { plainText } from './html.js';
 import { OPEN_API_POLICY } from './policy.js';
-import type { JobSource, PermalinkSelector, PostMetrics, RawPost } from './types.js';
+import type { FreshnessCheck, JobSource, PermalinkSelector, PostMetrics, RawPost } from './types.js';
 
 const STORIES_URL = 'https://hn.algolia.com/api/v1/search_by_date';
 const COMMENTS_URL = 'https://hn.algolia.com/api/v1/search';
@@ -61,18 +61,21 @@ export class HackerNewsSource implements JobSource {
   readonly loginUrl = null;
   readonly policy = OPEN_API_POLICY;
 
-  async fetch(_selectPermalinks: PermalinkSelector): Promise<RawPost[]> {
+  async fetch(_selectPermalinks: PermalinkSelector, isFresh?: FreshnessCheck): Promise<RawPost[]> {
     const story = await this.currentThread();
     const posts: RawPost[] = [];
 
     for (let page = 0; page < MAX_PAGES; page++) {
       const comments = await this.comments(story.objectID, page);
       if (comments.length === 0) break;
+      const pagePosts: RawPost[] = [];
       for (const comment of comments) {
         const post = this.toRawPost(comment, story);
-        if (post) posts.push(post);
+        if (post) pagePosts.push(post);
       }
+      posts.push(...pagePosts);
       if (comments.length < COMMENTS_PER_PAGE) break;
+      if (isFresh && !pagePosts.some((post) => isFresh(post.text))) break;
     }
 
     if (posts.length === 0) {
