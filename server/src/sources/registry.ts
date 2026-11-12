@@ -44,3 +44,7 @@ export function buildSources(config: Config, pool: BrowserPool): JobSource[] {
 export function buildSource(name: string, config: Config, pool: BrowserPool): JobSource {
   return sourceDefinition(name).create(config, pool);
 }
+
+export function sourceLabelOf(name: string): string {
+  return BY_NAME.get(name)?.label ?? name;
+}

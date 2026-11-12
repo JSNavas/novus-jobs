@@ -43,9 +43,10 @@ export function runFailureAdvice(failure: RunFailure, source = 'linkedin'): stri
   }
 }
 
-const SOURCE_LABELS: Record<string, string> = {
-  linkedin: 'LinkedIn',
-  getonbrd: 'Get on Board',
-};
+let sourceLabels: Record<string, string> = {};
 
-export const jobSourceLabel = (source: string): string => SOURCE_LABELS[source] ?? source;
+export function setSourceLabels(integrations: readonly { name: string; label: string }[]): void {
+  sourceLabels = Object.fromEntries(integrations.map((i) => [i.name, i.label]));
+}
+
+export const jobSourceLabel = (source: string): string => sourceLabels[source] ?? source;

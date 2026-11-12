@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router';
 import {
   Box, Button, CircularProgress, Stack, Switch, TextField, ToggleButton, Tooltip, Typography,
 } from '@mui/material';
@@ -208,7 +207,6 @@ const IntegrationCard = ({ integration, onSaved }: CardProps) => {
 };
 
 const IntegrationsPage = () => {
-  const { name } = useParams<{ name?: string }>();
   const [integrations, setIntegrations] = useState<Integration[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -230,27 +228,18 @@ const IntegrationsPage = () => {
     setIntegrations((prev) => prev?.map((item) => (item.name === saved.name ? saved : item)) ?? null);
   };
 
-  const shown = name ? integrations?.filter((item) => item.name === name) ?? null : integrations;
-  const title = (name && shown?.length === 1 ? shown[0]!.label : t('int.title'));
-
   return (
     <PageContainer
-      title={title}
+      title={t('int.title')}
       subtitle={t('int.subtitle')}
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
       {!integrations && !error ? (
         <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>
       ) : null}
-      {shown?.length === 0 ? (
-        <AppAlert severity="info">
-          {name
-            ? t('int.notFound', { name })
-            : t('int.none')}
-        </AppAlert>
-      ) : null}
+      {integrations?.length === 0 ? <AppAlert severity="info">{t('int.none')}</AppAlert> : null}
       <Stack spacing={2}>
-        {shown?.map((integration) => (
+        {integrations?.map((integration) => (
           <IntegrationCard key={integration.name} integration={integration} onSaved={replace} />
         ))}
       </Stack>

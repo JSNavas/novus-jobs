@@ -289,7 +289,7 @@ export const en: Record<keyof typeof es, string> = {
   'mod.onsite.hint': 'Office every day.',
   'src.help': 'Where postings are read from. You can change this whenever you want in Integrations, along with each one’s rhythm.',
   'src.needsLogin': 'needs a login',
-  'src.loginHint': 'The ones that need a session need you to log in once, from the server’s terminal (npm run login -- linkedin). Until then that platform returns nothing, and the dashboard will tell you why.',
+  'src.loginHint': 'The ones that need a session need you to log in once, from the server’s terminal: {commands}. Until then that platform returns nothing, and the dashboard will tell you why.',
   'done.help': 'This is enough to start searching. What is left has defaults and changes without restarting anything: the cover note and the maximum age of a posting live in Settings, and each platform’s rhythm in Integrations.',
   'done.summary': 'What gets saved',
   'done.core': 'Core:',
@@ -358,4 +358,7 @@ export const en: Record<keyof typeof es, string> = {
   'limits.focus': 'Focus window',
   'limits.focus.help': 'How much history the market analysis uses. Not the same as the maximum age: that one decides what gets saved, this one how much of what is saved gets looked at.',
   'limits.months': '{count} months',
+  'nav.integrations.count': '{count} platforms',
+  'wiz.exit': 'Back to the dashboard',
+  'wiz.exitEditing': 'Back to Settings',
 };

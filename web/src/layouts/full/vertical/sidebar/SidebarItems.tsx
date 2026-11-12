@@ -9,6 +9,7 @@ import { getStats, listIntegrations, type Integration, type Stats } from '../../
 import { AppChip, AppStatusPilot } from '../../../../components/ui';
 import { useEffect, useState } from 'react';
 import { JobStatus } from '../../../../types';
+import { setSourceLabels } from '../../../../labels';
 import { runStatusLabel, runStatusTone } from '../../../../views/dashboard/runStatus';
 import { INBOX_VIEWS, showsCount, titleOf } from '../../../../views/jobs/inbox';
 import { t } from '../../../../i18n';
@@ -35,7 +36,11 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
     let cancelled = false;
     const load = (): void => {
       getStats().then((next) => { if (!cancelled) setStats(next); }).catch(() => undefined);
-      listIntegrations().then((next) => { if (!cancelled) setIntegrations(next); }).catch(() => undefined);
+      listIntegrations().then((next) => {
+        if (cancelled) return;
+        setIntegrations(next);
+        setSourceLabels(next);
+      }).catch(() => undefined);
     };
     load();
     const timer = setInterval(() => {
@@ -129,34 +134,24 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
         </ListItemButton>
       </List>
 
-      {integrations.length ? (
-        <List
-          sx={{ px: 2 }}
-          subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>{t('nav.group.integrations')}</ListSubheader>}
+      <List sx={{ px: 2 }}>
+        <ListItemButton
+          component={NavLink}
+          to="/integraciones"
+          end
+          onClick={onNavigate}
+          sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
         >
-          {integrations.map((integration) => (
-            <ListItemButton
-              key={integration.name}
-              component={NavLink}
-              to={`/integraciones/${integration.name}`}
-              end
-              onClick={onNavigate}
-              sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
-            >
-              <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-                <IconPlug size="20" stroke={1.5} />
-              </ListItemIcon>
-              <ListItemText
-                primary={integration.label}
-                secondary={integration.schedule.kind === 'every-minutes'
-                  ? t('schedule.everyMinutes', { minutes: integration.schedule.minutes })
-                  : t('schedule.slots', { count: integration.schedule.hours.length })}
-                secondaryTypographyProps={{ variant: 'caption' }}
-              />
-            </ListItemButton>
-          ))}
-        </List>
-      ) : null}
+          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
+            <IconPlug size="20" stroke={1.5} />
+          </ListItemIcon>
+          <ListItemText
+            primary={t('nav.group.integrations')}
+            secondary={integrations.length ? t('nav.integrations.count', { count: integrations.length }) : undefined}
+            secondaryTypographyProps={{ variant: 'caption' }}
+          />
+        </ListItemButton>
+      </List>
 
       <List sx={{ px: 2 }}>
         <ListItemButton

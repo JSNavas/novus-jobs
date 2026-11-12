@@ -22,7 +22,6 @@ const router = createBrowserRouter([
       { path: 'busquedas/:id', element: <RunPage /> },
       { path: 'enfoque', element: <FocusPage /> },
       { path: 'integraciones', element: <IntegrationsPage /> },
-      { path: 'integraciones/:name', element: <IntegrationsPage /> },
       { path: 'configuracion', element: <SettingsPage /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],

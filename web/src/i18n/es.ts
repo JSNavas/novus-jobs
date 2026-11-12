@@ -287,7 +287,7 @@ export const es = {
   'mod.onsite.hint': 'Oficina todos los días.',
   'src.help': 'De dónde se leen las ofertas. Puedes cambiarlo cuando quieras en Integraciones, junto con el ritmo de cada una.',
   'src.needsLogin': 'pide iniciar sesión',
-  'src.loginHint': 'Las que piden sesión necesitan que inicies sesión una vez, desde la terminal del servidor (npm run login -- linkedin). Hasta entonces esa plataforma no devolverá nada, y el dashboard te lo dirá con su motivo.',
+  'src.loginHint': 'Las que piden sesión necesitan que inicies sesión una vez, desde la terminal del servidor: {commands}. Hasta entonces esa plataforma no devolverá nada, y el dashboard te lo dirá con su motivo.',
   'done.help': 'Con esto ya se puede buscar. Lo que falta tiene valores por defecto y se cambia sin reiniciar nada: el párrafo de motivación y la antigüedad máxima de las vacantes viven en Configuración, y el ritmo de cada plataforma en Integraciones.',
   'done.summary': 'Lo que queda guardado',
   'done.core': 'Núcleo:',
@@ -356,4 +356,7 @@ export const es = {
   'limits.focus': 'Ventana del Enfoque',
   'limits.focus.help': 'Con cuánto pasado se calcula lo que piden las vacantes. No es lo mismo que la antigüedad: aquella decide qué se guarda, esta con cuánto de lo guardado se mira el mercado.',
   'limits.months': '{count} meses',
+  'nav.integrations.count': '{count} plataformas',
+  'wiz.exit': 'Volver al dashboard',
+  'wiz.exitEditing': 'Volver a Configuración',
 } as const;

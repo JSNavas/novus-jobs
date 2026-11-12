@@ -4,7 +4,7 @@ import { findCountry } from './countries.js';
 import { t } from '../i18n/index.js';
 import type { CandidateProfile, Offer } from './decide.js';
 
-const JUDGE_REJECTIONS = ['onsite', 'other-country', 'english', 'technology', 'venezuelan-employer', 'role'] as const;
+const JUDGE_REJECTIONS = ['onsite', 'other-country', 'english', 'technology', 'local-employer', 'role'] as const;
 type JudgeRejection = (typeof JUDGE_REJECTIONS)[number];
 
 export interface JudgeVerdict {
@@ -117,8 +117,8 @@ function instruction(profile: CandidateProfile, country: string | null): string 
       : '   "english"           → no lo uses: no quiere filtrar por idioma.',
     '   "technology"        → EXIGEN algo que no sabe (de la lista de arriba).',
     profile.geo.excludeLocalEmployers && country
-      ? `   "venezuelan-employer" → la contrata una empresa de ${country}.`
-      : '   "venezuelan-employer" → no lo uses.',
+      ? `   "local-employer" → la contrata una empresa de ${country}.`
+      : '   "local-employer" → no lo uses.',
     '   "role"              → el puesto NO es de desarrollo de software, aunque el',
     '                         anuncio mencione tecnologías que él sabe. Es de',
     '                         seguridad/redes, datos (data engineer, analista BI),',

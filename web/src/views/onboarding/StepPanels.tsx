@@ -339,6 +339,8 @@ export const SourcesStep = () => {
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
   };
 
+  const needLogin = (integrations ?? []).filter((i) => i.enabled && i.needsLogin);
+
   return (
     <Stack spacing={2}>
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
@@ -362,9 +364,11 @@ export const SourcesStep = () => {
           ) : null}
         </Box>
       ))}
-      {integrations?.some((i) => i.enabled && i.needsLogin) ? (
+      {needLogin.length ? (
         <AppAlert severity="info">
-          {t('src.loginHint')}
+          {t('src.loginHint', {
+            commands: needLogin.map((i) => `npm run login -- ${i.name}`).join(', '),
+          })}
         </AppAlert>
       ) : null}
     </Stack>

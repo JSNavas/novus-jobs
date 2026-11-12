@@ -2,6 +2,7 @@ import type { NewJob } from '../db/jobs.repository.js';
 import { t } from '../i18n/index.js';
 import type { Language } from '../profile/types.js';
 import { RunFailure } from '../types.js';
+import { sourceLabelOf } from '../sources/registry.js';
 import type { Mail } from './mailer.js';
 
 const MAX_LISTED = 12;
@@ -24,13 +25,8 @@ export function offersSubject(count: number, language: Language): string {
     : t(language, 'mail.subject.many', { count });
 }
 
-const SOURCE_LABELS: Record<string, string> = {
-  linkedin: 'LinkedIn',
-  getonbrd: 'Get on Board',
-};
-
 function sourceLabel(source: string): string {
-  return SOURCE_LABELS[source] ?? source;
+  return sourceLabelOf(source);
 }
 
 export function offersMail(jobs: readonly NewJob[], dashboardUrl: string, language: Language): Mail {

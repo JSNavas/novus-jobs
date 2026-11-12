@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router';
 import {
   Box, Button, CircularProgress, Container, Stack, Step, StepLabel, Stepper, Typography,
 } from '@mui/material';
+import { IconArrowLeft } from '@tabler/icons-react';
 import {
   completeOnboarding, getOnboarding, saveOnboardingStep,
   type CvReading, type OnboardingState,
@@ -102,6 +103,16 @@ const WelcomePage = () => {
 
   return (
     <Container maxWidth="md" sx={{ py: 5 }}>
+      {state.completed ? (
+        <Button
+          variant="text"
+          startIcon={<IconArrowLeft size="18" stroke={1.5} />}
+          onClick={() => navigate(editing ? '/configuracion' : '/')}
+          sx={{ mb: 2, ml: -1 }}
+        >
+          {t(editing ? 'wiz.exitEditing' : 'wiz.exit')}
+        </Button>
+      ) : null}
       <Typography variant="h4" mb={0.5}>
         {t(editing ? 'wiz.title.edit' : 'wiz.title.welcome')}
       </Typography>
