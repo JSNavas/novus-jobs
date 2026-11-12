@@ -261,6 +261,8 @@ export const en: Record<keyof typeof es, string> = {
   'focus.topics': 'What the postings are asking for',
   'focus.topics.empty': 'Nothing repeats across two postings yet.',
   'focus.requirements': 'Recurring requirements',
+  'focus.rank.help': 'How many of the {total} accepted postings ask for it, and what share that is.',
+  'focus.rank.cell': '{count} of {total} postings ask for it · {share}% of the total',
   'focus.rank.head': 'Postings / %',
   'focus.mentions': '{count} mentions',
   'focus.analysed': '{count} postings analysed',

@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { Box, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { Box, MenuItem, Stack, TextField, Tooltip, Typography } from '@mui/material';
 import { getFocus, getSettings, markFocusSeen, type Focus, type FocusTopic } from '../../api/client';
 import { t } from '../../i18n';
 import { AppAlert, AppChip, PageContainer } from '../../components/ui';
 
 const WINDOWS = [3, 6, 12, 24];
-const RANKED = 8;
+const RANKED = 10;
 
 const monoSx = {
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
@@ -19,7 +19,11 @@ const Bar = ({ share, height = 6 }: { share: number; height?: number }) => (
   </Box>
 );
 
-const RankRow = ({ topic, index, top }: { topic: FocusTopic; index: number; top: number }) => (
+const RankRow = ({ topic, index, top, total }: { topic: FocusTopic; index: number; top: number; total: number }) => (
+  <Tooltip
+    title={t('focus.rank.cell', { count: topic.vacancies, total, share: topic.share })}
+    placement="top-start"
+  >
   <Box
     sx={{
       display: 'grid',
@@ -46,6 +50,7 @@ const RankRow = ({ topic, index, top }: { topic: FocusTopic; index: number; top:
       {`${topic.share}%`}
     </Typography>
   </Box>
+  </Tooltip>
 );
 
 const DetailRow = ({ topic, total }: { topic: FocusTopic; total: number }) => (
@@ -116,28 +121,11 @@ const FocusPage = () => {
     <PageContainer
       title={t('focus.title')}
       subtitle={t('focus.subtitle')}
-      action={(
-        <Stack direction="row" spacing={2} alignItems="center">
-          {focus && focus.analysed > 0 ? (
-            <Typography variant="label" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' } }}>
-              {t('focus.analysed', { count: focus.analysed })}
-            </Typography>
-          ) : null}
-          <TextField
-            select
-            size="small"
-            label={t('focus.window')}
-            value={months ?? ''}
-            onChange={(event) => setMonths(Number(event.target.value))}
-            slotProps={{ inputLabel: { shrink: true } }}
-            sx={{ minWidth: 170 }}
-          >
-            {WINDOWS.map((option) => (
-              <MenuItem key={option} value={option}>{t('focus.lastMonths', { months: option })}</MenuItem>
-            ))}
-          </TextField>
-        </Stack>
-      )}
+      action={focus && focus.analysed > 0 ? (
+        <Typography variant="label" color="text.secondary" sx={{ display: { xs: 'none', md: 'block' } }}>
+          {t('focus.analysed', { count: focus.analysed })}
+        </Typography>
+      ) : null}
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
 
@@ -154,15 +142,35 @@ const FocusPage = () => {
             }}
           >
             <Box sx={{ minWidth: 0 }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ minHeight: 39, mb: 1 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ minHeight: 39 }}>
                 <Typography variant="h6" sx={{ fontSize: 14 }}>{t('focus.topics')}</Typography>
-                <Typography variant="label" color="text.secondary">{t('focus.rank.head')}</Typography>
+                <TextField
+                  select
+                  size="small"
+                  label={t('focus.window')}
+                  value={months ?? ''}
+                  onChange={(event) => setMonths(Number(event.target.value))}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                  sx={{ minWidth: 170 }}
+                >
+                  {WINDOWS.map((option) => (
+                    <MenuItem key={option} value={option}>{t('focus.lastMonths', { months: option })}</MenuItem>
+                  ))}
+                </TextField>
+              </Stack>
+
+              <Stack direction="row" justifyContent="flex-end" sx={{ mt: 1.25, mb: 1 }}>
+                <Tooltip title={t('focus.rank.help', { total: focus.analysed })}>
+                  <Typography variant="label" color="text.secondary" sx={{ cursor: 'help' }}>
+                    {t('focus.rank.head')}
+                  </Typography>
+                </Tooltip>
               </Stack>
 
               {focus.topics.length ? (
                 <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: 'background.paper', px: 2.75 }}>
                   {focus.topics.slice(0, RANKED).map((topic, index) => (
-                    <RankRow key={topic.name} topic={topic} index={index} top={top} />
+                    <RankRow key={topic.name} topic={topic} index={index} top={top} total={focus.analysed} />
                   ))}
                 </Box>
               ) : (

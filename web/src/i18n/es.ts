@@ -259,6 +259,8 @@ export const es = {
   'focus.topics': 'Qué están pidiendo las vacantes',
   'focus.topics.empty': 'Nada se repite en dos vacantes todavía.',
   'focus.requirements': 'Requisitos recurrentes',
+  'focus.rank.help': 'Cuántas de las {total} vacantes aceptadas piden esto, y qué porcentaje supone.',
+  'focus.rank.cell': '{count} de {total} vacantes lo piden · {share}% del total',
   'focus.rank.head': 'Ofertas / %',
   'focus.mentions': '{count} menciones',
   'focus.analysed': '{count} ofertas analizadas',

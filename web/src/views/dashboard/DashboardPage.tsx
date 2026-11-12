@@ -106,7 +106,7 @@ const failedRowSx = {
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const { stats, latest, notices, push, refresh } = useNotifications();
+  const { stats, latest, notices, unread, markRead, push, refresh } = useNotifications();
   const [searching, setSearching] = useState(false);
   const noticesAtStart = useRef(0);
   const [runs, setRuns] = useState<RunInfo[] | null>(null);
@@ -209,9 +209,9 @@ const DashboardPage = () => {
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
 
-      {latest ? (
+      {latest && unread > 0 ? (
         <Box mb={2}>
-          <AppAlert severity={latest.tone}>
+          <AppAlert severity={latest.tone} onClose={markRead}>
             <Typography variant="body2" component="span" fontWeight={600}>{latest.title}</Typography>
             {latest.detail ? <Typography variant="body2" component="span">{` ${latest.detail}`}</Typography> : null}
           </AppAlert>
