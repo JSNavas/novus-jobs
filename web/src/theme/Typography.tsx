@@ -8,11 +8,13 @@ declare module '@mui/material/styles' {
   interface TypographyVariants {
     metric: CSSProperties;
     mono: CSSProperties;
+    label: CSSProperties;
   }
 
   interface TypographyVariantsOptions {
     metric?: CSSProperties;
     mono?: CSSProperties;
+    label?: CSSProperties;
   }
 }
 
@@ -20,6 +22,7 @@ declare module '@mui/material/Typography' {
   interface TypographyPropsVariantOverrides {
     metric: true;
     mono: true;
+    label: true;
   }
 }
 
@@ -31,6 +34,14 @@ const typography: TypographyVariantsOptions = {
     fontSize: '2rem',
     lineHeight: 1,
     fontVariantNumeric: 'tabular-nums',
+  },
+  label: {
+    fontFamily: monoFamily,
+    fontWeight: 500,
+    fontSize: '0.6875rem',
+    lineHeight: '1rem',
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
   },
   mono: {
     fontFamily: monoFamily,

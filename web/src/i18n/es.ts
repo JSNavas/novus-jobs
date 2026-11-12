@@ -36,12 +36,14 @@ export const es = {
   'inbox.dismissed.empty': 'Aquí van las que descartas. No se borran: puedes devolverlas a nuevas.',
 
   'nav.dashboard': 'Dashboard',
+  'nav.group.monitor': 'Monitor',
   'nav.group.offers': 'Ofertas',
   'nav.group.audit': 'Auditoría',
   'nav.group.integrations': 'Integraciones',
   'nav.rejected': 'Descartadas por el filtro',
   'nav.focus': 'Enfoque',
   'nav.settings': 'Configuración',
+  'nav.group.system': 'Sistema',
   'schedule.everyMinutes': 'cada {minutes} min',
   'schedule.slots': '{count} franja(s)',
 
@@ -70,6 +72,9 @@ export const es = {
   'stats.read.many': '{count} publicaciones leídas',
   'stats.lastRun.none': 'Todavía no se ha buscado',
   'sidebar.lastRunFailed': 'La última búsqueda falló',
+  'sidebar.workspace': 'Espacio personal',
+  'sidebar.local': 'Local y privado',
+  'sidebar.nextSearch': 'Próxima búsqueda',
   'stats.noRuns': 'Sin búsquedas todavía',
 
   'dash.title': 'Dashboard',

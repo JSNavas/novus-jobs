@@ -1,18 +1,52 @@
-import { Box, Drawer, Typography } from '@mui/material';
+import { Box, Drawer, Stack, Typography } from '@mui/material';
+import { IconLock } from '@tabler/icons-react';
+import { t } from '../../../../i18n';
 import SidebarItems from './SidebarItems';
 
-const drawerWidth = 220;
+const drawerWidth = 224;
 
-const paperSx = { width: drawerWidth, boxSizing: 'border-box', borderRight: 1, borderColor: 'divider' };
+const paperSx = {
+  width: drawerWidth,
+  boxSizing: 'border-box',
+  borderRight: 1,
+  borderColor: 'divider',
+  display: 'flex',
+  flexDirection: 'column',
+};
+
+const BrandMark = () => (
+  <Box aria-hidden sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 4px)', gap: '3px', transform: 'skewY(-18deg)' }}>
+    <Box sx={{ height: 17, bgcolor: 'primary.main' }} />
+    <Box sx={{ height: 23, bgcolor: 'primary.main' }} />
+    <Box sx={{ height: 17, bgcolor: 'primary.main' }} />
+  </Box>
+);
 
 const SidebarContent = ({ onNavigate }: { onNavigate: () => void }) => (
   <>
-    <Box px={2.5} py={2.5}>
-      <Typography variant="mono" color="primary">
+    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ px: 2.5, pt: 2.5, pb: 1.25 }}>
+      <BrandMark />
+      <Typography variant="mono" color="primary" sx={{ fontWeight: 600, fontSize: 15 }}>
         NOVUS·JOBS
       </Typography>
-    </Box>
+    </Stack>
+
+    <Stack direction="row" spacing={0.75} alignItems="center" sx={{ px: 2.5, pb: 1.5, color: 'text.secondary' }}>
+      <IconLock size={11} />
+      <Typography variant="label">{t('sidebar.workspace')}</Typography>
+    </Stack>
+
     <SidebarItems onNavigate={onNavigate} />
+
+    <Stack
+      direction="row"
+      spacing={1}
+      alignItems="center"
+      sx={{ px: 2.5, height: 46, borderTop: 1, borderColor: 'divider', color: 'text.secondary', flexShrink: 0 }}
+    >
+      <IconLock size={12} />
+      <Typography variant="label">{t('sidebar.local')}</Typography>
+    </Stack>
   </>
 );
 

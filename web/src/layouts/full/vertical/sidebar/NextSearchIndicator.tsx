@@ -1,4 +1,5 @@
-import { Box, Typography } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
+import { IconClock } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { getSchedule, type Schedule } from '../../../../api/client';
 import { formatNextSearch, nextSearchAt, nextSearchIn } from '../../../../views/jobs/scheduleText';
@@ -40,14 +41,22 @@ const NextSearchIndicator = ({ lastRunFailed }: NextSearchIndicatorProps) => {
   if (!next && !lastRunFailed) return null;
 
   return (
-    <Box component="li" sx={{ pl: 6.5, pr: 2, pb: 1 }}>
+    <Box sx={{ m: 2, p: 1.5, border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: 'background.default' }}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Typography variant="label" color="text.secondary">
+          {t('sidebar.nextSearch')}
+        </Typography>
+        <Box component={IconClock} size={13} sx={{ color: 'text.secondary' }} />
+      </Stack>
+
       {lastRunFailed ? (
-        <Typography variant="body2" sx={{ color: 'error.main', fontWeight: 600 }}>
+        <Typography variant="body2" sx={{ color: 'error.main', fontWeight: 600, mt: 1 }}>
           {t('sidebar.lastRunFailed')}
         </Typography>
       ) : null}
+
       {next ? (
-        <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
+        <Typography variant="mono" sx={{ display: 'block', mt: 1, color: 'text.primary' }}>
           {formatNextSearch(next)}
         </Typography>
       ) : null}

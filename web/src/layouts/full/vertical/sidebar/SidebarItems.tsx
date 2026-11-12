@@ -1,4 +1,4 @@
-import { List, ListItemButton, ListItemIcon, ListItemText, ListSubheader } from '@mui/material';
+import { Box, List, ListItemButton, ListItemIcon, ListItemText, ListSubheader } from '@mui/material';
 import {
   IconArchive, IconBookmark, IconEye, IconFilterOff, IconInbox, IconLayoutDashboard, IconPlug, IconSettings,
   IconTargetArrow,
@@ -23,6 +23,37 @@ const ICONS: Record<string, TablerIcon> = {
 };
 
 const POLL_INTERVAL_MS = 15_000;
+
+const itemSx = {
+  minHeight: 38,
+  px: 1.5,
+  mb: 0.375,
+  borderRadius: 1,
+  border: 1,
+  borderColor: 'transparent',
+  color: 'text.secondary',
+  transition: 'background-color 140ms',
+  '&:hover': { bgcolor: 'action.hover', color: 'text.primary' },
+  '&.active': { bgcolor: 'grey.300', borderColor: 'divider', color: 'primary.main' },
+};
+
+const groupSx = { px: 1.5, py: 0 };
+
+const subheaderSx = {
+  bgcolor: 'transparent',
+  px: 1.5,
+  pt: 2,
+  pb: 1,
+  lineHeight: 1,
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  fontSize: 10,
+  fontWeight: 500,
+  letterSpacing: '0.08em',
+  textTransform: 'uppercase',
+  color: 'text.secondary',
+};
+
+const labelSx = { my: 0, '& .MuiTypography-root': { fontSize: 13 } };
 
 interface SidebarItemsProps {
   onNavigate: () => void;
@@ -57,117 +88,78 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
   };
 
   return (
-    <>
-      <List sx={{ px: 2 }}>
-        <ListItemButton
-          component={NavLink}
-          to="/"
-          end
-          onClick={onNavigate}
-          sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
-        >
-          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-            <IconLayoutDashboard size="20" stroke={1.5} />
-          </ListItemIcon>
-          <ListItemText primary={t('nav.dashboard')} />
-          {stats?.lastRun ? (
-            <AppStatusPilot tone={runStatusTone(stats.lastRun)} srLabel={runStatusLabel(stats.lastRun)} />
-          ) : null}
-        </ListItemButton>
-        <NextSearchIndicator lastRunFailed={lastRunFailed} />
-      </List>
-
-    <List sx={{ px: 2 }} subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>{t('nav.group.offers')}</ListSubheader>}>
-      {INBOX_VIEWS.map((view) => {
-        const Icon = ICONS[view.path] ?? IconInbox;
-        const count = countOf(view);
-        return (
-          <ListItemButton
-            key={view.path}
-            component={NavLink}
-            to={view.path}
-            end
-            onClick={onNavigate}
-            sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
-          >
-            <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-              <Icon size="20" stroke={1.5} />
+    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
+      <Box sx={{ flex: 1, overflowY: 'auto' }}>
+        <List sx={groupSx} subheader={<ListSubheader disableSticky sx={subheaderSx}>{t('nav.group.monitor')}</ListSubheader>}>
+          <ListItemButton component={NavLink} to="/" end onClick={onNavigate} sx={itemSx}>
+            <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
+              <IconLayoutDashboard size="19" stroke={1.6} />
             </ListItemIcon>
-            <ListItemText primary={titleOf(view)} />
-            {count ? (
-              <AppChip label={String(count)} tone={view.status === JobStatus.New ? 'success' : 'neutral'} />
+            <ListItemText primary={t('nav.dashboard')} sx={labelSx} />
+            {stats?.lastRun ? (
+              <AppStatusPilot tone={runStatusTone(stats.lastRun)} srLabel={runStatusLabel(stats.lastRun)} />
             ) : null}
           </ListItemButton>
-        );
-      })}
-    </List>
+        </List>
 
-      <List sx={{ px: 2 }} subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>{t('nav.group.audit')}</ListSubheader>}>
-        <ListItemButton
-          component={NavLink}
-          to="/rechazadas"
-          end
-          onClick={onNavigate}
-          sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
-        >
-          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-            <IconFilterOff size="20" stroke={1.5} />
-          </ListItemIcon>
-          <ListItemText primary={t('nav.rejected')} />
-          {stats?.rejected ? <AppChip label={String(stats.rejected)} tone="neutral" /> : null}
-        </ListItemButton>
-      </List>
+        <List sx={groupSx} subheader={<ListSubheader disableSticky sx={subheaderSx}>{t('nav.group.offers')}</ListSubheader>}>
+          {INBOX_VIEWS.map((view) => {
+            const Icon = ICONS[view.path] ?? IconInbox;
+            const count = countOf(view);
+            return (
+              <ListItemButton key={view.path} component={NavLink} to={view.path} end onClick={onNavigate} sx={itemSx}>
+                <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
+                  <Icon size="19" stroke={1.6} />
+                </ListItemIcon>
+                <ListItemText primary={titleOf(view)} sx={labelSx} />
+                {count ? (
+                  <AppChip label={String(count)} tone={view.status === JobStatus.New ? 'success' : 'neutral'} />
+                ) : null}
+              </ListItemButton>
+            );
+          })}
+        </List>
 
-      <List sx={{ px: 2 }}>
-        <ListItemButton
-          component={NavLink}
-          to="/enfoque"
-          end
-          onClick={onNavigate}
-          sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
-        >
-          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-            <IconTargetArrow size="20" stroke={1.5} />
-          </ListItemIcon>
-          <ListItemText primary={t('nav.focus')} />
-          {stats?.focusNew ? <AppChip label={String(stats.focusNew)} tone="success" /> : null}
-        </ListItemButton>
-      </List>
+        <List sx={groupSx} subheader={<ListSubheader disableSticky sx={subheaderSx}>{t('nav.group.audit')}</ListSubheader>}>
+          <ListItemButton component={NavLink} to="/rechazadas" end onClick={onNavigate} sx={itemSx}>
+            <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
+              <IconFilterOff size="19" stroke={1.6} />
+            </ListItemIcon>
+            <ListItemText primary={t('nav.rejected')} sx={labelSx} />
+            {stats?.rejected ? <AppChip label={String(stats.rejected)} tone="neutral" /> : null}
+          </ListItemButton>
+          <ListItemButton component={NavLink} to="/enfoque" end onClick={onNavigate} sx={itemSx}>
+            <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
+              <IconTargetArrow size="19" stroke={1.6} />
+            </ListItemIcon>
+            <ListItemText primary={t('nav.focus')} sx={labelSx} />
+            {stats?.focusNew ? <AppChip label={String(stats.focusNew)} tone="success" /> : null}
+          </ListItemButton>
+        </List>
 
-      <List sx={{ px: 2 }}>
-        <ListItemButton
-          component={NavLink}
-          to="/integraciones"
-          end
-          onClick={onNavigate}
-          sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
-        >
-          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-            <IconPlug size="20" stroke={1.5} />
-          </ListItemIcon>
-          <ListItemText
-            primary={t('nav.group.integrations')}
-            secondary={integrations.length ? t('nav.integrations.count', { count: integrations.length }) : undefined}
-            secondaryTypographyProps={{ variant: 'caption' }}
-          />
-        </ListItemButton>
-      </List>
+        <List sx={groupSx} subheader={<ListSubheader disableSticky sx={subheaderSx}>{t('nav.group.system')}</ListSubheader>}>
+          <ListItemButton component={NavLink} to="/integraciones" end onClick={onNavigate} sx={itemSx}>
+            <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
+              <IconPlug size="19" stroke={1.6} />
+            </ListItemIcon>
+            <ListItemText
+              primary={t('nav.group.integrations')}
+              secondary={integrations.length ? t('nav.integrations.count', { count: integrations.length }) : undefined}
+              sx={labelSx}
+              secondaryTypographyProps={{ variant: 'caption' }}
+            />
+          </ListItemButton>
+          <ListItemButton component={NavLink} to="/configuracion" end onClick={onNavigate} sx={itemSx}>
+            <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
+              <IconSettings size="19" stroke={1.6} />
+            </ListItemIcon>
+            <ListItemText primary={t('nav.settings')} sx={labelSx} />
+          </ListItemButton>
+        </List>
+      </Box>
 
-      <List sx={{ px: 2 }}>
-        <ListItemButton
-          component={NavLink}
-          to="/configuracion"
-          end
-          onClick={onNavigate}
-          sx={{ borderRadius: 1, mb: 0.5, '&.active': { bgcolor: 'primary.light', color: 'primary.main' } }}
-        >
-          <ListItemIcon sx={{ minWidth: 36, color: 'inherit' }}>
-            <IconSettings size="20" stroke={1.5} />
-          </ListItemIcon>
-          <ListItemText primary={t('nav.settings')} />
-        </ListItemButton>
-      </List>
-    </>
+      <NextSearchIndicator lastRunFailed={lastRunFailed} />
+    </Box>
   );
 };
 

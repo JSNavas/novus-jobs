@@ -38,12 +38,14 @@ export const en: Record<keyof typeof es, string> = {
   'inbox.dismissed.empty': 'This is where the ones you dismiss go. They are not deleted: you can send them back to new.',
 
   'nav.dashboard': 'Dashboard',
+  'nav.group.monitor': 'Monitor',
   'nav.group.offers': 'Postings',
   'nav.group.audit': 'Audit',
   'nav.group.integrations': 'Integrations',
   'nav.rejected': 'Discarded by the filter',
   'nav.focus': 'Focus',
   'nav.settings': 'Settings',
+  'nav.group.system': 'System',
   'schedule.everyMinutes': 'every {minutes} min',
   'schedule.slots': '{count} slot(s)',
 
@@ -72,6 +74,9 @@ export const en: Record<keyof typeof es, string> = {
   'stats.read.many': '{count} postings read',
   'stats.lastRun.none': 'No search has run yet',
   'sidebar.lastRunFailed': 'The last search failed',
+  'sidebar.workspace': 'Personal space',
+  'sidebar.local': 'Local and private',
+  'sidebar.nextSearch': 'Next search',
   'stats.noRuns': 'No searches yet',
 
   'dash.title': 'Dashboard',
