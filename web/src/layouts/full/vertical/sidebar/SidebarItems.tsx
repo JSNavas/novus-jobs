@@ -8,7 +8,7 @@ import { NavLink } from 'react-router';
 import { listIntegrations, type Integration } from '../../../../api/client';
 import { AppChip, AppStatusPilot } from '../../../../components/ui';
 import { type ReactNode, useEffect, useState } from 'react';
-import { JobStatus } from '../../../../types';
+import { JobStatus, RunStatus } from '../../../../types';
 import { setSourceLabels } from '../../../../labels';
 import { runStatusLabel, runStatusTone } from '../../../../views/dashboard/runStatus';
 import { INBOX_VIEWS, showsCount, titleOf } from '../../../../views/jobs/inbox';
@@ -196,6 +196,7 @@ const SidebarItems = ({ onNavigate, collapsed = false }: SidebarItemsProps) => {
           lastRunFailed={lastRunFailed}
           lastRunAt={stats?.lastRun?.startedAt ?? null}
           platforms={integrations.length}
+          running={stats?.lastRun?.status === RunStatus.Running}
         />
       )}
     </Box>

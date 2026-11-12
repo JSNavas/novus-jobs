@@ -24,6 +24,7 @@ import { CriteriaPanel, FilterPanel, PanelLink, PlatformIcon, PlatformsPanel } f
 import RecentJobs from './RecentJobs';
 
 const POLL_INTERVAL_MS = 15_000;
+const RUNNING_POLL_MS = 4_000;
 
 interface Tile {
   label: string;
@@ -107,6 +108,7 @@ const failedRowSx = {
 const DashboardPage = () => {
   const navigate = useNavigate();
   const { stats, latest, notices, unread, markRead, push, refresh } = useNotifications();
+  const running = stats?.lastRun?.status === RunStatus.Running;
   const [searching, setSearching] = useState(false);
   const noticesAtStart = useRef(0);
   const [runs, setRuns] = useState<RunInfo[] | null>(null);
@@ -134,10 +136,10 @@ const DashboardPage = () => {
     };
     load();
     const timer = setInterval(() => {
-      if (document.visibilityState === 'visible') load();
-    }, POLL_INTERVAL_MS);
+      if (document.visibilityState === 'visible') { load(); refresh(); }
+    }, running ? RUNNING_POLL_MS : POLL_INTERVAL_MS);
     return () => { cancelled = true; clearInterval(timer); };
-  }, [page, period, notices.length]);
+  }, [page, period, notices.length, running, refresh]);
 
   useEffect(() => {
     let cancelled = false;
@@ -209,7 +211,18 @@ const DashboardPage = () => {
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
 
-      {latest && unread > 0 ? (
+      {running ? (
+        <Box mb={2}>
+          <AppAlert severity="info">
+            <Typography variant="body2" component="span" fontWeight={600}>{t('dash.running')}</Typography>
+            <Typography variant="body2" component="span">
+              {` ${t('dash.running.detail', { platforms: integrations.length })}`}
+            </Typography>
+          </AppAlert>
+        </Box>
+      ) : null}
+
+      {!running && latest && unread > 0 ? (
         <Box mb={2}>
           <AppAlert severity={latest.tone} onClose={markRead}>
             <Typography variant="body2" component="span" fontWeight={600}>{latest.title}</Typography>

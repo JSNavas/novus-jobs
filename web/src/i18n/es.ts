@@ -81,9 +81,13 @@ export const es = {
   'notice.runNothing': 'Búsqueda completada sin ofertas nuevas.',
   'notice.runNothing.detail': 'Leyó {read} publicaciones y ninguna encajó.',
   'notice.runFailed': 'La búsqueda falló.',
+  'dash.running': 'Búsqueda en curso',
+  'dash.running.detail': 'Leyendo {platforms} plataformas. El resultado aparece aquí en cuanto termine.',
   'dash.searchNow': 'Buscar ahora',
   'dash.searching': 'Buscando…',
   'sidebar.lastRunFailed': 'La última búsqueda falló',
+  'sidebar.searching': 'En curso',
+  'sidebar.soon': 'En curso',
   'sidebar.nextSearch': 'Próxima búsqueda',
   'stats.noRuns': 'Sin búsquedas todavía',
 

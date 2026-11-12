@@ -83,9 +83,13 @@ export const en: Record<keyof typeof es, string> = {
   'notice.runNothing': 'Search completed with no new postings.',
   'notice.runNothing.detail': 'Read {read} posts and none matched.',
   'notice.runFailed': 'The search failed.',
+  'dash.running': 'Search running',
+  'dash.running.detail': 'Reading {platforms} platforms. The result shows up here as soon as it finishes.',
   'dash.searchNow': 'Search now',
   'dash.searching': 'Searching…',
   'sidebar.lastRunFailed': 'The last search failed',
+  'sidebar.searching': 'Running',
+  'sidebar.soon': 'Running',
   'sidebar.nextSearch': 'Next search',
   'stats.noRuns': 'No searches yet',
 

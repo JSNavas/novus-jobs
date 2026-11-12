@@ -10,17 +10,21 @@ import { Rise } from '../../../../components/ui';
 import { formatTime } from '../../../../format';
 
 const REFRESH_INTERVAL_MS = 30_000;
+const HURRY_INTERVAL_MS = 5_000;
 const TICK_INTERVAL_MS = 1_000;
 
 interface NextSearchIndicatorProps {
   lastRunFailed: boolean;
   lastRunAt: string | null;
   platforms: number;
+  /** Hay una pasada corriendo: la cuenta atrás no significa nada mientras tanto. */
+  running: boolean;
 }
 
-const NextSearchIndicator = ({ lastRunFailed, lastRunAt, platforms }: NextSearchIndicatorProps) => {
+const NextSearchIndicator = ({ lastRunFailed, lastRunAt, platforms, running }: NextSearchIndicatorProps) => {
   const [schedule, setSchedule] = useState<Schedule | null>(null);
   const [now, setNow] = useState(() => new Date());
+  const [hurry, setHurry] = useState(false);
   const stillMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
 
   useEffect(() => {
@@ -40,19 +44,28 @@ const NextSearchIndicator = ({ lastRunFailed, lastRunAt, platforms }: NextSearch
       getSchedule().then(setSchedule).catch(() => undefined);
     };
     const ticker = stillMotion ? null : setInterval(beat, TICK_INTERVAL_MS);
-    const refresher = setInterval(refresh, REFRESH_INTERVAL_MS);
+    const refresher = setInterval(refresh, hurry ? HURRY_INTERVAL_MS : REFRESH_INTERVAL_MS);
     document.addEventListener('visibilitychange', refresh);
     return () => {
       if (ticker) clearInterval(ticker);
       clearInterval(refresher);
       document.removeEventListener('visibilitychange', refresh);
     };
-  }, [stillMotion]);
+  }, [stillMotion, hurry]);
+
+  // Mientras corre una pasada, o cuando ya tocaba, el horario del servidor va a
+  // cambiar pronto: no tiene sentido esperar treinta segundos a enterarse.
+  useEffect(() => {
+    const pending = running
+      || (schedule?.nextAt ? Date.parse(schedule.nextAt) - now.getTime() <= 0 : false);
+    setHurry(pending);
+  }, [running, schedule, now]);
 
   const next = schedule
     ? (schedule.nextAt ? nextSearchAt(schedule.nextAt, now) : nextSearchIn(schedule.hours, now))
     : null;
-  if (!next && !lastRunFailed) return null;
+  const due = next !== null && next.secondsLeft <= 0;
+  if (!next && !lastRunFailed && !running) return null;
 
   const share = next
     ? (lastRunAt ? shareSince(lastRunAt, next, now) : null) ?? (schedule ? elapsedShare(schedule.hours, next) : null)
@@ -79,9 +92,15 @@ const NextSearchIndicator = ({ lastRunFailed, lastRunAt, platforms }: NextSearch
           <Typography
             variant="metric"
             component="p"
-            sx={{ fontSize: '1.5rem', my: 1, color: lastRunFailed ? 'text.secondary' : 'text.primary' }}
+            sx={{
+              fontSize: running || due ? '1.0625rem' : '1.5rem',
+              my: 1,
+              color: running ? 'success.main' : lastRunFailed ? 'text.secondary' : 'text.primary',
+            }}
           >
-            {countdownOf(next.secondsLeft, !stillMotion)}
+            {running
+              ? t('sidebar.searching')
+              : due ? t('sidebar.soon') : countdownOf(next.secondsLeft, !stillMotion)}
           </Typography>
 
           <Typography variant="mono" sx={{ display: 'block', fontSize: '0.6875rem', color: 'text.secondary' }}>
