@@ -21,9 +21,13 @@ const AppFooter = () => {
       justifyContent="space-between"
       alignItems="center"
       spacing={2}
-      flexWrap="wrap"
-      useFlexGap
-      sx={{ mt: 3.75, pt: 2.125, pb: 2.125, borderTop: 1, borderColor: 'divider' }}
+      sx={{
+        height: 46,
+        flexShrink: 0,
+        px: { xs: 2, sm: 4 },
+        borderTop: 1,
+        borderColor: 'divider',
+      }}
     >
       <Stack direction="row" spacing={0.75} alignItems="center" sx={{ color: 'text.secondary' }}>
         <IconLock size={11} stroke={1.6} />

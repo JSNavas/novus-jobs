@@ -26,8 +26,8 @@ const FullLayout = () => {
           <Header onMenuClick={() => setMobileOpen(true)} onLanguageChange={changeLanguage} />
           <Container maxWidth={false} sx={{ maxWidth: 1600, px: { xs: 2, sm: 4 }, py: 3, flexGrow: 1 }}>
             <Outlet />
-            <AppFooter />
           </Container>
+          <AppFooter />
         </Box>
       </Box>
     </NotificationsProvider>
