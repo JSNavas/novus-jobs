@@ -25,7 +25,12 @@ fusionado antes las dos letras en un solo contorno.
 Hay tres copias del mismo dibujo y se tocan juntas:
 
 1. `logos/novus-jobs-mark.svg` — el original.
-2. `web/public/logoIcon.svg` — el favicon, copia literal del anterior.
+2. `web/public/logoIcon.svg` — el favicon. **No es copia literal del original**: ahí
+   las letras van pintadas en ink opaco (`#0A0C0E`) en vez de recortadas por máscara,
+   y el SVG lleva `width`/`height` explícitos. Un favicon se rasteriza en modo
+   restringido y hay navegadores que no lo pintan si depende de una máscara o si no
+   declara tamaño intrínseco. Sus respaldos PNG son `logoIcon-32.png` y
+   `logoIcon-180.png`, enlazados desde `web/index.html`.
 3. `BrandMark`, en `web/src/layouts/full/vertical/sidebar/Sidebar.tsx` — va en línea,
    y no copiado, para que tome el cian del tema con `currentColor` en vez de
    llevarlo escrito.
