@@ -63,6 +63,30 @@ datos**; las siguientes diez mil vacantes se leen sin IA y sin coste.
 **Lo que NO hay que grabar:** una fuente que pida iniciar sesión, y el atracón
 de la primera pasada (500+ ofertas) si el juez se ha quedado sin cuota.
 
+### 1.1c El filtro, auditado oferta por oferta · HECHO (12 nov 2026)
+
+Repasadas las **956 guardadas** una a una, en los dos sentidos: lo que entró y
+lo que se descartó. Salieron cuatro fallos que ninguna prueba cubría, todos del
+mismo tipo —una señal que parecía fuerte y no lo era— y los cuatro están
+arreglados y con prueba de regresión:
+
+| Lo que fallaba | Alcance | Caso que lo delató |
+| --- | --- | --- |
+| El `Hilo:` que escribe nuestro propio adaptador contaba como «esto es contenido, no oferta» | 169 de 188 de Hacker News | `Hilo: Ask HN: Who is hiring?` |
+| `REMOTE (US)` se leía como remoto global | 12 ofertas | `Remote (US Only)`, `Remote (EU time zone)` |
+| El veto por una palabra que también es palabra | 23 de 24 vetos por `go` | *«what can go wrong»*, *«go-to-market»* |
+| Un candidato presentándose en inglés pasaba por oferta | 2 | *«I'm Sushant Gangurde, A Software Engineer»* |
+
+Y un anuncio híbrido **y** atado a países ajenos se descarta ahora por el país,
+que es lo que el juez no puede revocar: Lithic pedía Nueva York presencial y
+estar en EE. UU., Canadá, Países Bajos o Polonia, y se colaba.
+
+Esto es material para el lanzamiento, no solo una corrección: **que la auditoría
+fuera posible es el argumento**. Ninguna de las cuatro se encuentra leyendo
+código; se encontraron porque cada descarte queda guardado con su motivo.
+Verificado hasta converger: cero aceptadas que deban caer, cero descartadas que
+deban volver. 337 pruebas.
+
 ### 1.2 El alta tiene que enseñar que lee el CV · media tarde
 El GIF de arriba no existe hasta que el paso 2 del alta lo merezca. Hoy es una
 lista fija de casillas: el usuario no ve que la máquina ha leído su currículum,

@@ -318,6 +318,9 @@ Tres cosas, y las tres por el mismo motivo: no son opiniones suyas.
 - **Un país escrito en el anuncio.** Un «Ubicación: Spain» no es una suposición
   de las reglas: está ahí, en el texto. Lo que se adivina —«presencial»,
   «híbrido»— sí se puede revocar, porque ahí la regla sí estaba opinando.
+  Por eso, cuando un anuncio es las dos cosas, el país va primero: Lithic era
+  híbrida en Nueva York **y** pedía estar en Estados Unidos, Canadá, Países
+  Bajos o Polonia. Si se quedaba en «híbrida», el juez la rescataba.
 - **Lo que otra regla no llegó a mirar.** Esto es lo que más costó ver.
 
 Lo último merece explicación, porque fue un fallo real y caro. Las reglas se
@@ -369,7 +372,7 @@ Vivían en `profile/profile.ts`, editables solo tocando código, cuando el proye
 
 ⚠️ `cannotDo` se equivoca en los dos sentidos y uno de ellos es invisible: meter algo que **sí** sabes tira ofertas buenas sin dejar rastro. Pasó con Symfony. Por eso el alta lo **propone** desde tu CV y lo deja editar, en vez de darlo por cerrado, y por eso solo propone vetar un ecosistema que tu CV no menciona ni una vez.
 
-El veto no es literal: una tecnología ajena no descarta si es «deseable», si está en una enumeración junto a algo que sí sabes («Node.js, Python o Go»), si es el legacy del que quieren migrar, o si el anuncio lleva varias vacantes.
+El veto no es literal: una tecnología ajena no descarta si es «deseable», si está en una enumeración junto a algo que sí sabes («Node.js, Python o Go»), si es el legacy del que quieren migrar, o si el anuncio lleva varias vacantes. Y tampoco si la palabra no está nombrando una tecnología: `go`, `rails`, `spark`, `backbone`, `phoenix`, `swift`, `ruby`, `rust` y unas cuantas más son también palabras corrientes, así que solo vetan cuando las rodea un contexto técnico.
 
 ### El idioma y la ubicación son tuyos, no del código
 
@@ -379,6 +382,62 @@ El filtro de inglés comparaba contra un B1 escrito dentro de las propias expres
 - **Ubicación.** Las listas de países, ciudades y monedas salen de `filters/countries.ts` y se derivan del país que elegiste: el tuyo encaja, los demás restringen. Sin país en el perfil no se aplica ninguna regla de país — sin saber desde dónde buscas, descartar una oferta sería tirarla por una suposición.
 - **Zona horaria.** Las franjas son horas de *tu* reloj y el presupuesto del día se corta a *tu* medianoche. Estaba fijada a UTC-4 en el código; ahora se elige en el alta, con horario de verano resuelto por `Intl` en vez de un desfase constante que acertaría media parte del año.
 - **Modalidad.** Remoto global, remoto en tu país, híbrido y presencial se encienden por separado. El híbrido dejó de ser «presencial» a secas porque son dos decisiones distintas: hay quien acepta ir dos días y no cinco.
+
+#### «Remoto» no dice nada; lo que dice es el sitio
+
+Una vacante puede ser remota y aun así no servirte. «Remoto Colombia» es
+remoto: hay que vivir en Colombia. Igual «Remoto Buenos Aires», «Remote -
+Madrid» o un `| REMOTE (US) |` de Hacker News. El filtro no busca la palabra
+*remoto*: busca si viene **atada a un sitio**, y el sitio puede ser un país o
+una ciudad.
+
+La línea de ubicación del anuncio manda en los dos sentidos. Si nombra sitios
+concretos y ninguno es el tuyo, no es global por mucho que el cuerpo repita
+*fully remote*. Si dice «Anywhere in the World», lo es. Y si la cabecera promete
+el mundo pero el cuerpo pone *«candidates must be located in the United States,
+Canada, Netherlands, Poland»*, gana el cuerpo: eso es un caso real de
+WeWorkRemotely.
+
+El paréntesis que acompaña a *remote* se lee aparte, porque en Hacker News es
+donde vive la restricción: `REMOTE (US, East Coast hours)` es Estados Unidos
+—el sitio pesa más que el reloj—, mientras que `REMOTE (PT to ET overlap
+preferred)` no nombra ningún sitio y sigue siendo global.
+
+> Esto obligó a conocer el mundo entero. El catálogo tenía 30 países, así que
+> una oferta para Bielorrusia, Moldavia, Ucrania y Emiratos no nombraba a nadie
+> y pasaba por remota global. Ahora hay 193, pero solo con sus nombres: las
+> ciudades y las monedas siguen siendo de los 30, porque solo hacen falta para
+> reconocer *tu* sitio, no para descartar los ajenos.
+
+#### Lo que enseñó auditar las 956 guardadas
+
+Repasar una a una las aceptadas y las descartadas encontró cuatro fallos que
+ninguna prueba cubría, y los cuatro tienen la misma forma: **una señal que
+parecía fuerte y no lo era.**
+
+- **El `Hilo:` que escribimos nosotros.** Esa marca estaba en la lista de «esto
+  es contenido, no una oferta» —sirve para los posts de LinkedIn que venden
+  cursos—, y nuestro propio adaptador de Hacker News la escribe en cada
+  publicación. 169 de 188 se descartaban por una línea nuestra. La regla ahora
+  es general: *una línea que escribimos nosotros no es prueba contra el
+  anuncio*. Las señales a favor sí se leen enteras; condenar es lo que no puede
+  hacer nuestra propia letra.
+- **`go`, la palabra.** 24 ofertas vetadas por «exigen go, que no manejas»; 23
+  eran inglés corriente: *«what can go wrong»*, *«go-to-market»*, *«go-live»*.
+  Lo mismo `backbone` (*«with a backbone»*), `phoenix` (*Phoenix, Arizona*),
+  `spark` (*«to spark interest»*) y `rails` (*«financial rails»*). Una palabra
+  que también es palabra solo veta si la rodea una tecnología.
+- **Un candidato no es una oferta, tampoco en inglés.** Se reconocía el «soy X
+  desarrollador»; faltaba el «I'm X, a Software Engineer» con el que la gente se
+  presenta en el hilo de ofertas.
+- **El país gana al híbrido.** Un anuncio que es híbrido *y* está atado a países
+  ajenos se descarta por el país, no por el híbrido. No es cosmética: lo híbrido
+  el juez puede revocarlo, porque ahí la regla opina; un país escrito en el
+  anuncio, no.
+
+También salieron dos lecturas demasiado severas: «professional English» es B2,
+no C1 —nombra el uso, no el nivel—, y «Americas» sí incluye Venezuela.
+
 
 ## Añadir una plataforma
 

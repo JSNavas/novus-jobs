@@ -61,7 +61,7 @@ jobs, and such a bug is invisible by definition unless you keep the evidence.
 | Market analysis | `server/src/analysis/` |
 | Dashboard | `web/src/views/`, with shared components in `web/src/components/ui/` |
 
-## Five decisions worth knowing
+## Seven decisions worth knowing
 
 ### The profile is data, not code
 
@@ -118,6 +118,24 @@ the reader's language.
 It used to be a sentence only, and the UI classified it with regular
 expressions over the Spanish text. Rewording one reason silently broke its
 badge, and no test failed. A code cannot rot like that.
+
+### A rejected posting is kept, with its reason
+
+Nothing is deleted. A posting the filter turns down is stored like any other,
+with its code, its parameters and the location the rules read off it. The
+dashboard has a screen for them.
+
+This costs disk and it is the most valuable thing in the schema. Reading all
+956 stored postings against the rules, one by one, found four bugs that no test
+covered and that no amount of reading the code would have surfaced: a marker
+*this project writes itself* (`Hilo:`, from the Hacker News adapter) was listed
+among the "this is content, not a job" marks, and it was quietly discarding 169
+of 188 posts from that source. The others were of the same shape — a signal that
+looked strong and was not: `REMOTE (US)` read as worldwide, and 23 of 24 vetoes
+on `go` that were the English verb (*"what can go wrong"*).
+
+A filter you can only trust is a filter you cannot fix. The reason each posting
+was turned down is the audit trail that makes the rules correctable.
 
 ### Enums have no CHECK constraints
 

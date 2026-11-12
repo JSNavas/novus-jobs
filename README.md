@@ -54,6 +54,11 @@ sync, no telemetry, and nothing to pay for.
 - Shows what the market is asking for, from the postings it already read, so you
   can see which technology keeps appearing in jobs you cannot take yet.
 
+> **That audit is not hypothetical.** Reading all 956 stored postings one by one
+> found four bugs no test covered — including a marker *this project writes
+> itself* that was silently discarding 169 of 188 Hacker News posts. A filter you
+> can read back is a filter you can correct.
+
 **What it does not do**
 
 - It does not apply for you. It opens the application with your text filled in,
