@@ -25,13 +25,29 @@ Es un dashboard y el README no enseña ni un píxel. Hace falta:
 - Imagen de *social preview* (1280×640) para que el enlace no salga desnudo en
   X, Slack o Reddit. Se sube en Settings del repositorio, no en el código.
 
-### 1.2 CI con insignia verde · 1 hora
+### 1.2 El alta tiene que enseñar que lee el CV · media tarde
+El GIF de arriba no existe hasta que el paso 2 del alta lo merezca. Hoy es una
+lista fija de casillas: el usuario no ve que la máquina ha leído su currículum,
+así que el momento «ah, vale» se pierde justo donde debería ocurrir.
+
+El back ya lo hace — `extractFromCv` devuelve stack, nivel de inglés, país y
+vetos sugeridos por ecosistema. Lo que falta es que la pantalla lo cuente:
+- Las tecnologías llegan marcadas y etiquetadas como **detectadas en tu CV**.
+- El inglés, el país y la ciudad vienen rellenos con lo deducido, y se ve que
+  no los escribió el usuario.
+- Un bloque aparte de **vetos sugeridos** que se aceptan o se rechazan: si no
+  ha tocado Java, se propone vetar el ecosistema Java entero.
+
+Hay que conservar `blockingError`, el guardado por paso (`changesOf`),
+`applyReading` y el modo `?editar=1`, que no vuelve a sellar la fecha de alta.
+
+### 1.3 CI con insignia verde · 1 hora
 `.github/workflows/ci.yml` que en cada push corra `npm ci`, `tsc --noEmit`,
 `npm test` y el build del dashboard, en server y en web. La insignia en el
 README dice «237 tests en verde» a quien no va a clonar nada. Sin ella, los
 tests son una afirmación.
 
-### 1.3 Tres o cuatro fuentes más · 1 día
+### 1.4 Tres o cuatro fuentes más · 1 día
 Hoy son dos, y la principal pide la cuenta de LinkedIn — que para un
 desconocido es pedir mucho el primer día. Con fuentes de API pública el
 proyecto funciona **sin configurar nada**:
@@ -47,14 +63,14 @@ proyecto funciona **sin configurar nada**:
 Cada una es un fichero y una línea (`docs/SOURCES.md`). La tabla de plataformas
 soportadas del README ya está esperando.
 
-### 1.4 Instalar en un comando · medio día
+### 1.5 Instalar en un comando · medio día
 Hoy son cinco pasos y dos `npm ci`. Hace falta una de estas dos, no las dos:
 - `npm run setup` en la raíz: instala, compila web y server, crea el `.env` y
   arranca.
 - `docker compose up`. El público de *self-hosted* lo espera por defecto, y es
   lo que permite probarlo sin tener Node instalado.
 
-### 1.5 Modo demo · medio día
+### 1.6 Modo demo · medio día
 Un `DEMO=true` que arranque con una base de ejemplo: 200 ofertas anonimizadas,
 sus descartes con motivo, el Enfoque lleno. Sirve para la captura, para el GIF
 y para que alguien lo pruebe en 30 segundos sin dar su CV. Es lo que más
@@ -113,7 +129,7 @@ de una línea. Es el buscador de GitHub y se rellena en dos minutos.
   puedes leer, con tu sesión, a ritmo humano, y no publica ni escribe nada. Hay
   que decirlo en el README antes de que lo pregunten, no después.
 - **«Otro scraper que se romperá en un mes.»** Se contesta con las fuentes de
-  API pública (1.3): si LinkedIn se cae, el proyecto sigue sirviendo.
+  API pública (1.4): si LinkedIn se cae, el proyecto sigue sirviendo.
 - **«¿Por qué no es un SaaS?»** Esa es la gracia, y conviene que la primera
   línea del README lo diga aún más fuerte.
 
