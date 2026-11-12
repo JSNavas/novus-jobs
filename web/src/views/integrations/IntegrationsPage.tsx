@@ -319,8 +319,12 @@ const IntegrationsPage = () => {
         </Typography>
       ) : null}
     >
-      {error ? <AppAlert severity="error">{error}</AppAlert> : null}
-      {notice ? <AppAlert severity="success" onClose={() => setNotice(null)}>{notice}</AppAlert> : null}
+      {error ? <Box mb={2.25}><AppAlert severity="error">{error}</AppAlert></Box> : null}
+      {notice ? (
+        <Box mb={2.25}>
+          <AppAlert severity="success" onClose={() => setNotice(null)}>{notice}</AppAlert>
+        </Box>
+      ) : null}
       {!integrations && !error ? (
         <Box sx={{ minHeight: 'max(240px, calc(100vh - 320px))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress /></Box>
       ) : null}
