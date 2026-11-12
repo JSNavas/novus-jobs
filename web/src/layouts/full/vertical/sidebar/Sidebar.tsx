@@ -31,6 +31,8 @@ const SidebarContent = ({ onNavigate, collapsed }: { onNavigate: () => void; col
 
     <SidebarItems onNavigate={onNavigate} collapsed={collapsed} />
 
+    <Box sx={{ height: 46, borderTop: 1, borderColor: 'divider', flexShrink: 0 }} />
+
   </>
 );
 
