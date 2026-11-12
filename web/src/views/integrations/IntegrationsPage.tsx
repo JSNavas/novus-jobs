@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { IconTrash } from '@tabler/icons-react';
 import {
-  Box, Button, CircularProgress, IconButton, Stack, Switch, TextField, ToggleButton, ToggleButtonGroup, Tooltip,
+  Box, Button, CircularProgress, Stack, Switch, TextField, ToggleButton, ToggleButtonGroup, Tooltip,
   Typography,
 } from '@mui/material';
 import {
@@ -279,16 +279,21 @@ const IntegrationCard = ({ integration, onSaved, onRemove }: CardProps) => {
 
         {onRemove ? (
           <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5, pt: 1.5, borderTop: 1, borderColor: 'divider' }}>
-            <Tooltip title={t('int.remove')}>
-              <IconButton
-                size="small"
-                onClick={onRemove}
-                aria-label={t('int.remove')}
-                sx={{ opacity: 0.4, '&:hover': { opacity: 1, color: 'error.main' } }}
-              >
-                <IconTrash size={16} stroke={1.6} />
-              </IconButton>
-            </Tooltip>
+            <Button
+              size="small"
+              variant="text"
+              color="inherit"
+              onClick={onRemove}
+              startIcon={<IconTrash size={15} stroke={1.6} />}
+              sx={{
+                textTransform: 'none',
+                fontSize: 12,
+                opacity: 0.55,
+                '&:hover': { opacity: 1, color: 'error.main', backgroundColor: 'transparent' },
+              }}
+            >
+              {t('int.remove')}
+            </Button>
           </Stack>
         ) : null}
       </Box>
