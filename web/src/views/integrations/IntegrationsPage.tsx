@@ -316,7 +316,7 @@ const IntegrationsPage = () => {
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
       {!integrations && !error ? (
-        <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>
+        <Box sx={{ minHeight: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress /></Box>
       ) : null}
       {integrations?.length === 0 ? <AppAlert severity="info">{t('int.none')}</AppAlert> : null}
       <Box

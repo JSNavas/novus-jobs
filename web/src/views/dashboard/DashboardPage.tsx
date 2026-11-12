@@ -219,7 +219,7 @@ const DashboardPage = () => {
       ) : null}
 
       {!stats && !error ? (
-        <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>
+        <Box sx={{ minHeight: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress /></Box>
       ) : null}
 
       {stats ? (

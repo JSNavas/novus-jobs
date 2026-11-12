@@ -55,7 +55,9 @@ const JobList = ({ query, empty }: JobListProps) => {
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
 
       {!result && !error ? (
-        <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>
+        <Box sx={{ minHeight: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <CircularProgress />
+        </Box>
       ) : null}
 
       {result && result.items.length === 0 ? (

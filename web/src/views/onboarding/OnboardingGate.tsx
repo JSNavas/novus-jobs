@@ -20,7 +20,19 @@ const OnboardingGate = () => {
   }, []);
 
   if (needsOnboarding === null) {
-    return <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>;
+    return (
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          bgcolor: 'background.default',
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
   }
   return needsOnboarding ? <Navigate to="/bienvenida" replace /> : <FullLayout />;
 };
