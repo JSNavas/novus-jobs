@@ -23,7 +23,7 @@ const FullLayout = () => {
         <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
         <Box sx={{ flexGrow: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
           <Header onMenuClick={() => setMobileOpen(true)} onLanguageChange={changeLanguage} />
-          <Container maxWidth="lg" sx={{ py: 3, flexGrow: 1 }}>
+          <Container maxWidth={false} sx={{ maxWidth: 1600, px: { xs: 2, sm: 4 }, py: 3, flexGrow: 1 }}>
             <Outlet />
           </Container>
         </Box>

@@ -68,8 +68,8 @@ export const PlatformsPanel = ({ integrations }: { integrations: Integration[] }
       <Box key={integration.name} sx={{ mt: index === 0 ? 0 : 2.25 }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <PlatformIcon label={integration.label} />
-          <Typography variant="body2" sx={{ fontSize: 12 }}>{integration.label}</Typography>
-          <Box sx={{ ml: 'auto' }}>
+          <Typography variant="body2" sx={{ fontSize: 12, flex: 1, minWidth: 0 }}>{integration.label}</Typography>
+          <Box sx={{ flexShrink: 0 }}>
             <AppStatusPilot
               tone={integration.enabled ? 'success' : 'neutral'}
               label={integration.enabled ? t('dash.platform.on') : t('dash.platform.off')}

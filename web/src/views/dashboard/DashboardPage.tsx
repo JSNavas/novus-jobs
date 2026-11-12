@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router';
 import {
   Box, Button, CircularProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography,
 } from '@mui/material';
-import { IconRefresh } from '@tabler/icons-react';
+import {
+  IconArchive, IconBookmark, IconEye, IconFilterOff, IconInbox, IconRefresh, type Icon as TablerIcon,
+} from '@tabler/icons-react';
 import {
   getOnboarding, listIntegrations, listJobs, listRuns, PAGE_SIZE, startRun,
   type Integration, type OnboardingState, type Stats,
@@ -11,7 +13,7 @@ import {
 import { useNotifications } from '../../notifications';
 import { AppAlert, AppChip, AppPagination, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { t } from '../../i18n';
-import { dayLabel, formatTime } from '../../format';
+import { dayLabel, formatDate, formatTime } from '../../format';
 import { RunStatus, type RunInfo } from '../../types';
 import { runStatusLabel, runStatusTone } from './runStatus';
 import { jobSourceLabel } from '../../labels';
@@ -27,14 +29,18 @@ interface Tile {
   hint: string;
   to: string;
   tone: 'success' | 'neutral';
+  icon: TablerIcon;
   audit?: boolean;
 }
+
+const padded = (value: number): string => (value < 10 ? `0${value}` : String(value));
 
 const tilesOf = (stats: Stats): Tile[] => [
   {
     label: t('dash.tile.new'),
     value: stats.new,
     hint: t('dash.tile.new.hint'),
+    icon: IconInbox,
     to: '/nuevas',
     tone: 'success',
   },
@@ -42,6 +48,7 @@ const tilesOf = (stats: Stats): Tile[] => [
     label: t('dash.tile.seen'),
     value: stats.byStatus.seen,
     hint: t('dash.tile.seen.hint'),
+    icon: IconEye,
     to: '/vistas',
     tone: 'neutral',
   },
@@ -49,6 +56,7 @@ const tilesOf = (stats: Stats): Tile[] => [
     label: t('dash.tile.saved'),
     value: stats.byStatus.saved,
     hint: t('dash.tile.saved.hint'),
+    icon: IconBookmark,
     to: '/guardadas',
     tone: 'neutral',
   },
@@ -56,6 +64,7 @@ const tilesOf = (stats: Stats): Tile[] => [
     label: t('dash.tile.dismissed'),
     value: stats.byStatus.dismissed,
     hint: t('dash.tile.dismissed.hint'),
+    icon: IconArchive,
     to: '/descartadas',
     tone: 'neutral',
   },
@@ -63,6 +72,7 @@ const tilesOf = (stats: Stats): Tile[] => [
     label: t('dash.tile.rejected'),
     value: stats.rejected,
     hint: t('dash.tile.rejected.hint'),
+    icon: IconFilterOff,
     to: '/rechazadas',
     tone: 'neutral',
     audit: true,
@@ -160,15 +170,27 @@ const DashboardPage = () => {
       title={t('dash.title')}
       subtitle={t('dash.subtitle')}
       action={(
-        <Button
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Typography
+            component="span"
+            sx={{
+              display: { xs: 'none', md: 'block' },
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+              fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'text.secondary',
+            }}
+          >
+            {dayLabel(new Date().toISOString())}, {formatDate(new Date().toISOString())}
+          </Typography>
+          <Button
           variant="outlined"
           size="small"
           startIcon={<IconRefresh size={14} stroke={1.6} />}
           onClick={search}
           disabled={searching}
         >
-          {searching ? t('dash.searching') : t('dash.searchNow')}
-        </Button>
+            {searching ? t('dash.searching') : t('dash.searchNow')}
+          </Button>
+        </Stack>
       )}
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
@@ -198,9 +220,12 @@ const DashboardPage = () => {
           {tilesOf(stats).map((tile) => (
             <BlankCard key={tile.label} dashed={tile.audit} onClick={() => void navigate(tile.to)}>
               <Box p={2.5}>
-                <Typography variant="overline" component="div" color="textSecondary">{tile.label}</Typography>
+                <Stack direction="row" alignItems="flex-start" justifyContent="space-between" spacing={1}>
+                  <Typography variant="overline" component="div" color="textSecondary">{tile.label}</Typography>
+                  <Box component={tile.icon} size={17} stroke={1.6} sx={{ color: 'text.secondary', flexShrink: 0 }} />
+                </Stack>
                 <Typography variant="metric" component="div" mt={1.5} color={tile.tone === 'success' && tile.value > 0 ? 'success.main' : 'textPrimary'}>
-                  {tile.value}
+                  {padded(tile.value)}
                 </Typography>
                 <Typography variant="caption" component="div" color="textSecondary" mt={1}>{tile.hint}</Typography>
               </Box>
@@ -278,7 +303,7 @@ const DashboardPage = () => {
                       <Typography variant="mono" component="span">{run.fetched}</Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <Typography variant="mono" component="span">{run.accepted}</Typography>
+                      <Typography variant="mono" component="span">{padded(run.accepted)}</Typography>
                     </TableCell>
                     <TableCell align="right">
                       <Typography variant="mono" component="span">{run.rejected}</Typography>

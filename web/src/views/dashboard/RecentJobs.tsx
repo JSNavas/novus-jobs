@@ -1,4 +1,5 @@
 import { Box, Stack, Typography } from '@mui/material';
+import { AppChip } from '../../components/ui';
 import { IconArrowUpRight } from '@tabler/icons-react';
 import { NavLink } from 'react-router';
 import type { Job } from '../../types';
@@ -64,6 +65,10 @@ const RecentJobs = ({ jobs }: { jobs: Job[] }) => {
               {[job.company ?? job.author, job.location].filter(Boolean).join(' · ')}
             </Typography>
           </Box>
+
+          <Stack direction="row" spacing={0.625} sx={{ display: { xs: 'none', lg: 'flex' }, flexShrink: 0 }}>
+            {job.stackMatch.slice(0, 2).map((tech) => <AppChip key={tech} label={tech} />)}
+          </Stack>
 
           <Typography variant="mono" color="text.secondary" sx={{ fontSize: '0.6875rem', minWidth: 62, textAlign: 'right' }}>
             {formatTime(job.foundAt)}
