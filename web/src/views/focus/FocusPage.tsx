@@ -22,12 +22,12 @@ const Bar = ({ share, height = 6 }: { share: number; height?: number }) => (
 const RankRow = ({ topic, index, top, total }: { topic: FocusTopic; index: number; top: number; total: number }) => (
   <Tooltip
     title={t('focus.rank.cell', { count: topic.vacancies, total, share: topic.share })}
-    placement="top-start"
+    placement="top"
   >
   <Box
     sx={{
       display: 'grid',
-      gridTemplateColumns: { xs: '22px 1fr 44px', sm: '22px minmax(150px, 230px) 1fr 44px 46px' },
+      gridTemplateColumns: { xs: '22px 1fr 62px', sm: '22px minmax(150px, 230px) 1fr 62px 46px' },
       alignItems: 'center',
       gap: 1.875,
       minHeight: 56,
@@ -45,7 +45,9 @@ const RankRow = ({ topic, index, top, total }: { topic: FocusTopic; index: numbe
     <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
       <Bar share={top === 0 ? 0 : (topic.vacancies / top) * 100} />
     </Box>
-    <Typography component="span" sx={{ ...monoSx, textAlign: 'right' }}>{topic.vacancies}</Typography>
+    <Typography component="span" sx={{ ...monoSx, textAlign: 'right' }}>
+      {`${topic.vacancies}/${total}`}
+    </Typography>
     <Typography component="span" sx={{ ...monoSx, color: 'text.secondary', textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
       {`${topic.share}%`}
     </Typography>
