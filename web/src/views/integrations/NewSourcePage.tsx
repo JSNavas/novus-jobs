@@ -216,7 +216,7 @@ const NewSourcePage = () => {
           <Typography variant="subtitle2" mb={0.75}>{t('src.help.tell')}</Typography>
           <Stack spacing={0.5}>
             <Stack direction="row" spacing={1} alignItems="baseline">
-              <Chip size="small" color="success" variant="outlined" label={t('src.help.yes')} />
+              <Chip size="small" variant="outlined" label={t('src.help.yes')} />
               <Typography variant="caption" sx={{ fontFamily: 'monospace', wordBreak: 'break-all' }}>
                 https://empresa.com/api/v1/jobs?page=1
               </Typography>
