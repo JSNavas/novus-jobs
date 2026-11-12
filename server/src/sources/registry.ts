@@ -67,6 +67,10 @@ export function describedSources(): readonly SourceDescriptor[] {
   return described;
 }
 
+export function buildDescribedSources(): JobSource[] {
+  return described.map((descriptor) => new DescribedSource(descriptor));
+}
+
 export function knownSourceNames(): string[] {
   return definitions().map((d) => d.name);
 }

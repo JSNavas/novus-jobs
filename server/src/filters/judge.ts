@@ -15,7 +15,7 @@ export interface JudgeVerdict {
   aggregator: boolean;
 }
 
-const POSTS_PER_CALL = 20;
+export const POSTS_PER_CALL = 60;
 const MAX_CHARS_PER_POST = 1800;
 
 function firstJsonArray(text: string): unknown[] | null {

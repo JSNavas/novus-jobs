@@ -21,7 +21,8 @@ import { LastPassStore, Scheduler } from './scheduler/scheduler.js';
 import { systemTimeZone } from './scheduler/timing.js';
 import { LINKEDIN_PROFILE_ID } from './sources/linkedin.source.js';
 import { SourceSchedules } from './sources/schedules.js';
-import { buildSources, registerDescriptors } from './sources/registry.js';
+import { buildDescribedSources, buildSources, isNativeSource, registerDescriptors } from './sources/registry.js';
+import { DescriptorInventor } from './sources/invent.js';
 import { readCatalog, SourceDescriptors } from './sources/descriptors.js';
 import { SourceToggles } from './sources/toggles.js';
 
@@ -46,6 +47,11 @@ async function main(): Promise<void> {
     console.log(`[arranque] ${described.length} fuente(s) descrita(s) con JSON: ${described.map((d) => d.label).join(', ')}`);
   }
   const sources = buildSources(config, pool);
+  const reloadDescribed = (): void => {
+    registerDescriptors([...catalog, ...descriptors.all()]);
+    const natives = sources.filter((source) => isNativeSource(source.name));
+    sources.splice(0, sources.length, ...natives, ...buildDescribedSources());
+  };
   const gemini = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;
   const judge = gemini ? new LlmJudge(gemini, config.judgeModel) : null;
   const enhancer = gemini ? new CvEnhancer(gemini, config.judgeModel) : null;
@@ -89,6 +95,10 @@ async function main(): Promise<void> {
   });
 
   const app = await buildApp({
+    descriptors,
+    inventor: gemini ? new DescriptorInventor(gemini, config.judgeModel) : null,
+    isNativeSource,
+    reloadDescribed,
     settings,
     profile,
     jobs,

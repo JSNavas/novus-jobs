@@ -36,7 +36,7 @@ Es una réplica deliberada del patrón de un bot anterior del autor, que lleva m
 
 ## Lo que este proyecto no negocia
 
-Seis reglas. Son la razón de que el código sea como es, y un cambio que rompa
+Siete reglas. Son la razón de que el código sea como es, y un cambio que rompa
 una de ellas es un cambio que este proyecto no quiere, por cómodo que sea.
 
 1. **Tus datos son tuyos.** El CV, el perfil y las ofertas viven en ficheros de
@@ -55,7 +55,12 @@ una de ellas es un cambio que este proyecto no quiere, por cómodo que sea.
    intercambiables tras una interfaz. Borrar la más grande es un fichero y una
    línea. Llevado hasta el final: si ninguna es especial, ninguna tiene por qué
    estar escrita en el código, y por eso la mayoría son datos.
-6. **El porqué vive en las pruebas.** El código no lleva comentarios: lo que
+6. **Un formulario que guarda también cancela.** Donde haya un «Guardar» hay un
+   «Cancelar» al lado, que devuelve los campos a lo último guardado. Los dos se
+   apagan cuando no hay nada que guardar. Dejar solo «Guardar» obliga a
+   recordar qué había antes para poder deshacerlo a mano, y eso no es una
+   opción: es una trampa.
+7. **El porqué vive en las pruebas.** El código no lleva comentarios: lo que
    explica una regla que parece equivocada es su prueba, con el nombre del caso
    real que la hizo falta. Un arreglo sin su caso no lo puede verificar nadie
    después.
@@ -346,7 +351,7 @@ Un rescate entra marcado como **«por confirmar»**, no como oferta limpia; y si
 
 El modelo por defecto es `gemini-3.5-flash`, no el `-lite`: el `lite` es el más barato y por eso el más disputado, y una pasada perdió sus 19 juicios con un `503 high demand` con reintento incluido. Clasificar texto corto no pide más inteligencia; pide que conteste.
 
-Va por **Gemini en la capa gratuita de Google AI Studio**, que es gratis para este volumen. Se le manda casi toda la pasada (todo menos los descartes por stack): unas 2 llamadas por pasada en tandas de 20 publicaciones, con 3 pasadas al día, muy por debajo del límite gratuito. Si una tanda falla se reintenta y, si vuelve a fallar, **las demás tandas se conservan** y esas ofertas las deciden las reglas: antes un 503 pasajero en la segunda tanda borraba los veredictos de la primera y la pasada entera volvía a cero.
+Va por **Gemini en la capa gratuita de Google AI Studio**, que es gratis para este volumen. Se le manda casi toda la pasada (todo menos los descartes por stack): una llamada por pasada en tandas de 60 publicaciones, con 3 pasadas al día, muy por debajo del límite gratuito. Si una tanda falla se reintenta y, si vuelve a fallar, **las demás tandas se conservan** y esas ofertas las deciden las reglas: antes un 503 pasajero en la segunda tanda borraba los veredictos de la primera y la pasada entera volvía a cero.
 
 ## Afinar el criterio
 
@@ -372,6 +377,17 @@ El filtro de inglés comparaba contra un B1 escrito dentro de las propias expres
 - **Modalidad.** Remoto global, remoto en tu país, híbrido y presencial se encienden por separado. El híbrido dejó de ser «presencial» a secas porque son dos decisiones distintas: hay quien acepta ir dos días y no cinco.
 
 ## Añadir una plataforma
+
+Desde la aplicación: **Integraciones → Añadir fuente**. Pegas la dirección, el
+servidor averigua de dónde salen las vacantes, el modelo escribe el mapeo, y
+antes de guardar ves las tres primeras ofertas tal y como las leerá el filtro.
+Si el mapeo falla en algo, se corrige ahí mismo y se vuelve a probar.
+
+Lo que el modelo escribe se guarda como datos y **no se vuelve a llamar**: las
+siguientes diez mil vacantes se extraen con ese JSON, sin IA y sin coste. La IA
+escribe el adaptador una vez; no extrae cada oferta.
+
+El resto de esta sección es el mismo trabajo hecho a mano.
 
 El proyecto está hecho para ir sumando sitios de empleo sin tocar nada más.
 Solo `sources/registry.ts` sabe qué plataformas existen: ni el runner, ni el

@@ -15,6 +15,9 @@ import { registerSettingsRoute } from './routes/settings.js';
 import { registerOnboardingRoutes } from './routes/onboarding.js';
 import { registerJobRoutes } from './routes/jobs.js';
 import { registerIntegrationRoutes } from './routes/integrations.js';
+import { registerDescriptorRoutes } from './routes/descriptors.js';
+import type { SourceDescriptors } from './sources/descriptors.js';
+import type { DescriptorInventor } from './sources/invent.js';
 import { registerRunRoutes } from './routes/runs.js';
 import type { Runner } from './runner.js';
 import type { Scheduler } from './scheduler/scheduler.js';
@@ -30,7 +33,11 @@ export interface AppDeps {
   runner: Runner;
   scheduler: Scheduler;
   pool: BrowserPool;
-  sources: readonly JobSource[];
+  sources: JobSource[];
+  descriptors: SourceDescriptors;
+  inventor: DescriptorInventor | null;
+  isNativeSource: (name: string) => boolean;
+  reloadDescribed: () => void;
   scheduleHours: readonly number[];
   schedules: SourceSchedules;
   gmailAccount: string | null;
@@ -69,6 +76,10 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   registerIntegrationRoutes(app, {
     sources: deps.sources, schedules: deps.schedules, runner: deps.runner,
     hours: deps.scheduleHours, toggles: deps.toggles, timeZone: deps.timeZone,
+  });
+  registerDescriptorRoutes(app, {
+    descriptors: deps.descriptors, inventor: deps.inventor, toggles: deps.toggles,
+    sources: deps.sources, isNative: deps.isNativeSource, reload: deps.reloadDescribed,
   });
   registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler });
   registerSettingsRoute(app, {

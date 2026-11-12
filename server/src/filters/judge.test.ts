@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { LlmJudge } from './judge.js';
+import { LlmJudge, POSTS_PER_CALL } from './judge.js';
 import type { CandidateProfile, Offer } from './decide.js';
 
 const PERFIL: CandidateProfile = {
@@ -41,24 +41,27 @@ function judgeWith(guion: readonly (number | Error)[]): LlmJudge {
 
 describe('LlmJudge.judge — una tanda caída no se lleva a las demás', () => {
   it('EL CASO REAL: la segunda tanda falla y los veredictos de la primera se conservan', async () => {
-    const judge = judgeWith([20, new Error('400 invalid request')]);
-    const verdicts = await judge.judge(offers(25), PERFIL);
+    const judge = judgeWith([POSTS_PER_CALL, new Error('400 invalid request')]);
+    const verdicts = await judge.judge(offers(POSTS_PER_CALL + 5), PERFIL);
 
     assert.ok(verdicts, 'algo se pudo juzgar, así que no es null');
-    assert.equal(verdicts.length, 20, 'los 20 de la primera tanda siguen ahí');
+    assert.equal(verdicts.length, POSTS_PER_CALL, 'los de la primera tanda siguen ahí');
     assert.deepEqual(
       verdicts.map((v) => v.index),
-      Array.from({ length: 20 }, (_, i) => i),
+      Array.from({ length: POSTS_PER_CALL }, (_, i) => i),
       'y con su índice original, para que el pipeline los cruce bien',
     );
   });
 
   it('los índices de la segunda tanda van desplazados, no vuelven a empezar en cero', async () => {
-    const judge = judgeWith([20, 5]);
-    const verdicts = await judge.judge(offers(25), PERFIL);
+    const judge = judgeWith([POSTS_PER_CALL, 5]);
+    const verdicts = await judge.judge(offers(POSTS_PER_CALL + 5), PERFIL);
 
-    assert.equal(verdicts?.length, 25);
-    assert.deepEqual(verdicts?.slice(20).map((v) => v.index), [20, 21, 22, 23, 24]);
+    assert.equal(verdicts?.length, POSTS_PER_CALL + 5);
+    assert.deepEqual(
+      verdicts?.slice(POSTS_PER_CALL).map((v) => v.index),
+      Array.from({ length: 5 }, (_, i) => POSTS_PER_CALL + i),
+    );
   });
 
   it('si no se pudo juzgar NADA devuelve null y mandan las reglas', async () => {

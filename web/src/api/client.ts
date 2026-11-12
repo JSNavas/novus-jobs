@@ -299,3 +299,49 @@ export function saveOnboardingStep(changes: {
 export function completeOnboarding(): Promise<{ completed: boolean; profile: CandidateProfile }> {
   return request('/onboarding/complete', { method: 'POST' });
 }
+
+export interface SourceCandidate {
+  url: string;
+  format: 'json' | 'rss';
+  how: string;
+  count: number;
+}
+
+export interface Discovery {
+  candidates: SourceCandidate[];
+  notes: string[];
+}
+
+export interface SourcePreview {
+  count: number;
+  posts: { employer: string | null; url: string | null; postedAt: string | null; text: string }[];
+}
+
+export interface InventedSource {
+  descriptor: Record<string, unknown>;
+  preview: SourcePreview;
+}
+
+export function discoverSource(url: string): Promise<Discovery> {
+  return request('/descriptors/discover', { method: 'POST', body: JSON.stringify({ url }) });
+}
+
+export function inventSource(url: string): Promise<InventedSource> {
+  return request('/descriptors/invent', { method: 'POST', body: JSON.stringify({ url }) });
+}
+
+export function previewSource(descriptor: unknown): Promise<InventedSource> {
+  return request('/descriptors/preview', { method: 'POST', body: JSON.stringify(descriptor) });
+}
+
+export function saveSource(descriptor: unknown): Promise<{ ok: boolean }> {
+  return request('/descriptors', { method: 'POST', body: JSON.stringify(descriptor) });
+}
+
+export function listSources(): Promise<Record<string, unknown>[]> {
+  return request('/descriptors');
+}
+
+export function deleteSource(name: string): Promise<{ ok: boolean }> {
+  return request(`/descriptors/${encodeURIComponent(name)}`, { method: 'DELETE' });
+}

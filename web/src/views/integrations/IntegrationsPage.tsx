@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router';
 import {
   Box, Button, CircularProgress, Stack, Switch, TextField, ToggleButton, ToggleButtonGroup, Tooltip,
   Typography,
@@ -313,11 +314,18 @@ const IntegrationsPage = () => {
     <PageContainer
       title={t('int.title')}
       subtitle={t('int.subtitle')}
-      action={integrations ? (
-        <Typography variant="label" color="text.secondary">
-          {t('int.activeCount', { count: integrations.filter((item) => item.enabled).length })}
-        </Typography>
-      ) : null}
+      action={(
+        <Stack direction="row" spacing={2} alignItems="center">
+          {integrations ? (
+            <Typography variant="label" color="text.secondary">
+              {t('int.activeCount', { count: integrations.filter((item) => item.enabled).length })}
+            </Typography>
+          ) : null}
+          <Button variant="contained" size="small" component={Link} to="/integraciones/nueva">
+            {t('int.addSource')}
+          </Button>
+        </Stack>
+      )}
     >
       {error ? <Box mb={2.25}><AppAlert severity="error">{error}</AppAlert></Box> : null}
       {notice ? (

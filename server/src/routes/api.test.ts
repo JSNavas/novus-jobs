@@ -18,6 +18,7 @@ import { Runner } from '../runner.js';
 import { LastPassStore, Scheduler } from '../scheduler/scheduler.js';
 import { SourceSchedules } from '../sources/schedules.js';
 import { SourceToggles } from '../sources/toggles.js';
+import { SourceDescriptors } from '../sources/descriptors.js';
 import { ProfileRepository } from '../profile/profile.repository.js';
 import { JobLocation, JobVerdict, JudgeStatus } from '../types.js';
 
@@ -92,6 +93,8 @@ describe('API HTTP', () => {
       mailFallbackTo: null,
       settings, profile: () => PROFILE, toggles, webDist: null, timeZone: () => 'America/Caracas',
       dataDir: dir, enhancer: null, profiles: new ProfileRepository(settings),
+      descriptors: new SourceDescriptors(settings), inventor: null,
+      isNativeSource: () => false, reloadDescribed: () => {},
     });
   });
 

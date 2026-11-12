@@ -17,6 +17,12 @@ const MailSection = ({ settings, onSaved }: MailSectionProps) => {
 
   const dirty = to !== settings.mailTo || onlyNew !== settings.mailOnlyNewOffers;
 
+  const revert = (): void => {
+    setTo(settings.mailTo);
+    setOnlyNew(settings.mailOnlyNewOffers);
+    setError(null);
+  };
+
   const save = (): void => {
     setSaving(true);
     setError(null);
@@ -60,11 +66,14 @@ const MailSection = ({ settings, onSaved }: MailSectionProps) => {
 
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
 
-      <Box>
+      <Stack direction="row" spacing={1}>
         <Button variant="contained" disabled={!dirty || saving} onClick={save}>
           {t('int.save')}
         </Button>
-      </Box>
+        <Button variant="text" disabled={!dirty || saving} onClick={revert}>
+          {t('int.cancel')}
+        </Button>
+      </Stack>
     </Stack>
   );
 };
