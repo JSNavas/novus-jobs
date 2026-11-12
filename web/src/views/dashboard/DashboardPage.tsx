@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
-  Box, CircularProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography,
+  Box, Button, CircularProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography,
 } from '@mui/material';
-import { getStats, listRuns, PAGE_SIZE, type Stats } from '../../api/client';
+import { IconRefresh } from '@tabler/icons-react';
+import { listRuns, PAGE_SIZE, startRun, type Stats } from '../../api/client';
+import { useNotifications } from '../../notifications';
 import { AppAlert, AppPagination, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { t } from '../../i18n';
 import { formatDateTime } from '../../format';
@@ -67,7 +69,9 @@ const failedRowSx = {
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<Stats | null>(null);
+  const { stats, latest, notices, push, refresh } = useNotifications();
+  const [searching, setSearching] = useState(false);
+  const noticesAtStart = useRef(0);
   const [runs, setRuns] = useState<RunInfo[] | null>(null);
   const [runsTotal, setRunsTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -76,10 +80,9 @@ const DashboardPage = () => {
   useEffect(() => {
     let cancelled = false;
     const load = (): void => {
-      Promise.all([getStats(), listRuns(PAGE_SIZE, (page - 1) * PAGE_SIZE)])
-        .then(([nextStats, nextRuns]) => {
+      listRuns(PAGE_SIZE, (page - 1) * PAGE_SIZE)
+        .then((nextRuns) => {
           if (cancelled) return;
-          setStats(nextStats);
           setRuns(nextRuns.items);
           setRunsTotal(nextRuns.total);
           setError(null);
@@ -93,14 +96,59 @@ const DashboardPage = () => {
       if (document.visibilityState === 'visible') load();
     }, POLL_INTERVAL_MS);
     return () => { cancelled = true; clearInterval(timer); };
-  }, [page]);
+  }, [page, notices.length]);
+
+  useEffect(() => {
+    if (!searching) return;
+    const poll = setInterval(refresh, 2_000);
+    const giveUp = setTimeout(() => setSearching(false), 120_000);
+    return () => { clearInterval(poll); clearTimeout(giveUp); };
+  }, [searching, refresh]);
+
+  useEffect(() => {
+    if (searching && notices.length > noticesAtStart.current) setSearching(false);
+  }, [notices.length, searching]);
+
+  const search = (): void => {
+    noticesAtStart.current = notices.length;
+    setSearching(true);
+    startRun().catch((cause: unknown) => {
+      setSearching(false);
+      push({
+        tone: 'error',
+        title: t('notice.runFailed'),
+        detail: cause instanceof Error ? cause.message : t('run.unknownError'),
+        at: new Date().toISOString(),
+      });
+    });
+  };
 
   return (
     <PageContainer
       title={t('dash.title')}
       subtitle={t('dash.subtitle')}
+      action={(
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<IconRefresh size={14} stroke={1.6} />}
+          onClick={search}
+          disabled={searching}
+        >
+          {searching ? t('dash.searching') : t('dash.searchNow')}
+        </Button>
+      )}
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
+
+      {latest ? (
+        <Box mb={2}>
+          <AppAlert severity={latest.tone}>
+            <Typography variant="body2" component="span" fontWeight={600}>{latest.title}</Typography>
+            {latest.detail ? <Typography variant="body2" component="span">{` ${latest.detail}`}</Typography> : null}
+          </AppAlert>
+        </Box>
+      ) : null}
 
       {!stats && !error ? (
         <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>

@@ -1,22 +1,34 @@
 import { useState } from 'react';
 import { Box, Container } from '@mui/material';
 import { Outlet } from 'react-router';
+import { saveOnboardingStep } from '../../api/client';
+import { language, setLanguage, type Language } from '../../i18n';
+import { NotificationsProvider } from '../../notifications';
 import Header from './vertical/header/Header';
 import Sidebar from './vertical/sidebar/Sidebar';
 
 const FullLayout = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [lang, setLang] = useState<Language>(language());
+
+  const changeLanguage = (next: Language): void => {
+    setLanguage(next);
+    setLang(next);
+    void saveOnboardingStep({ language: next }).catch(() => undefined);
+  };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
-      <Box sx={{ flexGrow: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-        <Header onMenuClick={() => setMobileOpen(true)} />
-        <Container maxWidth="lg" sx={{ py: 3, flexGrow: 1 }}>
-          <Outlet />
-        </Container>
+    <NotificationsProvider>
+      <Box key={lang} sx={{ display: 'flex', minHeight: '100vh' }}>
+        <Sidebar mobileOpen={mobileOpen} onClose={() => setMobileOpen(false)} />
+        <Box sx={{ flexGrow: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
+          <Header onMenuClick={() => setMobileOpen(true)} onLanguageChange={changeLanguage} />
+          <Container maxWidth="lg" sx={{ py: 3, flexGrow: 1 }}>
+            <Outlet />
+          </Container>
+        </Box>
       </Box>
-    </Box>
+    </NotificationsProvider>
   );
 };
 

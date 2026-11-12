@@ -5,7 +5,7 @@ import {
   type Icon as TablerIcon,
 } from '@tabler/icons-react';
 import { NavLink } from 'react-router';
-import { getStats, listIntegrations, type Integration, type Stats } from '../../../../api/client';
+import { listIntegrations, type Integration } from '../../../../api/client';
 import { AppChip, AppStatusPilot } from '../../../../components/ui';
 import { type ReactNode, useEffect, useState } from 'react';
 import { JobStatus } from '../../../../types';
@@ -13,6 +13,7 @@ import { setSourceLabels } from '../../../../labels';
 import { runStatusLabel, runStatusTone } from '../../../../views/dashboard/runStatus';
 import { INBOX_VIEWS, showsCount, titleOf } from '../../../../views/jobs/inbox';
 import { t } from '../../../../i18n';
+import { useNotifications } from '../../../../notifications';
 import NextSearchIndicator from './NextSearchIndicator';
 
 const ICONS: Record<string, TablerIcon> = {
@@ -63,13 +64,12 @@ interface SidebarItemsProps {
 }
 
 const SidebarItems = ({ onNavigate, collapsed = false }: SidebarItemsProps) => {
-  const [stats, setStats] = useState<Stats | null>(null);
+  const { stats } = useNotifications();
   const [integrations, setIntegrations] = useState<Integration[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     const load = (): void => {
-      getStats().then((next) => { if (!cancelled) setStats(next); }).catch(() => undefined);
       listIntegrations().then((next) => {
         if (cancelled) return;
         setIntegrations(next);

@@ -1,35 +1,31 @@
-import { t } from '../../../../i18n';
-import { AppBar, Badge, Box, IconButton, Stack, Toolbar, Tooltip, Typography } from '@mui/material';
+import { language, t, type Language } from '../../../../i18n';
+import {
+  AppBar, Badge, Box, Divider, IconButton, ListItemText, Menu, MenuItem, Stack, ToggleButton,
+  ToggleButtonGroup, Toolbar, Tooltip, Typography,
+} from '@mui/material';
 import { IconBell, IconMenu2 } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
-import { NavLink } from 'react-router';
-import { getStats, type Stats } from '../../../../api/client';
+import { useState, type MouseEvent } from 'react';
 import { AppStatusPilot } from '../../../../components/ui';
-import { utcOffsetLabel } from '../../../../format';
-import { runStatusTone } from '../../../../views/dashboard/runStatus';
+import { formatDateTime } from '../../../../format';
+import { useNotifications } from '../../../../notifications';
 
-const POLL_INTERVAL_MS = 15_000;
+const LANGUAGES: Language[] = ['es', 'en'];
+
+const toneOf = { success: 'success', warning: 'neutral', error: 'error' } as const;
 
 interface HeaderProps {
   onMenuClick: () => void;
+  onLanguageChange: (next: Language) => void;
 }
 
-const Header = ({ onMenuClick }: HeaderProps) => {
-  const [stats, setStats] = useState<Stats | null>(null);
+const Header = ({ onMenuClick, onLanguageChange }: HeaderProps) => {
+  const { notices, unread, markRead } = useNotifications();
+  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-    const load = (): void => {
-      getStats().then((next) => { if (!cancelled) setStats(next); }).catch(() => undefined);
-    };
-    load();
-    const timer = setInterval(() => {
-      if (document.visibilityState === 'visible') load();
-    }, POLL_INTERVAL_MS);
-    return () => { cancelled = true; clearInterval(timer); };
-  }, []);
-
-  const failed = stats?.lastRun ? runStatusTone(stats.lastRun) === 'error' : false;
+  const open = (event: MouseEvent<HTMLElement>): void => {
+    setAnchor(event.currentTarget);
+    markRead();
+  };
 
   return (
     <AppBar
@@ -48,24 +44,29 @@ const Header = ({ onMenuClick }: HeaderProps) => {
         <Box sx={{ flexGrow: 1 }} />
 
         <Stack direction="row" spacing={2} alignItems="center">
-          {stats?.lastRun ? (
-            <AppStatusPilot
-              tone={failed ? 'error' : 'success'}
-              label={failed ? t('sidebar.lastRunFailed') : t('header.searcherActive')}
-            />
-          ) : null}
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={language()}
+            onChange={(_, next: Language | null) => { if (next) onLanguageChange(next); }}
+            aria-label={t('header.language')}
+          >
+            {LANGUAGES.map((code) => (
+              <ToggleButton
+                key={code}
+                value={code}
+                sx={{ px: 1, py: 0.25, fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 11 }}
+              >
+                {code.toUpperCase()}
+              </ToggleButton>
+            ))}
+          </ToggleButtonGroup>
 
-          <Box sx={{ width: '1px', height: 14, bgcolor: 'divider' }} />
-
-          <Typography variant="label" color="text.secondary">
-            {utcOffsetLabel()}
-          </Typography>
-
-          <Tooltip title={t('header.newPostings')}>
-            <IconButton component={NavLink} to="/nuevas" aria-label={t('header.newPostings')} size="small">
+          <Tooltip title={t('header.notifications')}>
+            <IconButton aria-label={t('header.notifications')} size="small" onClick={open}>
               <Badge
-                badgeContent={stats?.new ?? 0}
-                max={999}
+                badgeContent={unread}
+                max={99}
                 color="success"
                 slotProps={{ badge: { style: { fontSize: 9, height: 15, minWidth: 15 } } }}
               >
@@ -74,6 +75,43 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             </IconButton>
           </Tooltip>
         </Stack>
+
+        <Menu
+          anchorEl={anchor}
+          open={Boolean(anchor)}
+          onClose={() => setAnchor(null)}
+          slotProps={{ paper: { sx: { width: 360, maxHeight: 420 } } }}
+        >
+          <Typography variant="label" color="text.secondary" sx={{ display: 'block', px: 2, pt: 1, pb: 1 }}>
+            {t('header.notifications')}
+          </Typography>
+          <Divider />
+
+          {notices.length === 0 ? (
+            <MenuItem disabled>
+              <Typography variant="body2" color="text.secondary">{t('notice.empty')}</Typography>
+            </MenuItem>
+          ) : notices.map((notice) => (
+            <MenuItem key={notice.id} sx={{ alignItems: 'flex-start', py: 1.25, whiteSpace: 'normal' }}>
+              <Box sx={{ pt: 0.5, pr: 1.5 }}>
+                <AppStatusPilot tone={toneOf[notice.tone]} srLabel={notice.title} />
+              </Box>
+              <ListItemText
+                primary={notice.title}
+                secondary={
+                  <>
+                    {notice.detail}
+                    <Typography variant="label" component="span" sx={{ display: 'block', mt: 0.5, opacity: 0.7 }}>
+                      {formatDateTime(notice.at)}
+                    </Typography>
+                  </>
+                }
+                primaryTypographyProps={{ variant: 'body2', fontWeight: 600 }}
+                secondaryTypographyProps={{ variant: 'caption' }}
+              />
+            </MenuItem>
+          ))}
+        </Menu>
       </Toolbar>
     </AppBar>
   );
