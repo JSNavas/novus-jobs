@@ -351,7 +351,11 @@ Un rescate entra marcado como **«por confirmar»**, no como oferta limpia; y si
 
 El modelo por defecto es `gemini-3.5-flash`, no el `-lite`: el `lite` es el más barato y por eso el más disputado, y una pasada perdió sus 19 juicios con un `503 high demand` con reintento incluido. Clasificar texto corto no pide más inteligencia; pide que conteste.
 
-Va por **Gemini en la capa gratuita de Google AI Studio**, que es gratis para este volumen. Se le manda casi toda la pasada (todo menos los descartes por stack): una llamada por pasada en tandas de 60 publicaciones, con 3 pasadas al día, muy por debajo del límite gratuito. Si una tanda falla se reintenta y, si vuelve a fallar, **las demás tandas se conservan** y esas ofertas las deciden las reglas: antes un 503 pasajero en la segunda tanda borraba los veredictos de la primera y la pasada entera volvía a cero.
+Va por **Gemini en la capa gratuita de Google AI Studio**. Se le manda casi toda la pasada (todo menos los descartes por stack): una llamada por pasada en tandas de 60 publicaciones.
+
+> **Cuidado con el presupuesto cuando crecen las fuentes.** La capa gratuita da 20 peticiones al día. Con dos plataformas y tres pasadas sobraba; con once cada hora, el 12 de noviembre de 2026 se agotó a media mañana y **502 de las 875 ofertas del día las decidieron solo las reglas**. El juez degrada como debe y lo escribe en el log, pero el panel todavía no lo enseña. Mientras tanto: ritmos de 3 h o más en las fuentes abiertas, y la tanda de 60 que ya está puesta.
+
+Si una tanda falla se reintenta y, si vuelve a fallar, **las demás tandas se conservan** y esas ofertas las deciden las reglas: antes un 503 pasajero en la segunda tanda borraba los veredictos de la primera y la pasada entera volvía a cero.
 
 ## Afinar el criterio
 
@@ -378,12 +382,30 @@ El filtro de inglés comparaba contra un B1 escrito dentro de las propias expres
 
 ## Añadir una plataforma
 
-Desde la aplicación: **Integraciones → Añadir fuente**. Escribes el nombre de la
-empresa y se busca en los nueve tableros más usados; si no está en ninguno, lo
-dice y ya. O pegas una dirección: el
-servidor averigua de dónde salen las vacantes, el modelo escribe el mapeo, y
-antes de guardar ves las tres primeras ofertas tal y como las leerá el filtro.
-Si el mapeo falla en algo, se corrige ahí mismo y se vuelve a probar.
+Desde la aplicación: **Integraciones → Añadir fuente**. El sistema busca por ti,
+en este orden:
+
+1. **Escribes el nombre de una empresa.** Se prueba en nueve tableros —Lever,
+   Greenhouse, Ashby, Recruitee, Workable, SmartRecruiters, Breezy, Teamtailor y
+   Personio— con las variantes del nombre. «Duolingo» encuentra su tablero de
+   Greenhouse con 61 vacantes. Si no está en ninguno, lo dice y se acabó.
+2. **O pegas una dirección cualquiera.** Se abre y se busca la API que hay
+   detrás, un RSS enlazado, las direcciones habituales del mismo dominio, las
+   que nombre su propio JavaScript, y las vacantes que la página traiga dentro.
+3. **Y si la página no suelta nada, se abre en un navegador de verdad** y se
+   mira qué pide al cargar, que es lo que hace una persona con F12 → Red. Así
+   entró Remote Latinos: la dirección de su backend no aparece en nada de lo que
+   sirve el sitio, solo existe mientras la aplicación se ejecuta.
+
+Una lista de objetos no es una lista de vacantes, así que cada candidata se
+puntúa por sus campos y su dirección: un campo de título, un cuerpo largo,
+sueldo, ubicación, una ruta que hable de empleo. Remote Latinos respondía con
+789 habilidades y 15 vacantes; por tamaño ganaban las habilidades, por puntos ni
+se ofrecen.
+
+Después el modelo escribe el mapeo y, antes de guardar, ves las tres primeras
+ofertas tal y como las leerá el filtro. Si algo falla, se corrige ahí mismo y se
+vuelve a probar.
 
 Lo que el modelo escribe se guarda como datos y **no se vuelve a llamar**: las
 siguientes diez mil vacantes se extraen con ese JSON, sin IA y sin coste. La IA

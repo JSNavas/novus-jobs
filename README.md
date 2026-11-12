@@ -8,12 +8,14 @@ Novus Jobs reads **public job boards** on a schedule, throws away the 95% that
 does not fit you, and leaves the rest in a local dashboard with the reason it
 kept each one — and the reason it discarded all the others.
 
-If a board is missing, **you add it with a JSON file** — no code, and no
-release to wait for: [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md).
+**If a board is missing, you add it by typing its name.** No code, no pull
+request, no release to wait for: the app finds the board, writes the mapping
+with an LLM, shows you three real postings, and starts reading it. A source is
+data, not a class — so it can be exported, pasted into an issue and shared.
 
 You pick which sites it reads. See [supported platforms](#supported-platforms)
-for the ones that ship today, and [docs/SOURCES.md](docs/SOURCES.md) for adding
-one — it is a single file.
+for the eleven that ship today, and [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md)
+for the format behind them.
 
 > Español: [README.es.md](README.es.md)
 
@@ -174,26 +176,43 @@ give it its own rhythm. Nothing in the project depends on any single platform.
 | **Himalayas** | `GET /jobs/api` | No | descriptor |
 | **We Work Remotely** | RSS feed of programming jobs | No | descriptor |
 | **Puente Talent** | `GET /api/jobs` (LATAM) | No | descriptor |
+| **Remote Latinos** | `GET /api/v1/posts` (LATAM) | No | descriptor |
+| **Interfell** | the postings its own page carries inside it | No | descriptor |
+| **TLNT Group** | its Lever board | No | descriptor |
 
-**Seven of the eight need no account at all**, so the project does something
-useful the first time you run it, before you have logged into anything. The
-public ones run every 60 minutes; LinkedIn gets three time slots a day. What
-sets the pace is **what is at risk when you read**: an open API only needs good
-manners towards someone else's server, while an account that can be flagged
-gets a human pace and a hard daily ceiling.
+**Ten of the eleven need no account at all**, so the project does something
+useful the first time you run it, before you have logged into anything. What
+sets each one's pace is **what is at risk when you read it**: an open API only
+needs good manners towards someone else's server, while an account that can be
+flagged gets a human pace and a hard daily ceiling.
 
-**Five of them are not code.** They are JSON descriptors in
-`server/descriptors/`, which is why this list is meant to grow without going
-through a maintainer: see [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md). If a board
-you use is missing, write a descriptor and
-[open an issue](.github/ISSUE_TEMPLATE/new-source.md) with it, or send a PR.
+**Eight of them are not code.** They are JSON descriptors in
+`server/descriptors/`, and each card in Integrations shows the exact address it
+reads. But the list is not the point — **adding your own is**:
+
+> **Integrations → Add source.** Type a company name and nine boards are tried
+> (Lever, Greenhouse, Ashby, Recruitee, Workable, SmartRecruiters, Breezy,
+> Teamtailor, Personio). Or paste any job board address: the API behind it, its
+> RSS feed, and the postings carried inside the page are all looked for — and if
+> the page gives nothing away, it is opened in a real browser to see which
+> request brings the list, which is what a person does with F12. Then the model
+> writes the field mapping, you see three real postings before saving, and the
+> source is live without a restart.
+
+The model is called **once**, to write the mapping. It is saved as data, so the
+next ten thousand postings are read with no LLM and no cost. That is the whole
+trick: the AI writes the adapter, it does not extract the jobs.
 
 Remote OK's terms ask that you link back to them when you use their API.
 
 ## Adding a platform
 
-**Usually it is not code.** A board that answers a `GET` with JSON, or publishes
-an RSS feed, is a file in `server/descriptors/`:
+**From the app: Integrations → Add source.** Type a company name, or paste any
+address, and the system does the hunting. The sections above describe what it
+tries. What comes out is the same thing you could have written by hand:
+
+**A board that answers a `GET` with JSON, publishes an RSS feed, or carries its
+postings inside its own HTML, is a file in `server/descriptors/`:**
 
 ```json
 {

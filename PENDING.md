@@ -145,6 +145,9 @@ indique. Mitigado en parte subiendo la tanda del juez de 20 a 60 y bajando el
 ritmo de las fuentes a 3 h, pero mitigar no es avisar.
 
 ### 1.8 Probar el alta de una fuente de punta a punta · 15 minutos
+**La pantalla está terminada** (buscar por nombre, por URL, por navegador, el
+modelo escribiendo el mapeo, la muestra, guardar y quitar). Lo único que falta
+es verla entera con cuota disponible.
 La pantalla de **Integraciones → Añadir fuente** está terminada y probada por
 partes, pero el paso del modelo —el que escribe el mapeo— solo se ha visto
 funcionar fuera de la pantalla, contra la API de Greenhouse de Duolingo. El día

@@ -52,12 +52,16 @@ jobs, and such a bug is invisible by definition unless you keep the evidence.
 | Your profile | `server/src/profile/` |
 | Reading a CV | `server/src/cv/` |
 | Platforms | `server/src/sources/` |
+| — a platform written as data | `descriptor.ts`, `described.source.ts`, `descriptors.ts` |
+| — the shipped catalogue | `server/descriptors/*.json` |
+| — finding a board from a name or a URL | `discover.ts`, `sniff.ts`, `joblike.ts` |
+| — writing the mapping with an LLM | `invent.ts` |
 | Scheduling | `server/src/scheduler/` |
 | Persistence | `server/src/db/` |
 | Market analysis | `server/src/analysis/` |
 | Dashboard | `web/src/views/`, with shared components in `web/src/components/ui/` |
 
-## Three decisions worth knowing
+## Five decisions worth knowing
 
 ### The profile is data, not code
 
@@ -75,6 +79,34 @@ infrastructure: ports, paths, API keys.
 The filter never asks "is this LinkedIn?". Sources are a registry of
 interchangeable implementations behind one interface, with a rhythm chosen by
 what is at risk when you read them. See [SOURCES.md](SOURCES.md).
+
+### Most platforms are data, not classes
+
+Taken to its conclusion: if no platform is special, no platform needs to be
+written in the code. Eight of the eleven that ship are JSON descriptors
+(`server/descriptors/`), and users add their own from the app, stored in
+`settings`. One class, `DescribedSource`, satisfies the port for all of them.
+
+This works because a posting travels as **text**: the rules read prose and so
+does the LLM judge, so four fields — title, company, description, link — produce
+something the pipeline evaluates exactly like a LinkedIn post. An incomplete
+mapping degrades, it does not corrupt.
+
+A class is still right when there is *logic*: a session to keep, a signature to
+compute, or two requests to answer one question. `hackernews.source.ts` is the
+example — the "Who is hiring" thread has a different id every month.
+
+### The LLM writes the adapter, never the posting
+
+Adding a source calls the model **once**, to turn a sample response into a
+mapping. That mapping is saved as data and the model is never called again for
+that source: the next ten thousand postings are extracted by `DescribedSource`,
+deterministically and for free.
+
+The same line runs through the judge, which reads postings but cannot overrule
+the stack, a named country, or a rule that never got to run. An LLM in this
+project proposes structure and opinion; it is never the thing between you and
+your data.
 
 ### Discard reasons travel as codes, not sentences
 

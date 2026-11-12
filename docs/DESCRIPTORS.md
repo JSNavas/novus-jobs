@@ -33,14 +33,45 @@ LinkedIn, and the filter cannot tell the difference.
 Drop that in `server/descriptors/` and Remotive is a platform: it shows up in
 Integrations with its own switch and its own rhythm.
 
+- [You do not have to write one](#you-do-not-have-to-write-one)
 - [Why this exists](#why-this-exists)
 - [Where descriptors live](#where-descriptors-live)
 - [The fields](#the-fields)
 - [Reading a feed instead of JSON](#reading-a-feed-instead-of-json)
+- [When the page carries the postings inside it](#when-the-page-carries-the-postings-inside-it)
 - [When the title carries the company](#when-the-title-carries-the-company)
+- [When the API gives no link](#when-the-api-gives-no-link)
+- [A company with nothing open](#a-company-with-nothing-open)
 - [What a descriptor cannot do](#what-a-descriptor-cannot-do)
 - [Recipes: a company's own board](#recipes-a-companys-own-board)
 - [Sharing one](#sharing-one)
+
+## You do not have to write one
+
+**Integrations → Add source** does this for you, and the rest of this page is
+what it produces. It is worth knowing how it hunts, because that tells you what
+to type:
+
+1. **A company name** — nine boards are tried with the usual spellings: Lever,
+   Greenhouse, Ashby, Recruitee, Workable, SmartRecruiters, Breezy, Teamtailor
+   and Personio. Typing `Duolingo` finds its Greenhouse board with 61 openings.
+   If it is on none of them, you are told so and that is the end of it.
+2. **Any address** — the page is opened and read for the API behind it, a linked
+   RSS feed, the usual same-origin guesses (`/api/jobs` and friends), addresses
+   named in its own JavaScript, and postings carried inside the HTML.
+3. **A real browser** — if the page gives nothing away, it is loaded in
+   Chromium and every request it makes is watched, which is what a person does
+   with F12 → Network. This is how Remote Latinos was integrated: its backend
+   address appears nowhere in what the site serves, only at runtime.
+
+A list of objects is not a list of postings. Each candidate is scored on its
+fields and its address: a title-ish key, a long text body, pay, location, a
+job-ish path. Remote Latinos answered with 789 skills and 15 postings — by size
+the skills win, by score they are not even offered.
+
+Then the model writes the mapping **once**, from a trimmed sample, and it is
+saved as data. The next ten thousand postings are read with no LLM and no cost.
+That division is the point: the AI writes the adapter, it never extracts a job.
 
 ## Why this exists
 
@@ -146,6 +177,31 @@ Escaped HTML inside `<description>` is decoded and then flattened.
   }
 }
 ```
+
+## When the API gives no link
+
+Many in-house APIs return an id and nothing else, because their own front end
+knows how to build the URL. `urlTemplate` does the same:
+
+```json
+"urlTemplate": "https://app.remotelatinos.com/jobs/{_id}"
+```
+
+The braces take the same dotted paths as every other field. If any placeholder
+comes out empty the link is dropped rather than half-built — a link to an error
+page is worse than no link at all. A real `url` field always wins over the
+template.
+
+## A company with nothing open
+
+`"allowEmpty": true` says this board is often empty on purpose. Without it, a
+pass that finds nothing fails loudly, which is right for a job board and wrong
+for one company: TLNT Group ships with the flag because a month with no
+openings is not a broken source.
+
+Leave it off for a real board. A board that answers with nothing has changed or
+broken, and dressing that up as a quiet job market is the one thing this project
+refuses to do.
 
 ## When the title carries the company
 

@@ -52,6 +52,8 @@ export interface JobSource {
   readonly name: string;
   /** What the dashboard shows. */
   readonly label: string;
+  /** The address it reads, shown on its Integrations card. null if there is none. */
+  readonly endpoint: string | null;
   /** The browser profile it needs, or null if it needs no session. */
   readonly profileId: string | null;
   /** Where to send the user to log in, or null. */
@@ -59,7 +61,7 @@ export interface JobSource {
   /** When the scheduler runs it, and how hard it may be pushed. */
   readonly policy: SourcePolicy;
 
-  fetch(selectPermalinks: PermalinkSelector): Promise<RawPost[]>;
+  fetch(selectPermalinks: PermalinkSelector, isFresh?: FreshnessCheck): Promise<RawPost[]>;
   close(): Promise<void>;
 }
 ```
@@ -212,6 +214,10 @@ To stop using one without deleting it, use the switch in Integrations.
 - **Respect the other side.** The ceilings exist for accounts you can lose and
   servers that are not yours. If a new platform needs a gentler rhythm than both
   policies, add a third one and name it after what it protects.
+- **Stop early when there is nothing new.** `fetch` gets an optional
+  `isFresh(text)`. A source that pages through results should stop as soon as a
+  whole page is already known: re-downloading what you will throw away costs
+  someone else's bandwidth and makes the dashboard claim work it did not do.
 - **Say why in a test.** The code carries no comments, so a rule that looks
   wrong is explained by the test beside it, named after the real case that made
   it necessary. The next person needs the reason, not a restatement of the code.
