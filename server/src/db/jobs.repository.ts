@@ -21,6 +21,7 @@ export interface JobQuery {
   runId: number | null;
   source: string | null;
   since?: string | null;
+  rejectionCode?: string | null;
   search: string | null;
   hasApply: boolean | null;
   limit: number;
@@ -186,6 +187,14 @@ export class JobsRepository {
     return { items: rows.map(toJob), total };
   }
 
+  rejectionCounts(): { code: string; count: number }[] {
+    return this.db.prepare<[], { code: string | null; count: number }>(
+      `SELECT rejection_code AS code, COUNT(*) AS count FROM jobs
+       WHERE verdict = '${JobVerdict.Rejected}'
+       GROUP BY rejection_code ORDER BY count DESC`,
+    ).all().map((row) => ({ code: row.code ?? '', count: row.count }));
+  }
+
   stats(): JobStats {
     const rows = this.db.prepare<[], { status: JobStatus; count: number }>(
       `SELECT status, COUNT(*) AS count FROM jobs
@@ -212,6 +221,11 @@ export class JobsRepository {
     if (query.status) { clauses.push('status = ?'); params.push(query.status); }
     if (query.source) { clauses.push('source = ?'); params.push(query.source); }
     if (query.since) { clauses.push('COALESCE(posted_at, found_at) >= ?'); params.push(query.since); }
+    if (query.rejectionCode) {
+      const codes = query.rejectionCode.split(',').filter(Boolean);
+      clauses.push(`rejection_code IN (${codes.map(() => '?').join(', ')})`);
+      params.push(...codes);
+    }
     if (query.search) {
       clauses.push('(text LIKE ? OR author LIKE ?)');
       params.push(`%${query.search}%`, `%${query.search}%`);

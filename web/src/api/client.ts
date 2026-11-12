@@ -14,7 +14,17 @@ export const PAGE_SIZE = 10;
 
 export const ALL_VERDICTS = 'todas';
 
+export interface RejectionCount {
+  code: string;
+  count: number;
+}
+
+export function listRejectionReasons(): Promise<RejectionCount[]> {
+  return request<RejectionCount[]>('/jobs/reasons');
+}
+
 export interface JobQuery {
+  rejectionCode?: string;
   source?: string;
   since?: string;
   verdict?: JobVerdict | typeof ALL_VERDICTS;
@@ -68,6 +78,7 @@ export function listJobs(query: JobQuery): Promise<JobsPage> {
   if (query.status) params.set('status', query.status);
   if (query.source) params.set('source', query.source);
   if (query.since) params.set('since', query.since);
+  if (query.rejectionCode) params.set('rejectionCode', query.rejectionCode);
   if (query.q) params.set('q', query.q);
   if (query.hasApply !== undefined) params.set('hasApply', String(query.hasApply));
   if (query.limit !== undefined) params.set('limit', String(query.limit));

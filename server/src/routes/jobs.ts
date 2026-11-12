@@ -45,6 +45,7 @@ function parseJobQuery(raw: unknown): Result<JobQuery> {
       runId: params.runId ? runId.value : null,
       source: params.source || null,
       since,
+      rejectionCode: params.rejectionCode || null,
       search: params.q || null,
       hasApply: hasApply.value,
       limit: limit.value,
@@ -66,6 +67,8 @@ export function registerJobRoutes(app: FastifyInstance, deps: JobRoutesDeps): vo
     if ('error' in query) return reply.code(400).send({ error: query.error });
     return reply.send(deps.jobs.list(query.value));
   });
+
+  app.get('/api/jobs/reasons', () => deps.jobs.rejectionCounts());
 
   app.get<{ Params: { id: string } }>('/api/jobs/:id', (request, reply) => {
     const job = deps.jobs.findById(Number(request.params.id));
