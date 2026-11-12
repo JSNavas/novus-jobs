@@ -131,9 +131,22 @@ const SidebarItems = ({ onNavigate, collapsed = false }: SidebarItemsProps) => {
             </Badge>
           ) : icon}
         </ListItemIcon>
-        {collapsed ? null : <ListItemText primary={label} sx={labelSx} />}
+        {collapsed ? null : (
+          <ListItemText
+            sx={labelSx}
+            primary={(
+              <>
+                {count ? (
+                  <Box component="span" sx={{ float: 'right', ml: 1, mt: '-1px' }}>
+                    <AppChip label={String(count)} tone={tone} />
+                  </Box>
+                ) : null}
+                {label}
+              </>
+            )}
+          />
+        )}
         {collapsed ? null : trailing}
-        {collapsed || !count ? null : <AppChip label={String(count)} tone={tone} />}
       </ListItemButton>
     );
 
@@ -143,7 +156,7 @@ const SidebarItems = ({ onNavigate, collapsed = false }: SidebarItemsProps) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
-      <Box sx={{ flex: 1, overflowY: 'auto' }}>
+      <Box sx={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
         {group('nav.group.monitor', (
           <Box key="/">
             {item('/', t('nav.dashboard'), IconLayoutDashboard, {
