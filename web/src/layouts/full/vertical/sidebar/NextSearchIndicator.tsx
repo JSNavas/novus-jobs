@@ -6,6 +6,7 @@ import {
   countdownOf, elapsedShare, nextSearchAt, nextSearchIn, searchHourLabel, shareSince,
 } from '../../../../views/jobs/scheduleText';
 import { t } from '../../../../i18n';
+import { Rise } from '../../../../components/ui';
 import { formatTime } from '../../../../format';
 
 const REFRESH_INTERVAL_MS = 30_000;
@@ -58,6 +59,7 @@ const NextSearchIndicator = ({ lastRunFailed, lastRunAt, platforms }: NextSearch
     : null;
 
   return (
+    <Rise from={16} delay={120}>
     <Box sx={{ m: 2, p: 1.5, border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: 'background.default' }}>
       <Stack direction="row" alignItems="center" justifyContent="space-between">
         <Typography variant="label" color="text.secondary">
@@ -95,6 +97,7 @@ const NextSearchIndicator = ({ lastRunFailed, lastRunAt, platforms }: NextSearch
         </>
       ) : null}
     </Box>
+    </Rise>
   );
 };
 

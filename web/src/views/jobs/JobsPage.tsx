@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
-import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
+import { Button, Stack, Typography } from '@mui/material';
 import { t } from '../../i18n';
 import {
   listIntegrations, PAGE_SIZE, updateJobStatus, type Integration, type JobQuery,
 } from '../../api/client';
-import { AppAlert, AppPagination, AppSnackbar, PageContainer } from '../../components/ui';
+import { AppAlert, AppPagination, AppSnackbar, PageContainer, Rise } from '../../components/ui';
 import { JobStatus, type Job } from '../../types';
 import JobCard from './JobCard';
+import JobSkeleton from './JobSkeleton';
 import { viewByPath, emptyOf, subtitleOf, titleOf } from './inbox';
 import { nextSearchSentence } from './scheduleText';
 import { IconInbox, IconRefresh } from '@tabler/icons-react';
@@ -99,9 +100,9 @@ const JobsPage = () => {
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
 
       {!page && !error ? (
-        <Box display="flex" justifyContent="center" py={6}>
-          <CircularProgress />
-        </Box>
+        <Stack spacing={1.5}>
+          {[0, 1, 2].map((index) => <JobSkeleton key={index} />)}
+        </Stack>
       ) : null}
 
       {page && page.items.length === 0 ? (
@@ -120,14 +121,15 @@ const JobsPage = () => {
       ) : null}
 
       <Stack spacing={1.5}>
-        {page?.items.map((job) => (
+        {page?.items.map((job, index) => (
+          <Rise key={job.id} delay={Math.min(index, 5) * 35}>
           <JobCard
-            key={job.id}
             job={job}
             busy={updatingId === job.id}
             settings={settings}
             onStatusChange={(status) => handleStatusChange(job, status)}
           />
+          </Rise>
         ))}
       </Stack>
 

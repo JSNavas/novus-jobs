@@ -6,7 +6,7 @@ import {
 import {
   listIntegrations, updateIntegrationEnabled, updateIntegrationSchedule, type Integration,
 } from '../../api/client';
-import { AppAlert, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
+import { AppAlert, AppSnackbar, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { PlatformIcon } from '../dashboard/panels';
 import { t } from '../../i18n';
 import { formatDateTime } from '../../format';
@@ -19,7 +19,7 @@ const POLL_INTERVAL_MS = 30_000;
 
 export interface CardProps {
   integration: Integration;
-  onSaved: (next: Integration) => void;
+  onSaved: (next: Integration, message?: string) => void;
 }
 
 export const IntervalEditor = ({ integration, onSaved }: CardProps) => {
@@ -34,7 +34,7 @@ export const IntervalEditor = ({ integration, onSaved }: CardProps) => {
     setSaving(true);
     setError(null);
     updateIntegrationSchedule(integration.name, { minutes: value })
-      .then(onSaved)
+      .then((next) => onSaved(next, t('int.saved', { name: integration.label })))
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setSaving(false));
   };
@@ -52,9 +52,9 @@ export const IntervalEditor = ({ integration, onSaved }: CardProps) => {
             key={preset}
             value={preset}
             size="small"
-            selected={preset === current}
+            selected={String(preset) === minutes}
             disabled={saving}
-            onChange={() => { setMinutes(String(preset)); save(preset); }}
+            onChange={() => setMinutes(String(preset))}
             sx={{ textTransform: 'none' }}
           >
             {intervalLabel(preset)}
@@ -69,7 +69,7 @@ export const IntervalEditor = ({ integration, onSaved }: CardProps) => {
           onChange={(event) => setMinutes(event.target.value)}
           error={Boolean(invalid)}
           helperText={invalid ?? ' '}
-          sx={{ width: 160 }}
+          sx={{ width: 104 }}
         />
         <Button
           variant="contained"
@@ -78,6 +78,14 @@ export const IntervalEditor = ({ integration, onSaved }: CardProps) => {
           sx={{ mt: 0.5 }}
         >
           {t('int.save')}
+        </Button>
+        <Button
+          variant="text"
+          disabled={saving || Number(minutes) === current}
+          onClick={() => setMinutes(String(current))}
+          sx={{ mt: 0.5 }}
+        >
+          {t('int.cancel')}
         </Button>
       </Stack>
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
@@ -97,7 +105,7 @@ export const HoursEditor = ({ integration, onSaved }: CardProps) => {
     setSaving(true);
     setError(null);
     updateIntegrationSchedule(integration.name, { hours })
-      .then(onSaved)
+      .then((next) => onSaved(next, t('int.saved', { name: integration.label })))
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setSaving(false));
   };
@@ -132,6 +140,9 @@ export const HoursEditor = ({ integration, onSaved }: CardProps) => {
         <Button variant="contained" disabled={saving || !changed || hours.length === 0} onClick={save}>
           {t('int.save')}
         </Button>
+        <Button variant="text" disabled={saving || !changed} onClick={() => setHours(current)}>
+          {t('int.cancel')}
+        </Button>
         {hours.length === 0 ? (
           <Typography variant="caption" color="error.main">
             {t('int.hours.atLeastOne')}
@@ -151,7 +162,7 @@ const EnabledSwitch = ({ integration, onSaved }: CardProps) => {
     setSaving(true);
     setError(null);
     updateIntegrationEnabled(integration.name, next)
-      .then(onSaved)
+      .then((saved) => onSaved(saved, t(next ? 'int.savedOn' : 'int.savedOff', { name: integration.label })))
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setSaving(false));
   };
@@ -196,7 +207,7 @@ const IntegrationCard = ({ integration, onSaved }: CardProps) => {
     setKindError(null);
     const body = mode === 'every-minutes' ? { minutes: 360 } : { hours: [9, 13, 18] };
     updateIntegrationSchedule(integration.name, body)
-      .then(onSaved)
+      .then((next) => onSaved(next, t('int.saved', { name: integration.label })))
       .catch((cause: unknown) => setKindError(cause instanceof Error ? cause.message : String(cause)));
   };
 
@@ -286,8 +297,11 @@ const IntegrationsPage = () => {
     return () => clearInterval(timer);
   }, [load]);
 
-  const replace = (saved: Integration): void => {
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const replace = (saved: Integration, message?: string): void => {
     setIntegrations((prev) => prev?.map((item) => (item.name === saved.name ? saved : item)) ?? null);
+    if (message) setNotice(message);
   };
 
   return (
@@ -317,6 +331,8 @@ const IntegrationsPage = () => {
           <IntegrationCard key={integration.name} integration={integration} onSaved={replace} />
         ))}
       </Box>
+
+      <AppSnackbar message={notice} severity="success" onClose={() => setNotice(null)} />
     </PageContainer>
   );
 };
