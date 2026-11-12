@@ -223,13 +223,6 @@ const IntegrationCard = ({ integration, onSaved, onRemove }: CardProps) => {
           <Typography variant="h6" sx={{ fontSize: 16, flex: 1, minWidth: 0, opacity: off ? 0.6 : 1 }} noWrap>
             {integration.label}
           </Typography>
-          {onRemove ? (
-            <Tooltip title={t('int.remove')}>
-              <IconButton size="small" onClick={onRemove} aria-label={t('int.remove')} sx={{ opacity: 0.55 }}>
-                <IconTrash size={16} />
-              </IconButton>
-            </Tooltip>
-          ) : null}
           <EnabledSwitch integration={integration} onSaved={onSaved} />
         </Stack>
 
@@ -283,6 +276,21 @@ const IntegrationCard = ({ integration, onSaved, onRemove }: CardProps) => {
             ? <IntervalEditor integration={integration} onSaved={onSaved} pending={pending} onCancel={() => setMode(kind)} />
             : <HoursEditor integration={integration} onSaved={onSaved} pending={pending} onCancel={() => setMode(kind)} />}
         </Box>
+
+        {onRemove ? (
+          <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5, pt: 1.5, borderTop: 1, borderColor: 'divider' }}>
+            <Tooltip title={t('int.remove')}>
+              <IconButton
+                size="small"
+                onClick={onRemove}
+                aria-label={t('int.remove')}
+                sx={{ opacity: 0.4, '&:hover': { opacity: 1, color: 'error.main' } }}
+              >
+                <IconTrash size={16} stroke={1.6} />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        ) : null}
       </Box>
     </BlankCard>
   );
