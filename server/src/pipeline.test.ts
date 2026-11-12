@@ -33,6 +33,9 @@ const HN_BERLIN =
 const SQUARESPACE_JAVA =
   'Squarespace busca: Staff Software Engineer, Revenue Systems\nPostular: https://weworkremotely.com/x\n\nSignificant experience with multiple programming languages (especially Java) and a broad range of tools like Springboot, hibernate, databases. Demonstrated experience leading system architecture for revenue platforms. 100% remote.';
 
+const SU_OFICIO =
+  'Rain busca: Senior Backend Engineer\nPostular: https://remoteok.com/x\n\nWe are looking for a Senior Backend Engineer to join a small, fully remote team. You will own services end to end, work with the product team and help us scale. Competitive salary.';
+
 const SIN_STACK =
   'Buscamos Contador Senior 100% remoto para LATAM. Responsabilidades: conciliaciones, impuestos y cierres mensuales. Sueldo USD 2000. Postula en jobs@acme.com';
 
@@ -202,6 +205,13 @@ describe('pipeline — el juez cruzado con las reglas', () => {
 
     assert.equal(result.outcome.accepted, 0, 'el veto cayó, pero sigue sin haber nada suyo en el anuncio');
     assert.equal(result.outcome.rejected, 1);
+  });
+
+  it('"Backend Engineer" sin nombrar tecnologías es su oficio, y eso las reglas ya lo aceptan', async () => {
+    const { judge } = fakeJudge(() => ({ isOffer: true, rejection: null }));
+    const result = await run([SU_OFICIO], judge);
+
+    assert.equal(result.outcome.accepted, 1, 'exigir el núcleo en el rescate no puede tapar la excepción de judgeCore');
   });
 
   it('el juez sigue pudiendo vetar lo que las reglas aceptaron', async () => {

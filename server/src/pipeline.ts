@@ -3,6 +3,7 @@ import type { RunOutcome } from './db/runs.repository.js';
 import { t } from './i18n/index.js';
 import type { Language } from './profile/types.js';
 import { matchStack } from './filters/offer.js';
+import { isOwnRole } from './filters/requirements.js';
 import { decideShipping, fingerprint, locationLabel, locationRejectionCode, storedText, type CandidateProfile, type Offer, type RejectedBy, type Verdict } from './filters/decide.js';
 import { companyName, offerTitle, roleOnly, stripAuthorHeaders } from './filters/headline.js';
 import type { LlmJudge, JudgeVerdict } from './filters/judge.js';
@@ -202,7 +203,7 @@ function applyJudgment(
 
   const location = rules.rejectedBy === 'location' ? JobLocation.Unknown : rules.location;
   if (locationRejectionCode(location, profile.modality)) return rules;
-  if (profile.core.length && !matchStack(text, profile.core).length) return rules;
+  if (profile.core.length && !matchStack(text, profile.core).length && !isOwnRole(text)) return rules;
 
   return {
     ...refined,
