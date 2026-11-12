@@ -63,6 +63,21 @@ export function formatDate(iso: string | null): string {
   return `${p.day} ${p.month} ${p.year}`;
 }
 
+export function dayLabel(iso: string | null): string {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const dayOf = (d: Date): string => {
+    const p = partsOf(d);
+    return `${p.year}-${p.month}-${p.day}`;
+  };
+  const now = new Date();
+  const yesterday = new Date(now.getTime() - 86_400_000);
+  if (dayOf(date) === dayOf(now)) return t('dash.runs.today');
+  if (dayOf(date) === dayOf(yesterday)) return t('dash.runs.yesterday');
+  return formatDate(iso);
+}
+
 export function utcOffsetLabel(): string {
   const name = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'shortOffset' })
     .formatToParts(new Date())

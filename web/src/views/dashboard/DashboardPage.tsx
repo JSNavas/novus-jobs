@@ -4,13 +4,20 @@ import {
   Box, Button, CircularProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography,
 } from '@mui/material';
 import { IconRefresh } from '@tabler/icons-react';
-import { listRuns, PAGE_SIZE, startRun, type Stats } from '../../api/client';
+import {
+  getOnboarding, listIntegrations, listJobs, listRuns, PAGE_SIZE, startRun,
+  type Integration, type OnboardingState, type Stats,
+} from '../../api/client';
 import { useNotifications } from '../../notifications';
-import { AppAlert, AppPagination, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
+import { AppAlert, AppChip, AppPagination, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { t } from '../../i18n';
-import { formatDateTime } from '../../format';
+import { dayLabel, formatTime } from '../../format';
 import { RunStatus, type RunInfo } from '../../types';
 import { runStatusLabel, runStatusTone } from './runStatus';
+import { jobSourceLabel } from '../../labels';
+import { JobStatus, type Job } from '../../types';
+import { CriteriaPanel, FilterPanel, PanelLink, PlatformIcon, PlatformsPanel } from './panels';
+import RecentJobs from './RecentJobs';
 
 const POLL_INTERVAL_MS = 15_000;
 
@@ -62,6 +69,13 @@ const tilesOf = (stats: Stats): Tile[] => [
   },
 ];
 
+const durationOf = (run: RunInfo): string => {
+  if (!run.finishedAt) return '—';
+  const seconds = Math.max(0, Math.round((Date.parse(run.finishedAt) - Date.parse(run.startedAt)) / 1000));
+  const minutes = Math.floor(seconds / 60);
+  return minutes === 0 ? `${seconds}s` : `${minutes}m ${String(seconds % 60).padStart(2, '0')}s`;
+};
+
 const failedRowSx = {
   bgcolor: 'error.light',
   '& > td:first-of-type': { borderLeft: 3, borderLeftColor: 'error.main' },
@@ -73,6 +87,9 @@ const DashboardPage = () => {
   const [searching, setSearching] = useState(false);
   const noticesAtStart = useRef(0);
   const [runs, setRuns] = useState<RunInfo[] | null>(null);
+  const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
+  const [recent, setRecent] = useState<Job[]>([]);
   const [runsTotal, setRunsTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +114,21 @@ const DashboardPage = () => {
     }, POLL_INTERVAL_MS);
     return () => { cancelled = true; clearInterval(timer); };
   }, [page, notices.length]);
+
+  useEffect(() => {
+    let cancelled = false;
+    listIntegrations().then((next) => { if (!cancelled) setIntegrations(next); }).catch(() => undefined);
+    getOnboarding().then((next) => { if (!cancelled) setOnboarding(next); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    listJobs({ status: JobStatus.New, limit: 3 })
+      .then((page) => { if (!cancelled) setRecent(page.items); })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [notices.length]);
 
   useEffect(() => {
     if (!searching) return;
@@ -158,7 +190,7 @@ const DashboardPage = () => {
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(5, 1fr)' },
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)', lg: 'repeat(5, 1fr)' },
             gap: 2,
             mb: 4,
           }}
@@ -177,68 +209,145 @@ const DashboardPage = () => {
         </Box>
       ) : null}
 
-      <Typography variant="h6" mb={1}>{t('dash.runs')}</Typography>
-      <Typography variant="body2" color="textSecondary" mb={2}>
-        {t('dash.runs.help')}
-      </Typography>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            md: 'minmax(0, 1fr) 248px',
+            lg: 'minmax(0, 1fr) 280px',
+            xl: 'minmax(0, 1fr) 300px',
+          },
+          gap: 2.5,
+          alignItems: 'start',
+        }}
+      >
+        <Box sx={{ minWidth: 0 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ minHeight: 39, mb: 1 }}>
+            <Typography variant="h6" sx={{ fontSize: 14 }}>{t('dash.runs')}</Typography>
+          </Stack>
+          <Typography variant="body2" color="textSecondary" mb={2}>
+            {t('dash.runs.help')}
+          </Typography>
 
-      <BlankCard>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>{t('dash.runs.when')}</TableCell>
-              <TableCell align="right">{t('dash.runs.read')}</TableCell>
-              <TableCell align="right">{t('dash.runs.accepted')}</TableCell>
-              <TableCell align="right">{t('dash.runs.rejected')}</TableCell>
-              <TableCell>{t('dash.runs.status')}</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {runs?.map((run) => (
-              <TableRow
-                key={run.id}
-                hover
-                onClick={() => void navigate(`/busquedas/${run.id}`)}
-                sx={{ cursor: 'pointer', ...(run.status === RunStatus.Error ? failedRowSx : undefined) }}
-              >
-                <TableCell>
-                  <Typography variant="mono" component="span">{formatDateTime(run.startedAt)}</Typography>
-                </TableCell>
-                <TableCell align="right">{run.fetched}</TableCell>
-                <TableCell align="right">{run.accepted}</TableCell>
-                <TableCell align="right">{run.rejected}</TableCell>
-                <TableCell>
-                  <Stack direction="row" spacing={1} alignItems="center">
-                    <AppStatusPilot label={runStatusLabel(run)} tone={runStatusTone(run)} />
-                    {run.error ? (
-                      <Typography variant="caption" color="textSecondary" noWrap sx={{ maxWidth: 320 }}>
-                        {run.error}
+          <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
+            <Box sx={{ overflowX: 'auto' }}>
+            <Table size="small" sx={{ minWidth: 680 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>{t('dash.runs.when')}</TableCell>
+                  <TableCell>{t('dash.runs.platform')}</TableCell>
+                  <TableCell>{t('dash.runs.status')}</TableCell>
+                  <TableCell align="right">{t('dash.runs.read')}</TableCell>
+                  <TableCell align="right">{t('dash.runs.accepted')}</TableCell>
+                  <TableCell align="right">{t('dash.runs.rejected')}</TableCell>
+                  <TableCell align="right">{t('dash.runs.duration')}</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {runs?.map((run) => (
+                  <TableRow
+                    key={run.id}
+                    hover
+                    onClick={() => void navigate(`/busquedas/${run.id}`)}
+                    sx={{ cursor: 'pointer', ...(run.status === RunStatus.Error ? failedRowSx : undefined) }}
+                  >
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                      <Typography component="span" sx={{ display: 'block', fontSize: 10, color: 'text.secondary', mb: 0.625 }}>
+                        {dayLabel(run.startedAt)}
                       </Typography>
-                    ) : null}
-                  </Stack>
-                </TableCell>
-              </TableRow>
-            ))}
-            {runs && runs.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5}>
-                  <Typography color="textSecondary" py={2} textAlign="center">
-                    {t('dash.runs.empty')}
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </BlankCard>
+                      <Typography variant="mono" component="span">{formatTime(run.startedAt)}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ whiteSpace: 'nowrap' }}>
+                        <PlatformIcon label={jobSourceLabel(run.source)} />
+                        <span>{jobSourceLabel(run.source)}</span>
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Stack direction="row" spacing={1} alignItems="center">
+                        <AppStatusPilot label={runStatusLabel(run)} tone={runStatusTone(run)} />
+                        {run.error ? (
+                          <Typography variant="caption" color="textSecondary" noWrap sx={{ maxWidth: 220 }}>
+                            {run.error}
+                          </Typography>
+                        ) : null}
+                      </Stack>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="mono" component="span">{run.fetched}</Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="mono" component="span">{run.accepted}</Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="mono" component="span">{run.rejected}</Typography>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Typography variant="mono" component="span" color="textSecondary">{durationOf(run)}</Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {runs && runs.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7}>
+                      <Typography color="textSecondary" py={2} textAlign="center">
+                        {t('dash.runs.empty')}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </TableBody>
+            </Table>
+            </Box>
 
-      <AppPagination
-        page={page}
-        pageSize={PAGE_SIZE}
-        total={runsTotal}
-        onChange={setPage}
-        noun={t('dash.runs.noun')}
-      />
+            {runsTotal > 0 ? (
+              <Box sx={{ px: 2.25, py: 1.5, borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
+                <Typography
+                  component="span"
+                  sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, color: 'text.secondary' }}
+                >
+                  {t('dash.runs.footer', { count: runsTotal })}
+                </Typography>
+              </Box>
+            ) : null}
+          </Box>
+
+          <AppPagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={runsTotal}
+            onChange={setPage}
+            noun={t('dash.runs.noun')}
+          />
+
+          <Box sx={{ mt: 2.75 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ minHeight: 39, mb: 1 }}>
+              <Stack direction="row" spacing={1.125} alignItems="center">
+                <Typography variant="h6" sx={{ fontSize: 14 }}>{t('dash.recent')}</Typography>
+                {stats?.new ? <AppChip label={String(stats.new)} tone="success" /> : null}
+              </Stack>
+              <PanelLink to="/nuevas">{t('dash.recent.all')}</PanelLink>
+            </Stack>
+            <RecentJobs jobs={recent} />
+          </Box>
+        </Box>
+
+        <Box component="aside" sx={{ minWidth: 0 }}>
+          {integrations.length ? <PlatformsPanel integrations={integrations} /> : null}
+          {stats ? <FilterPanel stats={stats} /> : null}
+          {onboarding ? (
+            <CriteriaPanel
+              profile={onboarding.profile}
+              country={
+                onboarding.catalogue.countries.find((c) => c.code === onboarding.profile.geo.country)?.label
+                ?? onboarding.profile.geo.country
+              }
+            />
+          ) : null}
+        </Box>
+      </Box>
+
     </PageContainer>
   );
 };
