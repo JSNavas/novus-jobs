@@ -76,6 +76,17 @@ The filter never asks "is this LinkedIn?". Sources are a registry of
 interchangeable implementations behind one interface, with a rhythm chosen by
 what is at risk when you read them. See [SOURCES.md](SOURCES.md).
 
+### Discard reasons travel as codes, not sentences
+
+The filter stores both: the sentence (emails read it, and so do postings saved
+before this existed) and a code with its parameters — `reject.english`,
+`{demanded: 'C1', yours: 'B1'}`. The dashboard writes the sentence itself, in
+the reader's language.
+
+It used to be a sentence only, and the UI classified it with regular
+expressions over the Spanish text. Rewording one reason silently broke its
+badge, and no test failed. A code cannot rot like that.
+
 ### Enums have no CHECK constraints
 
 Deliberate, and the comment is in `db/schema.ts`. A `CHECK (x IN (...))`

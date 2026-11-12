@@ -37,6 +37,8 @@ sync, no telemetry, and nothing to pay for.
 
 **What it does**
 
+- Speaks English or Spanish, your choice, everywhere: the dashboard, the
+  notification emails and the reason it gives for every discard.
 - Reads the platforms you turn on, on a rhythm set per platform.
 - Discards what does not fit **and tells you why** — a rejected offer is not
   deleted, it is filed with its reason, so you can audit the filter instead of
@@ -107,8 +109,10 @@ npm start
 
 Open **http://127.0.0.1:47831** and the setup wizard walks you through it:
 
-1. **Your CV.** Upload it and the stack, English level and location are read off
-   it — locally, with pattern rules, on your machine. You can skip this and type
+1. **Your CV.** Pick the language first (English or Spanish — the whole app,
+   including the emails and the reason each posting was discarded). Then upload
+   your CV and the stack, English level and location are read off it — locally,
+   with pattern rules, on your machine. You can skip the upload and type
    everything by hand.
 2. **Your stack.** What you know, which technologies define your trade, and which
    ecosystems you do not want to be offered.

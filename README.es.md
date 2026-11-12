@@ -253,6 +253,7 @@ Lo que se cambia sin tocar código ni reiniciar nada:
 
 | Ajuste | Qué decide |
 |---|---|
+| **Idioma** | español o inglés: la interfaz, los correos y los motivos de descarte |
 | **Tu perfil** | tu stack, tu núcleo, tus vetos, tu inglés, desde dónde buscas y tu zona horaria: lo que decide qué oferta te llega. Se edita en la misma pantalla del alta, desde Configuración |
 | **Motivación** | el párrafo que copia cada oferta, con sus huecos |
 | **Antigüedad máxima** | cuántos meses puede tener una vacante para entrar (3 por defecto) |
