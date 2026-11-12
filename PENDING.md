@@ -47,21 +47,33 @@ Hay que conservar `blockingError`, el guardado por paso (`changesOf`),
 README dice «237 tests en verde» a quien no va a clonar nada. Sin ella, los
 tests son una afirmación.
 
-### 1.4 Tres o cuatro fuentes más · 1 día
-Hoy son dos, y la principal pide la cuenta de LinkedIn — que para un
-desconocido es pedir mucho el primer día. Con fuentes de API pública el
-proyecto funciona **sin configurar nada**:
+### 1.4 Tres o cuatro fuentes más · ~~1 día~~ HECHO (12 nov 2026)
+Hoy son **siete**, y seis no piden cuenta, así que el proyecto funciona sin
+configurar nada. Cuatro no son código sino **descriptores** JSON en
+`server/descriptors/` ([docs/DESCRIPTORS.md](docs/DESCRIPTORS.md)).
 
-| Fuente | Cómo | Por qué esa |
+| Fuente | Cómo | Cómo está hecha |
 |---|---|---|
-| RemoteOK | `GET remoteok.com/api`, JSON plano | la más conocida del nicho |
-| Remotive | `GET remotive.com/api/remote-jobs` | buen volumen, categorías limpias |
-| We Work Remotely | RSS por categoría | la marca con más tráfico |
-| Himalayas | API pública | ofertas con país de contratación explícito |
-| Hacker News «Who is hiring» | API de Algolia sobre el hilo mensual | donde está el público que da estrellas |
+| Remotive | `GET /api/remote-jobs` | descriptor |
+| RemoteOK | `GET /api` (array en la raíz, `skip: 1` por su aviso legal) | descriptor |
+| Himalayas | `GET /jobs/api` | descriptor |
+| We Work Remotely | RSS por categoría | descriptor |
+| Hacker News «Who is hiring» | Algolia sobre el hilo del mes | clase: el id cambia cada mes |
 
-Cada una es un fichero y una línea (`docs/SOURCES.md`). La tabla de plataformas
-soportadas del README ya está esperando.
+Salió mejor de lo planeado: en vez de cuatro clases quedó un motor que convierte
+cualquier API JSON o RSS en una fuente, y este repositorio dejó de ser el cuello
+de botella para añadir portales.
+
+**Lo que falta de esto, y es lo que más mueve:**
+- **La pantalla para añadir una fuente desde Integraciones.** Hoy un descriptor
+  es un fichero y un reinicio. Sin pantalla, la promesa «cada usuario añade sus
+  APIs» no se cumple para quien no abre una terminal — y es justo el argumento
+  que distingue al proyecto de cualquier agregador.
+- Inferir el descriptor con el LLM desde una URL pegada, para no pedirle al
+  usuario que adivine caminos JSON.
+- Exportar e importar descriptores (ya se serializan; falta la puerta).
+- Paginación por `offset`: Himalayas trae una sola tanda de 50.
+- Remote OK pide enlazar de vuelta en sus términos. Ya está en el README.
 
 ### 1.5 Instalar en un comando · medio día
 Hoy son cinco pasos y dos `npm ci`. Hace falta una de estas dos, no las dos:
@@ -128,8 +140,14 @@ de una línea. Es el buscador de GitHub y se rellena en dos minutos.
   respuesta honesta ya está escrita en `docs/PRIVACY.md`: lee lo que tú ya
   puedes leer, con tu sesión, a ritmo humano, y no publica ni escribe nada. Hay
   que decirlo en el README antes de que lo pregunten, no después.
-- **«Otro scraper que se romperá en un mes.»** Se contesta con las fuentes de
-  API pública (1.4): si LinkedIn se cae, el proyecto sigue sirviendo.
+- **«Otro scraper que se romperá en un mes.»** Ya está contestado: seis de las
+  siete fuentes no tocan LinkedIn, y cuando una cambie de forma la arregla el
+  usuario editando un JSON, sin esperar un release.
+- **«Esto ya existe: Singer, Airbyte, RSS-Bridge, yt-dlp.»** Va a salir, y hay
+  que conceder la parte cierta: extractores mantenidos por la comunidad no son
+  una idea nueva. Lo defendible es lo concreto — nadie lo ha hecho para buscar
+  empleo, en local, con un filtro que absorbe mapeos imperfectos. Prometer
+  «nadie lo ha hecho» a secas se cae con una búsqueda, y cuesta el hilo.
 - **«¿Por qué no es un SaaS?»** Esa es la gracia, y conviene que la primera
   línea del README lo diga aún más fuerte.
 
