@@ -80,8 +80,9 @@ export interface RunsPage {
   total: number;
 }
 
-export function listRuns(limit = PAGE_SIZE, offset = 0): Promise<RunsPage> {
-  return request<RunsPage>(`/runs?limit=${limit}&offset=${offset}`);
+export function listRuns(limit = PAGE_SIZE, offset = 0, since: string | null = null): Promise<RunsPage> {
+  const window = since === null ? '' : `&since=${encodeURIComponent(since)}`;
+  return request<RunsPage>(`/runs?limit=${limit}&offset=${offset}${window}`);
 }
 
 export function getRun(id: number): Promise<RunInfo> {

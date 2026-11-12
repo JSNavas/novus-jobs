@@ -3,7 +3,7 @@ import { AppChip } from '../../components/ui';
 import { IconArrowUpRight } from '@tabler/icons-react';
 import { NavLink } from 'react-router';
 import type { Job } from '../../types';
-import { formatTime } from '../../format';
+import { dayLabel, formatTime } from '../../format';
 import { t } from '../../i18n';
 import { jobSourceLabel } from '../../labels';
 
@@ -70,9 +70,14 @@ const RecentJobs = ({ jobs }: { jobs: Job[] }) => {
             {job.stackMatch.slice(0, 2).map((tech) => <AppChip key={tech} label={tech} />)}
           </Stack>
 
-          <Typography variant="mono" color="text.secondary" sx={{ fontSize: '0.6875rem', minWidth: 62, textAlign: 'right' }}>
-            {formatTime(job.foundAt)}
-          </Typography>
+          <Box sx={{ minWidth: 62, textAlign: 'right', flexShrink: 0 }}>
+            <Typography variant="mono" component="span" color="text.secondary" sx={{ display: 'block', fontSize: '0.6875rem' }}>
+              {formatTime(job.foundAt)}
+            </Typography>
+            <Typography component="span" sx={{ display: 'block', fontSize: 10, color: 'text.secondary', opacity: 0.75 }}>
+              {dayLabel(job.foundAt)}
+            </Typography>
+          </Box>
           <IconArrowUpRight size={14} stroke={1.6} style={{ flexShrink: 0, opacity: 0.6 }} />
         </Stack>
       ))}

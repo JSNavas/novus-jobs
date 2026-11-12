@@ -138,6 +138,13 @@ export const en: Record<keyof typeof es, string> = {
   'dash.runs.platform': 'Platform',
   'dash.runs.duration': 'Duration',
   'dash.runs.footer': '{count} passes · runs on your machine',
+  'dash.period.48h': 'Last 48 hours',
+  'dash.period.today': 'Today',
+  'dash.period.week': 'Last 7 days',
+  'dash.period.all': 'All history',
+  'dash.runs.allHistory': 'All history',
+  'footer.local': 'All your data stays on your machine.',
+  'footer.sync': 'Last sync: {time}',
   'dash.runs.noun': 'searches',
 
   'card.action.new': 'Mark as new',

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
-  Box, Button, CircularProgress, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography,
+  Box, Button, CircularProgress, MenuItem, Select, Stack, Table, TableBody, TableCell, TableHead,
+  TableRow, Typography,
 } from '@mui/material';
 import {
-  IconArchive, IconBookmark, IconEye, IconFilterOff, IconInbox, IconRefresh, type Icon as TablerIcon,
+  IconArchive, IconArrowRight, IconBookmark, IconEye, IconFilterOff, IconInbox, IconRefresh,
+  type Icon as TablerIcon,
 } from '@tabler/icons-react';
 import {
   getOnboarding, listIntegrations, listJobs, listRuns, PAGE_SIZE, startRun,
@@ -33,7 +35,7 @@ interface Tile {
   audit?: boolean;
 }
 
-const padded = (value: number): string => (value < 10 ? `0${value}` : String(value));
+const padded = (value: number): string => (value > 0 && value < 10 ? `0${value}` : String(value));
 
 const tilesOf = (stats: Stats): Tile[] => [
   {
@@ -86,6 +88,17 @@ const durationOf = (run: RunInfo): string => {
   return minutes === 0 ? `${seconds}s` : `${minutes}m ${String(seconds % 60).padStart(2, '0')}s`;
 };
 
+const sinceOf = (period: '48h' | 'today' | 'week' | 'all'): string | null => {
+  if (period === 'all') return null;
+  if (period === 'today') {
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    return start.toISOString();
+  }
+  const hours = period === '48h' ? 48 : 24 * 7;
+  return new Date(Date.now() - hours * 3_600_000).toISOString();
+};
+
 const failedRowSx = {
   bgcolor: 'error.light',
   '& > td:first-of-type': { borderLeft: 3, borderLeftColor: 'error.main' },
@@ -102,12 +115,13 @@ const DashboardPage = () => {
   const [recent, setRecent] = useState<Job[]>([]);
   const [runsTotal, setRunsTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [period, setPeriod] = useState<'48h' | 'today' | 'week' | 'all'>('48h');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     const load = (): void => {
-      listRuns(PAGE_SIZE, (page - 1) * PAGE_SIZE)
+      listRuns(PAGE_SIZE, (page - 1) * PAGE_SIZE, sinceOf(period))
         .then((nextRuns) => {
           if (cancelled) return;
           setRuns(nextRuns.items);
@@ -123,7 +137,7 @@ const DashboardPage = () => {
       if (document.visibilityState === 'visible') load();
     }, POLL_INTERVAL_MS);
     return () => { cancelled = true; clearInterval(timer); };
-  }, [page, notices.length]);
+  }, [page, period, notices.length]);
 
   useEffect(() => {
     let cancelled = false;
@@ -248,8 +262,23 @@ const DashboardPage = () => {
         }}
       >
         <Box sx={{ minWidth: 0 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ minHeight: 39, mb: 1 }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} sx={{ minHeight: 39, mb: 1 }}>
             <Typography variant="h6" sx={{ fontSize: 14 }}>{t('dash.runs')}</Typography>
+            <Select
+              size="small"
+              value={period}
+              onChange={(event) => {
+                setPeriod(event.target.value as '48h' | 'today' | 'week' | 'all');
+                setPage(1);
+              }}
+              inputProps={{ 'aria-label': t('dash.runs') }}
+              sx={{ fontSize: 12 }}
+            >
+              <MenuItem value="48h">{t('dash.period.48h')}</MenuItem>
+              <MenuItem value="today">{t('dash.period.today')}</MenuItem>
+              <MenuItem value="week">{t('dash.period.week')}</MenuItem>
+              <MenuItem value="all">{t('dash.period.all')}</MenuItem>
+            </Select>
           </Stack>
           <Typography variant="body2" color="textSecondary" mb={2}>
             {t('dash.runs.help')}
@@ -327,14 +356,35 @@ const DashboardPage = () => {
             </Box>
 
             {runsTotal > 0 ? (
-              <Box sx={{ px: 2.25, py: 1.5, borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                spacing={2}
+                sx={{ px: 2.25, py: 1.5, borderTop: 1, borderColor: 'divider', bgcolor: 'background.paper' }}
+              >
                 <Typography
                   component="span"
                   sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 10, color: 'text.secondary' }}
                 >
                   {t('dash.runs.footer', { count: runsTotal })}
                 </Typography>
-              </Box>
+                {period === 'all' ? null : (
+                  <Box
+                    component="button"
+                    type="button"
+                    onClick={() => { setPeriod('all'); setPage(1); }}
+                    sx={{
+                      display: 'inline-flex', alignItems: 'center', gap: 1, border: 0, bgcolor: 'transparent',
+                      cursor: 'pointer', p: 0, fontSize: 11, color: 'text.secondary', fontFamily: 'inherit',
+                      '&:hover': { color: 'primary.main' },
+                    }}
+                  >
+                    {t('dash.runs.allHistory')}
+                    <IconArrowRight size={13} stroke={1.6} />
+                  </Box>
+                )}
+              </Stack>
             ) : null}
           </Box>
 

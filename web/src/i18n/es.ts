@@ -136,6 +136,13 @@ export const es = {
   'dash.runs.platform': 'Plataforma',
   'dash.runs.duration': 'Duración',
   'dash.runs.footer': '{count} pasadas · ejecución local',
+  'dash.period.48h': 'Últimas 48 horas',
+  'dash.period.today': 'Hoy',
+  'dash.period.week': 'Últimos 7 días',
+  'dash.period.all': 'Todo el historial',
+  'dash.runs.allHistory': 'Todo el historial',
+  'footer.local': 'Todos los datos permanecen en tu equipo.',
+  'footer.sync': 'Última sincronización: {time}',
   'dash.runs.noun': 'búsquedas',
 
   'card.action.new': 'Marcar como nueva',

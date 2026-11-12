@@ -116,11 +116,15 @@ export class RunsRepository {
     return row ? toRun(row) : null;
   }
 
-  list(limit: number, offset = 0): { items: RunInfo[]; total: number } {
-    const total = this.db.prepare<[], { count: number }>('SELECT COUNT(*) AS count FROM runs').get()?.count ?? 0;
-    const rows = this.db.prepare<[number, number], RunRow>(
-      `SELECT ${RUN_COLUMNS} FROM runs r ORDER BY r.id DESC LIMIT ? OFFSET ?`,
-    ).all(limit, offset);
+  list(limit: number, offset = 0, since: string | null = null): { items: RunInfo[]; total: number } {
+    const where = since === null ? '' : 'WHERE r.started_at >= ?';
+    const filter = since === null ? [] : [since];
+    const total = this.db
+      .prepare<string[], { count: number }>(`SELECT COUNT(*) AS count FROM runs r ${where}`)
+      .get(...filter)?.count ?? 0;
+    const rows = this.db.prepare<Array<string | number>, RunRow>(
+      `SELECT ${RUN_COLUMNS} FROM runs r ${where} ORDER BY r.id DESC LIMIT ? OFFSET ?`,
+    ).all(...filter, limit, offset);
     return { items: rows.map(toRun), total };
   }
 }

@@ -21,13 +21,18 @@ interface RunRoutesDeps {
   schedules: SourceSchedules;
 }
 
-function parseRunsPage(raw: unknown): Result<{ limit: number; offset: number }> {
+function parseRunsPage(raw: unknown): Result<{ limit: number; offset: number; since: string | null }> {
   const params = stringParams(raw);
   const limit = optionalInteger(params.limit, DEFAULT_LIMIT, 1, MAX_LIMIT, 'limit');
   if ('error' in limit) return limit;
   const offset = optionalInteger(params.offset, 0, 0, Number.MAX_SAFE_INTEGER, 'offset');
   if ('error' in offset) return offset;
-  return { value: { limit: limit.value, offset: offset.value } };
+
+  const raw_since = params.since;
+  if (raw_since === undefined) return { value: { limit: limit.value, offset: offset.value, since: null } };
+  const parsed = Date.parse(raw_since);
+  if (Number.isNaN(parsed)) return { error: '«since» tiene que ser una fecha ISO' };
+  return { value: { limit: limit.value, offset: offset.value, since: new Date(parsed).toISOString() } };
 }
 
 export function registerRunRoutes(app: FastifyInstance, deps: RunRoutesDeps): void {
@@ -49,7 +54,7 @@ export function registerRunRoutes(app: FastifyInstance, deps: RunRoutesDeps): vo
   app.get('/api/runs', (request, reply) => {
     const page = parseRunsPage(request.query);
     if ('error' in page) return reply.code(400).send({ error: page.error });
-    return reply.send(deps.runs.list(page.value.limit, page.value.offset));
+    return reply.send(deps.runs.list(page.value.limit, page.value.offset, page.value.since));
   });
 
   app.get<{ Params: { id: string } }>('/api/runs/:id', (request, reply) => {
