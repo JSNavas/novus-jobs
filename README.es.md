@@ -249,7 +249,9 @@ El catálogo de temas está escrito a mano, y ese era su único agujero: **lo qu
 
 Esta sección lo cierra por el otro lado. En vez de contar lo que conocemos, busca **cualquier palabra técnica que se repita en varias vacantes y que el catálogo no tenga**. Sale sola después de cada búsqueda, sin que nadie la haya previsto: si mañana seis vacantes empiezan a pedir Rust, asoma ahí.
 
-Para que no proponga basura hay cinco filtros, y el primero es el que de verdad decide: que se repita en dos vacantes o más. Los otros cuatro quitan las siglas que ya cuenta el catálogo, los nombres de las empresas, la primera palabra de cada frase (su mayúscula no es un nombre propio) y lo que no tiene forma de tecnología.
+Para que no proponga basura hay siete filtros, y el primero es el que de verdad decide: que se repita en dos vacantes o más. Los demás quitan las siglas que ya cuenta el catálogo, los nombres de las empresas, la primera palabra de cada frase (su mayúscula no es un nombre propio), lo que no tiene forma de tecnología, lo que vetaste —el Enfoque dice dónde poner el esfuerzo, y no vas a aprender algo que descartaste— y, el que más limpia, **cualquier palabra que en otro anuncio aparezca en minúscula**.
+
+Ese último se añadió al entrar las fuentes en inglés. El filtro de «primera palabra» miraba solo el principio de la línea, así que en «Apply. Complete a short screener» se caía *Apply* y sobrevivía *Complete*; con anuncios en español apenas se notaba, y con los de fuera la lista eran ocho palabras corrientes de trece. La regla de la minúscula no depende del idioma: *complete*, *once*, *run* o *most* aparecen en minúscula en algún anuncio, y *Microsoft* o *Kafka* no. Cuesta perder alguna tecnología que también es palabra común, y se acepta: el catálogo ya cubre las grandes, y esta sección existe para lo que nadie clasificó.
 
 ## Configuración
 

@@ -112,5 +112,5 @@ export function buildFocus(
     };
   });
 
-  return { analysed, windowDays: WINDOW_DAYS, topics, emerging: findEmerging(jobs) };
+  return { analysed, windowDays: WINDOW_DAYS, topics, emerging: findEmerging(jobs, profile) };
 }
