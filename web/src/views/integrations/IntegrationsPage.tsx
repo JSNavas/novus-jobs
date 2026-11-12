@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Box, Button, CircularProgress, Stack, Switch, TextField, ToggleButton, Tooltip, Typography,
+  Box, Button, CircularProgress, Stack, Switch, TextField, ToggleButton, ToggleButtonGroup, Tooltip,
+  Typography,
 } from '@mui/material';
 import {
   listIntegrations, updateIntegrationEnabled, updateIntegrationSchedule, type Integration,
 } from '../../api/client';
-import { AppAlert, AppChip, BlankCard, PageContainer } from '../../components/ui';
+import { AppAlert, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
+import { PlatformIcon } from '../dashboard/panels';
 import { t } from '../../i18n';
 import { formatDateTime } from '../../format';
 import { formatNextSearch, nextSearchAt } from '../jobs/scheduleText';
@@ -42,7 +44,7 @@ export const IntervalEditor = ({ integration, onSaved }: CardProps) => {
   return (
     <Stack spacing={2}>
       <Typography variant="body2" color="textSecondary">
-        {t('int.interval.help')}
+        {t(integration.needsLogin ? 'int.interval.help.account' : 'int.interval.help')}
       </Typography>
       <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
         {INTERVAL_PRESETS.map((preset) => (
@@ -169,35 +171,88 @@ const EnabledSwitch = ({ integration, onSaved }: CardProps) => {
   );
 };
 
+const Line = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <Stack
+    direction="row"
+    justifyContent="space-between"
+    alignItems="center"
+    spacing={2}
+    sx={{ py: 1.25, borderTop: 1, borderColor: 'divider' }}
+  >
+    <Typography variant="label" color="text.secondary">{label}</Typography>
+    {children}
+  </Stack>
+);
+
 const IntegrationCard = ({ integration, onSaved }: CardProps) => {
   const next = integration.nextAt ? nextSearchAt(integration.nextAt, new Date()) : null;
   const off = !integration.enabled;
+  const kind = integration.schedule.kind;
+
+  const switchKind = (mode: 'every-minutes' | 'configured-hours'): void => {
+    if (mode === kind) return;
+    const body = mode === 'every-minutes' ? { minutes: 360 } : { hours: [9, 13, 18] };
+    updateIntegrationSchedule(integration.name, body).then(onSaved).catch(() => undefined);
+  };
+
   return (
     <BlankCard>
       <Box p={3}>
-        <Stack direction="row" spacing={1.5} alignItems="center" mb={0.5} flexWrap="wrap" useFlexGap>
-          <Typography variant="h6" sx={{ opacity: off ? 0.6 : 1 }}>{integration.label}</Typography>
-          <AppChip
-            label={integration.schedule.kind === 'every-minutes'
-              ? t('int.everyInterval', { interval: intervalLabel(integration.schedule.minutes) })
-              : t('int.slotsPerDay', { count: integration.schedule.hours.length })}
-            tone="neutral"
-          />
-          {integration.needsLogin ? <AppChip label={t('int.needsLogin')} tone="neutral" /> : null}
-          {off ? <AppChip label={t('int.off')} tone="neutral" /> : null}
-          <Box flexGrow={1} />
+        <Stack direction="row" spacing={1.5} alignItems="center" mb={2.75}>
+          <PlatformIcon label={integration.label} />
+          <Typography variant="h6" sx={{ fontSize: 16, flex: 1, minWidth: 0, opacity: off ? 0.6 : 1 }} noWrap>
+            {integration.label}
+          </Typography>
           <EnabledSwitch integration={integration} onSaved={onSaved} />
         </Stack>
-        <Typography variant="caption" color="textSecondary" display="block" mb={2.5}>
+
+        <Line label={t('int.status')}>
+          <AppStatusPilot tone={off ? 'neutral' : 'success'} label={off ? t('int.off') : t('int.active')} />
+        </Line>
+
+        <Line label={t('int.rhythm')}>
+          <Typography variant="mono" sx={{ fontSize: '0.6875rem' }}>
+            {integration.schedule.kind === 'every-minutes'
+              ? t('int.everyInterval', { interval: intervalLabel(integration.schedule.minutes) })
+              : t('int.slotsPerDay', { count: integration.schedule.hours.length })}
+          </Typography>
+        </Line>
+
+        <Line label={t('int.lastPass')}>
+          <Typography variant="mono" sx={{ fontSize: '0.6875rem' }}>
+            {integration.lastRunAt ? formatDateTime(integration.lastRunAt) : '—'}
+          </Typography>
+        </Line>
+
+        <Line label={t('int.nextPass')}>
+          <Typography variant="mono" sx={{ fontSize: '0.6875rem' }}>
+            {off || !next ? '—' : formatNextSearch(next)}
+          </Typography>
+        </Line>
+
+        <Typography sx={{ fontSize: 12, lineHeight: 1.7, color: 'text.secondary', mt: 2, mb: 2.5 }}>
           {off
             ? t('int.off.explain')
-            : `${next ? formatNextSearch(next) : t('int.noNext')}${
-              integration.lastRunAt
-                ? t('int.lastRun', { date: formatDateTime(integration.lastRunAt) })
-                : t('int.neverRun')}`}
+            : integration.needsLogin ? t('int.login.help') : t('int.open.help')}
         </Typography>
+
         <Box sx={{ opacity: off ? 0.45 : 1, pointerEvents: off ? 'none' : 'auto' }}>
-          {integration.schedule.kind === 'every-minutes'
+          <ToggleButtonGroup
+            size="small"
+            exclusive
+            value={kind}
+            onChange={(_, mode: 'every-minutes' | 'configured-hours' | null) => { if (mode) switchKind(mode); }}
+            sx={{ mb: 2 }}
+          >
+            <ToggleButton value="every-minutes" sx={{ textTransform: 'none', fontSize: 12 }}>
+              {t('int.mode.interval')}
+            </ToggleButton>
+            <ToggleButton value="configured-hours" sx={{ textTransform: 'none', fontSize: 12 }}>
+              {t('int.mode.hours')}
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          {kind === 'every-minutes'
             ? <IntervalEditor integration={integration} onSaved={onSaved} />
             : <HoursEditor integration={integration} onSaved={onSaved} />}
         </Box>
@@ -232,17 +287,29 @@ const IntegrationsPage = () => {
     <PageContainer
       title={t('int.title')}
       subtitle={t('int.subtitle')}
+      action={integrations ? (
+        <Typography variant="label" color="text.secondary">
+          {t('int.activeCount', { count: integrations.filter((item) => item.enabled).length })}
+        </Typography>
+      ) : null}
     >
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
       {!integrations && !error ? (
         <Box display="flex" justifyContent="center" py={6}><CircularProgress /></Box>
       ) : null}
       {integrations?.length === 0 ? <AppAlert severity="info">{t('int.none')}</AppAlert> : null}
-      <Stack spacing={2}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, minmax(0, 1fr))' },
+          gap: 2.25,
+          alignItems: 'start',
+        }}
+      >
         {integrations?.map((integration) => (
           <IntegrationCard key={integration.name} integration={integration} onSaved={replace} />
         ))}
-      </Stack>
+      </Box>
     </PageContainer>
   );
 };

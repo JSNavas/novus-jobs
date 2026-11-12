@@ -57,10 +57,9 @@ export function registerIntegrationRoutes(app: FastifyInstance, deps: Integratio
     const source = deps.sources.find((s) => s.name === request.params.name);
     if (!source) return reply.code(404).send({ error: 'integración no encontrada' });
 
-    const shape = deps.schedules.of(source).kind;
     const body = (request.body ?? {}) as { minutes?: unknown; hours?: unknown };
 
-    if (shape === 'every-minutes') {
+    if (body.minutes !== undefined) {
       const minutes = Number(body.minutes);
       if (!Number.isInteger(minutes) || minutes < MIN_INTERVAL_MINUTES || minutes > MAX_INTERVAL_MINUTES) {
         return reply.code(400).send({

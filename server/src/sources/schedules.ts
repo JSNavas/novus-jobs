@@ -14,12 +14,7 @@ export class SourceSchedules {
   ) {}
 
   of(source: JobSource): SourceSchedule {
-    const stored = this.read(source.name);
-    const fallback = source.policy.schedule;
-    if (!stored) return fallback.kind === 'configured-hours' ? fallback : fallback;
-    if (fallback.kind === 'configured-hours' && stored.kind === 'configured-hours') return stored;
-    if (fallback.kind === 'every-minutes' && stored.kind === 'every-minutes') return stored;
-    return fallback;
+    return this.read(source.name) ?? source.policy.schedule;
   }
 
   hoursOf(source: JobSource): readonly number[] {
