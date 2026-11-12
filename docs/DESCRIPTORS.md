@@ -76,7 +76,7 @@ source written in TypeScript; that name wins and the descriptor is ignored.
 |---|---|---|
 | `url` | required | Must be `https` (or `localhost`, to try things out) |
 | `method` | `"GET"` | `"POST"` for endpoints that take a query body, like Workday |
-| `format` | `"json"` | `"rss"` to read a feed |
+| `format` | `"json"` | `"rss"` for a feed, `"embedded"` for postings carried inside an HTML page |
 | `headers` | `{}` | Sent on every request |
 | `query` | `{}` | Query string sent on every page |
 | `body` | — | JSON body; only with `POST` |
@@ -166,10 +166,27 @@ Be honest about the edge, so nobody debugs a wall:
   has a different id every month, so `hackernews.source.ts` resolves it first.
 - **Paginate by offset.** Paging is by page number today. A board that counts
   in rows gets one page until that changes.
-- **Parse HTML pages.** JSON and RSS only.
+- **Parse HTML pages.** JSON, RSS, and JSON carried inside a page. Markup is
+  never parsed.
 
 The dividing line is the one the project already draws: a descriptor covers the
 boring case, and anything with logic in it earns a class and a test.
+
+## When the page carries the postings inside it
+
+Plenty of boards render in the browser but still ship their data as JSON inside
+the HTML — Remix, Next, Nuxt and friends all do it to hydrate the page. With
+`"format": "embedded"` the page is fetched and the largest array of objects in
+any JSON blob it contains becomes the list, so `"list"` stays `null` and the
+field paths work as usual.
+
+This is not HTML scraping: no markup is parsed, and the data is the same object
+the site's own code reads. It breaks when the site changes its data shape, which
+is the same thing that breaks a plain API descriptor.
+
+Reach for it only when there is no endpoint. Interfell is the example in the
+shipped catalogue: its board is served by Simera, whose data route answers 403
+to anyone outside the page, while the page itself carries all 25 postings.
 
 ## Recipes: a company's own board
 

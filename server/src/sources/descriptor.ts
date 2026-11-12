@@ -4,7 +4,7 @@ export type FieldPath = string;
 
 export type DescriptorMethod = 'GET' | 'POST';
 
-export type DescriptorFormat = 'json' | 'rss';
+export type DescriptorFormat = 'json' | 'rss' | 'embedded';
 
 export interface DescriptorPaging {
   readonly param: string;
@@ -131,8 +131,8 @@ function asMethod(value: unknown): DescriptorMethod {
 function asFormat(value: unknown): DescriptorFormat {
   if (value === undefined || value === null) return 'json';
   const text = asString(value, 'request.format').toLowerCase();
-  if (text !== 'json' && text !== 'rss') {
-    throw new DescriptorError(`request.format solo puede ser json o rss, no "${text}".`);
+  if (text !== 'json' && text !== 'rss' && text !== 'embedded') {
+    throw new DescriptorError(`request.format solo puede ser json, rss o embedded, no "${text}".`);
   }
   return text;
 }

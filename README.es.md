@@ -378,7 +378,9 @@ El filtro de inglés comparaba contra un B1 escrito dentro de las propias expres
 
 ## Añadir una plataforma
 
-Desde la aplicación: **Integraciones → Añadir fuente**. Pegas la dirección, el
+Desde la aplicación: **Integraciones → Añadir fuente**. Escribes el nombre de la
+empresa y se busca en los nueve tableros más usados; si no está en ninguno, lo
+dice y ya. O pegas una dirección: el
 servidor averigua de dónde salen las vacantes, el modelo escribe el mapeo, y
 antes de guardar ves las tres primeras ofertas tal y como las leerá el filtro.
 Si el mapeo falla en algo, se corrige ahí mismo y se vuelve a probar.
@@ -456,7 +458,7 @@ los descriptores en [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md).
 
 ### Plataformas soportadas
 
-Diez, y siete de ellas no tienen código propio. Cada una se enciende, se apaga
+Once, y ocho de ellas no tienen código propio. Cada una se enciende, se apaga
 y se le pone su ritmo desde Integraciones.
 
 | Plataforma | Cómo lee | Cuenta | Cómo está hecha |
@@ -471,8 +473,9 @@ y se le pone su ritmo desde Integraciones.
 | **Puente Talent** | `GET /api/jobs` | ninguna | descriptor |
 | **TLNT Group** | su tablero de Lever | ninguna | descriptor |
 | **Remote Latinos** | `GET /api/v1/posts` | ninguna | descriptor |
+| **Interfell** | las vacantes que viajan dentro de su página | ninguna | descriptor |
 
-Las nueve sin cuenta funcionan **el primer día, sin configurar nada**: vienen
+Las diez sin cuenta funcionan **el primer día, sin configurar nada**: vienen
 encendidas y no piden iniciar sesión en ningún sitio. LinkedIn es la única que
 exige algo tuyo, y por eso no es el punto de entrada del proyecto.
 

@@ -1,10 +1,12 @@
+import { embeddedList } from './embedded.js';
+
 const TIMEOUT_MS = 15_000;
 const MAX_HTML_BYTES = 2_000_000;
 const USER_AGENT = 'novus-jobs (https://github.com/novus-jobs)';
 
 export interface Candidate {
   readonly url: string;
-  readonly format: 'json' | 'rss';
+  readonly format: 'json' | 'rss' | 'embedded';
   readonly how: string;
   readonly count: number;
 }
@@ -23,6 +25,20 @@ const ATS: readonly { readonly shape: RegExp; readonly api: (slug: string) => st
   { shape: /apply\.workable\.com\/([A-Za-z0-9_-]+)/, name: 'Workable', api: (s) => `https://apply.workable.com/api/v1/widget/accounts/${s}` },
   { shape: /([A-Za-z0-9_-]+)\.teamtailor\.com/, name: 'Teamtailor', api: (s) => `https://${s}.teamtailor.com/jobs.rss` },
 ];
+
+const BOARDS: readonly { readonly name: string; readonly format: 'json' | 'rss'; readonly url: (slug: string) => string }[] = [
+  { name: 'Lever', format: 'json', url: (s) => `https://api.lever.co/v0/postings/${s}?mode=json` },
+  { name: 'Greenhouse', format: 'json', url: (s) => `https://boards-api.greenhouse.io/v1/boards/${s}/jobs?content=true` },
+  { name: 'Ashby', format: 'json', url: (s) => `https://api.ashbyhq.com/posting-api/job-board/${s}` },
+  { name: 'Recruitee', format: 'json', url: (s) => `https://${s}.recruitee.com/api/offers/` },
+  { name: 'Workable', format: 'json', url: (s) => `https://apply.workable.com/api/v1/widget/accounts/${s}` },
+  { name: 'SmartRecruiters', format: 'json', url: (s) => `https://api.smartrecruiters.com/v1/companies/${s}/postings` },
+  { name: 'Breezy', format: 'json', url: (s) => `https://${s}.breezy.hr/json` },
+  { name: 'Teamtailor', format: 'rss', url: (s) => `https://${s}.teamtailor.com/jobs.rss` },
+  { name: 'Personio', format: 'rss', url: (s) => `https://${s}.jobs.personio.de/xml` },
+];
+
+const MAX_SLUGS = 3;
 
 const SAME_ORIGIN_GUESSES = ['/api/jobs', '/api/positions', '/api/openings', '/api/vacancies', '/jobs.json'];
 
@@ -111,13 +127,50 @@ function atsIn(html: string): { url: string; how: string }[] {
   return found;
 }
 
+export function slugsOf(name: string): string[] {
+  const clean = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const words = clean.split(/[^a-z0-9]+/).filter(Boolean);
+  if (!words.length) return [];
+  return [...new Set([words.join(''), words.join('-'), words[0] ?? ''])]
+    .filter(Boolean)
+    .slice(0, MAX_SLUGS);
+}
+
+export async function searchByName(name: string): Promise<Discovery> {
+  const slugs = slugsOf(name);
+  if (!slugs.length) return { candidates: [], notes: ['Escribe el nombre de la empresa.'] };
+
+  const attempts = BOARDS.flatMap((board) => slugs.map((slug) => ({ board, slug })));
+  const found = await Promise.all(attempts.map(async ({ board, slug }) => {
+    const url = board.url(slug);
+    const how = `tablero de ${board.name} de "${slug}"`;
+    return board.format === 'rss' ? asFeedCandidate(url, how) : asJsonCandidate(url, how);
+  }));
+
+  const candidates = found.filter((c): c is Candidate => c !== null);
+  if (candidates.length === 0) {
+    return {
+      candidates: [],
+      notes: [
+        `No hay ningún tablero público a nombre de "${name.trim()}" en ${BOARDS.map((b) => b.name).join(', ')}.`,
+        'Puede que use otro sistema, que no tenga vacantes abiertas, o que su nombre en el tablero sea otro.',
+        'Si la encuentras a mano, pega aquí la dirección de su página de empleo y se intenta de nuevo.',
+      ],
+    };
+  }
+  return { candidates: candidates.sort((a, b) => b.count - a.count), notes: [] };
+}
+
 export async function discover(input: string): Promise<Discovery> {
   const notes: string[] = [];
+  const looksLikeAddress = /^https?:\/\//i.test(input) || (/\./.test(input) && !/\s/.test(input));
+  if (!looksLikeAddress) return searchByName(input);
+
   let target: URL;
   try {
-    target = new URL(input);
+    target = new URL(/^https?:\/\//i.test(input) ? input : `https://${input}`);
   } catch {
-    return { candidates: [], notes: ['Eso no es una URL. Tiene que empezar por https://'] };
+    return searchByName(input);
   }
   if (target.protocol !== 'https:' && target.hostname !== 'localhost') {
     return { candidates: [], notes: ['La dirección tiene que ser https.'] };
@@ -146,6 +199,15 @@ export async function discover(input: string): Promise<Discovery> {
   ];
 
   const candidates: Candidate[] = [];
+  const inPage = embeddedList(html);
+  if (inPage) {
+    candidates.push({
+      url: target.href,
+      format: 'embedded',
+      how: 'la página trae sus vacantes dentro, en JSON',
+      count: inPage.length,
+    });
+  }
   const seen = new Set<string>();
   for (const attempt of tried) {
     if (seen.has(attempt.url)) continue;

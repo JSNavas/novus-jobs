@@ -298,6 +298,45 @@ describe('DescribedSource', () => {
     assert.equal(post.url, null, 'mejor sin enlace que con uno que lleva a una página de error');
   });
 
+  it('EL CASO REAL (interfell/simera): las vacantes viajan dentro de la página, en JSON', async () => {
+    const payload = JSON.stringify({ 'routes/jobs.($jobId)': { jobs: [
+      { id: 10926, customJobTitle: 'Arquitecto Cloud', company: { name: 'Tocumulus' }, JobDescription: 'Diseñar arquitecturas en AWS y Azure para cargas empresariales.' },
+    ] } });
+    globalThis.fetch = (async () =>
+      new Response(`<html><body><script>window.__ctx = ${payload};</script></body></html>`, {
+        status: 200, headers: { 'content-type': 'text/html' },
+      })) as typeof fetch;
+
+    const post = await onePost(describedFrom({
+      name: 'interfell',
+      request: { url: 'https://interfell.simera.io/interfell/jobs', format: 'embedded' },
+      fields: {
+        list: null,
+        title: 'customJobTitle',
+        company: 'company.name',
+        description: 'JobDescription',
+        urlTemplate: 'https://interfell.simera.io/interfell/jobs/{id}',
+      },
+    }));
+
+    assert.equal(post.employer, 'Tocumulus');
+    assert.equal(post.url, 'https://interfell.simera.io/interfell/jobs/10926');
+    assert.match(post.text, /^Tocumulus busca: Arquitecto Cloud\n/);
+  });
+
+  it('una página sin ninguna lista dentro lo dice, en vez de devolver cero en silencio', async () => {
+    globalThis.fetch = (async () =>
+      new Response('<html><body>Sign In</body></html>', { status: 200 })) as typeof fetch;
+    await assert.rejects(
+      () => describedFrom({
+        name: 'x',
+        request: { url: 'https://x.test/jobs', format: 'embedded' },
+        fields: { list: null, title: 't', description: 'd' },
+      }).fetch(() => []),
+      /dentro de la página/,
+    );
+  });
+
   it('no pide sesión ni navegador: por eso una fuente descrita funciona el primer día', () => {
     const source = describedFrom(REMOTIVE);
     assert.equal(source.profileId, null);

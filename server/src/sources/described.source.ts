@@ -5,6 +5,7 @@ import {
   type SourceDescriptor,
 } from './descriptor.js';
 import { plainText } from './html.js';
+import { embeddedList } from './embedded.js';
 import { parseFeed } from './rss.js';
 import { OPEN_API_POLICY } from './policy.js';
 import type { FreshnessCheck, JobSource, PermalinkSelector, PostMetrics, RawPost } from './types.js';
@@ -213,7 +214,7 @@ export class DescribedSource implements JobSource {
     const response = await fetch(target, {
       method,
       headers: {
-        accept: format === 'rss' ? 'application/rss+xml, application/xml' : 'application/json',
+        accept: format === 'json' ? 'application/json' : 'text/html, application/rss+xml, application/xml',
         'user-agent': USER_AGENT,
         ...(body ? { 'content-type': 'application/json' } : {}),
         ...headers,
@@ -224,6 +225,17 @@ export class DescribedSource implements JobSource {
 
     if (!response.ok) {
       throw new Error(`${target.href} respondió ${response.status} ${response.statusText}`);
+    }
+
+    if (format === 'embedded') {
+      const list = embeddedList(await response.text());
+      if (!list) {
+        throw new Error(
+          `${target.href} no trae ninguna lista de vacantes dentro de la página. ` +
+          '¿Sigue dibujándose en el servidor?',
+        );
+      }
+      return list;
     }
 
     if (format === 'rss') {

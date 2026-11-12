@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "name": "interfell",
+  "label": "Interfell",
+  "homepage": "https://interfell.com",
+  "allowEmpty": true,
+  "request": {
+    "url": "https://interfell.simera.io/interfell/jobs",
+    "method": "GET",
+    "format": "embedded"
+  },
+  "fields": {
+    "list": null,
+    "title": "customJobTitle",
+    "company": "company.name",
+    "description": ["JobDescription", "responsibilities", "company.description"],
+    "urlTemplate": "https://interfell.simera.io/interfell/jobs/{id}",
+    "location": ["country", "workLocation"],
+    "postedAt": "createTime"
+  }
+}
