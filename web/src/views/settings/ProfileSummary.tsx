@@ -1,16 +1,21 @@
 import { useEffect, useState } from 'react';
-import { Box, Button, Stack, TextField, Typography } from '@mui/material';
-import { saveOnboardingStep, type OnboardingState } from '../../api/client';
+import {
+  Box, Button, Checkbox, FormControlLabel, MenuItem, Stack, TextField, Typography,
+} from '@mui/material';
+import { saveOnboardingStep, type CandidateProfile, type OnboardingState } from '../../api/client';
 import { AppAlert, AppChip } from '../../components/ui';
 import { distinctTech, hasTech, removeTech } from '../../distinctTech';
 import { t } from '../../i18n';
 
 const VISIBLE = 12;
 
-interface Lists {
+interface Draft {
   core: string[];
   stack: string[];
   cannotDo: string[];
+  english: CandidateProfile['english'];
+  geo: CandidateProfile['geo'];
+  modality: CandidateProfile['modality'];
 }
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -81,46 +86,55 @@ interface ProfileSummaryProps {
 const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
   const { profile, catalogue } = onboarding;
 
-  const initial = (): Lists => ({
+  const initial = (): Draft => ({
     core: [...profile.core],
     stack: [...profile.stack],
     cannotDo: [...profile.cannotDo],
+    english: { ...profile.english },
+    geo: { ...profile.geo },
+    modality: { ...profile.modality },
   });
 
-  const [lists, setLists] = useState<Lists>(initial);
+  const [lists, setLists] = useState<Draft>(initial);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { setLists(initial()); }, [profile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const dirty = (['core', 'stack', 'cannotDo'] as const)
-    .some((field) => lists[field].join('|') !== profile[field].join('|'));
+      .some((field) => lists[field].join('|') !== profile[field].join('|'))
+    || JSON.stringify(lists.english) !== JSON.stringify(profile.english)
+    || JSON.stringify(lists.geo) !== JSON.stringify(profile.geo)
+    || JSON.stringify(lists.modality) !== JSON.stringify(profile.modality);
 
-  const change = (field: keyof Lists, next: string[]): void => {
+  const change = (field: 'core' | 'stack' | 'cannotDo', next: string[]): void => {
     setLists((prev) => ({ ...prev, [field]: next }));
   };
 
   const save = (): void => {
     setSaving(true);
     setError(null);
-    saveOnboardingStep({ core: lists.core, stack: lists.stack, cannotDo: lists.cannotDo })
+    saveOnboardingStep({
+      core: lists.core,
+      stack: lists.stack,
+      cannotDo: lists.cannotDo,
+      english: lists.english,
+      geo: lists.geo,
+      modality: lists.modality,
+    })
       .then(() => onSaved(t('set.saved')))
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
       .finally(() => setSaving(false));
   };
 
-  const country = catalogue.countries.find((c) => c.code === profile.geo.country)?.label
-    ?? profile.geo.country
-    ?? '—';
+  const MODALITIES = [
+    { key: 'remoteGlobal', label: 'dash.criteria.remoteGlobal' },
+    { key: 'remoteHomeCountry', label: 'dash.criteria.remoteHome' },
+    { key: 'hybrid', label: 'dash.criteria.hybrid' },
+    { key: 'onsite', label: 'dash.criteria.onsite' },
+  ] as const;
 
-  const modality = [
-    profile.modality.remoteGlobal ? t('dash.criteria.remoteGlobal') : null,
-    profile.modality.remoteHomeCountry ? t('dash.criteria.remoteHome') : null,
-    profile.modality.hybrid ? t('dash.criteria.hybrid') : null,
-    profile.modality.onsite ? t('dash.criteria.onsite') : null,
-  ].filter(Boolean) as string[];
-
-  const editor = (field: keyof Lists, tone?: 'success' | 'warning') => (
+  const editor = (field: 'core' | 'stack' | 'cannotDo', tone?: 'success' | 'warning') => (
     <Editable
       items={lists[field]}
       tone={tone}
@@ -140,6 +154,140 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
 
       {error ? <Box mb={2}><AppAlert severity="error">{error}</AppAlert></Box> : null}
 
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
+        <Field label={t('set.profile.english')}>
+          <Stack spacing={1} alignItems="flex-start">
+            <TextField
+              size="small"
+              select
+              label={t('set.profile.level')}
+              value={lists.english.level}
+              onChange={(event) => setLists((prev) => ({
+                ...prev,
+                english: { ...prev.english, level: event.target.value as CandidateProfile['english']['level'] },
+              }))}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 140 }}
+            >
+              {catalogue.englishLevels.map((level) => (
+                <MenuItem key={level} value={level}>{level.toUpperCase()}</MenuItem>
+              ))}
+            </TextField>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={lists.english.filter}
+                  onChange={(event) => setLists((prev) => ({
+                    ...prev,
+                    english: { ...prev.english, filter: event.target.checked },
+                  }))}
+                />
+              }
+              label={t('set.profile.englishFilter')}
+            />
+          </Stack>
+        </Field>
+
+        <Field label={t('set.profile.where')}>
+          <Stack spacing={1.5} alignItems="flex-start">
+            <TextField
+              size="small"
+              select
+              label={t('set.profile.country')}
+              value={lists.geo.country}
+              onChange={(event) => setLists((prev) => ({
+                ...prev,
+                geo: { ...prev.geo, country: event.target.value },
+              }))}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 200 }}
+            >
+              {catalogue.countries.map((option) => (
+                <MenuItem key={option.code} value={option.code}>{option.label}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              size="small"
+              label={t('set.profile.city')}
+              value={lists.geo.city ?? ''}
+              onChange={(event) => setLists((prev) => ({
+                ...prev,
+                geo: { ...prev.geo, city: event.target.value.trim() === '' ? null : event.target.value },
+              }))}
+              helperText={t('set.profile.cityHelp')}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 200 }}
+            />
+            <Stack spacing={0.5} alignItems="flex-start">
+              <TextField
+                size="small"
+                label={t('set.profile.timezone')}
+                value={lists.geo.timezone}
+                onChange={(event) => setLists((prev) => ({
+                  ...prev,
+                  geo: { ...prev.geo, timezone: event.target.value.trim() },
+                }))}
+                helperText={t('set.profile.timezoneHelp')}
+                slotProps={{ inputLabel: { shrink: true } }}
+                sx={{ minWidth: 220 }}
+              />
+              <Button
+                size="small"
+                variant="text"
+                sx={{ alignSelf: 'flex-start' }}
+                onClick={() => setLists((prev) => ({
+                  ...prev,
+                  geo: {
+                    ...prev.geo,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                  },
+                }))}
+              >
+                {t('set.profile.timezoneMine')}
+              </Button>
+            </Stack>
+          </Stack>
+        </Field>
+
+        <Field label={t('set.profile.modality')}>
+          <Stack>
+            {MODALITIES.map((option) => (
+              <FormControlLabel
+                key={option.key}
+                control={
+                  <Checkbox
+                    size="small"
+                    checked={lists.modality[option.key]}
+                    onChange={(event) => setLists((prev) => ({
+                      ...prev,
+                      modality: { ...prev.modality, [option.key]: event.target.checked },
+                    }))}
+                  />
+                }
+                label={t(option.label)}
+              />
+            ))}
+          </Stack>
+        </Field>
+
+        <Field label={t('set.profile.localOut')}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                size="small"
+                checked={lists.geo.excludeLocalEmployers}
+                onChange={(event) => setLists((prev) => ({
+                  ...prev,
+                  geo: { ...prev.geo, excludeLocalEmployers: event.target.checked },
+                }))}
+              />
+            }
+            label={t('set.profile.localOut.on')}
+          />
+        </Field>
+      </Box>
+
       <Stack direction="row" spacing={1} mb={3}>
         <Button variant="contained" size="small" disabled={!dirty || saving} onClick={save}>
           {t('int.save')}
@@ -149,31 +297,7 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
         </Button>
       </Stack>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 2.5 }}>
-        <Field label={t('set.profile.english')}>
-          <Typography variant="body2">
-            {profile.english.level.toUpperCase()}
-            {' · '}
-            {t(profile.english.filter ? 'set.profile.englishFilter' : 'set.profile.englishFree')}
-          </Typography>
-        </Field>
 
-        <Field label={t('set.profile.where')}>
-          <Typography variant="body2">
-            {[country, profile.geo.city, profile.geo.timezone].filter(Boolean).join(' · ')}
-          </Typography>
-        </Field>
-
-        <Field label={t('set.profile.modality')}>
-          <Stack direction="row" spacing={0.75} flexWrap="wrap" useFlexGap>
-            {modality.map((item) => <AppChip key={item} label={item} />)}
-          </Stack>
-        </Field>
-
-        <Field label={t('set.profile.localOut')}>
-          <Typography variant="body2">{profile.geo.excludeLocalEmployers ? 'Sí' : 'No'}</Typography>
-        </Field>
-      </Box>
     </Box>
   );
 };
