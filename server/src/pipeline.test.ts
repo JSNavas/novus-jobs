@@ -27,6 +27,12 @@ const SEGURIDAD_DE_RED =
 const REMOTO_SOLO_ESPANA =
   'TECDATA ENGINEERING busca: Desarrollador/a Front-End Vue.js - Remoto\nUbicacion: Spain\nPostular: https://himalayas.app/companies/tecdata-engineering/jobs/desarrollador-a-front-end-vue-js-remoto\n\nEn TecData Engineering buscamos un/a Desarrollador/a Front-End Vue.js para un cliente del sector eCommerce.\nUbicacion: Madrid\nModalidad: Teletrabajo\nMinimo 3 anos de experiencia en desarrollo Front-End con Vue.js. Valorable experiencia con Node.js.';
 
+const HN_BERLIN =
+  'eventfirst busca: Senior Full-Stack Engineer | Berlin, Germany | REMOTE (CET) | Full-time | eventfirst.com\nHilo: Ask HN: Who is hiring? (November 2026)\nPostular: https://news.ycombinator.com/item?id=50341824\n\neventfirst | Senior Full-Stack Engineer | Berlin, Germany | REMOTE (CET) | Full-time. Buscamos alguien con Node.js, TypeScript y React para nuestro equipo.';
+
+const SQUARESPACE_JAVA =
+  'Squarespace busca: Staff Software Engineer, Revenue Systems\nPostular: https://weworkremotely.com/x\n\nSignificant experience with multiple programming languages (especially Java) and a broad range of tools like Springboot, hibernate, databases. Demonstrated experience leading system architecture for revenue platforms. 100% remote.';
+
 const SIN_STACK =
   'Buscamos Contador Senior 100% remoto para LATAM. Responsabilidades: conciliaciones, impuestos y cierres mensuales. Sueldo USD 2000. Postula en jobs@acme.com';
 
@@ -167,6 +173,20 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     assert.equal(job.locationKind, JobLocation.OtherCountry, 'el país lo dice el anuncio: no hay nada que revocar');
   });
 
+  it('EL CASO REAL (hackernews, 12 nov 2026): rescatar "no es oferta" no salta el filtro de ubicación', async () => {
+    const { judge } = fakeJudge(() => ({ isOffer: true, rejection: null }));
+    const result = await run([HN_BERLIN], judge);
+
+    assert.equal(result.outcome.accepted, 0, 'que sí sea una oferta no la vuelve trabajable desde Caracas');
+    assert.equal(result.outcome.rejected, 1);
+
+    const stored = jobs.list({
+      status: null, verdict: null, runId: null,
+      source: null, search: null, hasApply: null, limit: 10, offset: 0,
+    });
+    assert.equal(stored.items[0]!.verdict, JobVerdict.Rejected);
+  });
+
   it('lo descartado por el stack NO lo rescata el juez, ni aunque diga que sirve', async () => {
     const { judge, seen } = fakeJudge(() => ({ isOffer: true, rejection: null }));
     const result = await run([SIN_STACK], judge);
@@ -174,6 +194,14 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     assert.equal(result.outcome.accepted, 0, 'no se le pregunta por el stack, así que no opina');
     assert.equal(result.outcome.rejected, 1);
     assert.deepEqual(seen, [], 'y ni se le manda: sería pagar tokens por una respuesta que se ignora');
+  });
+
+  it('EL CASO REAL (weworkremotely, 12 nov 2026): un rescate no entra sin una tecnología del núcleo', async () => {
+    const { judge } = fakeJudge(() => ({ isOffer: true, rejection: null }));
+    const result = await run([SQUARESPACE_JAVA], judge);
+
+    assert.equal(result.outcome.accepted, 0, 'el veto cayó, pero sigue sin haber nada suyo en el anuncio');
+    assert.equal(result.outcome.rejected, 1);
   });
 
   it('el juez sigue pudiendo vetar lo que las reglas aceptaron', async () => {

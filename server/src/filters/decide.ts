@@ -4,7 +4,7 @@ import { adBody, cleanLinkedInNoise, extractApplyUrl, extractEmail, isAggregator
 import { classifyLocation, isLocalEmployer, type HomeGeo } from './location.js';
 import { findCountry } from './countries.js';
 import { englishDemand, hasSeveralOpenings, isOtherEcosystem, isOwnRole, unknownRequiredTech } from './requirements.js';
-import { englishRank, type CandidateProfile, type Language } from '../profile/types.js';
+import { englishRank, type CandidateProfile, type Language, type ModalityPreference } from '../profile/types.js';
 import { t } from '../i18n/index.js';
 
 export interface Offer {
@@ -100,14 +100,21 @@ function homeOf(profile: CandidateProfile): HomeGeo {
   return { country: findCountry(profile.geo.country), city: profile.geo.city };
 }
 
-function rejectByLocation(ctx: Context, profile: CandidateProfile): Verdict | null {
-  const { modality } = profile;
-  if (ctx.location === JobLocation.OtherCountry) return reject(ctx, { code: 'reject.otherCountry', params: {} }, 'location');
-  if (ctx.location === JobLocation.Onsite && !modality.onsite) return reject(ctx, { code: 'reject.onsite', params: {} }, 'location');
-  if (ctx.location === JobLocation.Hybrid && !modality.hybrid) return reject(ctx, { code: 'reject.hybrid', params: {} }, 'location');
-  if (ctx.location === JobLocation.HomeCountry && !modality.remoteHomeCountry) return reject(ctx, { code: 'reject.homeCountryOnly', params: {} }, 'location');
-  if (ctx.location === JobLocation.Global && !modality.remoteGlobal) return reject(ctx, { code: 'reject.globalRemote', params: {} }, 'location');
+export function locationRejectionCode(
+  location: JobLocation,
+  modality: ModalityPreference,
+): RejectionCode | null {
+  if (location === JobLocation.OtherCountry) return 'reject.otherCountry';
+  if (location === JobLocation.Onsite && !modality.onsite) return 'reject.onsite';
+  if (location === JobLocation.Hybrid && !modality.hybrid) return 'reject.hybrid';
+  if (location === JobLocation.HomeCountry && !modality.remoteHomeCountry) return 'reject.homeCountryOnly';
+  if (location === JobLocation.Global && !modality.remoteGlobal) return 'reject.globalRemote';
   return null;
+}
+
+function rejectByLocation(ctx: Context, profile: CandidateProfile): Verdict | null {
+  const code = locationRejectionCode(ctx.location, profile.modality);
+  return code ? reject(ctx, { code, params: {} }, 'location') : null;
 }
 
 function rejectByVetoes(ctx: Context, ad: string, profile: CandidateProfile): Verdict | null {

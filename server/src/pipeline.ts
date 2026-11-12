@@ -2,7 +2,8 @@ import type { JobsRepository, NewJob } from './db/jobs.repository.js';
 import type { RunOutcome } from './db/runs.repository.js';
 import { t } from './i18n/index.js';
 import type { Language } from './profile/types.js';
-import { decideShipping, fingerprint, locationLabel, storedText, type CandidateProfile, type Offer, type RejectedBy, type Verdict } from './filters/decide.js';
+import { matchStack } from './filters/offer.js';
+import { decideShipping, fingerprint, locationLabel, locationRejectionCode, storedText, type CandidateProfile, type Offer, type RejectedBy, type Verdict } from './filters/decide.js';
 import { companyName, offerTitle, roleOnly, stripAuthorHeaders } from './filters/headline.js';
 import type { LlmJudge, JudgeVerdict } from './filters/judge.js';
 import { classifyFailure, failureMessage, worstFailure } from './sources/failure.js';
@@ -84,7 +85,7 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
     const judgment = judged.get(fingerprint(offer.text));
     const language = deps.profile.language;
     const verdict = rejectIfStale(
-      applyJudgment(ruleVerdict, judgment, language), metrics, now, deps.maxAgeDays, language,
+      applyJudgment(ruleVerdict, judgment, language, deps.profile, offer.text), metrics, now, deps.maxAgeDays, language,
     );
     const job = toNewJob(
       source.name,
@@ -166,7 +167,13 @@ function rejectedByOf(judgment: JudgeVerdict): RejectedBy {
   return judgment.rejection === 'onsite' || judgment.rejection === 'other-country' ? 'location' : 'veto';
 }
 
-function applyJudgment(rules: Verdict, judgment: JudgeVerdict | undefined, language: Language): Verdict {
+function applyJudgment(
+  rules: Verdict,
+  judgment: JudgeVerdict | undefined,
+  language: Language,
+  profile: CandidateProfile,
+  text: string,
+): Verdict {
   if (!judgment) return rules;
 
   if (!judgment.isOffer || judgment.rejection) {
@@ -193,13 +200,17 @@ function applyJudgment(rules: Verdict, judgment: JudgeVerdict | undefined, langu
   if (rules.rejectedBy === 'stack') return rules;
   if (rules.rejectedBy === 'location' && rules.location === JobLocation.OtherCountry) return rules;
 
+  const location = rules.rejectedBy === 'location' ? JobLocation.Unknown : rules.location;
+  if (locationRejectionCode(location, profile.modality)) return rules;
+  if (profile.core.length && !matchStack(text, profile.core).length) return rules;
+
   return {
     ...refined,
     accepted: true,
     reason: null,
     rejectedBy: null,
     uncertain: true,
-    location: rules.rejectedBy === 'location' ? JobLocation.Unknown : rules.location,
+    location,
   };
 }
 
