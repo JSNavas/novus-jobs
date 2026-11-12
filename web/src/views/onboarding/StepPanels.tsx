@@ -4,10 +4,15 @@ import {
   Switch, TextField, Typography,
 } from '@mui/material';
 import {
-  listIntegrations, readCv, updateIntegrationEnabled,
-  type CvReading, type EnglishLevel, type Integration, type OnboardingState,
+  getSettings, listIntegrations, readCv, updateIntegrationEnabled, updateSettings,
+  type CvReading, type EnglishLevel, type Integration, type OnboardingState, type Settings,
 } from '../../api/client';
+
+/** Los topes del formulario al que se pega el párrafo. Los valida el servidor. */
+const MIN_MOTIVATION_CHARS = 50;
+const MAX_MOTIVATION_CHARS = 1000;
 import { AppAlert, AppChip } from '../../components/ui';
+import { HoursEditor, IntervalEditor } from '../integrations/IntegrationsPage';
 import { t, type TranslationKey } from '../../i18n';
 import type { Draft } from './steps';
 
@@ -363,28 +368,41 @@ export const SourcesStep = () => {
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
   }, []);
 
+  const replace = (saved: Integration): void => {
+    setIntegrations((prev) => prev?.map((i) => (i.name === saved.name ? saved : i)) ?? null);
+  };
+
   const toggle = (integration: Integration, enabled: boolean): void => {
     updateIntegrationEnabled(integration.name, enabled)
-      .then((saved) => setIntegrations((prev) => prev?.map((i) => (i.name === saved.name ? saved : i)) ?? null))
+      .then(replace)
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
   };
 
   return (
     <Stack spacing={2}>
-      <Typography variant="body2" color="textSecondary">
-        {t('src.help')}
-      </Typography>
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
       {!integrations && !error ? <CircularProgress size={20} /> : null}
       {integrations?.map((integration) => (
-        <Stack key={integration.name} direction="row" spacing={1.5} alignItems="center">
-          <Switch
-            checked={integration.enabled}
-            onChange={(event) => toggle(integration, event.target.checked)}
-          />
-          <Typography variant="body2">{integration.label}</Typography>
-          {integration.needsLogin ? <AppChip label={t('src.needsLogin')} tone="neutral" /> : null}
-        </Stack>
+        <Box key={integration.name}>
+          <Stack direction="row" spacing={1.5} alignItems="center">
+            <Switch
+              checked={integration.enabled}
+              onChange={(event) => toggle(integration, event.target.checked)}
+            />
+            <Typography variant="body2">{integration.label}</Typography>
+            {integration.needsLogin ? <AppChip label={t('src.needsLogin')} tone="neutral" /> : null}
+          </Stack>
+          {/* El ritmo de la que está encendida, con el mismo editor que la
+              página de Integraciones: cuándo se lee es parte de darla de alta,
+              no algo que se descubra después. */}
+          {integration.enabled ? (
+            <Box sx={{ pl: 6, pt: 1 }}>
+              {integration.schedule.kind === 'every-minutes'
+                ? <IntervalEditor integration={integration} onSaved={replace} />
+                : <HoursEditor integration={integration} onSaved={replace} />}
+            </Box>
+          ) : null}
+        </Box>
       ))}
       {integrations?.some((i) => i.enabled && i.needsLogin) ? (
         <AppAlert severity="info">
@@ -395,7 +413,122 @@ export const SourcesStep = () => {
   );
 };
 
-/* ── Paso 6: listo ───────────────────────────────────────────────────────── */
+/* ── Paso 6: la candidatura y los límites ────────────────────────────────── */
+
+const MONTH_OPTIONS = [1, 2, 3, 6, 12, 24];
+
+/**
+ * LO QUE SE PUEDE DEJAR COMO ESTÁ, pero que conviene mirar una vez.
+ *
+ * El párrafo de motivación viene con un ejemplo y la idea es que lo reescriba:
+ * es lo único de todo el alta que va a leer una persona al otro lado, y un
+ * párrafo por defecto se reconoce a la legua.
+ *
+ * Escribe directo en los ajustes del servidor, no en el borrador del perfil:
+ * estos tres no son del perfil —son de la búsqueda y de la pantalla— y ya
+ * tienen su sitio en Configuración. Duplicarlos en el borrador sería dos
+ * fuentes para el mismo dato.
+ */
+export const LimitsStep = () => {
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [template, setTemplate] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    getSettings()
+      .then((loaded) => { setSettings(loaded); setTemplate(loaded.motivationTemplate); })
+      .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
+  }, []);
+
+  const save = (changes: Parameters<typeof updateSettings>[0]): void => {
+    setSaving(true);
+    setError(null);
+    updateSettings(changes)
+      .then((next) => { setSettings(next); if (changes.motivationTemplate !== undefined) setTemplate(next.motivationTemplate); })
+      .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)))
+      .finally(() => setSaving(false));
+  };
+
+  const length = template.trim().length;
+  const tooShort = length > 0 && length < MIN_MOTIVATION_CHARS;
+  const tooLong = length > MAX_MOTIVATION_CHARS;
+
+  return (
+    <Stack spacing={3}>
+      <Box>
+        <Typography variant="subtitle2" mb={0.5}>{t('limits.motivation')}</Typography>
+        <Typography variant="caption" color="textSecondary" display="block" mb={1.5}>
+          {t('limits.motivation.help')}
+        </Typography>
+        <TextField
+          multiline
+          minRows={8}
+          fullWidth
+          value={template}
+          disabled={settings === null}
+          onChange={(event) => setTemplate(event.target.value)}
+          onBlur={() => {
+            if (settings && template !== settings.motivationTemplate && !tooShort && !tooLong) {
+              save({ motivationTemplate: template });
+            }
+          }}
+          error={tooShort || tooLong}
+          helperText={
+            tooLong
+              ? t('set.chars.tooLong', { length, max: MAX_MOTIVATION_CHARS })
+              : tooShort
+                ? t('set.chars.tooShort', { length, min: MIN_MOTIVATION_CHARS })
+                : t('set.chars.ok', { length })
+          }
+        />
+      </Box>
+
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+        <Box>
+          <Typography variant="subtitle2" mb={0.5}>{t('limits.maxAge')}</Typography>
+          <Typography variant="caption" color="textSecondary" display="block" mb={1.5}>
+            {t('limits.maxAge.help')}
+          </Typography>
+          <TextField
+            select
+            size="small"
+            value={settings?.maxAgeMonths ?? 3}
+            disabled={settings === null || saving}
+            onChange={(event) => save({ maxAgeMonths: Number(event.target.value) })}
+            sx={{ minWidth: 180 }}
+          >
+            {MONTH_OPTIONS.map((option) => (
+              <MenuItem key={option} value={option}>{t('limits.months', { count: option })}</MenuItem>
+            ))}
+          </TextField>
+        </Box>
+        <Box>
+          <Typography variant="subtitle2" mb={0.5}>{t('limits.focus')}</Typography>
+          <Typography variant="caption" color="textSecondary" display="block" mb={1.5}>
+            {t('limits.focus.help')}
+          </Typography>
+          <TextField
+            select
+            size="small"
+            value={settings?.focusWindowMonths ?? 6}
+            disabled={settings === null || saving}
+            onChange={(event) => save({ focusWindowMonths: Number(event.target.value) })}
+            sx={{ minWidth: 180 }}
+          >
+            {MONTH_OPTIONS.map((option) => (
+              <MenuItem key={option} value={option}>{t('limits.months', { count: option })}</MenuItem>
+            ))}
+          </TextField>
+        </Box>
+      </Stack>
+
+      {error ? <AppAlert severity="error">{error}</AppAlert> : null}
+    </Stack>
+  );
+};
+
+/* ── Paso 7: listo ───────────────────────────────────────────────────────── */
 
 export const DoneStep = ({ draft }: PanelProps) => (
   <Stack spacing={2}>

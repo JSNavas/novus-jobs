@@ -1,8 +1,10 @@
 import type { FastifyInstance } from 'fastify';
-import { MAX_AGE_MONTHS_KEY, MOTIVATION_TEMPLATE_KEY, type SettingsRepository } from '../db/settings.repository.js';
 import {
-  DEFAULT_MAX_AGE_MONTHS, defaultMotivationTemplate, MAX_MAX_AGE_MONTHS, MAX_MOTIVATION_CHARS,
-  MIN_MAX_AGE_MONTHS,
+  FOCUS_WINDOW_MONTHS_KEY, MAX_AGE_MONTHS_KEY, MOTIVATION_TEMPLATE_KEY, type SettingsRepository,
+} from '../db/settings.repository.js';
+import {
+  DEFAULT_FOCUS_MONTHS, DEFAULT_MAX_AGE_MONTHS, defaultMotivationTemplate, MAX_FOCUS_MONTHS,
+  MAX_MAX_AGE_MONTHS, MAX_MOTIVATION_CHARS, MIN_FOCUS_MONTHS, MIN_MAX_AGE_MONTHS,
 } from '../profile/motivation.js';
 import type { Language } from '../profile/types.js';
 
@@ -40,6 +42,7 @@ export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutes
     motivationTemplate: motivationTemplate(),
     defaultMotivationTemplate: fallbackTemplate(),
     maxAgeMonths: readMaxAgeMonths(deps.settings),
+    focusWindowMonths: readFocusWindowMonths(deps.settings),
   }));
 
   /**
@@ -51,7 +54,27 @@ export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutes
    * vacío no es un error: significa «vuelve a la de por defecto».
    */
   app.put('/api/settings', (request, reply) => {
-    const body = request.body as { motivationTemplate?: unknown; maxAgeMonths?: unknown } | undefined;
+    const body = request.body as {
+      motivationTemplate?: unknown; maxAgeMonths?: unknown; focusWindowMonths?: unknown;
+    } | undefined;
+
+    // La ventana del Enfoque, igual que la antigüedad: se puede mandar sola.
+    if (body?.focusWindowMonths !== undefined) {
+      const months = Number(body.focusWindowMonths);
+      if (!Number.isInteger(months) || months < MIN_FOCUS_MONTHS || months > MAX_FOCUS_MONTHS) {
+        return reply.code(400).send({
+          error: `la ventana del Enfoque tiene que ser un número entero entre ${MIN_FOCUS_MONTHS} y ${MAX_FOCUS_MONTHS} meses`,
+        });
+      }
+      deps.settings.set(FOCUS_WINDOW_MONTHS_KEY, String(months));
+      if (body.motivationTemplate === undefined && body.maxAgeMonths === undefined) {
+        return {
+          focusWindowMonths: months,
+          maxAgeMonths: readMaxAgeMonths(deps.settings),
+          motivationTemplate: motivationTemplate(),
+        };
+      }
+    }
 
     // La antigüedad va por separado: se puede cambiar una cosa sin mandar la
     // otra, que es como la pantalla las edita.
@@ -64,7 +87,11 @@ export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutes
       }
       deps.settings.set(MAX_AGE_MONTHS_KEY, String(months));
       if (body.motivationTemplate === undefined) {
-        return { maxAgeMonths: months, motivationTemplate: motivationTemplate() };
+        return {
+          maxAgeMonths: months,
+          motivationTemplate: motivationTemplate(),
+          focusWindowMonths: readFocusWindowMonths(deps.settings),
+        };
       }
     }
 
@@ -76,7 +103,11 @@ export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutes
     const template = value.trim();
     if (!template) {
       deps.settings.set(MOTIVATION_TEMPLATE_KEY, fallbackTemplate());
-      return { motivationTemplate: fallbackTemplate(), maxAgeMonths: readMaxAgeMonths(deps.settings) };
+      return {
+        motivationTemplate: fallbackTemplate(),
+        maxAgeMonths: readMaxAgeMonths(deps.settings),
+        focusWindowMonths: readFocusWindowMonths(deps.settings),
+      };
     }
     if (template.length < MIN_MOTIVATION_CHARS) {
       return reply.code(400).send({
@@ -89,7 +120,11 @@ export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutes
       });
     }
     deps.settings.set(MOTIVATION_TEMPLATE_KEY, template);
-    return { motivationTemplate: template, maxAgeMonths: readMaxAgeMonths(deps.settings) };
+    return {
+      motivationTemplate: template,
+      maxAgeMonths: readMaxAgeMonths(deps.settings),
+      focusWindowMonths: readFocusWindowMonths(deps.settings),
+    };
   });
 }
 
@@ -104,4 +139,12 @@ export function readMaxAgeMonths(settings: SettingsRepository): number {
   return Number.isInteger(stored) && stored >= MIN_MAX_AGE_MONTHS && stored <= MAX_MAX_AGE_MONTHS
     ? stored
     : DEFAULT_MAX_AGE_MONTHS;
+}
+
+/** La ventana guardada del Enfoque, o la de fábrica. */
+export function readFocusWindowMonths(settings: SettingsRepository): number {
+  const stored = Number(settings.get(FOCUS_WINDOW_MONTHS_KEY));
+  return Number.isInteger(stored) && stored >= MIN_FOCUS_MONTHS && stored <= MAX_FOCUS_MONTHS
+    ? stored
+    : DEFAULT_FOCUS_MONTHS;
 }

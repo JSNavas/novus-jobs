@@ -15,6 +15,13 @@ import {
 } from './scheduleEditor';
 
 /**
+ * Los dos editores de horario se exportan porque el ALTA los usa tal cual: el
+ * ritmo se elige ahí, en el paso de plataformas, y mantener dos editores —uno
+ * para el alta y otro para esta página— sería mantener dos sitios donde el
+ * mismo suelo de minutos puede acabar diciendo cosas distintas.
+ */
+
+/**
  * INTEGRACIONES — una tarjeta por plataforma, y ninguna escrita a mano.
  *
  * La lista sale de `/api/integrations`, que son TODAS las que el servidor
@@ -31,12 +38,12 @@ import {
 
 const POLL_INTERVAL_MS = 30_000;
 
-interface CardProps {
+export interface CardProps {
   integration: Integration;
   onSaved: (next: Integration) => void;
 }
 
-const IntervalEditor = ({ integration, onSaved }: CardProps) => {
+export const IntervalEditor = ({ integration, onSaved }: CardProps) => {
   const current = integration.schedule.kind === 'every-minutes' ? integration.schedule.minutes : 60;
   const [minutes, setMinutes] = useState(String(current));
   const [saving, setSaving] = useState(false);
@@ -99,7 +106,7 @@ const IntervalEditor = ({ integration, onSaved }: CardProps) => {
   );
 };
 
-const HoursEditor = ({ integration, onSaved }: CardProps) => {
+export const HoursEditor = ({ integration, onSaved }: CardProps) => {
   const current = integration.schedule.kind === 'configured-hours' ? integration.schedule.hours : [];
   const [hours, setHours] = useState<number[]>(current);
   const [saving, setSaving] = useState(false);

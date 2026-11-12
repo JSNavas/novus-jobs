@@ -9,7 +9,7 @@ import {
 } from '../../api/client';
 import { AppAlert, BlankCard } from '../../components/ui';
 import { setLanguage, t } from '../../i18n';
-import { CvStep, DoneStep, EnglishStep, PlaceStep, SourcesStep, StackStep } from './StepPanels';
+import { CvStep, DoneStep, EnglishStep, LimitsStep, PlaceStep, SourcesStep, StackStep } from './StepPanels';
 import { applyReading, blockingError, draftFrom, STEPS, type Draft } from './steps';
 
 /**
@@ -155,7 +155,8 @@ const WelcomePage = () => {
           {step === 2 ? <EnglishStep {...panel} /> : null}
           {step === 3 ? <PlaceStep {...panel} /> : null}
           {step === 4 ? <SourcesStep /> : null}
-          {step === 5 ? <DoneStep {...panel} /> : null}
+          {step === 5 ? <LimitsStep /> : null}
+          {step === 6 ? <DoneStep {...panel} /> : null}
 
           {error ? <Box mt={3}><AppAlert severity="error">{error}</AppAlert></Box> : null}
 

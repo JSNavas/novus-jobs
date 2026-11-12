@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, LinearProgress, MenuItem, Stack, TextField, Typography } from '@mui/material';
-import { getFocus, markFocusSeen, type Focus, type FocusTopic } from '../../api/client';
+import { getFocus, getSettings, markFocusSeen, type Focus, type FocusTopic } from '../../api/client';
 import { t } from '../../i18n';
 import { AppAlert, AppChip, BlankCard, PageContainer } from '../../components/ui';
 
@@ -46,9 +46,22 @@ const WINDOWS = [3, 6, 12, 24];
 const FocusPage = () => {
   const [focus, setFocus] = useState<Focus | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [months, setMonths] = useState(6);
+  /**
+   * `null` mientras no se sabe con qué ventana abrir: la eligió el usuario en
+   * el alta y vive en los ajustes. Sin esta espera, la página pediría el
+   * Enfoque con 6 meses y lo volvería a pedir un instante después con los
+   * suyos — dos peticiones y un parpadeo de datos que no son los que pidió.
+   */
+  const [months, setMonths] = useState<number | null>(null);
 
   useEffect(() => {
+    getSettings()
+      .then((settings) => setMonths((current) => current ?? settings.focusWindowMonths))
+      .catch(() => setMonths((current) => current ?? 6));
+  }, []);
+
+  useEffect(() => {
+    if (months === null) return;
     getFocus(months)
       .then(setFocus)
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
@@ -97,7 +110,7 @@ const FocusPage = () => {
                 select
                 size="small"
                 label={t('focus.window')}
-                value={months}
+                value={months ?? ''}
                 onChange={(event) => setMonths(Number(event.target.value))}
                 sx={{ minWidth: 160 }}
               >

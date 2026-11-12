@@ -251,7 +251,7 @@ export const es = {
   'wiz.step.where': 'Dónde',
   'wiz.step.where.hint': 'Desde dónde buscas y qué modalidades aceptas.',
   'wiz.step.platforms': 'Plataformas',
-  'wiz.step.platforms.hint': 'De dónde salen las ofertas. Se pueden cambiar después en Integraciones.',
+  'wiz.step.platforms.hint': 'De dónde salen las ofertas y cada cuánto se lee cada una. Todo esto se cambia después en Integraciones.',
   'wiz.step.done': 'Listo',
   'wiz.step.done.hint': 'Lo que queda tiene valores por defecto: puedes afinarlo cuando quieras.',
   'wiz.needCore': 'Elige al menos una tecnología de tu núcleo. Sin ninguna, la búsqueda descartaría todo lo que encuentre.',
@@ -375,4 +375,15 @@ export const es = {
   'locale': 'es-ES',
   'card.apply': 'Postularse',
   'card.composeGmail': 'Redactar en Gmail',
+
+  // ── El alta: la candidatura y los límites ───────────────────────────────
+  'wiz.step.limits': 'Tu candidatura',
+  'wiz.step.limits.hint': 'El párrafo con el que te postulas y hasta dónde mira la búsqueda. Todo esto trae un valor por defecto: puedes dejarlo como está y afinarlo cuando quieras.',
+  'limits.motivation': 'Tu párrafo de motivación',
+  'limits.motivation.help': 'Lo que copia el botón de cada oferta para pegarlo en el «¿por qué te interesa trabajar aquí?». Viene uno de ejemplo: cámbialo por el tuyo, con tus palabras — se nota cuando no lo son. Los huecos {puesto}, {empresa} y {tecnologias} los rellena cada oferta.',
+  'limits.maxAge': 'Antigüedad máxima de una vacante',
+  'limits.maxAge.help': 'Más vieja que esto no entra. Escribirle a una oferta de hace un año, con cientos de postulaciones encima, es tirar el tiempo — y entierra la de ayer.',
+  'limits.focus': 'Ventana del Enfoque',
+  'limits.focus.help': 'Con cuánto pasado se calcula lo que piden las vacantes. No es lo mismo que la antigüedad: aquella decide qué se guarda, esta con cuánto de lo guardado se mira el mercado.',
+  'limits.months': '{count} meses',
 } as const;

@@ -246,7 +246,7 @@ export const en: Record<keyof typeof es, string> = {
   'wiz.step.where': 'Where',
   'wiz.step.where.hint': 'Where you search from and which arrangements you accept.',
   'wiz.step.platforms': 'Platforms',
-  'wiz.step.platforms.hint': 'Where the postings come from. You can change this later in Integrations.',
+  'wiz.step.platforms.hint': 'Where the postings come from and how often each one is read. All of it can be changed later in Integrations.',
   'wiz.step.done': 'Done',
   'wiz.step.done.hint': 'What is left has defaults: you can fine-tune it whenever you want.',
   'wiz.needCore': 'Pick at least one technology for your core. With none, the search would discard everything it finds.',
@@ -370,4 +370,15 @@ export const en: Record<keyof typeof es, string> = {
   'locale': 'en-GB',
   'card.apply': 'Apply',
   'card.composeGmail': 'Compose in Gmail',
+
+  // ── El alta: la candidatura y los límites ───────────────────────────────
+  'wiz.step.limits': 'Your application',
+  'wiz.step.limits.hint': 'The paragraph you apply with and how far back the search looks. All of it has a default: you can leave it as is and fine-tune it whenever you want.',
+  'limits.motivation': 'Your cover paragraph',
+  'limits.motivation.help': 'What the button on each posting copies, to paste into the “why do you want to work here?” box. There is an example one: replace it with yours, in your words — it shows when they are not. The blanks {puesto}, {empresa} and {tecnologias} are filled in per posting.',
+  'limits.maxAge': 'Maximum age of a posting',
+  'limits.maxAge.help': 'Older than this does not get in. Writing to a year-old ad with hundreds of applicants is time thrown away — and it buries yesterday’s.',
+  'limits.focus': 'Focus window',
+  'limits.focus.help': 'How much history the market analysis uses. Not the same as the maximum age: that one decides what gets saved, this one how much of what is saved gets looked at.',
+  'limits.months': '{count} months',
 };

@@ -24,6 +24,7 @@ export const STEPS: readonly StepDefinition[] = [
   { label: 'wiz.step.english', hint: 'wiz.step.english.hint', optional: true },
   { label: 'wiz.step.where', hint: 'wiz.step.where.hint', optional: true },
   { label: 'wiz.step.platforms', hint: 'wiz.step.platforms.hint', optional: true },
+  { label: 'wiz.step.limits', hint: 'wiz.step.limits.hint', optional: true },
   { label: 'wiz.step.done', hint: 'wiz.step.done.hint', optional: true },
 ];
 

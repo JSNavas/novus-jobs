@@ -42,3 +42,13 @@ export const MAX_AGE_MONTHS_KEY = 'vacancyMaxAgeMonths';
  * resaltar lo que apareció desde la última vez. Ver `analysis/news.ts`.
  */
 export const FOCUS_SEEN_KEY = 'focusSeen';
+
+/**
+ * Con cuántos meses de pasado se mira el Enfoque, POR DEFECTO.
+ *
+ * No es la antigüedad máxima de `MAX_AGE_MONTHS_KEY`: aquella decide qué se
+ * guarda, y esta con cuánto de lo ya guardado se calcula lo que piden las
+ * vacantes. La pantalla de Enfoque lo sigue cambiando sobre la marcha; esto es
+ * con qué valor abre, y se elige en el alta.
+ */
+export const FOCUS_WINDOW_MONTHS_KEY = 'focusWindowMonths';

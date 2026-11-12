@@ -170,6 +170,8 @@ export interface Settings {
   defaultMotivationTemplate: string;
   /** Antigüedad máxima de una vacante para ENTRAR. El filtro de la búsqueda. */
   maxAgeMonths: number;
+  /** Con cuántos meses de pasado abre el Enfoque. */
+  focusWindowMonths: number;
 }
 
 /** Desde qué cuenta escribe él, y con qué párrafo se postula. */
@@ -178,7 +180,9 @@ export function getSettings(): Promise<Settings> {
 }
 
 /** Guarda la plantilla. Con el texto vacío el servidor restituye la de fábrica. */
-export function updateSettings(changes: { motivationTemplate?: string; maxAgeMonths?: number }): Promise<Settings> {
+export function updateSettings(
+  changes: { motivationTemplate?: string; maxAgeMonths?: number; focusWindowMonths?: number },
+): Promise<Settings> {
   return request<Settings>('/settings', {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
