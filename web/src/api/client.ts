@@ -162,7 +162,6 @@ export function updateSettings(
 ): Promise<Settings> {
   return request<Settings>('/settings', {
     method: 'PUT',
-    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(changes),
   });
 }
@@ -193,7 +192,6 @@ export function listIntegrations(): Promise<Integration[]> {
 export function updateIntegrationEnabled(name: string, enabled: boolean): Promise<Integration> {
   return request<Integration>(`/integrations/${name}/enabled`, {
     method: 'PUT',
-    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ enabled }),
   });
 }
@@ -204,7 +202,6 @@ export function updateIntegrationSchedule(
 ): Promise<Integration> {
   return request<Integration>(`/integrations/${name}/schedule`, {
     method: 'PUT',
-    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(schedule),
   });
 }

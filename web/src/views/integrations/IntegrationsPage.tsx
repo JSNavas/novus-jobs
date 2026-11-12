@@ -189,10 +189,15 @@ const IntegrationCard = ({ integration, onSaved }: CardProps) => {
   const off = !integration.enabled;
   const kind = integration.schedule.kind;
 
+  const [kindError, setKindError] = useState<string | null>(null);
+
   const switchKind = (mode: 'every-minutes' | 'configured-hours'): void => {
     if (mode === kind) return;
+    setKindError(null);
     const body = mode === 'every-minutes' ? { minutes: 360 } : { hours: [9, 13, 18] };
-    updateIntegrationSchedule(integration.name, body).then(onSaved).catch(() => undefined);
+    updateIntegrationSchedule(integration.name, body)
+      .then(onSaved)
+      .catch((cause: unknown) => setKindError(cause instanceof Error ? cause.message : String(cause)));
   };
 
   return (
@@ -251,6 +256,8 @@ const IntegrationCard = ({ integration, onSaved }: CardProps) => {
               {t('int.mode.hours')}
             </ToggleButton>
           </ToggleButtonGroup>
+
+          {kindError ? <Box mb={2}><AppAlert severity="error">{kindError}</AppAlert></Box> : null}
 
           {kind === 'every-minutes'
             ? <IntervalEditor integration={integration} onSaved={onSaved} />
