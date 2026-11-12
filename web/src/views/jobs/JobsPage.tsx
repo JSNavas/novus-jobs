@@ -1,16 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
 import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
-import { plural, t } from '../../i18n';
-import { PAGE_SIZE, startRun, updateJobStatus, type JobQuery } from '../../api/client';
-import { AppAlert, AppChip, AppPagination, AppSnackbar, PageContainer } from '../../components/ui';
+import { t } from '../../i18n';
+import {
+  listIntegrations, PAGE_SIZE, updateJobStatus, type Integration, type JobQuery,
+} from '../../api/client';
+import { AppAlert, AppPagination, AppSnackbar, PageContainer } from '../../components/ui';
 import { JobStatus, type Job } from '../../types';
 import JobCard from './JobCard';
 import { viewByPath, emptyOf, subtitleOf, titleOf } from './inbox';
 import { nextSearchSentence } from './scheduleText';
-import JobFilters, { type FilterValues } from './JobFilters';
+import { IconRefresh } from '@tabler/icons-react';
+import JobFilters, { sinceOfWindow, type FilterValues } from './JobFilters';
 import LastRunAlert from './LastRunAlert';
-import StatsRow from './StatsRow';
 import { useDashboardData } from './useDashboardData';
 
 interface Notice {
@@ -18,14 +20,12 @@ interface Notice {
   severity: 'success' | 'error';
 }
 
-const newCountText = (count: number): string => plural(count, 'jobs.newCount.one', 'jobs.newCount.many');
-
 const errorMessage = (cause: unknown): string => (cause instanceof Error ? cause.message : t('run.unknownError'));
 
 const JobsPage = () => {
   const view = viewByPath(useLocation().pathname);
-  const [filters, setFilters] = useState<FilterValues>({ q: '', hasApply: false });
-  const [starting, setStarting] = useState(false);
+  const [filters, setFilters] = useState<FilterValues>({ q: '', hasApply: false, source: 'all', date: 'all' });
+  const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -36,6 +36,8 @@ const JobsPage = () => {
     () => ({
       status: view.status ?? undefined,
       q: filters.q.trim() || undefined,
+      source: filters.source === 'all' ? undefined : filters.source,
+      since: sinceOfWindow(filters.date),
       hasApply: filters.hasApply ? true : undefined,
       limit: PAGE_SIZE,
       offset: (pageNumber - 1) * PAGE_SIZE,
@@ -45,18 +47,11 @@ const JobsPage = () => {
 
   const { page, stats, schedule, settings, error, reload } = useDashboardData(query);
 
-  const handleStartRun = async () => {
-    setStarting(true);
-    try {
-      await startRun();
-      setNotice({ message: t('jobs.runStarted'), severity: 'success' });
-      reload();
-    } catch (cause: unknown) {
-      setNotice({ message: errorMessage(cause), severity: 'error' });
-    } finally {
-      setStarting(false);
-    }
-  };
+  useEffect(() => {
+    let cancelled = false;
+    listIntegrations().then((next) => { if (!cancelled) setIntegrations(next); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
 
   const handleStatusChange = async (job: Job, status: JobStatus) => {
     setUpdatingId(job.id);
@@ -76,9 +71,9 @@ const JobsPage = () => {
     return [emptyOf(view), next].filter(Boolean).join(' ');
   };
 
-  const searchButton = (
-    <Button variant="contained" onClick={handleStartRun} disabled={starting}>
-      {t('jobs.searchNow')}
+  const refreshButton = (
+    <Button variant="outlined" size="small" startIcon={<IconRefresh size={14} stroke={1.6} />} onClick={reload}>
+      {t('jobs.refresh')}
     </Button>
   );
 
@@ -86,16 +81,17 @@ const JobsPage = () => {
     <PageContainer
       title={titleOf(view)}
       subtitle={subtitleOf(view)}
-      action={searchButton}
+      action={refreshButton}
     >
-      <Stack direction="row" spacing={1} alignItems="center" mb={2}>
-        {stats ? <AppChip label={newCountText(stats.new)} tone={stats.new > 0 ? 'success' : 'neutral'} /> : null}
-      </Stack>
-
       {stats ? <LastRunAlert lastRun={stats.lastRun} /> : null}
-      {stats ? <StatsRow stats={stats} /> : null}
 
-      <JobFilters values={filters} onChange={setFilters} />
+      <JobFilters values={filters} integrations={integrations} onChange={setFilters} />
+
+      {page ? (
+        <Typography variant="label" color="text.secondary" sx={{ display: 'block', mb: 1.75 }}>
+          {t('filters.result', { count: page.total })}
+        </Typography>
+      ) : null}
 
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
 
@@ -111,7 +107,7 @@ const JobsPage = () => {
         </Typography>
       ) : null}
 
-      <Stack spacing={2}>
+      <Stack spacing={1.5}>
         {page?.items.map((job) => (
           <JobCard
             key={job.id}

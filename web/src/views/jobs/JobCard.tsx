@@ -1,8 +1,12 @@
-import { useLayoutEffect, useRef, useState } from 'react';
-import { Box, Button, Stack, Typography } from '@mui/material';
-import { AppAlert, AppChip, BlankCard } from '../../components/ui';
-import { formatDate, formatDateTime } from '../../format';
-import { jobLocationLabel, jobSourceLabel, jobStatusLabel } from '../../labels';
+import { useState } from 'react';
+import { Box, Button, Collapse, Divider, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import {
+  IconArchive, IconBookmark, IconChevronDown, IconChevronUp, IconExternalLink, IconInbox, IconLink,
+  IconMail, IconFileText, IconEye,
+} from '@tabler/icons-react';
+import { AppChip, AppStatusPilot, BlankCard } from '../../components/ui';
+import { formatDate, formatTime } from '../../format';
+import { jobLocationLabel, jobSourceLabel } from '../../labels';
 import { plural, t, type TranslationKey } from '../../i18n';
 import { JobLocation, JobStatus, JobVerdict, type Job } from '../../types';
 import type { Settings } from '../../api/client';
@@ -16,11 +20,15 @@ interface JobCardProps {
   onStatusChange: (status: JobStatus) => void;
 }
 
-const statusActions: { status: JobStatus; label: TranslationKey; variant: 'contained' | 'outlined' | 'text' }[] = [
-  { status: JobStatus.New, label: 'card.action.new', variant: 'text' },
-  { status: JobStatus.Seen, label: 'card.action.seen', variant: 'outlined' },
-  { status: JobStatus.Saved, label: 'card.action.save', variant: 'outlined' },
-  { status: JobStatus.Dismissed, label: 'card.action.dismiss', variant: 'text' },
+const COPIED_FEEDBACK_MS = 2000;
+const SUMMARY_CHARS = 240;
+const MAX_CHIPS = 4;
+
+const statusActions: { status: JobStatus; label: TranslationKey; icon: typeof IconInbox }[] = [
+  { status: JobStatus.New, label: 'card.action.new', icon: IconInbox },
+  { status: JobStatus.Seen, label: 'card.action.seen', icon: IconEye },
+  { status: JobStatus.Saved, label: 'card.action.save', icon: IconBookmark },
+  { status: JobStatus.Dismissed, label: 'card.action.dismiss', icon: IconArchive },
 ];
 
 const linkLabel = (url: string): string => {
@@ -35,58 +43,34 @@ const locationText = (job: Job): string => {
   return hasReason ? (job.location ?? jobLocationLabel(job.locationKind)) : jobLocationLabel(job.locationKind);
 };
 
-const COLLAPSED_HEIGHT = 140;
-const COPIED_FEEDBACK_MS = 2000;
+const summaryOf = (job: Job): string => {
+  const title = job.title ?? '';
+  const body = job.text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0 && line !== title && line !== job.author)
+    .join(' ');
+  return body.length > SUMMARY_CHARS ? `${body.slice(0, SUMMARY_CHARS).trimEnd()}…` : body;
+};
+
+const metaSx = { fontSize: 11, color: 'text.secondary' } as const;
 
 const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
   const [expanded, setExpanded] = useState(false);
-  const textRef = useRef<HTMLPreElement>(null);
-  const [overflows, setOverflows] = useState(false);
+  const [copied, setCopied] = useState<'link' | 'letter' | 'email' | null>(null);
 
-  useLayoutEffect(() => {
-    const node = textRef.current;
-    if (!node) return;
-    setOverflows(node.scrollHeight > COLLAPSED_HEIGHT + 4);
-  }, [job.text]);
-
-  const [copied, setCopied] = useState(false);
-  const [shared, setShared] = useState(false);
-  const [lettered, setLettered] = useState(false);
-
-  const share = async (): Promise<void> => {
-    const link = job.url ?? job.applyUrl;
-    const payload = link ?? [job.title, job.text].filter(Boolean).join('\n\n');
+  const copy = async (what: 'link' | 'letter' | 'email', payload: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(payload);
-      setShared(true);
-      setTimeout(() => setShared(false), COPIED_FEEDBACK_MS);
+      setCopied(what);
+      setTimeout(() => setCopied(null), COPIED_FEEDBACK_MS);
     } catch {
-      setShared(false);
-    }
-  };
-
-  const copyLetter = async (): Promise<void> => {
-    try {
-      await navigator.clipboard.writeText(motivationLetter(job, settings?.motivationTemplate ?? ''));
-      setLettered(true);
-      setTimeout(() => setLettered(false), COPIED_FEEDBACK_MS);
-    } catch {
-      setLettered(false);
-    }
-  };
-
-  const copyEmail = async (): Promise<void> => {
-    if (!job.contactEmail) return;
-    try {
-      await navigator.clipboard.writeText(job.contactEmail);
-      setCopied(true);
-      setTimeout(() => setCopied(false), COPIED_FEEDBACK_MS);
-    } catch {
-      setCopied(false);
+      setCopied(null);
     }
   };
 
   const actions = statusActions.filter((action) => action.status !== job.status);
+  const canApplyByEmail = !job.applyUrl && shouldOfferApplication(job);
 
   const responseText = (): string | null => {
     const days = job.responseDays;
@@ -95,131 +79,210 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
     const one = days.max ?? days.min;
     return one ? t('card.responseAbout', { days: one }) : null;
   };
+
   const competition = [
-    job.applications === null
-      ? null
-      : plural(job.applications, 'card.applications.one', 'card.applications.many'),
+    job.applications === null ? null : plural(job.applications, 'card.applications.one', 'card.applications.many'),
     responseText(),
   ].filter(Boolean).join(' · ');
-  const canApplyByEmail = !job.applyUrl && shouldOfferApplication(job);
 
   const contactLine = job.applyUrl
-    ? t('card.applyAt', { url: job.applyUrl })
+    ? null
     : job.contactEmail
       ? t(canApplyByEmail ? 'card.sendCvTo' : 'card.contact', { email: job.contactEmail })
       : t('card.noContact');
 
+  const iconAction = (title: string, icon: React.ReactNode, onClick: () => void, disabled = false) => (
+    <Tooltip title={title}>
+      <span>
+        <IconButton size="small" aria-label={title} onClick={onClick} disabled={disabled}>
+          {icon}
+        </IconButton>
+      </span>
+    </Tooltip>
+  );
+
   return (
     <BlankCard>
-      <Stack spacing={1.5} p={3}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2} flexWrap="wrap">
-          <Box>
-            <Typography variant="h5">{job.title ?? t('card.untitled')}</Typography>
-            <Typography variant="subtitle2" color="textSecondary">
-              {[
-                jobSourceLabel(job.source),
-                job.company,
-                job.postedAt
-                  ? t('card.postedOn', { date: formatDate(job.postedAt) })
-                  : t('card.foundOn', { date: formatDateTime(job.foundAt) }),
-              ].filter(Boolean).join(' · ')}
-            </Typography>
+      <Box sx={{ px: 2.5, py: 2.375 }}>
+        <Stack direction="row" spacing={1.5} alignItems="flex-start">
+          <Box
+            aria-hidden
+            sx={{
+              width: 34, height: 34, flexShrink: 0, border: 1, borderColor: 'divider', borderRadius: 1,
+              bgcolor: 'grey.300', color: 'text.secondary', display: 'flex', alignItems: 'center',
+              justifyContent: 'center', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+              fontSize: 13, fontWeight: 600,
+            }}
+          >
+            {(job.company ?? job.author ?? job.source).trim().slice(0, 1).toUpperCase()}
           </Box>
-          <Stack direction="row" spacing={1}>
-            {job.isUncertain ? <AppChip label={t('card.uncertain')} tone="warning" /> : null}
-            {job.verdict === JobVerdict.Rejected ? <AppChip label={t('card.rejected')} tone="error" /> : null}
-            <AppChip label={jobStatusLabel(job.status)} />
+
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="h6" sx={{ fontSize: 15, fontWeight: 600, mb: 0.875 }}>
+              {job.title ?? t('card.untitled')}
+            </Typography>
+            <Stack direction="row" spacing={1.25} alignItems="center" flexWrap="wrap" useFlexGap sx={metaSx}>
+              <span>{job.company ?? job.author ?? t('card.unknownAuthor')}</span>
+              <span>·</span>
+              <span>{locationText(job)}</span>
+              <span>·</span>
+              <Box
+                aria-hidden
+                sx={{
+                  width: 20, height: 20, border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: 'grey.300',
+                  color: 'text.primary', display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 11, fontWeight: 600,
+                }}
+              >
+                {jobSourceLabel(job.source).slice(0, 1)}
+              </Box>
+              <span>{jobSourceLabel(job.source)}</span>
+              <Typography variant="mono" component="span" sx={{ fontSize: '0.6875rem' }}>
+                {job.postedAt
+                  ? t('card.postedOn', { date: formatDate(job.postedAt) })
+                  : `${formatDate(job.foundAt)} · ${formatTime(job.foundAt)}`}
+              </Typography>
+            </Stack>
+          </Box>
+
+          <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexShrink: 0 }}>
+            {job.status === JobStatus.New ? (
+              <AppStatusPilot tone="success" label={t('card.status.new')} />
+            ) : null}
+            {job.isUncertain ? (
+              <Tooltip title={t('card.uncertain.help')}>
+                <span><AppStatusPilot tone="neutral" label={t('card.uncertain')} /></span>
+              </Tooltip>
+            ) : null}
+            {job.isAggregator ? (
+              <Tooltip title={t('card.aggregator')}>
+                <span><AppStatusPilot tone="neutral" label={t('card.aggregator.short')} /></span>
+              </Tooltip>
+            ) : null}
+            {job.verdict === JobVerdict.Rejected ? (
+              <AppStatusPilot tone="error" label={t('card.rejected')} />
+            ) : null}
           </Stack>
         </Stack>
 
-        {job.verdict === JobVerdict.Rejected || job.rejectionReason || job.rejectionCode
-          ? <RejectionBadge job={job} />
-          : null}
-
-        <Typography variant="body2">{t('card.postedBy', { author: job.author ?? t('card.unknownAuthor') })}</Typography>
-        {job.stackMatch.length > 0 ? (
-          <Typography variant="body2">{t('card.matches', { list: job.stackMatch.join(', ') })}</Typography>
+        {job.verdict === JobVerdict.Rejected || job.rejectionReason || job.rejectionCode ? (
+          <Box sx={{ mt: 1.875 }}><RejectionBadge job={job} /></Box>
         ) : null}
-        <Typography variant="body2">{t('card.location', { place: locationText(job) })}</Typography>
-        {competition ? <Typography variant="body2">{competition}</Typography> : null}
 
-        <Stack spacing={1}>
-          {contactLine ? <Typography variant="body2">{contactLine}</Typography> : null}
-          <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
-            {job.applyUrl ? (
-              <Button variant="contained" component="a" href={job.applyUrl} target="_blank" rel="noopener noreferrer">
-                {t('card.apply')}
-              </Button>
+        <Typography sx={{ fontSize: 12, lineHeight: 1.7, color: 'text.secondary', mt: 1.875, mb: 1.5, maxWidth: 850 }}>
+          {summaryOf(job)}
+        </Typography>
+
+        {competition || contactLine ? (
+          <Typography sx={{ ...metaSx, display: 'block', mb: 1.5 }}>
+            {[competition, contactLine].filter(Boolean).join(' · ')}
+          </Typography>
+        ) : null}
+
+        <Stack
+          direction={{ xs: 'column', lg: 'row' }}
+          justifyContent="space-between"
+          alignItems={{ xs: 'flex-start', lg: 'center' }}
+          spacing={1.75}
+        >
+          <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+            {job.stackMatch.slice(0, MAX_CHIPS).map((tech) => <AppChip key={tech} label={tech} />)}
+            {job.stackMatch.length > MAX_CHIPS ? (
+              <Tooltip title={job.stackMatch.slice(MAX_CHIPS).join(', ')}>
+                <span><AppChip label={`+${job.stackMatch.length - MAX_CHIPS}`} /></span>
+              </Tooltip>
             ) : null}
-            {canApplyByEmail ? (
+            <Button
+              size="small"
+              variant="text"
+              onClick={() => setExpanded((value) => !value)}
+              endIcon={expanded ? <IconChevronUp size={12} /> : <IconChevronDown size={12} />}
+            >
+              {expanded ? t('card.hideAd') : t('card.fullAd')}
+            </Button>
+          </Stack>
+
+          <Stack direction="row" spacing={0.75} alignItems="center" flexWrap="wrap" useFlexGap>
+            {job.applyUrl ? (
               <Button
                 variant="contained"
+                size="small"
+                component="a"
+                href={job.applyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                endIcon={<IconExternalLink size={13} />}
+              >
+                {t('card.apply')}
+              </Button>
+            ) : canApplyByEmail ? (
+              <Button
+                variant="contained"
+                size="small"
                 component="a"
                 href={gmailComposeUrl(job, settings?.gmailAccount ?? null)}
                 target="_blank"
                 rel="noopener noreferrer"
+                endIcon={<IconExternalLink size={13} />}
               >
                 {t('card.composeGmail')}
               </Button>
-            ) : null}
-            {job.url && job.url !== job.applyUrl ? (
-              <Button variant="outlined" component="a" href={job.url} target="_blank" rel="noopener noreferrer">
+            ) : job.url ? (
+              <Button
+                variant="contained"
+                size="small"
+                component="a"
+                href={job.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                endIcon={<IconExternalLink size={13} />}
+              >
                 {linkLabel(job.url)}
               </Button>
             ) : null}
-            {settings?.motivationTemplate ? (
-              <Button variant="outlined" onClick={() => void copyLetter()}>
-                {lettered ? t('card.copiedLetter') : t('card.copyLetter')}
-              </Button>
+
+            {iconAction(
+              copied === 'link' ? t('card.copied') : t('card.copyLink'),
+              <IconLink size={16} stroke={1.6} />,
+              () => void copy('link', job.url ?? job.applyUrl ?? [job.title, job.text].filter(Boolean).join('\n\n')),
+            )}
+
+            {settings?.motivationTemplate ? iconAction(
+              copied === 'letter' ? t('card.copiedLetter') : t('card.copyLetter'),
+              <IconFileText size={16} stroke={1.6} />,
+              () => void copy('letter', motivationLetter(job, settings.motivationTemplate)),
             ) : null}
-            <Button variant="outlined" onClick={() => void share()}>
-              {shared ? t('card.copied') : t('card.copyLink')}
-            </Button>
-            {job.contactEmail ? (
-              <Button variant="outlined" onClick={() => void copyEmail()}>
-                {copied ? t('card.copied') : t('card.copyEmail')}
-              </Button>
+
+            {job.contactEmail ? iconAction(
+              copied === 'email' ? t('card.copied') : t('card.copyEmail'),
+              <IconMail size={16} stroke={1.6} />,
+              () => void copy('email', job.contactEmail ?? ''),
             ) : null}
-            {actions.map((action) => (
-              <Button
-                key={action.status}
-                variant={action.variant}
-                disabled={busy}
-                onClick={() => onStatusChange(action.status)}
-              >
-                {t(action.label)}
-              </Button>
+
+            <Divider orientation="vertical" flexItem sx={{ mx: 0.25 }} />
+
+            {actions.map((action) => iconAction(
+              t(action.label),
+              <action.icon size={16} stroke={1.6} />,
+              () => onStatusChange(action.status),
+              busy,
             ))}
           </Stack>
         </Stack>
 
-        {job.isAggregator ? (
-          <AppAlert severity="warning">{t('card.aggregator')}</AppAlert>
-        ) : null}
-
-        <Typography
-          variant="mono"
-          component="pre"
-          ref={textRef}
-          sx={{
-            m: 0,
-            p: 2,
-            borderRadius: 1,
-            bgcolor: 'grey.100',
-            whiteSpace: 'pre-wrap',
-            maxHeight: expanded ? 'none' : COLLAPSED_HEIGHT,
-            overflow: 'hidden',
-          }}
-        >
-          {job.text}
-        </Typography>
-        {overflows ? (
-          <Button variant="text" onClick={() => setExpanded((value) => !value)} sx={{ alignSelf: 'flex-start' }}>
-            {expanded ? t('card.showLess') : t('card.showMore')}
-          </Button>
-        ) : null}
-
-      </Stack>
+        <Collapse in={expanded} unmountOnExit>
+          <Typography
+            component="pre"
+            sx={{
+              mt: 2, mb: 0, p: 2.25, border: 1, borderColor: 'divider', borderRadius: 1,
+              bgcolor: 'background.default', whiteSpace: 'pre-wrap', overflowX: 'auto',
+              fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 11, lineHeight: 1.8,
+            }}
+          >
+            {job.text}
+          </Typography>
+        </Collapse>
+      </Box>
     </BlankCard>
   );
 };

@@ -20,6 +20,7 @@ export interface JobQuery {
   verdict: JobVerdict | null;
   runId: number | null;
   source: string | null;
+  since?: string | null;
   search: string | null;
   hasApply: boolean | null;
   limit: number;
@@ -210,6 +211,7 @@ export class JobsRepository {
     if (query.runId !== null) { clauses.push('run_id = ?'); params.push(query.runId); }
     if (query.status) { clauses.push('status = ?'); params.push(query.status); }
     if (query.source) { clauses.push('source = ?'); params.push(query.source); }
+    if (query.since) { clauses.push('COALESCE(posted_at, found_at) >= ?'); params.push(query.since); }
     if (query.search) {
       clauses.push('(text LIKE ? OR author LIKE ?)');
       params.push(`%${query.search}%`, `%${query.search}%`);

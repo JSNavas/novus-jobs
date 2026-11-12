@@ -32,12 +32,19 @@ function parseJobQuery(raw: unknown): Result<JobQuery> {
   if ('error' in offset) return offset;
   const runId = optionalInteger(params.runId, 0, 0, Number.MAX_SAFE_INTEGER, 'runId');
   if ('error' in runId) return runId;
+  let since: string | null = null;
+  if (params.since) {
+    const parsed = Date.parse(params.since);
+    if (Number.isNaN(parsed)) return { error: '«since» tiene que ser una fecha ISO' };
+    since = new Date(parsed).toISOString();
+  }
   return {
     value: {
       status: status.value,
       verdict: wantsAll ? null : verdict.value ?? JobVerdict.Accepted,
       runId: params.runId ? runId.value : null,
       source: params.source || null,
+      since,
       search: params.q || null,
       hasApply: hasApply.value,
       limit: limit.value,
