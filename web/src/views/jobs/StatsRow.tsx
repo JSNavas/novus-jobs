@@ -10,22 +10,10 @@ interface StatsRowProps {
 
 const readText = (count: number): string => plural(count, 'stats.read.one', 'stats.read.many');
 
-/**
- * La última búsqueda dice CUÁNTO LEYÓ, no cuántas aceptó.
- *
- * Decía "3 aceptadas" junto a un recuadro de "Total aceptadas: 2", y las dos
- * cifras eran ciertas: la pasada aceptó tres en su momento y después el
- * criterio cambió y una dejó de encajar. Pero en pantalla, una al lado de la
- * otra, solo parecían un error. Las publicaciones leídas son un hecho de la
- * pasada que no caduca; cuántas encajan es algo vivo y ya lo dice su propio
- * recuadro.
- */
 const StatsRow = ({ stats }: StatsRowProps) => {
   const counters = [
     { label: t('stats.new'), value: stats.new, hint: t('stats.new.hint'), positive: true },
     { label: t('stats.saved'), value: stats.saved, hint: t('stats.saved.hint'), positive: false },
-    // 'Para ti' y no 'aceptadas': las junior quedan fuera del recuento. Sin
-    // pie: el nombre ya lo dice, y la aclaración solo nombraba lo que falta.
     { label: t('stats.total'), value: stats.total, hint: null, positive: false },
   ];
 

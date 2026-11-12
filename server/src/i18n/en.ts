@@ -27,7 +27,6 @@ export const en: Record<keyof typeof es, string> = {
   'judge.language': 'Answer in English.',
   'motivation.default': 'I am interested in the {puesto} role at {empresa}: it is a position where I can bring the experience I have built up as a software developer. I saw that you are looking for {tecnologias}, which are exactly the technologies I have been working with. I am reliable, I enjoy working in a team and I settle into new environments quickly. I like learning technologies, integrating them and improving how I work, and I care about good practices and maintainable code.',
 
-  // ── Los correos ─────────────────────────────────────────────────────────
   'mail.subject.one': '1 new posting to review',
   'mail.subject.many': '{count} new postings to review',
   'mail.text.one': '1 new posting came in. Check the dashboard:',

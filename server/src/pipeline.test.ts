@@ -12,38 +12,21 @@ import { OPEN_API_POLICY } from './sources/policy.js';
 import type { JobSource, RawPost } from './sources/types.js';
 import { JobLocation, JobStatus, JobVerdict, JudgeStatus } from './types.js';
 
-/**
- * EL CRUCE ENTRE LAS REGLAS Y EL JUEZ, que es donde se perdían las ofertas.
- *
- * Antes el juez solo veía lo que las reglas habían aceptado, así que un falso
- * descarte por regex no tenía vuelta: se guardaba descartado y nadie lo volvía
- * a mirar. Medido sobre el feed real: 117 descartes y 114 sin pasar por el juez.
- */
-
-/** Una vacante buena: las reglas la aceptan solas. */
 const BUENA =
   'Buscamos Full Stack Senior 100% remoto para LATAM. Stack: Node.js, React, PostgreSQL. Sueldo USD 3000. Postula: https://lnkd.in/dxyz';
 
-/** Otra vacante buena, para poder comparar el orden de dos. */
 const OTRA_BUENA =
   'Otra vacante: buscamos Backend Senior 100% remoto para LATAM. Stack: Node.js, TypeScript, PostgreSQL. Sueldo USD 3500. Postula: https://lnkd.in/dotra';
 
-/** Presencial en Barcelona: las reglas la descartan por ubicación. */
 const PRESENCIAL =
   'Full-Stack Developer (Senior). Ubicacion: Barcelona, Espana. Modalidad presencial. Buscamos un/a Full-Stack Developer con Node.js, React y AWS. Contrato indefinido. Postula en https://lnkd.in/dabc';
 
-/**
- * Las reglas la ACEPTAN —menciona Python, que está en el núcleo— pero el puesto
- * no es de desarrollo. Caso tomado de la pasada 15 del 2026-11-11.
- */
 const SEGURIDAD_DE_RED =
   'Freelanly | Ingeniero de Seguridad de Red. Estados Unidos. USD 102000-138000/ano. El cliente necesita un Ingeniero de Seguridad de Red para firewalls, VPN y segmentacion. Scripting en Python deseable. Remoto. Postula: https://lnkd.in/dseg';
 
-/** No menciona nada de su stack: descarte de los que el juez NO puede tocar. */
 const SIN_STACK =
   'Buscamos Contador Senior 100% remoto para LATAM. Responsabilidades: conciliaciones, impuestos y cierres mensuales. Sueldo USD 2000. Postula en jobs@acme.com';
 
-/** Una fuente cuyas ofertas se publicaron hace `days` días. */
 function fakeSourceAged(texts: readonly string[], days: number): JobSource {
   const postedAt = new Date(Date.now() - days * 24 * 60 * 60_000).toISOString();
   const base = fakeSource(texts);
@@ -58,7 +41,6 @@ function fakeSourceAged(texts: readonly string[], days: number): JobSource {
   };
 }
 
-/** Como `fakeSource`, pero con los números que publica la plataforma. */
 function fakeSourceWithMetrics(texts: readonly string[], applications: number): JobSource {
   const base = fakeSource(texts);
   return {
@@ -92,10 +74,6 @@ function fakeSource(texts: readonly string[]): JobSource {
   };
 }
 
-/**
- * Juez de mentira. `verdicts` recibe las ofertas que el pipeline decidió
- * mandarle, así que sirve además para comprobar QUÉ se le manda.
- */
 function fakeJudge(decide: (text: string, index: number) => Partial<JudgeVerdict>): {
   judge: LlmJudge;
   seen: string[];
@@ -193,9 +171,6 @@ describe('pipeline — el juez cruzado con las reglas', () => {
   });
 
   it('EL CASO REAL: el juez veta un puesto que no es de su oficio aunque las reglas lo acepten', async () => {
-    // La pasada 15 aceptó "Ingeniero de Seguridad de Red" porque el anuncio
-    // menciona Python, que está en el núcleo. Las reglas no saben de oficios:
-    // en cuanto una tecnología del núcleo aparece, dejan pasar. El juez sí.
     const { judge } = fakeJudge(() => ({
       isOffer: true,
       rejection: 'role',
@@ -219,18 +194,12 @@ describe('pipeline — el juez cruzado con las reglas', () => {
       status: null, verdict: null, runId: null, seniority: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
-    // Se comprueba el CÓDIGO y no la frase: la frase está en el idioma del
-    // usuario y se puede reescribir sin cambiar lo que la regla decidió.
     assert.equal(
       stored.items[0]!.rejectionCode,
       'reject.onsite',
       'el motivo de la regla dice más que un "[IA] no es una vacante"',
     );
   });
-
-  /* ═══ LOS NÚMEROS DE LA PLATAFORMA ═══
-   * Van en columnas y no en el texto justamente para esto: cambian cada día,
-   * y la huella que deduplica es un sha1 del texto. */
 
   it('guarda cuándo la publicaron ellos y cuánta gente se postuló', async () => {
     const source = fakeSourceWithMetrics([BUENA], 298);
@@ -247,8 +216,6 @@ describe('pipeline — el juez cruzado con las reglas', () => {
   });
 
   it('EL CASO REAL: una segunda pasada actualiza las postulaciones sin duplicar la oferta', async () => {
-    // 298 el lunes y 310 el martes. Si el número viviera en el texto, la huella
-    // cambiaría y la misma vacante entraría otra vez como nueva.
     await runPasses([fakeSourceWithMetrics([BUENA], 298)], { jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90 });
     await runPasses([fakeSourceWithMetrics([BUENA], 310)], { jobs, judge: null, profile: PROFILE, runId: 2, maxAgeDays: 90 });
 
@@ -285,10 +252,6 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     assert.equal(stored.items[0]!.postedAt, null);
   });
 
-  /* ═══ EL TOPE DE TRES MESES ═══
-   * De 27 aceptadas el 2026-11-11, 14 llevaban más de dos meses publicadas, y
-   * la primera era de noviembre de 2025 con 969 postulaciones. */
-
   it('EL CASO REAL: una vacante de hace ocho meses no entra, por buena que sea', async () => {
     const result = await runPasses([fakeSourceAged([BUENA], 240)], {
       jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90,
@@ -323,8 +286,6 @@ describe('pipeline — el juez cruzado con las reglas', () => {
   });
 
   it('la lista sale por fecha de publicación, no por cuándo la leímos', async () => {
-    // Las dos se leen en la misma pasada: si se ordenara por `found_at`, el
-    // orden lo decidiría el azar del recorrido.
     await runPasses([fakeSourceAged([BUENA], 60)], { jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90 });
     await runPasses([fakeSourceAged([OTRA_BUENA], 5)], { jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90 });
 

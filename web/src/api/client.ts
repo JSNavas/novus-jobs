@@ -10,23 +10,13 @@ export class ApiError extends Error {
   }
 }
 
-/**
- * CUÁNTAS SE PIDEN DE UNA VEZ, en todas las listas.
- *
- * Diez, y la siguiente página se pide al servidor cuando hace falta. Traerse
- * las setenta para enseñar diez es pagar el transporte de sesenta que nadie va
- * a mirar, y con el historial creciendo tres veces al día eso solo empeora.
- */
 export const PAGE_SIZE = 10;
 
-/** Las dos listas a la vez: lo aceptado y lo que el filtro descartó. */
 export const ALL_VERDICTS = 'todas';
 
 export interface JobQuery {
   verdict?: JobVerdict | typeof ALL_VERDICTS;
-  /** Solo lo que encontró una búsqueda concreta. */
   runId?: number;
-  /** Cuántas se piden y desde cuál: la paginación la hace el servidor. */
   limit?: number;
   offset?: number;
   status?: JobStatus;
@@ -38,7 +28,6 @@ export interface JobQuery {
 export interface JobsPage {
   items: Job[];
   total: number;
-  /** Cuántas hay en cada pestaña con los mismos filtros, ignorando la elegida. */
   bySeniority: Record<JobSeniority, number>;
 }
 
@@ -46,11 +35,8 @@ export interface Stats {
   new: number;
   saved: number;
   total: number;
-  /** Cuántas descartó el filtro por no encajar. No entran en la bandeja. */
   rejected: number;
-  /** Cuántas hay en cada estado: lo que enseña el menú lateral. */
   byStatus: Record<JobStatus, number>;
-  /** Novedades sin mirar en el Enfoque. */
   focusNew: number;
   lastRun: RunInfo | null;
 }
@@ -58,7 +44,6 @@ export interface Stats {
 export interface Schedule {
   hours: number[];
   timezone: string;
-  /** La próxima lectura real, la más cercana entre todas las fuentes. */
   nextAt: string | null;
 }
 
@@ -93,7 +78,6 @@ export function updateJobStatus(id: number, status: JobStatus): Promise<Job> {
   return request<Job>(`/jobs/${id}`, { method: 'PATCH', body: JSON.stringify({ status }) });
 }
 
-/** Una página del historial de búsquedas, lo más reciente primero. */
 export interface RunsPage {
   items: RunInfo[];
   total: number;
@@ -118,68 +102,48 @@ export function startRun(): Promise<RunInfo> {
 export interface FocusTopic {
   name: string;
   area: string;
-  /** En cuántas vacantes aceptadas aparece. */
   vacancies: number;
   share: number;
-  /** Si ya está en su perfil. Lo que no lo está es la lista de estudio. */
   known: boolean;
-  /** ¿Apareció desde la última vez que miró? */
   isNew?: boolean;
-  /** Frases reales de los anuncios, tal cual las escribieron. */
   examples: string[];
 }
 
-/** Lo que se repite en los anuncios y el catálogo todavía no tiene. */
 export interface EmergingTerm {
   term: string;
   vacancies: number;
   example: string | null;
-  /** ¿Apareció desde la última vez que miró? */
   isNew?: boolean;
 }
 
 export interface Focus {
   analysed: number;
-  /** El tamaño de la ventana en días: la pantalla no se lo inventa. */
   windowDays: number;
   topics: FocusTopic[];
   emerging: EmergingTerm[];
-  /** Cuántas novedades hay. Es el número del menú. */
   newCount?: number;
 }
 
-/**
- * «Ya lo vi». Se llama AL SALIR de la pantalla: al entrar borraría el
- * resaltado antes de que diera tiempo a leerlo.
- */
 export function markFocusSeen(): Promise<{ ok: boolean }> {
   return request<{ ok: boolean }>('/focus/seen', { method: 'POST' });
 }
 
-/** Qué piden en común las vacantes aceptadas. Se calcula al vuelo. */
 export function getFocus(months?: number): Promise<Focus> {
   return request<Focus>(months ? `/focus?months=${months}` : '/focus');
 }
 
 export interface Settings {
-  /** La cuenta desde la que él se postula. No tiene que ver con los avisos. */
   gmailAccount: string | null;
-  /** El párrafo de motivación, con sus huecos. Se edita en Configuración. */
   motivationTemplate: string;
-  /** La de fábrica, para poder volver a ella desde la pantalla. */
   defaultMotivationTemplate: string;
-  /** Antigüedad máxima de una vacante para ENTRAR. El filtro de la búsqueda. */
   maxAgeMonths: number;
-  /** Con cuántos meses de pasado abre el Enfoque. */
   focusWindowMonths: number;
 }
 
-/** Desde qué cuenta escribe él, y con qué párrafo se postula. */
 export function getSettings(): Promise<Settings> {
   return request<Settings>('/settings');
 }
 
-/** Guarda la plantilla. Con el texto vacío el servidor restituye la de fábrica. */
 export function updateSettings(
   changes: { motivationTemplate?: string; maxAgeMonths?: number; focusWindowMonths?: number },
 ): Promise<Settings> {
@@ -190,19 +154,10 @@ export function updateSettings(
   });
 }
 
-/** Cuándo busca el servidor. Lo dice él: las horas son configurables. */
 export function getSchedule(): Promise<Schedule> {
   return request<Schedule>('/schedule');
 }
 
-/**
- * UNA INTEGRACIÓN, TAL CUAL LA MONTÓ EL SERVIDOR.
- *
- * La lista la decide `JOB_SOURCES`, no la interfaz: enchufar una plataforma
- * nueva la hace aparecer en el menú sin tocar una línea de React. Y el
- * `kind` del horario es lo único que la pantalla necesita saber para pintar
- * el editor que toque: franjas de hora o cada cuántos minutos.
- */
 export type IntegrationSchedule =
   | { kind: 'configured-hours'; hours: number[] }
   | { kind: 'every-minutes'; minutes: number };
@@ -211,7 +166,6 @@ export interface Integration {
   name: string;
   label: string;
   needsLogin: boolean;
-  /** Si corre. Una apagada se sigue listando: es como se vuelve a encender. */
   enabled: boolean;
   schedule: IntegrationSchedule;
   timezone: string;
@@ -223,10 +177,6 @@ export function listIntegrations(): Promise<Integration[]> {
   return request<Integration[]>('/integrations');
 }
 
-/**
- * Enciende o apaga una plataforma. No borra nada de lo que ya encontró, y
- * encenderla no dispara una búsqueda: entra por su horario.
- */
 export function updateIntegrationEnabled(name: string, enabled: boolean): Promise<Integration> {
   return request<Integration>(`/integrations/${name}/enabled`, {
     method: 'PUT',
@@ -246,19 +196,9 @@ export function updateIntegrationSchedule(
   });
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
- * EL ALTA
- *
- * Lo que el servidor sabe del candidato y lo que la pantalla de bienvenida
- * necesita para rellenarse sola. El catálogo —países, niveles, ecosistemas—
- * viene del servidor y no se duplica aquí: las reglas del filtro se escriben
- * una vez, y una lista de países repetida en React se queda desfasada sola.
- * ═══════════════════════════════════════════════════════════════════════════ */
-
 export type EnglishLevel = 'none' | 'a1' | 'a2' | 'b1' | 'b2' | 'c1' | 'c2' | 'native';
 
 export interface CandidateProfile {
-  /** En qué idioma habla la aplicación: la interfaz y lo que escribe el servidor. */
   language: 'es' | 'en';
   stack: string[];
   core: string[];
@@ -276,7 +216,6 @@ export interface OnboardingState {
     englishLevels: EnglishLevel[];
     ecosystems: { id: string; label: string }[];
   };
-  /** Si hay clave de Gemini: sin ella no se ofrece leer el CV con el modelo. */
   canEnhance: boolean;
   acceptedFiles: string[];
 }
@@ -289,9 +228,7 @@ export interface CvReading {
   country: string | null;
   city: string | null;
   years: number | null;
-  /** Si se reconoció algo: con `false`, el formulario se rellena a mano. */
   foundInCv: boolean;
-  /** Si pasó por el modelo. La pantalla lo dice, para que nadie se sorprenda. */
   enhanced: boolean;
 }
 
@@ -299,15 +236,9 @@ export function getOnboarding(): Promise<OnboardingState> {
   return request<OnboardingState>('/onboarding');
 }
 
-/**
- * Sube el CV. `enhance` manda además el texto a Gemini, y solo se pasa cuando
- * el usuario lo pide con el aviso delante: por defecto el CV no sale de su
- * máquina, que es la razón de ser de todo esto.
- */
 export async function readCv(file: File, enhance: boolean): Promise<CvReading> {
   const form = new FormData();
   form.append('file', file);
-  // Sin `Content-Type` a mano: el navegador tiene que poner el boundary.
   const response = await fetch(`/api/onboarding/cv?enhance=${enhance ? 'true' : 'false'}`, {
     method: 'POST',
     body: form,
@@ -319,7 +250,6 @@ export async function readCv(file: File, enhance: boolean): Promise<CvReading> {
   return (await response.json()) as CvReading;
 }
 
-/** Guarda un paso. Lo que no se manda no se toca. */
 export function saveOnboardingStep(changes: {
   language?: 'es' | 'en';
   stack?: string[];

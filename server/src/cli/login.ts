@@ -5,26 +5,6 @@ import { profileLockHolder } from '../browser/profile-lock.js';
 import { LINKEDIN_PROFILE_ID } from '../sources/linkedin.source.js';
 import { buildSource, knownSourceNames, sourceDefinition } from '../sources/registry.js';
 
-/**
- * `npm run login -- <plataforma>` — abre una ventana para iniciar sesión.
- *
- * Es un script y no un botón del dashboard a propósito: iniciar sesión es
- * teclear una contraseña y, cada vez más, resolver una verificación. Eso no lo
- * hace un servidor en segundo plano, y menos sin que el usuario lo vea.
- *
- * Lo que este script arregla respecto a la versión anterior:
- *
- *  - PIDE EL PERFIL AL SERVIDOR en vez de rendirse. Antes, si el servidor tenía
- *    el navegador abierto —y lo tiene cinco minutos después de cada pasada—
- *    el login decía "cierra el servidor"; un servidor que launchd vuelve a
- *    levantar solo. El resultado era matar procesos a mano, Chromium muriendo
- *    de malas maneras, y un lock huérfano que rompía TODO. Ahora se le pide por
- *    HTTP que suelte el perfil y pause las pasadas mientras dura el login.
- *
- *  - ESPERA A QUE EL SEÑOR CIERRE LA VENTANA. Nada de esperar a que la URL
- *    llegue al feed y cerrar cinco segundos después. Ver `openWindow()`.
- */
-
 const RELEASE_WAIT_MS = 20_000;
 const POLL_MS = 500;
 
@@ -39,7 +19,6 @@ async function askServerToRelease(config: Config, profileId: string): Promise<bo
     console.log('el servidor soltó el perfil y pausó las pasadas mientras inicias sesión.');
     return true;
   } catch {
-    // Lo normal cuando el servidor no está corriendo: no es un problema.
     return false;
   }
 }
@@ -49,7 +28,6 @@ async function tellServerDone(config: Config, profileId: string): Promise<void> 
   await fetch(url, { method: 'POST', signal: AbortSignal.timeout(10_000) }).catch(() => undefined);
 }
 
-/** Espera a que el lock del perfil quede libre tras pedirle al servidor que lo suelte. */
 async function waitForFreeProfile(dir: string): Promise<void> {
   const deadline = Date.now() + RELEASE_WAIT_MS;
   while (Date.now() < deadline) {
@@ -77,8 +55,6 @@ async function main(): Promise<void> {
     console.log(`${definition.label} no necesita iniciar sesión.`);
     return;
   }
-  // La sesión que el usuario ya tenía, si viene de la versión que guardaba el
-  // perfil dentro del repo.
   if (source.profileId === LINKEDIN_PROFILE_ID) {
     migrateProfile(legacyLinkedinProfileDir(config), pool.session(LINKEDIN_PROFILE_ID).dir);
   }

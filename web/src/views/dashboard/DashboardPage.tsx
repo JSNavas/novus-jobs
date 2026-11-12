@@ -12,27 +12,12 @@ import { runStatusLabel, runStatusTone } from './runStatus';
 
 const POLL_INTERVAL_MS = 15_000;
 
-/**
- * The page that was missing: what the searcher did and where each offer is.
- *
- * The first screen used to be the "Nuevas" inbox, and with the filter doing
- * its job that inbox is almost always empty. The result looked broken: zero
- * offers, zero information, and nothing explaining that behind it were seventy
- * postings read and discarded with their reason. Invisible work has to be shown,
- * because it is the only proof the system is alive when there is nothing to show.
- *
- * Every number here is clickable and leads to the offers behind it. A counter
- * that cannot be opened forces you to take it on trust, and what sits behind it
- * (what was discarded and why) is exactly what has to be auditable.
- */
-
 interface Tile {
   label: string;
   value: number;
   hint: string;
   to: string;
   tone: 'success' | 'neutral';
-  /** What the filter set aside unseen: shown muted with a dashed border. */
   audit?: boolean;
 }
 
@@ -75,12 +60,6 @@ const tilesOf = (stats: Stats): Tile[] => [
   },
 ];
 
-/**
- * A failed search is visible at a glance: red band on the left and a tinted background.
- *
- * Only `borderLeftColor`: `borderColor` repainted the cell's own bottom divider
- * red too, and that stray horizontal red line read as part of the error.
- */
 const failedRowSx = {
   bgcolor: 'error.light',
   '& > td:first-of-type': { borderLeft: 3, borderLeftColor: 'error.main' },
@@ -183,7 +162,6 @@ const DashboardPage = () => {
                 <TableCell>
                   <Stack direction="row" spacing={1} alignItems="center">
                     <AppStatusPilot label={runStatusLabel(run)} tone={runStatusTone(run)} />
-                    {/* Failure reason, truncated: the full detail lives on the search page. */}
                     {run.error ? (
                       <Typography variant="caption" color="textSecondary" noWrap sx={{ maxWidth: 320 }}>
                         {run.error}

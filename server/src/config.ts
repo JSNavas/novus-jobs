@@ -13,44 +13,13 @@ export interface Config {
   scheduleHours: number[];
   schedulerEnabled: boolean;
   enabledSources: string[];
-  /**
-   * Dónde viven las sesiones del navegador, una carpeta por plataforma.
-   *
-   * FUERA DEL REPO a propósito. Estaba en `server/data/linkedin-profile`, es
-   * decir dentro del árbol que se compila, se despliega y se borra: un
-   * `rm -rf data`, un reinstall o mover la carpeta del proyecto se llevaban la
-   * sesión por delante y había que volver a iniciarla. La sesión es lo único
-   * aquí que no se puede regenerar — la base de datos sí — así que vive donde
-   * nada del ciclo de build la toque: un directorio propio bajo el `$HOME`.
-   */
   browserProfilesRoot: string;
   browserHeadless: boolean;
   linkedinFeedUrl: string;
-  /**
-   * El juez LLM: Gemini. Opcional — sin clave, mandan solo las reglas.
-   */
   geminiApiKey: string | null;
   judgeModel: string;
-  /**
-   * Resend. Las tres variables o ninguna: no se manda ni una
-   * cuenta ni una factura. `null` si falta cualquiera de las tres piezas —sin
-   * destinatario no hay correo, y a medias no sirve.
-   */
   mail: { apiKey: string; from: string; to: string } | null;
-  /** A dónde manda el correo. Es la URL de este mismo servidor. */
   dashboardUrl: string;
-  /**
-   * La cuenta de Gmail DESDE LA QUE ÉL se postula.
-   *
-   * No tiene nada que ver con Resend. Son dos correos distintos y conviene no
-   * mezclarlos nunca: Resend manda los avisos del servidor HACIA él, y esto es
-   * la cuenta con la que él escribe a quien contrata. Una candidatura tiene que
-   * salir de su dirección personal — un correo de empleo enviado desde el
-   * dominio de un servicio no lo abre nadie, y además no sería suyo.
-   *
-   * Sirve para abrir la sesión correcta: con varias cuentas de Google abiertas,
-   * Gmail usa la primera, que puede no ser la suya.
-   */
   gmailAccount: string | null;
 }
 
@@ -64,28 +33,8 @@ function mailConfig(): Config['mail'] {
 const SERVER_ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 
 const DEFAULT_SCHEDULE_HOURS = '9,13,18';
-/**
- * Las dos fuentes activas. Get on Board entra por defecto y no por `.env`
- * porque no pide nada a cambio: lee de una API pública, sin cuenta, sin
- * navegador y sin sesión que caducar. Apagarla es sacarla de `JOB_SOURCES`.
- */
 const DEFAULT_SOURCES = 'linkedin,getonbrd';
 const DEFAULT_FEED_URL = 'https://www.linkedin.com/feed/';
-/**
- * El modelo del juez. `flash-lite` porque la tarea es clasificar texto corto
- * contra un criterio explícito, no razonar: el barato acierta igual y la capa
- * gratuita da de sobra para tres pasadas al día.
- *
- * Se fija el 3.5 y no el 3.1 porque el 3.1 llevaba horas
- * devolviendo 503 por saturación, y un juez que no contesta es un juez
- * apagado. Se cambia con JUDGE_MODEL sin tocar código.
- *
- * Y se deja de usar `-lite` por lo mismo: el 2026-11-11 la pasada de las 13:00
- * perdió sus 19 juicios con `503 This model is currently experiencing high
- * demand`, reintento incluido. El `lite` es el más barato y por eso el más
- * disputado. La tarea sigue siendo clasificar texto corto, así que el salto de
- * precio no compra inteligencia que haga falta: compra que conteste.
- */
 const DEFAULT_JUDGE_MODEL = 'gemini-3.5-flash';
 const HOME_DIR = join(homedir(), '.novus-jobs');
 
@@ -134,7 +83,6 @@ export function loadConfig(): Config {
   };
 }
 
-/** La carpeta donde vivía el perfil de LinkedIn antes de salir del repo. */
 export function legacyLinkedinProfileDir(config: Config): string {
   return join(config.dataDir, 'linkedin-profile');
 }

@@ -47,7 +47,6 @@ function newJob(overrides: Partial<NewJob>): NewJob {
   };
 }
 
-/** Una plataforma con el ritmo vigilado: es la que hace que el segundo POST sea 409. */
 const FAKE_SOURCE: JobSource = {
   name: 'linkedin',
   label: 'LinkedIn',
@@ -186,26 +185,17 @@ describe('API HTTP', () => {
     assert.deepEqual(res.json(), {
       new: 1, saved: 1, total: 2, rejected: 1, lastRun: null,
       byStatus: { new: 1, seen: 0, saved: 1, dismissed: 0 },
-      // Viaja aquí para que el menú haga UNA sola petición cada quince
-      // segundos, en vez de una por cada contador que enseña.
       focusNew: 0,
     });
   });
 
   it('GET /api/jobs dice cuántas hay en CADA pestaña, no solo en la abierta', async () => {
-    // El bug: el menú decía "1 nueva" y la lista salía vacía porque la única
-    // oferta era junior y vivía en la otra pestaña.
     const res = await app.inject({ method: 'GET', url: '/api/jobs?seniority=junior' });
     assert.equal(res.statusCode, 200);
     const body = res.json<{ items: unknown[]; total: number; bySeniority: Record<string, number> }>();
     assert.equal(body.items.length, 0, 'no hay ninguna junior');
     assert.deepEqual(body.bySeniority, { regular: 2, junior: 0 }, 'pero sí las de la otra pestaña');
   });
-
-  /* ═══ LA PLANTILLA DE LA MOTIVACIÓN ═══
-   * Se corrigió cinco veces en una tarde, y cada corrección era un despliegue.
-   * Ahora vive en la BD y se edita desde la pantalla, así que el contrato de
-   * esta ruta es lo único que separa "corregir una frase" de "tocar código". */
 
   it('GET /api/settings trae la plantilla de fábrica cuando nunca se guardó ninguna', async () => {
     const response = await app.inject({ method: 'GET', url: '/api/settings' });
@@ -252,9 +242,6 @@ describe('API HTTP', () => {
   it('GET /api/schedule dice las horas y la zona, para que la UI no las invente', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/schedule' });
     assert.equal(res.statusCode, 200);
-    // Sin fuentes montadas no hay próxima lectura que anunciar.
-    // La zona ya no es un texto fijo: es la del perfil, en nombre IANA, para
-    // que la interfaz pueda formatear con ella y no solo enseñarla.
     assert.deepEqual(res.json(), { hours: [9, 13, 18], timezone: 'America/Caracas', nextAt: null });
   });
 

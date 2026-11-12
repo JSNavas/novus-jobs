@@ -1,34 +1,11 @@
-/**
- * Los países que el filtro sabe reconocer, con lo que hace falta para leer un
- * anuncio: cómo se llaman, cómo se llama a su gente, sus ciudades grandes, su
- * moneda y en qué región están.
- *
- * Esto existe porque la pregunta "¿esta oferta me sirve?" no tiene respuesta
- * absoluta: "remoto Argentina" es una puerta abierta para quien vive en
- * Argentina y una pared para todos los demás. Antes las cuatro listas estaban
- * escritas a mano y daban por hecho que el usuario vivía en Venezuela; ahora
- * cada una se deriva del país que el usuario eligió en el alta.
- *
- * ⚠️ Nada de tokens de una o dos letras ni palabras que signifiquen otra cosa.
- * Un patrón como `R` casaría con cualquier "r" suelta del anuncio y tiraría
- * ofertas buenas sin dejar rastro. Por lo mismo no está "Chile" como ciudad ni
- * siglas como "US" sueltas: van las formas largas e inequívocas.
- */
-
 export type Region = 'latam' | 'iberia' | 'north-america' | 'europe' | 'asia';
 
 export interface Country {
-  /** ISO 3166-1 alfa-2. Es lo que se guarda en el perfil. */
   readonly code: string;
-  /** Nombre para la pantalla, en español. */
   readonly label: string;
-  /** Cómo aparece escrito en los anuncios, en español y en inglés, con y sin tilde. */
   readonly names: readonly string[];
-  /** Gentilicios: "empresa venezolana", "equipo mexicano". */
   readonly adjectives: readonly string[];
-  /** Ciudades que, nombradas, dicen dónde está el puesto. */
   readonly cities: readonly string[];
-  /** Su moneda tal como se escribe en un sueldo. Delata al empleador local. */
   readonly currency: readonly string[];
   readonly region: Region;
 }
@@ -246,7 +223,6 @@ export const COUNTRIES: readonly Country[] = [
   },
 ];
 
-/** Cómo se nombra cada región en un anuncio. "Remoto para LATAM" incluye a quien vive dentro. */
 export const REGION_MARKS: Readonly<Record<Region, readonly string[]>> = {
   latam: ['latam', 'latinoamérica', 'latinoamerica', 'latin america', 'américa latina', 'america latina', 'hispanoamérica', 'hispanoamerica', 'sudamérica', 'sudamerica', 'south america'],
   iberia: ['península ibérica', 'peninsula iberica', 'iberia'],

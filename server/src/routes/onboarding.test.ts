@@ -9,12 +9,6 @@ import { SettingsRepository } from '../db/settings.repository.js';
 import { ProfileRepository } from '../profile/profile.repository.js';
 import { registerOnboardingRoutes } from './onboarding.js';
 
-/**
- * EL ALTA ES LA PRIMERA IMPRESIÓN y lo único que ve alguien que acaba de
- * clonar esto. Lo que se mide aquí es que guarde a trozos, que no acepte
- * basura, y sobre todo que no se cierre con un perfil con el que la búsqueda
- * descartaría todo lo que encuentre.
- */
 describe('rutas del alta', () => {
   let dir: string;
   let db: Db;
@@ -52,7 +46,6 @@ describe('rutas del alta', () => {
     assert.equal((res.json() as { canEnhance: boolean }).canEnhance, false);
   });
 
-  /** Se puede cerrar el navegador en el paso 3 y volver mañana. */
   it('guarda paso a paso y un paso no borra lo del anterior', async () => {
     await put({ stack: ['TypeScript', 'React'], core: ['TypeScript'] });
     await put({ english: { level: 'b2', filter: true } });
@@ -74,10 +67,6 @@ describe('rutas del alta', () => {
     assert.equal(profiles.get().geo.country, '');
   });
 
-  /**
-   * Sin país NO se rechaza: es un estado legítimo. Quien vive donde el dataset
-   * no llega queda sin reglas de país, que es mejor que con las equivocadas.
-   */
   it('dejar el país vacío está permitido', async () => {
     assert.equal((await put({ geo: { country: '' } })).statusCode, 200);
   });

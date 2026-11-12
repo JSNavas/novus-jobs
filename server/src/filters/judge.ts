@@ -4,14 +4,6 @@ import { findCountry } from './countries.js';
 import { t } from '../i18n/index.js';
 import type { CandidateProfile, Offer } from './decide.js';
 
-/**
- * Segundo par de ojos, en los dos sentidos: el modelo puede DESCARTAR lo que
- * las reglas dejaron pasar y REVOCAR lo que las reglas descartaron por algo
- * que él sabe leer mejor (ubicación, idioma, tecnología, o si es una vacante).
- * Solo con uno de estos motivos: uno fuera de la lista se trata como "sin
- * descarte", porque el modelo no puede inventarse un veto. Qué descartes puede
- * revocar lo decide `applyJudgment`, no este fichero.
- */
 const JUDGE_REJECTIONS = ['onsite', 'other-country', 'english', 'technology', 'venezuelan-employer', 'role'] as const;
 type JudgeRejection = (typeof JUDGE_REJECTIONS)[number];
 
@@ -27,11 +19,6 @@ export interface JudgeVerdict {
 const POSTS_PER_CALL = 20;
 const MAX_CHARS_PER_POST = 1800;
 
-/**
- * Extrae el primer array JSON completo de la respuesta contando corchetes
- * balanceados fuera de cadenas. No se recorta del primer `[` al último `]`: un
- * modelo que devuelve dos arrays rompería ese recorte.
- */
 function firstJsonArray(text: string): unknown[] | null {
   const start = text.indexOf('[');
   if (start < 0) return null;
@@ -58,7 +45,6 @@ function isJudgeRejection(value: unknown): value is JudgeRejection {
   return typeof value === 'string' && JUDGE_REJECTIONS.some((r) => r === value);
 }
 
-/** Valida un elemento de la respuesta. Lo que no encaja se descarta, no se adivina. */
 function parseJudgeItem(item: unknown, offset: number): JudgeVerdict | null {
   if (typeof item !== 'object' || item === null) return null;
   const fields: Record<string, unknown> = Object.fromEntries(Object.entries(item));
@@ -74,12 +60,10 @@ function parseJudgeItem(item: unknown, offset: number): JudgeVerdict | null {
   };
 }
 
-/** El país del perfil con su nombre, que es lo que el modelo entiende. */
 function countryName(profile: CandidateProfile): string | null {
   return findCountry(profile.geo.country)?.label ?? null;
 }
 
-/** Cómo se le describe al modelo cada modalidad que el usuario NO acepta. */
 function unwantedModalities(profile: CandidateProfile): string[] {
   const out: string[] = [];
   if (!profile.modality.onsite) out.push('presencial');
@@ -89,17 +73,6 @@ function unwantedModalities(profile: CandidateProfile): string[] {
   return out;
 }
 
-/**
- * LA INSTRUCCIÓN SE CONSTRUYE DEL PERFIL, no está escrita a mano.
- *
- * Estuvo escrita: decía la edad profesional, la ciudad y el nivel de inglés de
- * una persona concreta, y a quien instalara esto le juzgaba las ofertas con el
- * criterio de otro. Peor que inútil — el modelo descartaba por un inglés que sí
- * tiene, o le dejaba pasar un presencial que no puede aceptar.
- *
- * Y se escribe en el idioma del usuario porque el modelo contesta en el idioma
- * en que se le habla, y su `motivo` acaba en la pantalla de descartadas.
- */
 function instruction(profile: CandidateProfile, country: string | null): string {
   const unwanted = unwantedModalities(profile);
   const accepted = [
@@ -181,28 +154,6 @@ function instruction(profile: CandidateProfile, country: string | null): string 
   ].filter((line) => line !== null).join('\n');
 }
 
-/**
- * ═══ GEMINI, Y NO OTRO ═══
- *
- * Porque es el que se midió juzgando estas mismas ofertas
- * (`job-judge.service.ts`, `gemini-3.1-flash-lite`), con la clave que el usuario
- * ya tiene y ya paga. Este proyecto arrancó pidiendo una clave de Anthropic
- * que no tenía, así que el juez nació apagado y las reglas quedaron solas —que
- * es justo lo que el juez existe para evitar.
- *
- * El criterio para elegir proveedor aquí no es cuál es mejor: es cuál ya está
- * en casa. Una cuenta nueva y una factura nueva por un segundo par de ojos no
- * se justifican cuando el primero ya está pagado.
- */
-/**
- * UN reintento, y solo ante un fallo pasajero del proveedor.
- *
- * Medido en real: un 503 "high demand" de Google tumbaba el juicio de la
- * pasada entera. Es un error que se arregla solo en segundos, y perder el
- * segundo par de ojos por eso es tonto. Lo que NO se reintenta es una
- * respuesta mal formada: eso no mejora repitiendo, y encima gastaría el
- * presupuesto de la capa gratuita.
- */
 const RETRIES = 1;
 const RETRY_DELAY_MS = 4_000;
 const TRANSIENT = /\b(429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|high demand|overloaded|timeout|ETIMEDOUT|ECONNRESET/i;
@@ -213,20 +164,6 @@ export class LlmJudge {
     private readonly model: string,
   ) {}
 
-  /**
-   * Juzga el lote entero, tanda a tanda.
-   *
-   * UNA TANDA QUE FALLA NO TIRA LAS DEMÁS. Antes se devolvía `null` al primer
-   * fallo: mandaban las reglas y no se mezclaban criterios a medias. Eso valía
-   * cuando el juez solo podía VETAR, porque perderlo solo dejaba pasar algún
-   * falso positivo. Ahora el juez también RESCATA descartes de las reglas, así
-   * que un 503 de Google en la segunda tanda borraba los rescates de la
-   * primera: la pasada entera volvía a cero ofertas por un fallo pasajero.
-   * Cada oferta sin veredicto se guarda como `Skipped`, que es exactamente lo
-   * que era antes para todas.
-   *
-   * Devuelve `null` solo si no se pudo juzgar NADA.
-   */
   async judge(offers: readonly Offer[], profile: CandidateProfile): Promise<JudgeVerdict[] | null> {
     const verdicts: JudgeVerdict[] = [];
     let failed = 0;
@@ -255,17 +192,10 @@ export class LlmJudge {
         });
         const array = firstJsonArray(response.text ?? '');
         if (array) return array.flatMap((item) => parseJudgeItem(item, offset) ?? []);
-        // Respondió, pero no con el JSON pedido. Reintentar no suele arreglarlo.
         console.warn('[juez] la respuesta no traía un array JSON; mandan las reglas');
         return null;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        // ═══ EL MOTIVO NO SE TIRA ═══
-        // Este `catch` se tragaba el error entero y devolvía `null`. La pasada
-        // seguía con las reglas —que es lo correcto— pero nadie sabía nunca por
-        // qué el juez no había opinado. Se comprobó en real: era un 503 de
-        // Google por saturación, cosa que se arregla sola y que, en silencio,
-        // parecía un juez roto.
         if (attempt < RETRIES && TRANSIENT.test(message)) {
           console.warn(`[juez] fallo pasajero (${message.slice(0, 80)}): reintento en ${RETRY_DELAY_MS / 1000}s`);
           await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));

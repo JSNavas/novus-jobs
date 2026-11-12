@@ -8,11 +8,6 @@ class FakeSettings {
   set(key: string, value: string): void { this.values.set(key, value); }
 }
 
-/**
- * El interruptor tiene que respetar lo que ya había montado. Quien quitó
- * LinkedIn de `JOB_SOURCES` lo quitó a propósito, y al actualizar no puede
- * encontrarse con que su cuenta vuelve a leerse sola.
- */
 describe('SourceToggles', () => {
   it('sin nada guardado manda el JOB_SOURCES del .env', () => {
     const toggles = new SourceToggles(new FakeSettings(), ['getonbrd']);

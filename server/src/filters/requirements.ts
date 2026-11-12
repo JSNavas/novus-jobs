@@ -1,23 +1,8 @@
 import { ENGLISH_LEVELS, type EnglishLevel } from '../profile/types.js';
 import { escapeRegex } from './text-match.js';
 
-/**
- * Lo que una oferta pide de inglés: qué nivel y si es obligatorio.
- *
- * Antes esto devolvía 'required' | 'desirable' | 'none', y "required" estaba
- * calculado contra UN nivel concreto —el B1 del dueño del proyecto— escrito
- * dentro de las propias expresiones. Ahora se mide el nivel que exige el anuncio
- * y quien compara es `decide.ts`, contra el nivel de cada usuario: el mismo
- * "inglés B2 excluyente" descarta a quien tiene B1 y no a quien tiene C1.
- */
 export interface EnglishDemand {
-  /** El nivel que pide, en la escala del perfil. `none` es no pedir ninguno. */
   level: EnglishLevel;
-  /**
-   * Si lo pide de verdad. 'deseable', 'valorable' o 'es un plus' aparecen en
-   * casi todas las ofertas de LATAM: tratarlos como exigencia perdería las
-   * buenas.
-   */
   mandatory: boolean;
 }
 
@@ -25,15 +10,6 @@ const ENGLISH_MENTION = /ingl[ée]s|english|biling[üu]e|bilingual/i;
 const BILINGUAL = /\bbiling[üu]e\b|\bbilingual\b/i;
 const NOT_REQUIRED = /deseable|no\s+excluyente|no\s+es\s+excluyente|no\s+obligatorio|no\s+requerid|no\s+requiere|no\s+se\s+requiere|no\s+es\s+necesario|no\s+indispensable|sin\s+necesidad|valorable|se\s+valorar[áa]?|valoramos|se\s+valora|es\s+un\s+plus|\ba\s+plus\b|is\s+a\s+plus|nice\s+to\s+have|not\s+required|preferible|preferred|opcional|optional/i;
 
-/**
- * El nivel que nombra el anuncio, en la escala del Marco Común Europeo.
- *
- * Importa el nivel y no solo "alto o bajo": "inglés A2 (excluyente)" y "inglés
- * C1 (excluyente)" son la misma frase para una regla binaria y dos ofertas
- * distintas para una persona con B1 —la primera la cumple, la segunda no—. Antes
- * esto estaba resuelto con una lista `LOW_LEVEL` que significaba "lo que el
- * dueño ya tiene", y por eso no se podía compartir el proyecto.
- */
 const LEVEL_MARKS: ReadonlyArray<readonly [EnglishLevel, RegExp]> = [
   ['native', /\bnativ\w*|\bnative\b|biling[üu]e|bilingual/i],
   ['c2', /\bc2\b|dominio\s+total|proficiency/i],
@@ -44,7 +20,6 @@ const LEVEL_MARKS: ReadonlyArray<readonly [EnglishLevel, RegExp]> = [
   ['a1', /\ba1\b|principiante|beginner/i],
 ];
 
-/** El nivel más alto que nombre la ventana: "B1 mínimo, B2 ideal" pide B2. */
 function demandedLevel(window: string): EnglishLevel | null {
   const found = LEVEL_MARKS.filter(([, re]) => re.test(window)).map(([level]) => level);
   if (!found.length) return null;
@@ -54,22 +29,8 @@ function demandedLevel(window: string): EnglishLevel | null {
 const OBLIGATION = /obligatori|requerid|se\s+requiere|requiere|required|require\b|excluyente|indispensable|imprescindible|mandatory|must\b|necesario|es\s+un\s+requisito|requisito/i;
 const REAL_USE = /hablad|escrit|oral|conversar|comunicars?e|comunicaci[óo]n|communicat|reuni[óo]n|reuniones|meetings?|stand-?ups?|daily|entrevista|equipo\s+trabaja|se\s+comunicar|skills?\b|speak|written|spoken/i;
 const ENGLISH_WINDOW = 70;
-/** Donde termina un requisito y empieza el siguiente: salto de línea o viñeta. */
 const BULLET = /[\n\r]|[✔✅☑✓⭐★•●▪►▶→·]|(?:^|\s)-\s/;
 
-/**
- * La ventana se corta en la VIÑETA, no a los 70 caracteres a pelo.
- *
- * Con la ventana ciega pasó esto, medido con una oferta real:
- *
- *     ✔️ Inglés Upper Intermediate (B2+), excluyente.
- *     ⭐ Se valorará:
- *
- * Los 70 caracteres siguientes a "Inglés" se comían el "Se valorará" del
- * requisito SIGUIENTE, `NOT_REQUIRED` lo daba por "deseable" y la oferta se
- * mandaba pese a exigir un inglés que él no tiene. El texto decía "excluyente"
- * dos palabras antes. Cada viñeta es un requisito y se juzga sola.
- */
 function englishWindows(t: string): string[] {
   return [...t.matchAll(new RegExp(ENGLISH_MENTION.source, 'gi'))].map((m) => {
     const i = m.index ?? 0;
@@ -80,7 +41,6 @@ function englishWindows(t: string): string[] {
   });
 }
 
-/** Recorta por el lado que toca en cuanto aparece una viñeta o un salto de línea. */
 function cutAtBullet(fragment: string, side: 'start' | 'end'): string {
   const marks = [...fragment.matchAll(new RegExp(BULLET.source, 'gu'))];
   if (!marks.length) return fragment;
@@ -89,11 +49,6 @@ function cutAtBullet(fragment: string, side: 'start' | 'end'): string {
   return fragment.slice((last.index ?? 0) + last[0].length);
 }
 
-/**
- * Se mira una VENTANA alrededor de cada mención, no frases completas: los
- * reclutadores escriben "inglés avanzado", "nivel de inglés: C1" y "se requiere
- * inglés", y cubrir eso con frases enteras exige una lista infinita.
- */
 export function englishDemand(text: string): EnglishDemand {
   const t = text.toLowerCase();
   if (!ENGLISH_MENTION.test(t)) return { level: 'none', mandatory: false };
@@ -103,36 +58,18 @@ export function englishDemand(text: string): EnglishDemand {
     (best, next) => (next && (!best || ENGLISH_LEVELS.indexOf(next) > ENGLISH_LEVELS.indexOf(best)) ? next : best),
     null,
   );
-  // Lo que dice expresamente que NO es obligatorio manda sobre todo lo demás.
   if (windows.some((w) => NOT_REQUIRED.test(w))) return { level: level ?? 'none', mandatory: false };
-  // Nombrar un nivel ya es pedirlo: "inglés B2" sin más es un requisito, igual
-  // que lo son un "excluyente" o un uso real (reuniones, dailies, escritura).
   const mandatory = windows.some((w) => demandedLevel(w) !== null || OBLIGATION.test(w) || REAL_USE.test(w));
-  // Pide inglés de verdad pero no dice cuánto: se toma como el nivel con el que
-  // se puede trabajar, que es lo que quiere decir "se requiere inglés" a secas.
   if (mandatory && !level) return { level: 'b2', mandatory: true };
   return { level: level ?? 'none', mandatory };
 }
 
-/**
- * Las tecnologías que no maneja salen del PERFIL, no de una lista paralela.
- *
- * Antes había dos sitios que decían lo mismo —`profile.cannotDo` y una
- * expresión regular aquí— y, como siempre que hay dos, divergieron: la regex
- * nunca supo de C++ (y así una oferta que pedía "3+ años de backend con C++"
- * se mandaba igual) y en cambio sí vetaba Symfony, que él SÍ sabe. Añadir una
- * tecnología es ahora una línea en `profile.ts` y nada más.
- *
- * `C++`, `C#` y `.NET` obligan a cuidar los bordes: el `\b` de toda la vida no
- * funciona junto a `+`, `#` ni `.`, así que los límites se construyen a mano.
- */
 const TECH_PATTERN_CACHE = new Map<string, RegExp>();
 
 function unknownTechPattern(cannotDo: readonly string[]): RegExp {
   const key = cannotDo.join('|');
   const cached = TECH_PATTERN_CACHE.get(key);
   if (cached) return cached;
-  // Las más largas primero: así "ruby on rails" gana a "ruby" y ".net core" a ".net".
   const alternatives = [...cannotDo]
     .sort((a, b) => b.length - a.length)
     .map((tech) => escapeRegex(tech.toLowerCase()).replace(/ /g, String.raw`\s+`))
@@ -148,10 +85,6 @@ const OPTIONAL_TECH = /deseable|valorable|se\s+valora\w*|valoramos|plus|nice\s+t
 const MIGRATION_CONTEXT = /migra\w*|legacy|reemplaz\w*|sustitu\w*|desde\s+\w*\s*hacia|monolito/i;
 const TECH_WINDOW = 60;
 
-/**
- * Tecnología ajena que el anuncio EXIGE. Nombrarla no basta: puede ser
- * deseable, una alternativa a algo que sí sabe, o el pasado del que quieren salir.
- */
 export function unknownRequiredTech(text: string, cannotDo: readonly string[]): string | null {
   const t = text.toLowerCase();
   for (const m of t.matchAll(unknownTechPattern(cannotDo))) {
@@ -170,11 +103,6 @@ const LIST_ITEM = String.raw`\.?[a-záéíóúñ0-9][a-záéíóúñ0-9.#+_-]*(?
 const KNOWN_TECH = /\b(node(?:js|\.js)?|typescript|javascript|react|reactjs|vue(?:js|\.js)?|nuxt|next(?:js|\.js)?|php|laravel|python|nest(?:js|\.js)?|fastapi|express)\b/i;
 const CHOOSE_ONE = /al\s+menos\s+uno|alguno?\s+de\s+(?:los|las)|cualquiera\s+de|o\s+similar(?:es)?|u\s+otr[ao]s?|entre\s+otr[ao]s|o\s+equivalentes?/i;
 
-/**
- * ¿La tecnología ajena vive en una ENUMERACIÓN donde también hay algo suyo?
- * Se mira la cadena entera: en "Node.js, TypeScript, Python, Go o C#/.NET"
- * basta que aparezca algo que sabe para que sea un menú y no un requisito.
- */
 function isAlternativeToKnownTech(t: string, i: number, length: number): boolean {
   const chain = new RegExp(`${LIST_ITEM}(?:${LIST_SEPARATOR}${LIST_ITEM})+`, 'gi');
   const end = i + length;
@@ -190,15 +118,10 @@ function isAlternativeToKnownTech(t: string, i: number, length: number): boolean
 const STACKS_FOREIGN = /\b(\.net|dotnet|asp\.net|c#|blazor|java\b|spring\s*boot|kotlin|swift\b|ruby\s+on\s+rails|\brails\b|golang|\bgo\b|angular|flutter|scala|elixir|phoenix|drupal|umbraco|sharepoint|salesforce|abap|cobol)\b/i;
 const OWN_ROLES = /\b(front[\s-]?end|back[\s-]?end|full[\s-]?stack|web\s+developer|desarrollador(a)?\s+web|software\s+engineer|desarrollador(a)?\s+(de\s+)?software)\b/i;
 
-/**
- * El puesto es de lo suyo aunque el anuncio no liste tecnologías: los anuncios
- * cortos listan el rol, no el stack. Solo cuenta si no hay otro ecosistema mandando.
- */
 export function isOwnRole(text: string): boolean {
   return OWN_ROLES.test(text) && !STACKS_FOREIGN.test(text);
 }
 
-/** Solo coincide en JavaScript, de refilón, en un puesto de otro ecosistema (.NET, Java…). */
 export function isOtherEcosystem(text: string, coreMatch: readonly string[]): boolean {
   const onlyJs = coreMatch.length > 0 && coreMatch.every((x) => /^javascript$/i.test(x));
   return onlyJs && STACKS_FOREIGN.test(text);
@@ -207,10 +130,6 @@ export function isOtherEcosystem(text: string, coreMatch: readonly string[]): bo
 const SEVERAL_OPENINGS = new RegExp(String.raw`\b[2-9]\s*(?:vacantes|posiciones|perfiles|oportunidades|roles|puestos|b[úu]squedas)\b`, 'i');
 const NUMBERED_ROLE = new RegExp(String.raw`[1-9][.)️⃣]?[\s️⃣]*(?:desarrollador\w*|ingenier\w*|developer|engineer|arquitect\w*|analista|tech\s*lead|dise[ñn]ador\w*|frontend|front-end|backend|back-end|full\s?stack|qa\b|data\b)`, 'gi');
 
-/**
- * El anuncio lleva VARIAS vacantes. El veto por tecnología no puede aplicarse:
- * la tecnología ajena puede pertenecer a otro puesto del mismo anuncio.
- */
 export function hasSeveralOpenings(text: string): boolean {
   if (SEVERAL_OPENINGS.test(text)) return true;
   return [...text.matchAll(NUMBERED_ROLE)].length >= 2;

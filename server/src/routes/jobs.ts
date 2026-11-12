@@ -4,24 +4,14 @@ import type { RunsRepository } from '../db/runs.repository.js';
 import { JobSeniority, JobStatus, JobVerdict } from '../types.js';
 import { isOneOf, optionalBoolean, optionalEnum, optionalInteger, stringParams, type Result } from './parse.js';
 
-/**
- * `verdict=todas` pide las dos: lo aceptado y lo que el filtro tiró.
- *
- * Sin esta palabra no había forma de VER los descartes desde la interfaz, solo
- * su número. Y un descarte que no se puede leer no se puede auditar: una oferta
- * buena tirada por error se quedaría invisible para siempre, que es justo lo
- * que guardar los descartes venía a evitar.
- */
 const ALL_VERDICTS = 'todas';
 
-/** La misma página que el resto: se pide solo lo que se va a enseñar. */
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 200;
 
 interface JobRoutesDeps {
   jobs: JobsRepository;
   runs: RunsRepository;
-  /** Cuántos temas del Enfoque son nuevos. Para el contador del menú. */
   focusNew: () => number;
 }
 
@@ -47,7 +37,6 @@ function parseJobQuery(raw: unknown): Result<JobQuery> {
   return {
     value: {
       status: status.value,
-      // Por defecto manda la bandeja: lo aceptado. Los descartes se piden.
       verdict: wantsAll ? null : verdict.value ?? JobVerdict.Accepted,
       runId: params.runId ? runId.value : null,
       seniority: seniority.value,
@@ -89,9 +78,6 @@ export function registerJobRoutes(app: FastifyInstance, deps: JobRoutesDeps): vo
   });
 
   app.get('/api/stats', (_request, reply) => {
-    // `focusNew` viaja con las estadísticas y no en una ruta propia para que
-    // el menú siga haciendo UNA sola petición cada quince segundos. Quién lo
-    // calcula no es asunto de esta ruta: llega como función.
     return reply.send({ ...deps.jobs.stats(), lastRun: deps.runs.latest(), focusNew: deps.focusNew() });
   });
 }

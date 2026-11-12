@@ -1,11 +1,3 @@
-/**
- * El idioma de origen del servidor y el contrato de claves.
- *
- * Los `reject.*` son los motivos de descarte. Están escritos para que se
- * entiendan sueltos, en una lista: no "por el idioma", sino "exigen inglés C1 y
- * tienes B1". Quien abre la pantalla de descartadas lo hace sospechando que el
- * filtro se equivocó, y un motivo vago no se puede discutir.
- */
 export const es = {
   'reject.notAVacancy': 'no es una vacante: es alguien ofreciéndose como candidato',
   'reject.notAnOffer': 'no es una oferta de trabajo (publicación técnica o de opinión)',
@@ -24,20 +16,16 @@ export const es = {
   'reject.ai': '[IA] {reason}',
   'reject.ai.fallback': 'no es una oferta',
 
-  // ── Los correos ──────────────────────────────────────────────────────────
   'mail.offers.one': '1 oferta nueva',
   'mail.offers.many': '{count} ofertas nuevas',
   'mail.openDashboard': 'Abrir el dashboard',
   'mail.failure.subject': 'Novus Jobs: la búsqueda falló',
   'mail.failure.intro': 'La última búsqueda no terminó bien.',
 
-  // ── La instrucción del juez ──────────────────────────────────────────────
   'judge.language': 'Responde en español.',
 
-  // ── La plantilla de motivación de fábrica ───────────────────────────────
   'motivation.default': 'Me interesa el puesto de {puesto} en {empresa}: es un rol donde puedo aportar la experiencia que he ido acumulando como desarrollador de software. Vi que piden conocimientos en {tecnologias}, que son justo las tecnologías con las que vengo trabajando. Soy responsable, me gusta trabajar en equipo y me adapto rápido a entornos nuevos. Disfruto aprendiendo tecnologías, integrándolas y mejorando mi forma de trabajar, y cuido las buenas prácticas y el código que se puede mantener.',
 
-  // ── Los correos ─────────────────────────────────────────────────────────
   'mail.subject.one': '1 oferta nueva para revisar',
   'mail.subject.many': '{count} ofertas nuevas para revisar',
   'mail.text.one': 'Llegó 1 oferta nueva. Revisa el dashboard:',

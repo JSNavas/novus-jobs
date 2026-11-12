@@ -7,11 +7,6 @@ import { JobLocation, JobSeniority, JobStatus, JobVerdict, JudgeStatus, RunTrigg
 import { openDatabase, type Db } from './database.js';
 import { RunsRepository } from './runs.repository.js';
 
-/**
- * EL CASO REAL: el historial del 10 de noviembre decía «3 aceptadas» en la
- * pasada 7 cuando en la tabla había 1, y «23 leídas» en la 6 sin una sola fila
- * detrás. Esos números son pulsables en el dashboard, así que se cuentan.
- */
 describe('RunsRepository — los contadores se cuentan contra jobs', () => {
   let dir: string;
   let db: Db;
@@ -28,7 +23,6 @@ describe('RunsRepository — los contadores se cuentan contra jobs', () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  /** Guarda una oferta de la pasada `runId` sin pasar por el pipeline. */
   function addJob(runId: number, verdict: JobVerdict, n: number): void {
     db.prepare(
       `INSERT INTO jobs (source, fingerprint, text, location_kind, verdict, seniority,
@@ -42,9 +36,7 @@ describe('RunsRepository — los contadores se cuentan contra jobs', () => {
 
   it('ignora los contadores guardados y cuenta las filas que hay de verdad', () => {
     const id = runs.start('linkedin', RunTrigger.Manual);
-    // La pasada se cierra diciendo 3 aceptadas y 20 descartadas...
     runs.finish(id, { fetched: 23, accepted: 3, rejected: 20 });
-    // ...pero en la tabla solo hay 1 y 2.
     addJob(id, JobVerdict.Accepted, 1);
     addJob(id, JobVerdict.Rejected, 1);
     addJob(id, JobVerdict.Rejected, 2);

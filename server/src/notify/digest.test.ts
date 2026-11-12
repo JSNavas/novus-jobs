@@ -43,9 +43,6 @@ describe('headline', () => {
 });
 
 describe('offersMail', () => {
-  // Los casos están escritos en español porque es el idioma en el que se
-  // midieron; lo que prueban —la concordancia, el resumen, el tope— no depende
-  // del idioma, y hay un caso al final que comprueba que el inglés también sale.
   it('el asunto dice cuántas son, en singular y en plural', () => {
     assert.equal(offersSubject(1, 'es'), '1 oferta nueva para revisar');
     assert.equal(offersSubject(4, 'es'), '4 ofertas nuevas para revisar');
@@ -73,7 +70,6 @@ describe('offersMail', () => {
   });
 
   it('escapa el HTML del texto de la oferta', () => {
-    // El texto viene de LinkedIn: es de fuera y no puede inyectar marcado.
     const mail = offersMail([job({ text: 'Buscamos\n<script>alert(1)</script> Node.js developer remoto' })], 'http://x/', 'es');
     assert.equal(mail.html.includes('<script>'), false);
     assert.match(mail.html, /&lt;script&gt;/);

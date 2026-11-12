@@ -10,21 +10,9 @@ interface BrowserRoutesDeps {
   scheduler: Scheduler;
 }
 
-/**
- * Las dos rutas que hacen posible iniciar sesión sin pelearse con el servidor.
- *
- * Un perfil de Chromium solo admite UN proceso, y el servidor se queda con el
- * navegador cinco minutos después de cada pasada. Antes eso convertía el login
- * en "para el servidor" — un servidor que launchd relanza solo — y el camino
- * real era matar procesos a mano, con lo que Chromium moría de malas maneras y
- * dejaba el perfil marcado como ocupado para siempre. Estas rutas son la vía
- * limpia: el login pide el perfil, el servidor lo suelta y pausa las pasadas, y
- * al cerrar la ventana las reanuda.
- */
 export function registerBrowserRoutes(app: FastifyInstance, deps: BrowserRoutesDeps): void {
   const profileIds = new Set(deps.sources.map((s) => s.profileId).filter((id): id is string => id !== null));
 
-  /** Qué plataformas hay activas y si su sesión está en uso. Lo que la UI necesita para crecer. */
   app.get('/api/sources', () => deps.sources.map((source) => ({
     name: source.name,
     label: source.label,

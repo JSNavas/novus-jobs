@@ -9,7 +9,6 @@ import type { JobSource } from '../sources/types.js';
 import { SourceSchedules } from '../sources/schedules.js';
 import { LastPassStore, Scheduler } from './scheduler.js';
 
-/** Ajustes en memoria: al planificador solo le hace falta leer el horario. */
 class FakeSettings {
   private readonly values = new Map<string, string>();
   get(key: string): string | null { return this.values.get(key) ?? null; }
@@ -19,9 +18,7 @@ class FakeSettings {
 class FakeRunner implements PassRunner {
   busy = false;
   scheduled = 0;
-  /** Los nombres de cada disparo, en orden: dice A QUIÉN se lanzó, no solo cuántas veces. */
   launched: string[][] = [];
-  /** Última pasada por fuente, que es lo que el planificador lee de la BD. */
   last = new Map<string, number>();
 
   isBusy(): boolean {
@@ -38,7 +35,6 @@ class FakeRunner implements PassRunner {
   }
 }
 
-/** Una fuente de mentira: al planificador solo le importan su nombre y su política. */
 function fakeSource(name: string, policy: JobSource['policy']): JobSource {
   return { name, label: name, profileId: null, loginUrl: null, policy } as JobSource;
 }
@@ -96,8 +92,6 @@ describe('Scheduler', () => {
   });
 
   it('mientras se inicia sesión no se lanza nada, y la franja NO se marca', () => {
-    // La franja tiene que quedar pendiente: en cuanto termina el login, el tick
-    // siguiente la recupera. Marcarla aquí perdería la pasada del día.
     const scheduler = schedulerAt('2026-11-10T17:20:00Z');
     scheduler.pauseForLogin();
     scheduler.tick();
@@ -124,7 +118,7 @@ describe('Scheduler', () => {
     });
     scheduler.pauseForLogin();
     assert.equal(scheduler.isPaused(), true);
-    clock = new Date('2026-11-10T17:50:00Z'); // media hora después
+    clock = new Date('2026-11-10T17:50:00Z');
     assert.equal(scheduler.isPaused(), false);
     scheduler.tick();
     assert.equal(runner.scheduled, 1);
@@ -134,12 +128,7 @@ describe('Scheduler', () => {
     assert.equal(store.read('linkedin'), undefined);
   });
 
-  /* ═══ DOS CADENCIAS A LA VEZ ═══ */
-
   it('la fuente por intervalo se lanza aunque no sea franja de la otra', () => {
-    // Las 15:00 VET no son franja. Con la de las 13:00 ya dada por hecha,
-    // LinkedIn no tiene nada que hacer; Get on Board sí, porque su reloj son
-    // 30 minutos y no las 9, 13 y 18.
     store.write('linkedin', { date: '2026-11-10', hour: 13 });
     schedulerAt('2026-11-10T19:00:00Z', [LINKEDIN, GETONBRD]).tick();
     assert.deepEqual(runner.launched, [['getonbrd']]);
@@ -169,7 +158,6 @@ describe('Scheduler', () => {
   it('las franjas guardadas de LinkedIn sustituyen a las del .env', () => {
     const schedules = new SourceSchedules(new FakeSettings(), [9, 13, 18]);
     schedules.save(LINKEDIN, { kind: 'configured-hours', hours: [7] });
-    // 11:20 UTC = 7:20 am VET: franja propia, que con las del .env no existiría.
     schedulerAt('2026-11-10T11:20:00Z', [LINKEDIN], schedules).tick();
     assert.deepEqual(store.read('linkedin'), { date: '2026-11-10', hour: 7 });
   });
@@ -196,8 +184,6 @@ describe('Scheduler', () => {
   });
 
   it('lee el fichero viejo de una sola marca como la de LinkedIn', () => {
-    // Al desplegar esto el fichero en disco tiene el formato antiguo. Si no se
-    // entendiera, la franja del día se repetiría nada más arrancar.
     const file = join(dir, 'data', 'last-pass.json');
     mkdirSync(join(dir, 'data'), { recursive: true });
     writeFileSync(file, JSON.stringify({ date: '2026-11-10', hour: 13 }), 'utf8');

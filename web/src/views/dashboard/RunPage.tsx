@@ -9,14 +9,6 @@ import { RunStatus, type RunInfo } from '../../types';
 import JobList from '../jobs/JobList';
 import { runStatusLabel, runStatusTone } from './runStatus';
 
-/**
- * TODO lo que encontró una búsqueda, aceptado y descartado junto.
- *
- * Separar aquí las buenas de las malas sería esconder la mitad del trabajo: lo
- * que se viene a ver es el criterio en acción, y eso solo se juzga leyendo
- * seguidas la que pasó y la que no. Cada tarjeta ya dice en qué lado cayó y por
- * qué motivo.
- */
 const RunPage = () => {
   const { id } = useParams<{ id: string }>();
   const runId = Number(id);
@@ -33,8 +25,6 @@ const RunPage = () => {
     return () => { cancelled = true; };
   }, [runId]);
 
-  // Sin `useMemo` el objeto sería nuevo en cada render y la lista se recargaría
-  // en bucle: es una dependencia de su efecto.
   const query = useMemo<JobQuery>(() => ({ verdict: ALL_VERDICTS, runId }), [runId]);
 
   const summary = (current: RunInfo): string => {
@@ -58,9 +48,6 @@ const RunPage = () => {
         </AppAlert>
       ) : null}
 
-      {/* Una búsqueda que leyó cosas y no guardó ninguna no está rota: eran
-          todas publicaciones que ya estaban en la base. Decirlo evita que el
-          "0" de abajo parezca un fallo. */}
       {run && run.fetched > 0 && run.accepted + run.rejected === 0 ? (
         <BlankCard>
           <Box p={2.5}>

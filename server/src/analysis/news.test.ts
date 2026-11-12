@@ -8,11 +8,6 @@ import { SettingsRepository } from '../db/settings.repository.js';
 import type { Focus } from './focus.js';
 import { markSeen, withNews } from './news.js';
 
-/**
- * EL RESALTADO SOLO SIRVE SI SE PUEDE CONFIAR EN ÉL. Si marca de más, se
- * aprende a ignorarlo; si marca de menos, una tendencia nueva pasa sin que
- * nadie la vea — que es justo lo que el Enfoque existe para evitar.
- */
 function focusWith(names: string[], terms: string[] = []): Focus {
   return {
     analysed: 10,
@@ -57,8 +52,6 @@ describe('withNews — qué apareció desde la última vez', () => {
   });
 
   it('MIRAR NO ES VER: leer la pantalla dos veces no apaga el resaltado', () => {
-    // El aviso se apaga al SALIR, no al cargar. Si se apagara al cargar,
-    // existiría en la base de datos y nunca en la pantalla.
     withNews(focusWith(['Docker']), settings);
     const primera = withNews(focusWith(['Docker', 'Terraform']), settings);
     const segunda = withNews(focusWith(['Docker', 'Terraform']), settings);
@@ -86,11 +79,8 @@ describe('withNews — qué apareció desde la última vez', () => {
   });
 
   it('cambiar la ventana no resucita avisos ya vistos', () => {
-    // «Ya lo vi» se SUMA a lo visto, no lo reemplaza: con tres meses se ven
-    // menos temas que con doce, y reemplazar haría que estrechar la lente
-    // marcara como nuevo algo que ya estaba visto.
     markSeen(focusWith(['Docker', 'AWS', 'Terraform']), settings);
-    markSeen(focusWith(['Docker']), settings); // una ventana más estrecha
+    markSeen(focusWith(['Docker']), settings);
 
     assert.equal(withNews(focusWith(['Docker', 'AWS', 'Terraform']), settings).newCount, 0);
   });

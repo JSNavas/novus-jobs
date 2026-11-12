@@ -89,7 +89,7 @@ badge, and no test failed. A code cannot rot like that.
 
 ### Enums have no CHECK constraints
 
-Deliberate, and the comment is in `db/schema.ts`. A `CHECK (x IN (...))`
+Deliberate. A `CHECK (x IN (...))`
 generated from a TypeScript enum freezes the list of values in the databases of
 everyone who already installed the project, because `CREATE TABLE IF NOT EXISTS`
 does not touch an existing table. Then a new enum value works in a fresh install

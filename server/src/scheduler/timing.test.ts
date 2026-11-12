@@ -4,19 +4,7 @@ import { localDayStart, nextRunAt, offsetMsAt, shouldRunPass, toLocalTime } from
 
 const HOURS = [9, 13, 18];
 
-/**
- * Los casos vienen de un usuario en Venezuela (UTC-4, sin horario de verano),
- * que es donde se midieron. Lo que prueban no es "Venezuela": es que las
- * franjas son horas del reloj DEL USUARIO, y por eso la zona se pasa explícita.
- */
 const ZONA = 'America/Caracas';
-
-/**
- * ⚠️ `shouldRunPass` recibe la hora YA en el reloj del usuario, no en UTC: la
- * convierte quien la llama, con `toLocalTime`. Las fechas de estos casos son
- * horas venezolanas escritas con una Z detrás, que es como se escribieron
- * cuando la zona era una constante del código.
- */
 
 describe('shouldRunPass (las franjas son del reloj del usuario)', () => {
   it('no toca antes de la primera franja del día', () => {
@@ -57,7 +45,6 @@ describe('nextRunAt (la próxima lectura de verdad)', () => {
   ];
 
   it('EL CASO REAL: gana el intervalo de Get on Board, no la franja de LinkedIn', () => {
-    // 22:30 UTC = 6:30 pm VET, con Get on Board leído hace 10 minutos.
     const now = new Date('2026-11-11T22:30:00Z');
     const next = nextRunAt(now, HOURS, SOURCES, (source) => (
       source === 'getonbrd' ? Date.parse('2026-11-11T22:20:00Z') : null
@@ -68,7 +55,6 @@ describe('nextRunAt (la próxima lectura de verdad)', () => {
   it('sin fuentes de intervalo, es la franja siguiente', () => {
     const now = new Date('2026-11-11T22:30:00Z');
     const next = nextRunAt(now, HOURS, [SOURCES[0]!], () => null, ZONA);
-    // 9:00 am VET del día siguiente = 13:00 UTC.
     assert.equal(new Date(next!).toISOString(), '2026-11-12T13:00:00.000Z');
   });
 
@@ -82,21 +68,14 @@ describe('nextRunAt (la próxima lectura de verdad)', () => {
   });
 });
 
-/**
- * LA ZONA YA NO ES UNA CONSTANTE, así que hay que probar que de verdad cambia
- * el resultado — y sobre todo el horario de verano, que es donde un desfase
- * fijo acierta media parte del año y falla la otra media.
- */
 describe('zonas horarias', () => {
   it('la misma hora UTC cae en franjas distintas según dónde viva el usuario', () => {
-    const now = new Date('2026-11-11T13:30:00Z');   // 9:30 am en Caracas, 2:30 pm en Madrid
+    const now = new Date('2026-11-11T13:30:00Z');
     assert.equal(shouldRunPass(toLocalTime(now, 'America/Caracas'), HOURS)?.hour, 9);
     assert.equal(shouldRunPass(toLocalTime(now, 'Europe/Madrid'), HOURS)?.hour, 13);
   });
 
   it('el día del usuario empieza a SU medianoche, no a la de UTC', () => {
-    // 2 am UTC del día 12 es todavía el día 11 en Caracas: el presupuesto de
-    // lecturas no puede haberse reiniciado.
     const start = localDayStart(new Date('2026-11-12T02:00:00Z'), 'America/Caracas');
     assert.equal(start.toISOString(), '2026-11-11T04:00:00.000Z');
   });

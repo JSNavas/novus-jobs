@@ -6,16 +6,6 @@ import { AppAlert, AppPagination, AppSnackbar } from '../../components/ui';
 import { JobStatus, type Job } from '../../types';
 import JobCard from './JobCard';
 
-/**
- * Una lista de ofertas y ya: la piden las pantallas que NO son la bandeja.
- *
- * La bandeja (`JobsPage`) carga además estadísticas, pestañas por seniority,
- * filtros y el botón de buscar, porque todo eso sirve para trabajar la cola
- * del día. Las vistas de auditoría —lo que encontró una pasada, lo que tiró el
- * filtro— no quieren nada de eso: quieren enseñar exactamente el conjunto que
- * se pidió, sin que un filtro heredado cambie lo que se ve y haga dudar del
- * número que te trajo hasta aquí.
- */
 interface JobListProps {
   query: JobQuery;
   empty: string;
@@ -32,8 +22,6 @@ const JobList = ({ query, empty }: JobListProps) => {
   const [revision, setRevision] = useState(0);
   const [page, setPage] = useState(1);
 
-  // Al cambiar lo que se pide, se vuelve a la primera página: quedarse en la
-  // cuatro de una lista que ahora tiene dos deja la pantalla vacía sin motivo.
   useEffect(() => { setPage(1); }, [query]);
 
   useEffect(() => {

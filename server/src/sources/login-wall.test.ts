@@ -15,8 +15,6 @@ describe('loginWallOf', () => {
   });
 
   it('el checkpoint gana al login aunque la URL lleve las dos palabras', () => {
-    // Es la distinción que decide qué tiene que hacer el usuario: teclear un
-    // código no es lo mismo que volver a iniciar sesión.
     assert.equal(
       loginWallOf('https://www.linkedin.com/checkpoint/challenge/verify?loginSubmitSource=x'),
       LoginWall.Checkpoint,
@@ -28,8 +26,6 @@ describe('loginWallOf', () => {
   });
 
   it('una palabra en el dominio o en el query no basta', () => {
-    // El dominio NO se mira: solo el camino. Si no, un `?utm_campaign=login`
-    // o un host llamado "login.example.com" darían sesión caída sin motivo.
     assert.equal(loginWallOf('https://login.example.com/feed/'), null);
   });
 

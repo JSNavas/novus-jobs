@@ -1,13 +1,5 @@
 import type { es } from './es';
 
-/**
- * El inglés. Se declara con el tipo de `es`, así que si allí nace una clave y
- * aquí no, TypeScript lo dice antes de que nadie vea la pantalla a medio
- * traducir.
- *
- * No es una traducción palabra por palabra: donde el español dice algo que en
- * inglés suena raro, manda lo que diría alguien que trabaja en inglés.
- */
 export const en: Record<keyof typeof es, string> = {
   'status.new': 'New',
   'status.seen': 'Seen',
@@ -47,7 +39,6 @@ export const en: Record<keyof typeof es, string> = {
   'inbox.dismissed.subtitle': 'The ones you set aside. They are not deleted: you can send them back to new',
   'inbox.dismissed.empty': 'This is where the ones you dismiss go. They are not deleted: you can send them back to new.',
 
-  // ── Navegación ───────────────────────────────────────────────────────────
   'nav.dashboard': 'Dashboard',
   'nav.group.offers': 'Postings',
   'nav.group.audit': 'Audit',
@@ -58,13 +49,11 @@ export const en: Record<keyof typeof es, string> = {
   'schedule.everyMinutes': 'every {minutes} min',
   'schedule.slots': '{count} slot(s)',
 
-  // ── La bandeja: acciones y vacíos ────────────────────────────────────────
   'jobs.runStarted': 'Search started. New postings will show up when it finishes.',
   'jobs.empty.filters': 'No postings match these filters.',
   'jobs.empty.elsewhere': 'None here, but you have {count} in “{tab}”.',
   'jobs.searchNow': 'Search now',
 
-  // ── El reloj: cuándo toca la siguiente búsqueda ──────────────────────────
   'schedule.or': 'or',
   'schedule.nextSentence': 'The next search runs at {hours} ({timezone}).',
   'schedule.nextUnderMinute': 'Next in under 1 min',
@@ -76,7 +65,6 @@ export const en: Record<keyof typeof es, string> = {
   'run.running': 'Running',
   'run.ok': 'OK',
 
-  // ── Las cifras de la cabecera ───────────────────────────────────────────
   'stats.new': 'New',
   'stats.new.hint': 'Not looked at yet',
   'stats.saved': 'Saved',
@@ -89,7 +77,6 @@ export const en: Record<keyof typeof es, string> = {
   'sidebar.lastRunFailed': 'The last search failed',
   'stats.noRuns': 'No searches yet',
 
-  // ── Dashboard ───────────────────────────────────────────────────────────
   'dash.title': 'Dashboard',
   'dash.subtitle': 'What it searched, what it found, and where each posting is',
   'dash.tile.new': 'New',
@@ -111,7 +98,6 @@ export const en: Record<keyof typeof es, string> = {
   'dash.runs.empty': 'No search has run yet.',
   'dash.runs.noun': 'searches',
 
-  // ── La tarjeta de una oferta ────────────────────────────────────────────
   'card.action.new': 'Mark as new',
   'card.action.seen': 'Mark as seen',
   'card.action.save': 'Save',
@@ -144,7 +130,6 @@ export const en: Record<keyof typeof es, string> = {
   'card.showMore': 'Show more',
   'card.showLess': 'Show less',
 
-  // ── Filtros, cabecera, descartadas y detalle de búsqueda ────────────────
   'filters.search': 'Search the text',
   'filters.onlyApplicable': 'Only with a way to apply',
   'header.openMenu': 'Open menu',
@@ -161,7 +146,6 @@ export const en: Record<keyof typeof es, string> = {
   'run.offers.empty': 'This search saved no new posting.',
   'run.unknownError': 'Unknown error',
 
-  // ── Integraciones ───────────────────────────────────────────────────────
   'int.title': 'Integrations',
   'int.subtitle': 'Where the postings come from and how often each site is read',
   'int.interval.help': 'How often it is read. This is a public API, so there is no account to protect: the only reason not to drop it to zero is not to punish someone else’s server.',
@@ -191,7 +175,6 @@ export const en: Record<keyof typeof es, string> = {
   'interval.tooLow': 'At least {min} minutes: below that is hammering the platform.',
   'interval.tooHigh': '24 hours maximum.',
 
-  // ── Enfoque ─────────────────────────────────────────────────────────────
   'focus.title': 'Focus',
   'focus.subtitle': 'What the jobs that fit you keep asking for',
   'focus.new': 'new',
@@ -206,7 +189,6 @@ export const en: Record<keyof typeof es, string> = {
   'focus.emerging': 'Coming up',
   'focus.emerging.help': 'Words that repeat in the requirements and are not measured above yet. This comes out on its own, with nobody predicting it: if something new starts being asked for, it shows up here first.',
 
-  // ── Configuración ───────────────────────────────────────────────────────
   'set.title': 'Settings',
   'set.subtitle': 'What you can change without touching the code',
   'set.saved': 'Saved. Postings use this text from now on.',
@@ -236,7 +218,6 @@ export const en: Record<keyof typeof es, string> = {
   'set.language': 'Language',
   'set.language.help': 'What language the app speaks. Changing it reloads the screen.',
 
-  // ── El alta ─────────────────────────────────────────────────────────────
   'wiz.step.cv': 'Your CV',
   'wiz.step.cv.hint': 'Upload it and whatever can be read gets filled in. You can also skip it and type everything by hand.',
   'wiz.step.stack': 'Your stack',
@@ -261,7 +242,6 @@ export const en: Record<keyof typeof es, string> = {
   'wiz.saveNext': 'Save and continue',
   'wiz.back': 'Back',
 
-  // ── El alta: los paneles de cada paso ───────────────────────────────────
   'eng.none': 'None',
   'eng.a1': 'A1 — a few words',
   'eng.a2': 'A2 — basic, I read documentation',
@@ -326,12 +306,10 @@ export const en: Record<keyof typeof es, string> = {
   'done.none': 'none',
   'done.noModality.error': 'You have left no arrangement selected: nothing would get in. Go back to the “Where” step and pick at least one.',
 
-  // ── La candidatura ──────────────────────────────────────────────────────
   'apply.greeting': 'Hello, nice to meet you!',
   'apply.body': 'I am interested in the {vacancy} position. I am attaching my CV so you can see my skills and experience. Best regards!',
   'apply.thePosting': 'the posting you shared',
 
-  // ── Los motivos de descarte, que escribe el servidor como código ────────
   'reject.notAVacancy': 'not a vacancy: someone offering themselves as a candidate',
   'reject.notAnOffer': 'not a job posting (a technical or opinion post)',
   'reject.otherCountry': 'remote, restricted to another country',
@@ -371,7 +349,6 @@ export const en: Record<keyof typeof es, string> = {
   'card.apply': 'Apply',
   'card.composeGmail': 'Compose in Gmail',
 
-  // ── El alta: la candidatura y los límites ───────────────────────────────
   'wiz.step.limits': 'Your application',
   'wiz.step.limits.hint': 'The paragraph you apply with and how far back the search looks. All of it has a default: you can leave it as is and fine-tune it whenever you want.',
   'limits.motivation': 'Your cover paragraph',

@@ -1,10 +1,5 @@
 const INK = '#0A0C0E';
 
-/*
- * Only three saturated colors: green (ok), amber (warning) and red (failure).
- * The muted cyan is the only accent and is reserved for focus, links and selection.
- * The grays step the background surfaces up to the card surface.
- */
 const darkPalette = {
   primary: {
     main: '#7FB8C4',

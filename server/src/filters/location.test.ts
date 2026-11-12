@@ -4,19 +4,9 @@ import { JobLocation } from '../types.js';
 import { findCountry } from './countries.js';
 import { classifyLocation } from './location.js';
 
-/**
- * Estas pruebas se escribieron con casos reales de alguien que busca desde
- * Venezuela, así que el hogar del perfil es Venezuela. La regla que miden no es
- * "Venezuela encaja": es "el país del usuario encaja y los demás no".
- */
 const HOGAR = { country: findCountry('VE'), city: null };
 
 describe('classifyLocation — región contra modalidad', () => {
-  /**
-   * EL CASO REAL, 2026-11-10. Llegó al dashboard y no debía: el puesto es en
-   * Buenos Aires y en todo el anuncio no aparece la palabra "remoto". "LatAm"
-   * describe dónde operan las empresas, no desde dónde se puede trabajar.
-   */
   const BUENOS_AIRES = [
     'Hola a todos! buscamos 10 Node.Js con mucha experiencia en fintech.',
     'Backend Engineer · Node.js · Buenos Aires',
@@ -35,7 +25,6 @@ describe('classifyLocation — región contra modalidad', () => {
   });
 
   it('"LatAm" a secas no dice la modalidad: queda por confirmar, no se tira', () => {
-    // Ante la duda se manda marcada, que es lo contrario de darla por buena.
     assert.equal(
       classifyLocation('Buscamos backend Node.js para una fintech de LatAm.', HOGAR),
       JobLocation.Unknown,
@@ -43,7 +32,6 @@ describe('classifyLocation — región contra modalidad', () => {
   });
 
   it('una ciudad SE PERDONA si el anuncio afirma que es remoto', () => {
-    // "Oficinas en Bogotá" no es dónde tienes que vivir si el puesto es remoto.
     assert.equal(
       classifyLocation('Backend Node.js, 100% remoto. Nuestras oficinas están en Bogotá.', HOGAR),
       JobLocation.Global,

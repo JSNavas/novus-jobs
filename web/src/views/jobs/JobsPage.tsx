@@ -20,20 +20,12 @@ interface Notice {
   severity: 'success' | 'error';
 }
 
-/**
- * Las pestañas llevan su número.
- *
- * Sin él, el menú podía decir "1 nueva" y la pestaña abierta salir vacía: las
- * dos cosas eran ciertas —la única oferta era junior y estaba en la otra— pero
- * juntas parecían un error. El número dice de un vistazo dónde está.
- */
 const seniorityTabs = (counts: Record<JobSeniority, number> | undefined) =>
   Object.values(JobSeniority).map((seniority) => ({
     value: seniority,
     label: counts ? `${jobSeniorityLabel(seniority)} (${counts[seniority]})` : jobSeniorityLabel(seniority),
   }));
 
-/** La otra pestaña, para poder mandar allí cuando esta está vacía y aquella no. */
 const otherSeniority = (current: JobSeniority): JobSeniority =>
   current === JobSeniority.Regular ? JobSeniority.Junior : JobSeniority.Regular;
 
@@ -42,9 +34,6 @@ const newCountText = (count: number): string => (count === 1 ? '1 oferta nueva' 
 const errorMessage = (cause: unknown): string => (cause instanceof Error ? cause.message : t('run.unknownError'));
 
 const JobsPage = () => {
-  // Qué lista se está mirando lo dice la URL, no un estado interno: así el
-  // enlace del menú, el botón de atrás y un enlace compartido llevan al mismo
-  // sitio, y el correo puede apuntar directo a /guardadas el día que haga falta.
   const view = viewByPath(useLocation().pathname);
   const [seniority, setSeniority] = useState<JobSeniority>(JobSeniority.Regular);
   const [filters, setFilters] = useState<FilterValues>({ q: '', hasApply: false });
@@ -53,8 +42,6 @@ const JobsPage = () => {
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
 
-  // Cambiar de lista, de pestaña o de filtro vuelve a la primera página:
-  // seguir en la tres de una lista que ahora tiene una deja la pantalla vacía.
   useEffect(() => { setPageNumber(1); }, [seniority, filters, view]);
 
   const query = useMemo<JobQuery>(
@@ -78,10 +65,6 @@ const JobsPage = () => {
       setNotice({ message: t('jobs.runStarted'), severity: 'success' });
       reload();
     } catch (cause: unknown) {
-      // El servidor ya dice el motivo exacto —el tope del día, los minutos que
-      // faltan, la sesión caída— y cada uno pide una acción distinta. Ponerle
-      // delante "Ya hay una búsqueda en curso" a todos los 409 contradecía al
-      // mensaje que venía detrás.
       setNotice({ message: errorMessage(cause), severity: 'error' });
     } finally {
       setStarting(false);
@@ -100,11 +83,6 @@ const JobsPage = () => {
     }
   };
 
-  /**
-   * Qué decir cuando la lista sale vacía. Nunca "no hay nada" a secas si lo que
-   * pasa es que está en la otra pestaña: ese mensaje contradice al contador y
-   * hace dudar de todo lo demás.
-   */
   const emptyMessage = (): string => {
     if (filters.q || filters.hasApply) return t('jobs.empty.filters');
     const elsewhere = page?.bySeniority[otherSeniority(seniority)] ?? 0;
@@ -154,9 +132,6 @@ const JobsPage = () => {
 
       {page && page.items.length === 0 ? (
         <Typography color="textSecondary" py={4} textAlign="center">
-          {/* El vacío de cada lista dice algo distinto: "no hay nada nuevo" y
-              "todavía no has guardado ninguna" son dos situaciones y una sola
-              frase genérica las confundiría. */}
           {emptyMessage()}
         </Typography>
       ) : null}

@@ -13,10 +13,6 @@ import { OPEN_API_POLICY, WATCHED_ACCOUNT_POLICY } from './sources/policy.js';
 import type { JobSource } from './sources/types.js';
 import { RunFailure, RunTrigger } from './types.js';
 
-/**
- * Fuentes de mentira: el runner solo mira su nombre y su política para decidir
- * el ritmo. No llegan a leer nada porque `fetch` devuelve vacío.
- */
 function fakeSource(name: string, policy: JobSource['policy']): JobSource {
   return {
     name,
@@ -32,13 +28,6 @@ function fakeSource(name: string, policy: JobSource['policy']): JobSource {
 const LINKEDIN = fakeSource('linkedin', WATCHED_ACCOUNT_POLICY);
 const GETONBRD = fakeSource('getonbrd', OPEN_API_POLICY);
 
-/**
- * EL RITMO ES LA SALUD DE LA CUENTA, así que se prueba.
- *
- * El caso que se colaba antes era el cuarto: una sesión caída lee 0
- * publicaciones, el suelo bajaba a diez minutos "porque no leyó nada", y el
- * botón autorizaba a golpear una pantalla de login indefinidamente.
- */
 describe('Runner — suelo de las búsquedas manuales', () => {
   let dir: string;
   let db: Db;
@@ -55,9 +44,6 @@ describe('Runner — suelo de las búsquedas manuales', () => {
   });
 
   afterEach(async () => {
-    // `launch` dispara la pasada sin esperarla. Se le dan unos turnos al bucle
-    // de eventos: si no, la BD se cierra con el pipeline a medias y el fallo
-    // aparece en OTRO test, que es el peor sitio donde puede aparecer.
     for (let i = 0; i < 5; i++) await new Promise((resolve) => setImmediate(resolve));
     db.close();
     rmSync(dir, { recursive: true, force: true });
@@ -83,7 +69,6 @@ describe('Runner — suelo de las búsquedas manuales', () => {
     });
   }
 
-  /** Deja registrada una pasada que terminó como dice `failure` (o bien). */
   function pastRun(failure: RunFailure | null, trigger = RunTrigger.Manual): void {
     const id = runs.start('linkedin', trigger, now.toISOString());
     if (failure) runs.fail(id, 'lo que fuera', failure);
@@ -128,7 +113,7 @@ describe('Runner — suelo de las búsquedas manuales', () => {
 
   it('SIN SESIÓN no se reintenta nunca: se niega y manda a iniciar sesión', () => {
     pastManual(RunFailure.LoginRequired);
-    advance(6 * 60 * 60_000); // seis horas después: sigue sin tener sentido
+    advance(6 * 60 * 60_000);
     const message = refusal(() => runner().startManual());
     assert.match(message, /sin sesión/);
     assert.match(message, /npm run login/);
@@ -147,8 +132,6 @@ describe('Runner — suelo de las búsquedas manuales', () => {
   });
 
   it('una pasada vacía POR MAQUETADO no rebaja el suelo', () => {
-    // Si lo rebajara, un cambio en el DOM de LinkedIn se traduciría en un
-    // navegador golpeando el feed cada pocos minutos sin que nada mejore.
     pastManual(RunFailure.Layout);
     advance(15 * 60_000);
     assert.match(refusal(() => runner().startManual()), /espera 45 min/);
@@ -161,15 +144,7 @@ describe('Runner — suelo de las búsquedas manuales', () => {
     assert.equal(runs.list(10).items.filter((x) => x.id === 2).length, 1);
   });
 
-  /* ═══ LOS LÍMITES QUE PROTEGEN LA CUENTA ═══
-   * Lo que LinkedIn mide no es cuántas veces se pulsa un botón, sino cuántas
-   * veces un navegador carga el feed y con qué patrón. Cada uno de estos tapa
-   * una forma distinta de parecer un robot. */
-
   it('la pasada automática NO bloquea el botón: el suelo manual es lo único que cuenta', () => {
-    // Hubo un tope de 20 min tras cualquier lectura. Lo quitó el usuario el
-    // 2026-11-11: con una hora entre manuales ya no se encadenan dos cargas
-    // por insistir, y lo que hacía en la práctica era negarle el botón.
     pastRun(null, RunTrigger.Scheduled);
     advance(60_000);
     assert.ok(runner().startManual().id);
@@ -182,7 +157,6 @@ describe('Runner — suelo de las búsquedas manuales', () => {
   });
 
   it('una manual que murió con el perfil ocupado NO gasta presupuesto', () => {
-    // Nunca se abrió el navegador: LinkedIn no vio nada que cobrar.
     for (let i = 0; i < 5; i++) pastManual(RunFailure.ProfileBusy);
     advance(60 * 60_000);
     assert.ok(runner().startManual().id);
@@ -195,13 +169,8 @@ describe('Runner — suelo de las búsquedas manuales', () => {
     assert.equal(runs.list(50).items.length, before, 'no debería haber lanzado nada');
   });
 
-  /* ═══ CADA PLATAFORMA, SU RITMO ═══
-   * El 2026-11-11 el presupuesto de LinkedIn, ya gastado, impedía consultar una
-   * API pública sin cuenta ni sesión. Un tope sin nada que proteger es una
-   * avería, no prudencia. */
-
   it('EL CASO REAL: con LinkedIn en su hora de espera, Get on Board se busca igual', () => {
-    pastRun(null, RunTrigger.Manual); // linkedin acaba de buscar: le toca esperar
+    pastRun(null, RunTrigger.Manual);
     const previas = runs.list(50).items.map((r) => r.id);
     const run = runner([LINKEDIN, GETONBRD]).startManual();
 
@@ -232,10 +201,10 @@ describe('Runner — suelo de las búsquedas manuales', () => {
   });
 
   it('si NINGUNA puede, se niega y dice el motivo de cada una', () => {
-    pastManual(null);                                    // linkedin: suelo de una hora
+    pastManual(null);
     const id = runs.start('getonbrd', RunTrigger.Manual, now.toISOString());
     runs.finish(id, { fetched: 1, accepted: 0, rejected: 1 });
-    advance(30_000); // menos del minuto de Get on Board y menos de la hora de LinkedIn
+    advance(30_000);
 
     const message = refusal(() => runner([LINKEDIN, GETONBRD]).startManual());
     assert.match(message, /linkedin: /);
@@ -248,23 +217,15 @@ describe('Runner — suelo de las búsquedas manuales', () => {
   });
 
   it('el techo del día se cuenta por día de Venezuela, no por día UTC', () => {
-    // A las 20:00 UTC son las 16:00 en Venezuela: sigue siendo el mismo día y
-    // el contador NO se ha reiniciado. Con el corte en UTC, la tarde del usuario
-    // tendría techo doble.
     now = new Date('2026-11-10T20:00:00.000Z');
     for (let i = 0; i < 20; i++) pastRun(null, RunTrigger.Scheduled);
-    now = new Date('2026-11-11T01:00:00.000Z'); // 21:00 en Venezuela, mismo día
+    now = new Date('2026-11-11T01:00:00.000Z');
     assert.match(refusal(() => runner().startManual()), /techo del día/);
-    now = new Date('2026-11-11T05:00:00.000Z'); // 01:00 en Venezuela, día nuevo
+    now = new Date('2026-11-11T05:00:00.000Z');
     assert.ok(runner().startManual().id);
   });
 });
 
-/**
- * LO QUE NO SE PUEDE BUSCAR. Las dos puertas que hay antes de tocar una
- * plataforma, y las dos se cerraron por el mismo motivo: una lectura gastada no
- * se recupera, ni en el presupuesto del día ni en lo que la cuenta ve.
- */
 describe('Runner — cuándo se niega a buscar', () => {
   let dir: string;
   let db: Db;

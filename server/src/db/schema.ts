@@ -1,26 +1,5 @@
 import { JobStatus } from '../types.js';
 
-/* ═══════════════════════════════════════════════════════════════════════════
- * POR QUÉ NINGÚN ENUM LLEVA `CHECK`
- *
- * Lo llevaban, generados desde el propio TS, y parecía lo correcto: la BD
- * rechazaba un valor que el código no conocía. Lo que no hace un `CHECK` es
- * cambiar cuando cambia el enum — `CREATE TABLE IF NOT EXISTS` no toca una
- * tabla que ya existe, así que la lista de valores se queda CONGELADA en la
- * base de quien ya tenía el proyecto instalado.
- *
- * Y entonces pasa esto, medido: al renombrar `venezuela` por `home_country`
- * —el valor dejó de nombrar un país para nombrar "el país del usuario", que es
- * lo que permite que esto sirva a cualquiera— la migración murió con
- * "CHECK constraint failed" en una instalación real, mientras que en una nueva
- * habría funcionado sin enterarse. Un `CHECK` de enum convierte cada valor
- * nuevo en una migración de tabla completa.
- *
- * Los valores los valida el TypeScript, que es el mismo en todas las
- * instalaciones. Los `CHECK` que sí se quedan son los que no dependen de un
- * enum: los `IN (0, 1)` de los booleanos.
- * ═══════════════════════════════════════════════════════════════════════════ */
-
 export const SCHEMA = `
 CREATE TABLE IF NOT EXISTS jobs (
   id               INTEGER PRIMARY KEY AUTOINCREMENT,

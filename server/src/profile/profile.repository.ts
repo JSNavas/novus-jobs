@@ -2,30 +2,13 @@ import type { SettingsRepository } from '../db/settings.repository.js';
 import { DEFAULT_PROFILE } from './defaults.js';
 import { ENGLISH_LEVELS, LANGUAGES, type CandidateProfile, type EnglishLevel, type Language } from './types.js';
 
-/** El perfil entero, como un JSON en `settings`. */
 export const PROFILE_KEY = 'candidateProfile';
 
-/**
- * Si el alta se completó. Clave aparte del perfil a propósito: un perfil a
- * medias es un estado normal —se puede guardar el paso 2 y volver mañana— y el
- * servidor necesita distinguir "a medias" de "terminado" sin adivinarlo a partir
- * de qué campos están llenos.
- */
 export const ONBOARDING_DONE_KEY = 'onboardingCompletedAt';
 
-/**
- * Lee y escribe el perfil. Una sola fila de `settings`, no una tabla: el perfil
- * se lee entero y se guarda entero, y así añadirle un campo no pide migración —
- * los que falten los pone `DEFAULT_PROFILE` al leer.
- */
 export class ProfileRepository {
   constructor(private readonly settings: SettingsRepository) {}
 
-  /**
-   * Siempre devuelve un perfil usable. Un JSON roto a mano, o venido de una
-   * versión anterior, no puede tumbar el arranque: se cae a los valores por
-   * defecto campo a campo y el servidor sigue.
-   */
   get(): CandidateProfile {
     return parseProfile(this.settings.get(PROFILE_KEY));
   }
@@ -34,7 +17,6 @@ export class ProfileRepository {
     this.settings.set(PROFILE_KEY, JSON.stringify(profile));
   }
 
-  /** Guarda solo lo que cambió: el alta manda un paso, no el perfil completo. */
   patch(changes: Partial<CandidateProfile>): CandidateProfile {
     const next: CandidateProfile = { ...this.get(), ...changes };
     this.save(next);
@@ -95,7 +77,6 @@ function record(value: unknown): Record<string, unknown> | null {
     : null;
 }
 
-/** Listas de tecnología: se tiran los vacíos y los repetidos, que es lo que llega de un formulario. */
 function strings(value: unknown): string[] | null {
   if (!Array.isArray(value)) return null;
   const clean = value.filter((v): v is string => typeof v === 'string').map((v) => v.trim()).filter(Boolean);
@@ -110,11 +91,6 @@ function bool(value: unknown): boolean | null {
   return typeof value === 'boolean' ? value : null;
 }
 
-/**
- * Una zona que el runtime no conozca se tira: con un nombre inventado, `Intl`
- * lanza y el planificador se caería en cada tick. Vacío significa "la de la
- * máquina", que es un valor legítimo y el de por defecto.
- */
 function timezone(value: unknown): string | null {
   const name = text(value);
   if (!name) return null;

@@ -2,16 +2,6 @@ import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import { GetOnBoardSource } from './getonbrd.source.js';
 
-/**
- * LA FUENTE DE GET ON BOARD, SIN TOCAR LA RED.
- *
- * Lo que se prueba aquí no es que la API conteste —eso se comprobó en real,
- * 187 vacantes el 2026-11-11— sino la traducción de su JSON a un anuncio de
- * texto, que es de donde el resto del proyecto saca TODO: ubicación, stack,
- * seniority y vía de postulación. Un campo mal volcado no rompe nada: hace que
- * las reglas decidan sobre algo que el anuncio no decía.
- */
-
 const CATEGORIES = {
   data: [
     { id: 'programming', type: 'category', attributes: { name: 'Programming' } },
@@ -19,7 +9,6 @@ const CATEGORIES = {
   ],
 };
 
-/** Una vacante como las que devuelve de verdad `/api/v0/search/jobs`. */
 function apiJob(overrides: Record<string, unknown> = {}) {
   return {
     id: 'full-stack-node-react-acme-remote',
@@ -51,7 +40,6 @@ describe('GetOnBoardSource — del JSON al anuncio', () => {
   const realFetch = globalThis.fetch;
   let calls: string[];
 
-  /** Responde categorías o vacantes según la URL, sin salir a internet. */
   function stub(reply: (url: string) => { body: unknown; status?: number } | null): void {
     globalThis.fetch = (async (input: string | URL) => {
       const url = String(input);

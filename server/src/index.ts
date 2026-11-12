@@ -32,18 +32,10 @@ async function main(): Promise<void> {
   const interrupted = runs.failInterrupted();
   if (interrupted) console.log(`[arranque] ${interrupted} pasada(s) interrumpida(s) cerrada(s) como error`);
 
-  // Un solo navegador por perfil para todo el proceso, pase lo que pase con las
-  // fuentes: es lo que garantiza que el ritmo que ve cada plataforma no dependa
-  // de cuántas haya activas.
   const pool = new BrowserPool(config.browserProfilesRoot, config.browserHeadless);
-  // La sesión que el usuario ya tenía, cuando el perfil vivía dentro del repo.
   migrateProfile(legacyLinkedinProfileDir(config), pool.session(LINKEDIN_PROFILE_ID).dir);
 
-  // Todas las conocidas: cuáles corren lo dice el interruptor de cada una, que
-  // se consulta en cada pasada y se puede cambiar desde Integraciones.
   const sources = buildSources(config, pool);
-  // Un solo cliente de Gemini para los dos usos: juzgar ofertas y, si el
-  // usuario lo pide, leerle el CV en el alta.
   const gemini = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;
   const judge = gemini ? new LlmJudge(gemini, config.judgeModel) : null;
   const enhancer = gemini ? new CvEnhancer(gemini, config.judgeModel) : null;
@@ -61,12 +53,8 @@ async function main(): Promise<void> {
   const enabled = (name: string): boolean => toggles.isEnabled(name);
   console.log(`[arranque] plataformas: ${sources.map((s) => `${s.label}${enabled(s.name) ? '' : ' (apagada)'}`).join(', ') || 'ninguna'}`);
   const profiles = new ProfileRepository(settings);
-  // Como función y no como valor: así un cambio en Configuración o en el alta
-  // entra en la siguiente pasada sin reiniciar el servicio.
   const profile = (): CandidateProfile => profiles.get();
   const onboarded = (): boolean => profiles.isOnboarded();
-  // La zona del perfil manda; vacía, la de la máquina. Las franjas son horas de
-  // SU reloj, y el presupuesto del día se corta a SU medianoche.
   const timeZone = (): string => profile().geo.timezone || systemTimeZone();
   console.log(onboarded()
     ? `[arranque] perfil cargado: ${profile().core.length} tecnologías de núcleo, inglés ${profile().english.level.toUpperCase()}, zona ${timeZone()}`
@@ -109,8 +97,6 @@ async function main(): Promise<void> {
 
   const shutdown = async (): Promise<void> => {
     scheduler.stop();
-    // El navegador se cierra LIMPIAMENTE antes de salir. Es lo que vuelca la
-    // cookie jar al disco y lo que no deja el perfil marcado como ocupado.
     await pool.closeAll();
     await app.close();
     db.close();

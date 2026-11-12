@@ -4,24 +4,6 @@ import { GetOnBoardSource } from './getonbrd.source.js';
 import { LinkedInSource } from './linkedin.source.js';
 import type { JobSource, SourceDefinition } from './types.js';
 
-/**
- * EL CATÁLOGO DE PLATAFORMAS. Es el único sitio del proyecto que las conoce.
- *
- * Para añadir una (InfoJobs, Glassdoor, Indeed, un RSS, una API):
- *   1. `sources/<nombre>.source.ts` con una clase que cumpla `JobSource`.
- *      Si necesita sesión, pide su navegador al pool con `pool.session('<id>')`
- *      y declara `profileId` y `loginUrl`; si no la necesita, los deja en `null`.
- *   2. Una línea en esta lista.
- *
- * Eso es todo: aparece en Integraciones, apagada, y el usuario la enciende
- * cuando quiera. Para quitarla del todo: borrar su fichero y su línea de aquí;
- * nada más la nombra. Para dejar de usarla sin borrarla: el interruptor de
- * Integraciones (ver `toggles.ts`).
- *
- * Nada más cambia. El runner, el scheduler, el pipeline, la API y la UI no
- * saben cuántas plataformas hay ni cómo se llaman, y las ofertas ya se guardan
- * con su columna `source`.
- */
 const DEFINITIONS: readonly SourceDefinition[] = [
   {
     name: 'linkedin',
@@ -31,7 +13,6 @@ const DEFINITIONS: readonly SourceDefinition[] = [
   {
     name: 'getonbrd',
     label: 'Get on Board',
-    // Ni `config` ni `pool`: lee de una API pública, sin sesión ni navegador.
     create: () => new GetOnBoardSource(),
   },
 ];
@@ -50,15 +31,6 @@ export function sourceDefinition(name: string): SourceDefinition {
   return definition;
 }
 
-/**
- * Todas las plataformas que el proyecto conoce, construidas.
- *
- * TODAS, no solo las encendidas: una fuente que no se construye no existe para
- * la interfaz, y entonces no hay forma de volver a encenderla desde el
- * dashboard. Cuáles corren lo dice `SourceToggles`, que se consulta en cada
- * pasada. Construir una fuente no abre navegadores ni hace peticiones: eso pasa
- * en su `fetch`.
- */
 export function buildSources(config: Config, pool: BrowserPool): JobSource[] {
   return DEFINITIONS.map((definition) => {
     try {
@@ -69,7 +41,6 @@ export function buildSources(config: Config, pool: BrowserPool): JobSource[] {
   });
 }
 
-/** Una fuente suelta, por nombre, sin mirar `JOB_SOURCES`: lo que necesita el login. */
 export function buildSource(name: string, config: Config, pool: BrowserPool): JobSource {
   return sourceDefinition(name).create(config, pool);
 }

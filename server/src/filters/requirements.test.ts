@@ -4,15 +4,6 @@ import { PROFILE } from '../profile/profile.js';
 import { englishDemand, unknownRequiredTech } from './requirements.js';
 import { englishRank, type EnglishLevel } from '../profile/types.js';
 
-/**
- * Lo que mide esto no es "¿piden inglés?" sino "¿piden MÁS del que tengo?", y la
- * respuesta depende de quién pregunte: el mismo "inglés B2 excluyente" descarta
- * a quien tiene B1 y no a quien tiene C1. Por eso los casos se escriben contra
- * un nivel concreto y no contra una verdad absoluta.
- *
- * El nivel de referencia es B1 porque es el del perfil de ejemplo, con el que
- * se encontraron estos casos reales.
- */
 describe('englishDemand', () => {
   const cierra = (texto: string, mio: EnglishLevel): boolean => {
     const demand = englishDemand(texto);
@@ -49,7 +40,6 @@ describe('englishDemand', () => {
     descarta('✔️ Inglés avanzado, excluyente.\n⭐ Se valorará:\n✔️ AWS');
   });
 
-  /** La misma oferta, otro candidato: con C1 encima, un B2 excluyente ya no cierra. */
   it('el mismo anuncio no descarta a quien tiene más nivel', () => {
     assert.equal(cierra('✔️ Inglés Upper Intermediate (B2+), excluyente.', 'c1'), false);
     assert.equal(cierra('Buscamos perfil bilingüe.', 'native'), false);

@@ -1,16 +1,4 @@
-/**
- * EL IDIOMA DE ORIGEN, y el contrato de claves.
- *
- * Este objeto define qué claves existen; `en.ts` se declara con su mismo tipo,
- * así que una traducción que falte no compila. Las claves van agrupadas por
- * pantalla con un prefijo, en plano y no anidadas: una clave plana se busca con
- * un grep y sale una sola línea.
- *
- * Los huecos son `{nombre}`. Nunca posiciones: el orden de las partes de una
- * frase cambia de un idioma a otro.
- */
 export const es = {
-  // ── Estados y etiquetas de dominio ───────────────────────────────────────
   'status.new': 'Nueva',
   'status.seen': 'Vista',
   'status.saved': 'Guardada',
@@ -24,7 +12,6 @@ export const es = {
   'location.hybrid': 'híbrido',
   'location.unknown': 'no dice desde dónde se puede trabajar',
 
-  // ── Fallos de una búsqueda ───────────────────────────────────────────────
   'failure.loginRequired': 'Hay que iniciar sesión otra vez',
   'failure.profileBusy': 'El navegador estaba ocupado',
   'failure.layout': 'La plataforma cambió su maquetado',
@@ -37,7 +24,6 @@ export const es = {
     'La sesión está bien, pero no se encontró ninguna publicación. Hay una captura en los logs del servidor.',
   'failure.other.advice': 'Mira el detalle debajo y los logs del servidor.',
 
-  // ── La bandeja ───────────────────────────────────────────────────────────
   'inbox.new.title': 'Nuevas',
   'inbox.new.subtitle': 'Ofertas recién encontradas que todavía no has mirado',
   'inbox.new.empty': 'No hay ofertas nuevas.',
@@ -51,8 +37,6 @@ export const es = {
   'inbox.dismissed.subtitle': 'Las que apartaste. No se borran: puedes devolverlas a nuevas',
   'inbox.dismissed.empty': 'Aquí van las que descartas. No se borran: puedes devolverlas a nuevas.',
 
-
-  // ── Navegación ───────────────────────────────────────────────────────────
   'nav.dashboard': 'Dashboard',
   'nav.group.offers': 'Ofertas',
   'nav.group.audit': 'Auditoría',
@@ -63,13 +47,11 @@ export const es = {
   'schedule.everyMinutes': 'cada {minutes} min',
   'schedule.slots': '{count} franja(s)',
 
-  // ── La bandeja: acciones y vacíos ────────────────────────────────────────
   'jobs.runStarted': 'Búsqueda iniciada. Las ofertas nuevas aparecerán al terminar.',
   'jobs.empty.filters': 'No hay ofertas con estos filtros.',
   'jobs.empty.elsewhere': 'Aquí no hay ninguna, pero tienes {count} en «{tab}».',
   'jobs.searchNow': 'Buscar ahora',
 
-  // ── El reloj: cuándo toca la siguiente búsqueda ──────────────────────────
   'schedule.or': 'o',
   'schedule.nextSentence': 'La siguiente búsqueda es a las {hours} ({timezone}).',
   'schedule.nextUnderMinute': 'Próxima en menos de 1 min',
@@ -81,7 +63,6 @@ export const es = {
   'run.running': 'En curso',
   'run.ok': 'Correcta',
 
-  // ── Las cifras de la cabecera ───────────────────────────────────────────
   'stats.new': 'Nuevas',
   'stats.new.hint': 'Sin mirar todavía',
   'stats.saved': 'Guardadas',
@@ -94,7 +75,6 @@ export const es = {
   'sidebar.lastRunFailed': 'La última búsqueda falló',
   'stats.noRuns': 'Sin búsquedas todavía',
 
-  // ── Dashboard ───────────────────────────────────────────────────────────
   'dash.title': 'Dashboard',
   'dash.subtitle': 'Qué ha buscado, qué ha encontrado y dónde está cada oferta',
   'dash.tile.new': 'Nuevas',
@@ -116,7 +96,6 @@ export const es = {
   'dash.runs.empty': 'Todavía no se ha buscado ninguna vez.',
   'dash.runs.noun': 'búsquedas',
 
-  // ── La tarjeta de una oferta ────────────────────────────────────────────
   'card.action.new': 'Marcar como nueva',
   'card.action.seen': 'Marcar como vista',
   'card.action.save': 'Guardar',
@@ -149,7 +128,6 @@ export const es = {
   'card.showMore': 'Ver más',
   'card.showLess': 'Ver menos',
 
-  // ── Filtros, cabecera, descartadas y detalle de búsqueda ────────────────
   'filters.search': 'Buscar en el texto',
   'filters.onlyApplicable': 'Solo con vía de postulación',
   'header.openMenu': 'Abrir menú',
@@ -166,7 +144,6 @@ export const es = {
   'run.offers.empty': 'Esta búsqueda no guardó ninguna oferta nueva.',
   'run.unknownError': 'Error desconocido',
 
-  // ── Integraciones ───────────────────────────────────────────────────────
   'int.title': 'Integraciones',
   'int.subtitle': 'De dónde salen las ofertas y cada cuánto se mira cada sitio',
   'int.interval.help': 'Cada cuánto se lee. Es una API pública, así que no hay cuenta que cuidar: el único motivo para no bajarlo a cero es no castigar un servidor ajeno.',
@@ -196,7 +173,6 @@ export const es = {
   'interval.tooLow': 'Mínimo {min} minutos: por debajo es martillear la plataforma.',
   'interval.tooHigh': 'Máximo 24 horas.',
 
-  // ── Enfoque ─────────────────────────────────────────────────────────────
   'focus.title': 'Enfoque',
   'focus.subtitle': 'Lo que piden en común las vacantes que te sirven',
   'focus.new': 'nuevo',
@@ -211,7 +187,6 @@ export const es = {
   'focus.emerging': 'Apareciendo',
   'focus.emerging.help': 'Palabras que se repiten en los requisitos y que todavía no se miden arriba. Esto sale solo, sin que nadie las haya previsto: si algo nuevo empieza a pedirse, asoma aquí primero.',
 
-  // ── Configuración ───────────────────────────────────────────────────────
   'set.title': 'Configuración',
   'set.subtitle': 'Lo que puedes cambiar sin tocar el código',
   'set.saved': 'Guardado. Las ofertas ya usan este texto.',
@@ -241,7 +216,6 @@ export const es = {
   'set.language': 'Idioma',
   'set.language.help': 'En qué idioma habla la aplicación. Al cambiarlo se recarga la pantalla.',
 
-  // ── El alta ─────────────────────────────────────────────────────────────
   'wiz.step.cv': 'Tu CV',
   'wiz.step.cv.hint': 'Súbelo y se rellena lo que se pueda leer. También puedes saltarlo y escribirlo a mano.',
   'wiz.step.stack': 'Tu stack',
@@ -266,7 +240,6 @@ export const es = {
   'wiz.saveNext': 'Guardar y seguir',
   'wiz.back': 'Atrás',
 
-  // ── El alta: los paneles de cada paso ───────────────────────────────────
   'eng.none': 'Ninguno',
   'eng.a1': 'A1 — algunas palabras',
   'eng.a2': 'A2 — básico, leo documentación',
@@ -331,12 +304,10 @@ export const es = {
   'done.none': 'ninguno',
   'done.noModality.error': 'No has dejado ninguna modalidad marcada: así no entraría ninguna oferta. Vuelve al paso «Dónde» y marca al menos una.',
 
-  // ── La candidatura ──────────────────────────────────────────────────────
   'apply.greeting': 'Hola, un gusto saludarte!',
   'apply.body': 'Estoy interesado en la vacante de {vacancy}. Le adjunto mi CV para que pueda ver mis habilidades y experiencia. Saludos!',
   'apply.thePosting': 'la publicación que compartiste',
 
-  // ── Los motivos de descarte, que escribe el servidor como código ────────
   'reject.notAVacancy': 'no es una vacante: es alguien ofreciéndose como candidato',
   'reject.notAnOffer': 'no es una oferta de trabajo (publicación técnica o de opinión)',
   'reject.otherCountry': 'remoto restringido a otro país',
@@ -376,7 +347,6 @@ export const es = {
   'card.apply': 'Postularse',
   'card.composeGmail': 'Redactar en Gmail',
 
-  // ── El alta: la candidatura y los límites ───────────────────────────────
   'wiz.step.limits': 'Tu candidatura',
   'wiz.step.limits.hint': 'El párrafo con el que te postulas y hasta dónde mira la búsqueda. Todo esto trae un valor por defecto: puedes dejarlo como está y afinarlo cuando quieras.',
   'limits.motivation': 'Tu párrafo de motivación',

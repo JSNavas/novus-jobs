@@ -4,7 +4,6 @@ export function isOneOf<T extends string>(values: readonly T[], value: string): 
   return values.some((v) => v === value);
 }
 
-/** Los parámetros de la query llegan como `unknown`: solo se conservan los que son texto. */
 export function stringParams(raw: unknown): Record<string, string> {
   if (typeof raw !== 'object' || raw === null) return {};
   return Object.fromEntries(Object.entries(raw).flatMap(([key, value]) => (typeof value === 'string' ? [[key, value]] : [])));

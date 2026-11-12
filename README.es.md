@@ -30,7 +30,7 @@ Novus Jobs lee el feed en tu nombre, aplica tu criterio y te deja en el dashboar
 
 ### De dónde sale
 
-Es una réplica deliberada del patrón de un bot anterior del autor, que lleva meses leyendo ese mismo feed a diario sin que la cuenta se resienta: el ritmo de tres franjas, el scroll del contenedor interno, la lectura del DOM y el navegador único por perfil vienen de ahí. Lo que aquí se añadió está explicado en los comentarios del código, caso por caso.
+Es una réplica deliberada del patrón de un bot anterior del autor, que lleva meses leyendo ese mismo feed a diario sin que la cuenta se resienta: el ritmo de tres franjas, el scroll del contenedor interno, la lectura del DOM y el navegador único por perfil vienen de ahí. Lo que aquí se añadió está fijado con pruebas, caso por caso.
 
 ## Lo que este proyecto no negocia
 
@@ -52,9 +52,10 @@ una de ellas es un cambio que este proyecto no quiere, por cómodo que sea.
 5. **Ninguna plataforma es especial.** Las fuentes son implementaciones
    intercambiables tras una interfaz. Borrar la más grande es un fichero y una
    línea.
-6. **Los comentarios dicen por qué, no qué.** Casi toda regla rara del filtro
-   nombra la oferta real que la hizo necesaria. Un arreglo sin su caso no lo
-   puede verificar nadie después.
+6. **El porqué vive en las pruebas.** El código no lleva comentarios: lo que
+   explica una regla que parece equivocada es su prueba, con el nombre del caso
+   real que la hizo falta. Un arreglo sin su caso no lo puede verificar nadie
+   después.
 
 ## Las pantallas
 

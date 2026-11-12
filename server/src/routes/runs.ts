@@ -8,7 +8,6 @@ import type { SourceSchedules } from '../sources/schedules.js';
 import type { JobSource } from '../sources/types.js';
 import { optionalInteger, stringParams, type Result } from './parse.js';
 
-/** Diez por página en todas partes: es lo que se lee sin desplazarse. */
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 100;
 
@@ -17,7 +16,6 @@ interface RunRoutesDeps {
   runner: Runner;
   scheduler: Scheduler;
   hours: readonly number[];
-  /** La zona del usuario, para decir a qué hora de SU reloj toca la siguiente. */
   timeZone: () => string;
   sources: readonly JobSource[];
   schedules: SourceSchedules;
@@ -33,13 +31,6 @@ function parseRunsPage(raw: unknown): Result<{ limit: number; offset: number }> 
 }
 
 export function registerRunRoutes(app: FastifyInstance, deps: RunRoutesDeps): void {
-  /**
-   * Cuándo busca, para que la interfaz no tenga que suponerlo.
-   *
-   * `nextAt` es la próxima lectura DE VERDAD: la más cercana entre todas las
-   * fuentes, franjas e intervalos mezclados. La UI no sabe —ni tiene por qué—
-   * que Get on Board va cada media hora y LinkedIn por franjas.
-   */
   app.get('/api/schedule', () => {
     const next = nextRunAt(
       new Date(),
@@ -61,7 +52,6 @@ export function registerRunRoutes(app: FastifyInstance, deps: RunRoutesDeps): vo
     return reply.send(deps.runs.list(page.value.limit, page.value.offset));
   });
 
-  /** Una pasada suelta: el dashboard la abre para enseñar lo que encontró. */
   app.get<{ Params: { id: string } }>('/api/runs/:id', (request, reply) => {
     const run = deps.runs.find(Number(request.params.id));
     if (!run) return reply.code(404).send({ error: 'pasada no encontrada' });

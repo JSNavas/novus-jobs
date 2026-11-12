@@ -1,11 +1,6 @@
 import { t } from '../../i18n';
 import { Checkbox, FormControlLabel, Stack, TextField } from '@mui/material';
 
-/**
- * El estado YA NO está aquí: lo elige el menú lateral, que es donde se ve.
- * Tenerlo en los dos sitios dejaría dos mandos para lo mismo y, en cuanto
- * discreparan, el usuario no sabría cuál manda.
- */
 export interface FilterValues {
   q: string;
   hasApply: boolean;

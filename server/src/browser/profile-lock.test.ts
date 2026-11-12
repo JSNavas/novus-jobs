@@ -5,14 +5,6 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import { isProfileBusy, profileLockHolder } from './profile-lock.js';
 
-/**
- * El test que no existía cuando el bug estaba suelto.
- *
- * El caso que importa es el TERCERO: un lock que apunta a un proceso muerto.
- * Era el que rompía el proyecto entero —todas las pasadas fallando y el login
- * negándose a arrancar— y el que no se ve nunca en desarrollo, porque hace
- * falta que Chromium muera de malas maneras para reproducirlo.
- */
 describe('profileLockHolder', () => {
   let dir: string;
 
@@ -40,7 +32,6 @@ describe('profileLockHolder', () => {
   });
 
   it('un lock HUÉRFANO (pid muerto) deja el perfil libre', () => {
-    // 2^22 + 1 está por encima del pid máximo de macOS y Linux: no existe.
     symlinkSync(`${hostname()}-4194305`, lock());
     assert.equal(profileLockHolder(profile()), null);
     assert.equal(isProfileBusy(profile()), false);

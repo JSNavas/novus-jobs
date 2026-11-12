@@ -1,19 +1,3 @@
-/**
- * Enviar correo. Lo único que sale de esta máquina hacia el usuario.
- *
- * VÍA RESEND, y por HTTP a pelo, sin SDK: no hace falta cuenta ni
- * factura, así que no se añade ninguna de las dos. Y una llamada `fetch` evita
- * meter `nodemailer` y un cliente SMTP entero por mandar tres correos al día.
- *
- * NO REINTENTA, y es deliberado. Si el envío falla se registra y se acabó: un
- * reintento ciego con correo es la receta para mandarle la misma oferta cinco
- * veces, y el destinatario es su bandeja personal. Perder un aviso es molesto;
- * inundarle es peor y no se deshace.
- *
- * NUNCA LANZA. Quien llama está dentro de una pasada programada, y una
- * excepción aquí mataría la pasada —y las ofertas ya guardadas— por no haber
- * podido mandar un correo.
- */
 export interface MailConfig {
   apiKey: string;
   from: string;
@@ -55,8 +39,6 @@ export class Mailer {
         signal: AbortSignal.timeout(20_000),
       });
       if (!response.ok) {
-        // El cuerpo del error de Resend dice el motivo real (dominio sin
-        // verificar, clave mala…). Sin él, "falló el correo" no se arregla.
         const body = await response.text().catch(() => '');
         console.error(`[correo] Resend lo rechazó (${response.status}): ${body.slice(0, 300)}`);
         return false;

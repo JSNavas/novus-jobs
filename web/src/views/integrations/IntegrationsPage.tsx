@@ -14,28 +14,6 @@ import {
   ALL_HOURS, hourLabel, INTERVAL_PRESETS, intervalError, intervalLabel,
 } from './scheduleEditor';
 
-/**
- * Los dos editores de horario se exportan porque el ALTA los usa tal cual: el
- * ritmo se elige ahí, en el paso de plataformas, y mantener dos editores —uno
- * para el alta y otro para esta página— sería mantener dos sitios donde el
- * mismo suelo de minutos puede acabar diciendo cosas distintas.
- */
-
-/**
- * INTEGRACIONES — una tarjeta por plataforma, y ninguna escrita a mano.
- *
- * La lista sale de `/api/integrations`, que son TODAS las que el servidor
- * conoce, encendidas o no: el día que entre InfoJobs aparecerá aquí sola, con
- * su editor, sin tocar React. Y se listan también las apagadas porque si no, no
- * habría desde dónde volver a encenderlas. Lo
- * único que decide qué editor se pinta es la FORMA del horario que declara su
- * política: LinkedIn va por franjas porque es una cuenta vigilada y leer a
- * deshora es lo que quema una cuenta; Get on Board va por intervalo porque es
- * una API pública y ahí lo único en juego es no ser un mal vecino.
- *
- * Por eso la forma no se elige desde aquí: se elige el número.
- */
-
 const POLL_INTERVAL_MS = 30_000;
 
 export interface CardProps {
@@ -164,12 +142,6 @@ export const HoursEditor = ({ integration, onSaved }: CardProps) => {
   );
 };
 
-/**
- * El interruptor de la plataforma. Vive en la cabecera y no entre los ajustes
- * del horario porque es de otro orden: el horario dice cuándo se lee, esto dice
- * si se lee. Apagada, el editor se queda visible pero en gris: lo que se
- * configuró sigue ahí y se recupera tal cual al encenderla.
- */
 const EnabledSwitch = ({ integration, onSaved }: CardProps) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -236,8 +208,6 @@ const IntegrationCard = ({ integration, onSaved }: CardProps) => {
 };
 
 const IntegrationsPage = () => {
-  // `/integraciones/linkedin` enseña solo esa; `/integraciones`, todas. La
-  // misma página sirve para las dos cosas porque la tarjeta es la unidad.
   const { name } = useParams<{ name?: string }>();
   const [integrations, setIntegrations] = useState<Integration[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -250,7 +220,6 @@ const IntegrationsPage = () => {
 
   useEffect(() => {
     load();
-    // La cuenta atrás de cada integración envejece sola: se vuelve a preguntar.
     const timer = setInterval(() => {
       if (document.visibilityState === 'visible') load();
     }, POLL_INTERVAL_MS);

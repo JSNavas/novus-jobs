@@ -5,15 +5,6 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import { BrowserPool } from './session.js';
 
-/**
- * EL CASO REAL, el del 2026-11-10: LinkedIn entregó `li_at` como cookie DE
- * SESIÓN —sin fecha de caducidad— y Chromium, correctamente, no la escribió en
- * el perfil. El usuario iniciaba sesión, veía su feed, cerraba, y la siguiente
- * pasada caía en `/uas/login`.
- *
- * Por eso la cookie de estos tests NO lleva `expires`: si el arreglo solo
- * funcionara con cookies persistentes, no arreglaría nada.
- */
 describe('BrowserSession — la sesión sobrevive al cierre del navegador', () => {
   let root: string;
 
@@ -51,8 +42,6 @@ describe('BrowserSession — la sesión sobrevive al cierre del navegador', () =
     await session.rememberSession();
     await first.closeAll();
 
-    // Navegador nuevo, proceso nuevo en la práctica: el perfil por sí solo
-    // habría perdido la cookie.
     const second = new BrowserPool(root, true);
     assert.ok((await cookieNamesOf(second)).includes('li_at'));
     await second.closeAll();

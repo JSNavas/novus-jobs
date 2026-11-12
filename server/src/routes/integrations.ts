@@ -12,19 +12,10 @@ interface IntegrationRoutesDeps {
   schedules: SourceSchedules;
   runner: Runner;
   hours: readonly number[];
-  /** La zona del usuario, para decir a qué hora de SU reloj toca la siguiente. */
   timeZone: () => string;
   toggles: SourceToggles;
 }
 
-/**
- * LAS INTEGRACIONES, TAL CUAL ESTÁN MONTADAS.
- *
- * La lista no se escribe en ningún sitio: es el registro de fuentes entero, así
- * que enchufar InfoJobs mañana la hace aparecer en el menú —apagada— sin tocar
- * la interfaz. Cada una dice qué FORMA tiene su horario —franjas o intervalo— y
- * la interfaz pinta el editor que toque; no hay una pantalla por plataforma.
- */
 export function registerIntegrationRoutes(app: FastifyInstance, deps: IntegrationRoutesDeps): void {
   const describe = (source: JobSource) => {
     const schedule = deps.schedules.of(source);
@@ -39,9 +30,7 @@ export function registerIntegrationRoutes(app: FastifyInstance, deps: Integratio
     return {
       name: source.name,
       label: source.label,
-      /** Si pide sesión, la interfaz puede ofrecer el botón de iniciarla. */
       needsLogin: source.loginUrl !== null,
-      /** Si corre. Apagada se sigue listando: si no, no habría forma de encenderla. */
       enabled: deps.toggles.isEnabled(source.name),
       schedule: schedule.kind === 'every-minutes'
         ? { kind: 'every-minutes' as const, minutes: schedule.minutes }
@@ -54,12 +43,6 @@ export function registerIntegrationRoutes(app: FastifyInstance, deps: Integratio
 
   app.get('/api/integrations', () => deps.sources.map(describe));
 
-  /**
-   * El interruptor. Apagar una plataforma no borra nada —sus ofertas y sus
-   * búsquedas siguen ahí— y encenderla no dispara una búsqueda: entra en el
-   * siguiente tick por su propio horario, que es lo que protege a una cuenta
-   * vigilada de un encendido y apagado seguidos.
-   */
   app.put<{ Params: { name: string }; Body: unknown }>('/api/integrations/:name/enabled', (request, reply) => {
     const source = deps.sources.find((s) => s.name === request.params.name);
     if (!source) return reply.code(404).send({ error: 'integración no encontrada' });

@@ -1,14 +1,5 @@
 import type { Db } from './database.js';
 
-/**
- * Los ajustes que el usuario cambia desde el dashboard.
- *
- * Clave y valor, no una columna por ajuste: el siguiente ajuste no debería
- * pedir una migración. Y en la BD y no en el `.env` porque el `.env` solo se
- * lee al arrancar — cambiar ahí la plantilla obligaría a reiniciar el
- * servicio, que es justo lo que no puede pedírsele a quien solo quiere
- * corregir una frase.
- */
 export class SettingsRepository {
   constructor(private readonly db: Db) {}
 
@@ -28,27 +19,8 @@ export class SettingsRepository {
 
 export const MOTIVATION_TEMPLATE_KEY = 'motivationTemplate';
 
-/**
- * La antigüedad máxima de una vacante PARA ENTRAR, en meses.
- *
- * Es el filtro de la búsqueda, no el de la pantalla de Enfoque: lo que esto
- * decide es qué se guarda, y por eso vive en Configuración. La ventana con la
- * que se analiza lo ya guardado se elige en la propia página de Enfoque.
- */
 export const MAX_AGE_MONTHS_KEY = 'vacancyMaxAgeMonths';
 
-/**
- * Lo que él ya vio en el Enfoque: un array JSON de nombres. Sirve para
- * resaltar lo que apareció desde la última vez. Ver `analysis/news.ts`.
- */
 export const FOCUS_SEEN_KEY = 'focusSeen';
 
-/**
- * Con cuántos meses de pasado se mira el Enfoque, POR DEFECTO.
- *
- * No es la antigüedad máxima de `MAX_AGE_MONTHS_KEY`: aquella decide qué se
- * guarda, y esta con cuánto de lo ya guardado se calcula lo que piden las
- * vacantes. La pantalla de Enfoque lo sigue cambiando sobre la marcha; esto es
- * con qué valor abre, y se elige en el alta.
- */
 export const FOCUS_WINDOW_MONTHS_KEY = 'focusWindowMonths';

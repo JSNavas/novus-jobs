@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { companyName, jobTitle, offerTitle, stripAuthorHeaders } from './headline.js';
 
-/** Literal del feed del usuario, 2026-11-10. La cabecera tiene tres líneas. */
 const CON_CABECERA = [
   'Gloria Luz Gaviria Ramírez',
   '• 2o',
@@ -14,7 +13,6 @@ const CON_CABECERA = [
   '💼 Modalidad: 100 % remoto.',
 ].join('\n');
 
-/** Una republicación: dos cabeceras encadenadas antes del anuncio. */
 const REPUBLICADA = [
   'Tomas Banegas',
   '• Siguiendo',
@@ -48,7 +46,6 @@ describe('stripAuthorHeaders', () => {
   });
 
   it('no recorta hasta dejarlo sin anuncio', () => {
-    // Si al quitar la cabecera no queda cuerpo, vale más el texto entero que nada.
     const corto = 'Ana Pérez\n• 2o\nRecruiter | Talent\nBuscamos dev.';
     assert.ok(stripAuthorHeaders(corto).includes('Buscamos dev'));
   });
@@ -60,7 +57,6 @@ describe('jobTitle', () => {
   });
 
   it('reconoce una línea que ES el puesto, con puntos dentro', () => {
-    // "Node.js" lleva un punto: prohibirlos dejaba fuera justo estas líneas.
     assert.equal(jobTitle(stripAuthorHeaders(REPUBLICADA)), 'Backend Engineer · Node.js · Buenos Aires');
   });
 
@@ -103,7 +99,6 @@ describe('companyName', () => {
   });
 
   it('la arroba solo cuenta tras "at"/"en"/"de"', () => {
-    // Suelta, una anotación de código daba una empresa llamada "PostMapping".
     assert.equal(companyName('Ejemplo de Spring:\n@PostMapping("/users")'), null);
     assert.equal(companyName('Talent Partner at @deRecruiters'), 'deRecruiters');
   });

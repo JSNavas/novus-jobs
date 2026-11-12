@@ -15,7 +15,6 @@ function offers(n: number): Offer[] {
   return Array.from({ length: n }, (_, i) => ({ text: `vacante numero ${i}`, url: null, author: null }));
 }
 
-/** Respuesta válida del modelo para un lote de `n` publicaciones. */
 function respuesta(n: number): { text: string } {
   const items = Array.from({ length: n }, (_, i) =>
     `{"i":${i},"esOferta":true,"descarte":null,"esJunior":false,"esAgregador":false,"motivo":"ok"}`,
@@ -23,10 +22,6 @@ function respuesta(n: number): { text: string } {
   return { text: `[${items.join(',')}]` };
 }
 
-/**
- * Cliente de mentira. `guion` dice qué hace cada llamada en orden: un número
- * devuelve una respuesta buena de ese tamaño, un Error lo lanza.
- */
 function fakeClient(guion: readonly (number | Error)[]) {
   let llamada = 0;
   return {
@@ -46,10 +41,6 @@ function judgeWith(guion: readonly (number | Error)[]): LlmJudge {
 
 describe('LlmJudge.judge — una tanda caída no se lleva a las demás', () => {
   it('EL CASO REAL: la segunda tanda falla y los veredictos de la primera se conservan', async () => {
-    // 25 ofertas con POSTS_PER_CALL = 20 → dos tandas: 20 y 5.
-    // El fallo es uno NO reintentable a propósito: con un 503 el juez reintenta
-    // y el test se iría a cuatro segundos. Lo que se prueba —que la tanda buena
-    // se conserva— no depende de por qué cayó la otra.
     const judge = judgeWith([20, new Error('400 invalid request')]);
     const verdicts = await judge.judge(offers(25), PERFIL);
 

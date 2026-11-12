@@ -9,22 +9,15 @@ export type NewJob = Omit<
   & {
     foundAt?: string;
     runId?: number | null;
-    /**
-     * El motivo sin idioma. Opcional porque una oferta aceptada no tiene, y
-     * porque quien inserta a mano —las pruebas— no debería tener que decirlo.
-     */
     rejectionCode?: string | null;
     rejectionParams?: Record<string, string | number> | null;
-    /** Opcionales: solo los trae la fuente que los publica. */
     applications?: number | null;
     responseDays?: { min: number | null; max: number | null } | null;
   };
 
 export interface JobQuery {
   status: JobStatus | null;
-  /** `null` = las dos: lo aceptado Y lo que el filtro descartó. */
   verdict: JobVerdict | null;
-  /** Solo las de una pasada concreta. Es lo que hace pulsable el dashboard. */
   runId: number | null;
   seniority: JobSeniority | null;
   source: string | null;
@@ -38,9 +31,7 @@ interface JobStats {
   new: number;
   saved: number;
   total: number;
-  /** Cuántas descartó el filtro, en total. Sin esto el dashboard no cuadra. */
   rejected: number;
-  /** Cuántas hay en cada estado. El menú lateral las enseña como contador. */
   byStatus: Record<JobStatus, number>;
 }
 
@@ -81,7 +72,6 @@ const JOB_COLUMNS = `id, source, fingerprint, title, role, company, author, text
   judge_status, status, found_at, posted_at, run_id,
   applications, response_days_min, response_days_max`;
 
-/** Los datos del motivo. Un JSON roto no puede tumbar la lista: se ignora. */
 function parseParams(raw: string | null): Record<string, string | number> | null {
   if (!raw) return null;
   try {
@@ -132,7 +122,6 @@ function toJob(row: JobRow): Job {
 export class JobsRepository {
   constructor(private readonly db: Db) {}
 
-  /** `true` si la oferta es nueva; `false` si esa huella ya estaba en la BD. */
   insert(job: NewJob): boolean {
     const result = this.db.prepare(`
       INSERT OR IGNORE INTO jobs (source, fingerprint, title, role, company, author, text, url, location, location_kind,
@@ -160,17 +149,6 @@ export class JobsRepository {
     return result.changes > 0;
   }
 
-  /**
-   * Refresca los números de una oferta QUE YA ESTÁ GUARDADA.
-   *
-   * Las postulaciones suben cada día. Sin esto, una oferta enseñaría para
-   * siempre las que tenía el día que se encontró, y «298 postulaciones» de
-   * hace una semana es peor que no decir nada: parece un dato de hoy.
-   *
-   * Solo toca estas columnas. El texto, el veredicto y el estado en la bandeja
-   * son de él y de la pasada que la juzgó, y una lectura posterior no tiene
-   * por qué pisarlos.
-   */
   refreshMetrics(source: string, fingerprint: string, metrics: PostMetrics): void {
     this.db.prepare(`
       UPDATE jobs SET posted_at = ?, applications = ?, response_days_min = ?, response_days_max = ?
@@ -200,25 +178,10 @@ export class JobsRepository {
     return result.changes > 0 ? this.findById(id) : null;
   }
 
-  /**
-   * La lista, y además CUÁNTAS HAY EN CADA PESTAÑA con los mismos filtros.
-   *
-   * El recuento por seniority se calcula ignorando la pestaña elegida, y eso
-   * es el arreglo de un bug que se veía feo: el menú decía "1 nueva" y la
-   * lista salía vacía con un "No hay ofertas nuevas". Las dos cosas eran
-   * ciertas por separado —la única oferta era junior y estaba en la otra
-   * pestaña— pero juntas parecían un error. Un contador que no cuadra con lo
-   * que se ve debajo destruye la confianza en todo lo demás.
-   */
   list(query: JobQuery): { items: Job[]; total: number; bySeniority: Record<JobSeniority, number> } {
     const { where, params } = this.buildWhere(query);
     const total = this.db.prepare<unknown[], { count: number }>(`SELECT COUNT(*) AS count FROM jobs ${where}`).get(...params)?.count ?? 0;
     const rows = this.db.prepare<unknown[], JobRow>(
-      // LO MÁS RECIENTE PRIMERO, y «reciente» es cuándo la publicaron ellos,
-      // no cuándo la leímos nosotros. Ordenar por `found_at` mezclaba una
-      // vacante de hace ocho meses con una de ayer, porque las dos se leyeron
-      // en la misma pasada. `COALESCE` deja que LinkedIn —que no publica la
-      // fecha— se ordene por la lectura, que ahí es la mejor aproximación.
       `SELECT ${JOB_COLUMNS} FROM jobs ${where}
        ORDER BY COALESCE(posted_at, found_at) DESC, id DESC LIMIT ? OFFSET ?`,
     ).all(...params, query.limit, query.offset);
@@ -235,18 +198,6 @@ export class JobsRepository {
     return counts;
   }
 
-/**
-   * El resumen de la bandeja.
-   *
-   * ⚠️ LAS JUNIOR NO CUENTAN. Llegan como extra —por si quiere pasárselas a
-   * alguien— y no son trabajo suyo pendiente. Metiéndolas en el contador, el
-   * menú decía "2 nuevas" cuando solo una era para él: un número que no
-   * corresponde con lo que hay que hacer deja de servir para decidir si vale
-   * la pena abrir el dashboard, que es lo único que ese número tiene que hacer.
-   *
-   * Se rellenan los estados sin ninguna oferta: un contador que desaparece
-   * cuando vale cero hace dudar de si la lista está vacía o rota.
-   */
   stats(): JobStats {
     const rows = this.db.prepare<[], { status: JobStatus; count: number }>(
       `SELECT status, COUNT(*) AS count FROM jobs
@@ -280,8 +231,6 @@ export class JobsRepository {
     if (query.hasApply !== null) {
       clauses.push(query.hasApply ? '(apply_url IS NOT NULL OR contact_email IS NOT NULL)' : '(apply_url IS NULL AND contact_email IS NULL)');
     }
-    // Sin ninguna condición no se escribe `WHERE`: "WHERE" a secas es un error
-    // de sintaxis, y pedir la lista entera es una consulta legítima.
     return { where: clauses.length ? `WHERE ${clauses.join(' AND ')}` : '', params };
   }
 }

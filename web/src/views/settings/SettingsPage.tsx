@@ -5,15 +5,6 @@ import { language, t, type Language, type TranslationKey } from '../../i18n';
 import { getSettings, saveOnboardingStep, updateSettings, type Settings } from '../../api/client';
 import { AppAlert, BlankCard, PageContainer } from '../../components/ui';
 
-/**
- * CONFIGURACIÓN — por ahora, el párrafo de las postulaciones.
- *
- * Existe porque ese texto se corrigió cinco veces en una tarde, y cada
- * corrección era un cambio de código y un despliegue. Una frase que no suena
- * como él no es un error de programación: es algo que tiene que poder
- * arreglar quien la escribe, cuando la lee.
- */
-
 const PLACEHOLDERS = [
   { token: '{puesto}', help: 'set.placeholder.role' },
   { token: '{empresa}', help: 'set.placeholder.company' },
@@ -41,11 +32,6 @@ const SettingsPage = () => {
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
   }, []);
 
-  /**
-   * Guarda el idioma y recarga. La recarga es la parte importante: el texto ya
-   * pintado no se vuelve a pedir solo, y media pantalla en un idioma y media en
-   * otro es peor que esperar un segundo.
-   */
   const changeLanguage = async (next: Language): Promise<void> => {
     await saveOnboardingStep({ language: next });
     window.location.reload();
@@ -136,8 +122,6 @@ const SettingsPage = () => {
                   {` — ${t(placeholder.help as TranslationKey)}`}
                 </Typography>
               ))}
-              {/* Que una frase entera desaparezca no es obvio, y si no se dice
-                  aquí se descubre el día que una oferta no casa con nada. */}
               <Typography variant="body2" color="textSecondary" mt={1}>
                 Si una oferta no coincide con ninguna tecnología, la frase que lleva{' '}
                 <Typography component="span" variant="mono">{'{tecnologias}'}</Typography> se quita
@@ -160,9 +144,6 @@ const SettingsPage = () => {
           </Stack>
         </BlankCard>
 
-        {/* EL FILTRO DE LA BÚSQUEDA, no el de la pantalla de Enfoque. Esto
-            decide qué se guarda; la ventana con la que se analiza lo ya
-            guardado se elige en la propia página de Enfoque. */}
         <BlankCard>
           <Stack spacing={2} p={3}>
             <Box>
@@ -193,10 +174,6 @@ const SettingsPage = () => {
           </Stack>
         </BlankCard>
 
-        {/* EL IDIOMA RECARGA LA PÁGINA al cambiar, a propósito: es un cambio de
-            dos veces en la vida de una instalación, y una recarga es más
-            honesta que repintar media aplicación desde un estado global que
-            existiría solo para esto. */}
         <BlankCard>
           <Stack spacing={1.5} p={3} alignItems="flex-start">
             <Typography variant="h5">{t('set.language')}</Typography>

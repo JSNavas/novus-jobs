@@ -1,48 +1,15 @@
-/**
- * EL CATÁLOGO DE TECNOLOGÍAS, agrupadas por ecosistema.
- *
- * Existe para una sola cosa: leer un CV y proponer las tres listas del perfil
- * sin que el usuario las escriba a mano. De aquí sale todo lo que el alta
- * rellena sola.
- *
- * - Lo que el CV menciona → `stack`.
- * - Lo que el CV menciona Y está marcado `core` → `core`, las que definen el
- *   oficio. Docker o Git aparecen en cualquier oferta y no pueden abrir la
- *   puerta solas, así que nunca son núcleo.
- * - Los ecosistemas que el CV NO menciona → propuesta de `cannotDo`. Se
- *   propone el ecosistema entero y no tecnología a tecnología: quien no ha
- *   tocado la JVM no quiere ofertas de Spring, Kotlin ni Hibernate, y marcarlo
- *   de una es la diferencia entre un paso de diez segundos y uno de diez
- *   minutos.
- *
- * ⚠️ `cannotDo` es lo que más se equivoca en los dos sentidos, y un error aquí
- * no se ve: meter algo que SÍ sabe tira ofertas buenas en silencio. Por eso el
- * alta lo PROPONE y lo deja editar, y nunca lo da por cerrado.
- *
- * ⚠️ Nada de nombres de una o dos letras. Un patrón como `R` o `C` casaría con
- * cualquier letra suelta del anuncio. Las que son así de cortas —C, R, Go— van
- * con alias largos y el emparejado respeta bordes de palabra (ver `text-match`).
- */
-
 export type Ecosystem =
   | 'node' | 'php' | 'python' | 'jvm' | 'dotnet' | 'go' | 'ruby' | 'rust-c'
   | 'elixir' | 'frontend' | 'mobile' | 'data' | 'cms' | 'cloud' | 'devops'
   | 'db' | 'testing' | 'ai';
 
 export interface Technology {
-  /** Cómo se escribe en la pantalla y en el perfil. */
   readonly name: string;
-  /** Las otras formas en que un anuncio o un CV la nombran. */
   readonly aliases?: readonly string[];
   readonly ecosystem: Ecosystem;
-  /**
-   * Si define el oficio. Solo estas pueden entrar en `core`: son las que, si
-   * aparecen en una oferta, dicen de qué va el puesto.
-   */
   readonly core?: boolean;
 }
 
-/** Los ecosistemas que se pueden vetar en bloque, con su nombre para la pantalla. */
 export const ECOSYSTEM_LABELS: Readonly<Record<Ecosystem, string>> = {
   node: 'JavaScript / Node',
   php: 'PHP',
@@ -64,18 +31,11 @@ export const ECOSYSTEM_LABELS: Readonly<Record<Ecosystem, string>> = {
   ai: 'IA',
 };
 
-/**
- * Los ecosistemas que tiene sentido vetar enteros: un lenguaje de servidor que
- * no se sabe cierra la oferta completa. `frontend`, `cloud`, `devops`, `db`,
- * `testing` y `ai` NO están: son transversales, aparecen de refilón en casi
- * cualquier anuncio y vetarlos en bloque tiraría ofertas buenas.
- */
 export const VETOABLE_ECOSYSTEMS: readonly Ecosystem[] = [
   'node', 'php', 'python', 'jvm', 'dotnet', 'go', 'ruby', 'rust-c', 'elixir', 'mobile', 'data', 'cms',
 ];
 
 export const TECHNOLOGIES: readonly Technology[] = [
-  // ── JavaScript y Node ────────────────────────────────────────────────────
   { name: 'TypeScript', aliases: ['ts'], ecosystem: 'node', core: true },
   { name: 'JavaScript', aliases: ['js', 'ecmascript'], ecosystem: 'node', core: true },
   { name: 'Node.js', aliases: ['nodejs', 'node'], ecosystem: 'node', core: true },
@@ -87,7 +47,6 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'tRPC', ecosystem: 'node' },
   { name: 'GraphQL', ecosystem: 'node' },
 
-  // ── Frontend ─────────────────────────────────────────────────────────────
   { name: 'React', aliases: ['reactjs', 'react.js'], ecosystem: 'frontend', core: true },
   { name: 'Next.js', aliases: ['nextjs'], ecosystem: 'frontend', core: true },
   { name: 'Vue', aliases: ['vue.js', 'vuejs'], ecosystem: 'frontend', core: true },
@@ -111,14 +70,12 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'ECharts', ecosystem: 'frontend' },
   { name: 'Leaflet', ecosystem: 'frontend' },
 
-  // ── PHP ──────────────────────────────────────────────────────────────────
   { name: 'PHP', ecosystem: 'php', core: true },
   { name: 'Laravel', ecosystem: 'php', core: true },
   { name: 'Symfony', ecosystem: 'php', core: true },
   { name: 'CodeIgniter', ecosystem: 'php' },
   { name: 'Doctrine', ecosystem: 'php' },
 
-  // ── Python ───────────────────────────────────────────────────────────────
   { name: 'Python', ecosystem: 'python', core: true },
   { name: 'Django', ecosystem: 'python', core: true },
   { name: 'Flask', ecosystem: 'python', core: true },
@@ -127,7 +84,6 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'Pandas', ecosystem: 'python' },
   { name: 'NumPy', ecosystem: 'python' },
 
-  // ── JVM ──────────────────────────────────────────────────────────────────
   { name: 'Java', ecosystem: 'jvm', core: true },
   { name: 'Spring', aliases: ['spring boot', 'springboot'], ecosystem: 'jvm', core: true },
   { name: 'Kotlin', ecosystem: 'jvm', core: true },
@@ -137,14 +93,12 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'Quarkus', ecosystem: 'jvm' },
   { name: 'JSP', ecosystem: 'jvm' },
 
-  // ── .NET ─────────────────────────────────────────────────────────────────
   { name: '.NET', aliases: ['dotnet', 'asp.net', '.net core'], ecosystem: 'dotnet', core: true },
   { name: 'C#', aliases: ['csharp'], ecosystem: 'dotnet', core: true },
   { name: 'Blazor', ecosystem: 'dotnet' },
   { name: 'VB.NET', ecosystem: 'dotnet' },
   { name: 'Entity Framework', ecosystem: 'dotnet' },
 
-  // ── Otros lenguajes de servidor ──────────────────────────────────────────
   { name: 'Go', aliases: ['golang'], ecosystem: 'go', core: true },
   { name: 'Ruby', ecosystem: 'ruby', core: true },
   { name: 'Ruby on Rails', aliases: ['rails'], ecosystem: 'ruby', core: true },
@@ -159,7 +113,6 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'Perl', ecosystem: 'rust-c' },
   { name: 'Solidity', ecosystem: 'rust-c', core: true },
 
-  // ── Móvil ────────────────────────────────────────────────────────────────
   { name: 'React Native', ecosystem: 'mobile', core: true },
   { name: 'Flutter', ecosystem: 'mobile', core: true },
   { name: 'Dart', ecosystem: 'mobile' },
@@ -169,7 +122,6 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'Xamarin', aliases: ['maui'], ecosystem: 'mobile' },
   { name: 'Android', ecosystem: 'mobile' },
 
-  // ── Bases de datos ───────────────────────────────────────────────────────
   { name: 'PostgreSQL', aliases: ['postgres'], ecosystem: 'db' },
   { name: 'MySQL', ecosystem: 'db' },
   { name: 'MariaDB', ecosystem: 'db' },
@@ -186,7 +138,6 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'Prisma', ecosystem: 'db' },
   { name: 'SQL', ecosystem: 'db' },
 
-  // ── Nube e infraestructura ───────────────────────────────────────────────
   { name: 'AWS', aliases: ['amazon web services'], ecosystem: 'cloud' },
   { name: 'Lambda', ecosystem: 'cloud' },
   { name: 'S3', ecosystem: 'cloud' },
@@ -206,7 +157,6 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'RabbitMQ', ecosystem: 'devops' },
   { name: 'Kafka', ecosystem: 'devops' },
 
-  // ── Datos y BI ───────────────────────────────────────────────────────────
   { name: 'Power BI', aliases: ['powerbi'], ecosystem: 'data', core: true },
   { name: 'Tableau', ecosystem: 'data', core: true },
   { name: 'Spark', aliases: ['pyspark'], ecosystem: 'data', core: true },
@@ -217,7 +167,6 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'ETL', ecosystem: 'data' },
   { name: 'MATLAB', ecosystem: 'data' },
 
-  // ── CMS y plataformas cerradas ───────────────────────────────────────────
   { name: 'WordPress', ecosystem: 'cms', core: true },
   { name: 'WooCommerce', ecosystem: 'cms' },
   { name: 'Drupal', ecosystem: 'cms', core: true },
@@ -233,7 +182,6 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'Sitecore', ecosystem: 'cms' },
   { name: 'Umbraco', ecosystem: 'cms' },
 
-  // ── Calidad ──────────────────────────────────────────────────────────────
   { name: 'Jest', ecosystem: 'testing' },
   { name: 'Vitest', ecosystem: 'testing' },
   { name: 'Cypress', ecosystem: 'testing' },
@@ -246,7 +194,6 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'Swagger', aliases: ['openapi'], ecosystem: 'testing' },
   { name: 'Sentry', ecosystem: 'testing' },
 
-  // ── IA ───────────────────────────────────────────────────────────────────
   { name: 'LangChain', ecosystem: 'ai' },
   { name: 'RAG', ecosystem: 'ai' },
   { name: 'embeddings', ecosystem: 'ai' },
@@ -255,7 +202,6 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'PyTorch', ecosystem: 'ai', core: true },
 ];
 
-/** Todas las formas de nombrar una tecnología: su nombre y sus alias. */
 export function spellingsOf(tech: Technology): string[] {
   return [tech.name, ...(tech.aliases ?? [])];
 }

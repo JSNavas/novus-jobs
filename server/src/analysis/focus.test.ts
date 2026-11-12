@@ -4,12 +4,6 @@ import { PROFILE } from '../profile/profile.js';
 import { JobLocation, JobSeniority, JobStatus, JobVerdict, JudgeStatus, type Job } from '../types.js';
 import { buildFocus } from './focus.js';
 
-/**
- * EL ENFOQUE ES UNA LISTA DE ESTUDIO, así que lo que hay que fijar es que no
- * mienta: que cuente vacantes y no menciones, que no cuele la publicidad de la
- * empresa entre los requisitos, y que un tema que sale en una sola vacante no
- * pase por patrón.
- */
 function job(text: string, id = 1): Job {
   return {
     id, source: 'getonbrd', fingerprint: `fp-${id}`, title: 'Oferta', role: 'Developer',
@@ -88,9 +82,6 @@ Requisitos:
   });
 
   it('EL CASO REAL: una frase que vale para varios temas se enseña UNA vez', () => {
-    // Pasó de verdad: «Soltura con JavaScript/TypeScript (idealmente
-    // Next.js/React) y bases de datos SQL» salía bajo cuatro temas. Leída
-    // cuatro veces, una frase deja de informar y empieza a estorbar.
     const compartida = '- Soltura con JavaScript, TypeScript y React en proyectos de producción.';
     const texto = `Requisitos:
 ${compartida}
@@ -108,8 +99,6 @@ ${compartida}
   });
 
   it('pero antes de quedarse muda, una fila repite frase', () => {
-    // Si TODAS sus frases se las llevaron otros temas, repetir una es mejor
-    // que enseñar un número suelto que nadie puede interpretar.
     const unica = '- Soltura con JavaScript, TypeScript y React en proyectos de producción.';
     const focus = buildFocus([job(`Requisitos:\n${unica}`, 1), job(`Requisitos:\n${unica}`, 2)], PROFILE);
 
@@ -137,8 +126,6 @@ ${compartida}
   });
 
   it('ningún tema se queda mudo: con un número y sin frase no se entiende', () => {
-    // «Machine learning» salía con 3 vacantes y cero ejemplos, porque lo
-    // pedían en prosa y no en una viñeta.
     const enProsa = 'Buscamos a alguien con experiencia en machine learning aplicado a producto real.';
     const focus = buildFocus([job(enProsa, 1), job(enProsa, 2)], PROFILE);
 
@@ -157,12 +144,6 @@ ${compartida}
   });
 });
 
-/**
- * EL DETECTOR AUTOMÁTICO cierra el único agujero real del Enfoque: lo que no
- * está en el catálogo no se detecta por mucho que lo pidan. Lo que hay que
- * fijar aquí es que no proponga basura, porque una lista de hallazgos con
- * ruido se deja de mirar a la segunda vez.
- */
 describe('findEmerging — lo que se repite y nadie clasificó', () => {
   const conTerraform = (n: number) => job(`Requisitos:
 - Experiencia con Snowflake para el almacén de datos de la compañía.
@@ -177,9 +158,6 @@ describe('findEmerging — lo que se repite y nadie clasificó', () => {
   });
 
   it('NO propone trozos de lo que el catálogo ya cuenta', () => {
-    // Salía «CI», «CD», «IA» y «Cloud»: son partes de «CI/CD», «IA
-    // generativa» y «Google Cloud». Descubrir media palabra que ya tienes no
-    // es descubrir nada, y entierra lo que sí es nuevo.
     const texto = `Requisitos:
 - Experiencia con Docker y pipelines de CI/CD mediante GitHub Actions.
 - Trabajo con Google Cloud y despliegues de IA generativa en producción.`;
@@ -192,8 +170,6 @@ describe('findEmerging — lo que se repite y nadie clasificó', () => {
   });
 
   it('el nombre de la empresa NO es una tecnología emergente', () => {
-    // Una consultora con cincuenta vacantes publicadas sería, si no, «la
-    // tecnología más demandada del mercado».
     const texto = 'Requisitos:\n- Experiencia trabajando con Acme en proyectos de larga duración.';
     const uno = { ...job(texto, 1), author: 'Acme', company: 'Acme' };
     const dos = { ...job(texto, 2), author: 'Acme', company: 'Acme' };

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  Autocomplete, Box, Button, Checkbox, Chip, CircularProgress, FormControlLabel, MenuItem, Stack,
+  Autocomplete, Box, Button, Checkbox, CircularProgress, FormControlLabel, MenuItem, Stack,
   Switch, TextField, Typography,
 } from '@mui/material';
 import {
@@ -8,7 +8,6 @@ import {
   type CvReading, type EnglishLevel, type Integration, type OnboardingState, type Settings,
 } from '../../api/client';
 
-/** Los topes del formulario al que se pega el párrafo. Los valida el servidor. */
 const MIN_MOTIVATION_CHARS = 50;
 const MAX_MOTIVATION_CHARS = 1000;
 import { AppAlert, AppChip } from '../../components/ui';
@@ -16,20 +15,12 @@ import { HoursEditor, IntervalEditor } from '../integrations/IntegrationsPage';
 import { t, type TranslationKey } from '../../i18n';
 import type { Draft } from './steps';
 
-/**
- * LOS PANELES DEL ALTA. Uno por paso, y todos con la misma forma: reciben el
- * borrador y una función para cambiarlo. Ninguno guarda nada por su cuenta —de
- * eso se encarga la página al pasar de paso— salvo el de plataformas, que
- * escribe directo porque el interruptor de una integración ya es su propio
- * guardado.
- */
 export interface PanelProps {
   state: OnboardingState;
   draft: Draft;
   onChange: (next: Draft) => void;
 }
 
-/** Cómo se lee cada nivel. La sigla sola no dice nada a quien no la conoce. */
 const ENGLISH_KEYS: Record<EnglishLevel, TranslationKey> = {
   none: 'eng.none', a1: 'eng.a1', a2: 'eng.a2', b1: 'eng.b1',
   b2: 'eng.b2', c1: 'eng.c1', c2: 'eng.c2', native: 'eng.native',
@@ -37,20 +28,10 @@ const ENGLISH_KEYS: Record<EnglishLevel, TranslationKey> = {
 
 const englishLabel = (level: EnglishLevel): string => t(ENGLISH_KEYS[level]);
 
-/* ── Paso 1: el CV ───────────────────────────────────────────────────────── */
-
 interface CvPanelProps extends PanelProps {
   onRead: (cv: CvReading) => void;
 }
 
-/**
- * EL IDIOMA, EN EL PRIMER PASO Y ANTES QUE NADA.
- *
- * Va aquí arriba y no en un paso propio porque quien abre esto por primera vez
- * y no lee español necesita cambiarlo ANTES de entender qué le están
- * preguntando. Un paso dedicado llegaría tarde: para verlo ya habría tenido
- * que leer el anterior.
- */
 const LanguagePicker = ({ draft, onChange }: PanelProps) => (
   <TextField
     select
@@ -139,8 +120,6 @@ export const CvStep = ({ state, draft, onChange, onRead }: CvPanelProps) => {
   );
 };
 
-/* ── Paso 2: el stack ────────────────────────────────────────────────────── */
-
 export const StackStep = ({ state, draft, onChange }: PanelProps) => (
   <Stack spacing={3}>
     <Box>
@@ -156,8 +135,6 @@ export const StackStep = ({ state, draft, onChange }: PanelProps) => (
         onChange={(_event, value) => onChange({
           ...draft,
           stack: value as string[],
-          // Lo que sale del stack no puede quedarse en el núcleo: serían dos
-          // listas diciendo cosas distintas de la misma tecnología.
           core: draft.core.filter((tech) => (value as string[]).includes(tech)),
         })}
         renderInput={(params) => (
@@ -214,8 +191,6 @@ export const StackStep = ({ state, draft, onChange }: PanelProps) => (
   </Stack>
 );
 
-/* ── Paso 3: el inglés ───────────────────────────────────────────────────── */
-
 export const EnglishStep = ({ state, draft, onChange }: PanelProps) => (
   <Stack spacing={2.5}>
     <TextField
@@ -254,13 +229,6 @@ export const EnglishStep = ({ state, draft, onChange }: PanelProps) => (
   </Stack>
 );
 
-/* ── Paso 4: dónde ───────────────────────────────────────────────────────── */
-
-/**
- * Las zonas las enumera el propio navegador: mantener una lista a mano sería
- * mantener una copia del tz database, y se queda vieja sola. Si el runtime es
- * viejo y no la trae, se cae a la suya, que es la que acierta casi siempre.
- */
 function timeZones(): string[] {
   const supported = (Intl as { supportedValuesOf?: (key: string) => string[] }).supportedValuesOf;
   const own = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
@@ -351,13 +319,6 @@ export const PlaceStep = ({ state, draft, onChange }: PanelProps) => (
   </Stack>
 );
 
-/* ── Paso 5: las plataformas ─────────────────────────────────────────────── */
-
-/**
- * Este paso escribe directo en el servidor: el interruptor de una integración
- * ES su guardado, y duplicarlo en el borrador solo daría dos sitios donde el
- * mismo dato puede discrepar.
- */
 export const SourcesStep = () => {
   const [integrations, setIntegrations] = useState<Integration[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -392,9 +353,6 @@ export const SourcesStep = () => {
             <Typography variant="body2">{integration.label}</Typography>
             {integration.needsLogin ? <AppChip label={t('src.needsLogin')} tone="neutral" /> : null}
           </Stack>
-          {/* El ritmo de la que está encendida, con el mismo editor que la
-              página de Integraciones: cuándo se lee es parte de darla de alta,
-              no algo que se descubra después. */}
           {integration.enabled ? (
             <Box sx={{ pl: 6, pt: 1 }}>
               {integration.schedule.kind === 'every-minutes'
@@ -413,22 +371,8 @@ export const SourcesStep = () => {
   );
 };
 
-/* ── Paso 6: la candidatura y los límites ────────────────────────────────── */
-
 const MONTH_OPTIONS = [1, 2, 3, 6, 12, 24];
 
-/**
- * LO QUE SE PUEDE DEJAR COMO ESTÁ, pero que conviene mirar una vez.
- *
- * El párrafo de motivación viene con un ejemplo y la idea es que lo reescriba:
- * es lo único de todo el alta que va a leer una persona al otro lado, y un
- * párrafo por defecto se reconoce a la legua.
- *
- * Escribe directo en los ajustes del servidor, no en el borrador del perfil:
- * estos tres no son del perfil —son de la búsqueda y de la pantalla— y ya
- * tienen su sitio en Configuración. Duplicarlos en el borrador sería dos
- * fuentes para el mismo dato.
- */
 export const LimitsStep = () => {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [template, setTemplate] = useState('');
@@ -528,8 +472,6 @@ export const LimitsStep = () => {
   );
 };
 
-/* ── Paso 7: listo ───────────────────────────────────────────────────────── */
-
 export const DoneStep = ({ draft }: PanelProps) => (
   <Stack spacing={2}>
     <Typography variant="body2" color="textSecondary">
@@ -541,7 +483,7 @@ export const DoneStep = ({ draft }: PanelProps) => (
         <Typography variant="body2">
           <strong>{t('done.core')}</strong>{' '}
           {draft.core.length
-            ? draft.core.map((tech) => <Chip key={tech} size="small" label={tech} sx={{ mr: 0.5 }} />)
+            ? draft.core.map((tech) => <AppChip key={tech} label={tech} tone="neutral" />)
             : '—'}
         </Typography>
         <Typography variant="body2">

@@ -2,10 +2,6 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { extractFromCv, knownTechnology, vetoesOf } from './extract.js';
 
-/**
- * Un CV realista y corto. Lo que se mide es que de un texto así salgan las tres
- * listas sin que el usuario escriba nada, y que lo que NO está no se invente.
- */
 const CV = `
 Jesús Pérez — Desarrollador Full Stack
 Caracas, Venezuela · jesus@example.com
@@ -24,7 +20,6 @@ describe('extractFromCv', () => {
     assert.ok(cv.stack.includes('TypeScript'));
     assert.ok(cv.stack.includes('PostgreSQL'));
     assert.ok(cv.core.includes('NestJS'));
-    // Docker aparece en casi cualquier oferta: no puede abrir la puerta sola.
     assert.ok(cv.stack.includes('Docker'));
     assert.ok(!cv.core.includes('Docker'), 'Docker nunca es núcleo');
   });
@@ -43,10 +38,6 @@ describe('extractFromCv', () => {
     assert.equal(extractFromCv(CV).years, 9);
   });
 
-  /**
-   * Lo que no dice el CV NO se rellena. Un nivel de inglés asumido activaría un
-   * filtro que el usuario no pidió, y le esconderían ofertas sin saber por qué.
-   */
   it('lo que el CV no dice se queda vacío', () => {
     const vacio = extractFromCv('Desarrollador. Me gusta programar.');
     assert.equal(vacio.english, null);
@@ -56,11 +47,6 @@ describe('extractFromCv', () => {
     assert.equal(vacio.foundInCv, false);
   });
 
-  /**
-   * El veto se propone por ecosistema entero y solo si está COMPLETAMENTE
-   * ausente: este CV tiene PHP y Python, así que ninguno de los dos se propone,
-   * y la JVM, que no aparece, sí.
-   */
   it('propone vetar solo los ecosistemas que el CV no toca', () => {
     const propuestos = extractFromCv(CV).suggestedVetoes.map((v) => v.ecosystem);
     assert.ok(propuestos.includes('jvm'));

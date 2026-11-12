@@ -1,20 +1,9 @@
 import type { CandidateProfile, CvReading, OnboardingState } from '../../api/client';
 import { t, type TranslationKey } from '../../i18n';
 
-/**
- * LOS PASOS DEL ALTA, en un sitio y no repartidos por el componente.
- *
- * El orden no es decorativo: el CV va primero porque es lo que rellena los
- * demás, y lo obligatorio va antes de lo que tiene valor por defecto. Quien
- * abandone en el paso 4 ya tiene un perfil que busca; quien abandone en el 2,
- * no, y por eso el 2 es el único que no se puede saltar.
- */
 export interface StepDefinition {
-  /** Lo que se lee en el indicador de pasos. Corto: es una línea apretada. */
   label: TranslationKey;
-  /** La frase bajo el título. Dice qué decide este paso. */
   hint: TranslationKey;
-  /** Si se puede pasar al siguiente sin tocar nada. */
   optional: boolean;
 }
 
@@ -28,12 +17,10 @@ export const STEPS: readonly StepDefinition[] = [
   { label: 'wiz.step.done', hint: 'wiz.step.done.hint', optional: true },
 ];
 
-/** El estado del formulario mientras se rellena. Se guarda paso a paso. */
 export interface Draft {
   language: CandidateProfile['language'];
   stack: string[];
   core: string[];
-  /** Los ecosistemas marcados para vetar. El servidor los traduce a tecnologías. */
   vetoEcosystems: string[];
   english: CandidateProfile['english'];
   geo: CandidateProfile['geo'];
@@ -52,11 +39,6 @@ export function draftFrom(state: OnboardingState): Draft {
   };
 }
 
-/**
- * Lo que trajo el CV entra en el borrador SIN pisar lo que el usuario ya haya
- * tocado a mano: si volvió al paso 1 a subir otro CV, lo que escribió en el
- * paso 2 sigue ahí y el CV solo añade.
- */
 export function applyReading(draft: Draft, cv: CvReading): Draft {
   return {
     ...draft,
@@ -74,7 +56,6 @@ export function applyReading(draft: Draft, cv: CvReading): Draft {
   };
 }
 
-/** El paso 2 es el único que bloquea: sin núcleo, la búsqueda descarta todo. */
 export function blockingError(step: number, draft: Draft): string | null {
   if (step !== 1) return null;
   if (!draft.core.length) {

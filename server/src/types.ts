@@ -27,35 +27,18 @@ export enum RunStatus {
 }
 
 export enum JobLocation {
-  /** Se puede trabajar desde el país del usuario: remoto local, o la oferta lo nombra. */
   HomeCountry = 'home_country',
-  /** Remoto sin restricción de residencia, o restringido a una región que le incluye. */
   Global = 'global',
-  /** Remoto, pero solo para residentes de otro país. */
   OtherCountry = 'other_country',
   Onsite = 'onsite',
-  /** Presencial a tiempo parcial. Separado de `Onsite`: son dos decisiones distintas. */
   Hybrid = 'hybrid',
   Unknown = 'unknown',
 }
 
-/**
- * POR QUÉ se cayó una pasada, en una palabra que el código pueda mirar.
- *
- * El mensaje de error es para el usuario; esto es para decidir si tiene sentido
- * reintentar. Son decisiones opuestas: con el perfil ocupado se reintenta
- * pronto porque basta con cerrar una ventana, y con la sesión caída NO se
- * reintenta nunca — nada va a cambiar hasta que él inicie sesión, y machacar
- * una pantalla de login es exactamente lo que marca una cuenta.
- */
 export enum RunFailure {
-  /** La plataforma pide entrar. Solo lo arregla `npm run login`. */
   LoginRequired = 'login_required',
-  /** Otro Chromium vivo tenía el perfil. Se puede reintentar pronto. */
   ProfileBusy = 'profile_busy',
-  /** Hay sesión y el feed vino vacío: cambió el maquetado. No se reintenta en bucle. */
   Layout = 'layout',
-  /** Red, timeout, cualquier otra cosa. */
   Other = 'other',
 }
 
@@ -69,7 +52,6 @@ export interface Job {
   source: string;
   fingerprint: string;
   title: string | null;
-  /** El puesto a secas, sin tecnologías ni apostillas. Va al asunto del correo. */
   role: string | null;
   company: string | null;
   author: string | null;
@@ -78,10 +60,6 @@ export interface Job {
   location: string | null;
   verdict: JobVerdict;
   rejectionReason: string | null;
-  /**
-   * El motivo sin idioma: la regla que descartó y sus datos. `null` en lo
-   * guardado antes de que existiera, que enseña la frase tal cual se guardó.
-   */
   rejectionCode: string | null;
   rejectionParams: Record<string, string | number> | null;
   seniority: JobSeniority;
@@ -89,18 +67,14 @@ export interface Job {
   judgeStatus: JudgeStatus;
   status: JobStatus;
   foundAt: string;
-  /** Cuándo la publicó la plataforma. `null` si no lo dice. */
   postedAt: string | null;
-  /** Cuánta gente se había postulado la última vez que se leyó. */
   applications: number | null;
-  /** Lo que la empresa tarda en contestar, en días. */
   responseDays: { min: number | null; max: number | null } | null;
   stackMatch: string[];
   locationKind: JobLocation;
   applyUrl: string | null;
   contactEmail: string | null;
   isUncertain: boolean;
-  /** La pasada que la encontró. `null` solo en lo guardado antes de registrarlo. */
   runId: number | null;
 }
 
@@ -114,6 +88,5 @@ export interface RunInfo {
   accepted: number;
   rejected: number;
   error: string | null;
-  /** Presente solo cuando `status` es `error`. */
   failure: RunFailure | null;
 }

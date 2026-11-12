@@ -12,23 +12,8 @@ import { setLanguage, t } from '../../i18n';
 import { CvStep, DoneStep, EnglishStep, LimitsStep, PlaceStep, SourcesStep, StackStep } from './StepPanels';
 import { applyReading, blockingError, draftFrom, STEPS, type Draft } from './steps';
 
-/**
- * LA BIENVENIDA. Lo primero que ve alguien que acaba de clonar esto.
- *
- * Vive fuera del marco de la aplicación —sin barra lateral ni cabecera— a
- * propósito: no hay nada que navegar todavía, y un menú lleno de pantallas
- * vacías invita a perderse antes de tener un perfil.
- *
- * Cada paso se GUARDA al pasar al siguiente, no al final. Un alta que solo
- * guarda al terminar castiga al que se interrumpe, y aquí interrumpirse es lo
- * normal: hay que buscar el CV, pensarse los vetos, decidir el inglés. Al
- * volver, el formulario está donde lo dejó.
- */
 const WelcomePage = () => {
   const navigate = useNavigate();
-  // La misma pantalla sirve para darse de alta y para corregir el perfil más
-  // tarde. Sin esto, cambiar el stack tras el alta no tendría dónde hacerse:
-  // el formulario está aquí, y duplicarlo en Configuración sería mantener dos.
   const [params] = useSearchParams();
   const editing = params.get('editar') === '1';
   const [state, setState] = useState<OnboardingState | null>(null);
@@ -43,22 +28,17 @@ const WelcomePage = () => {
         setState(next);
         setDraft(draftFrom(next));
         setLanguage(next.profile.language);
-        // Ya dado de alta: aquí no hay nada que hacer. Se puede volver a esta
-        // pantalla a propósito desde Configuración, pero no por accidente.
         if (next.completed && !editing) navigate('/', { replace: true });
       })
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
   }, [navigate, editing]);
 
-  /** Lo que se manda al servidor en cada paso. Solo lo que ese paso decide. */
   const changesOf = useCallback((index: number, current: Draft) => {
     switch (index) {
       case 0: return { language: current.language };
       case 1: return { stack: current.stack, core: current.core, vetoEcosystems: current.vetoEcosystems };
       case 2: return { english: current.english };
       case 3: return { geo: current.geo, modality: current.modality };
-      // Las plataformas no tienen nada propio que guardar: el interruptor de
-      // cada una escribe directo.
       default: return null;
     }
   }, []);
@@ -87,8 +67,6 @@ const WelcomePage = () => {
     if (!draft || !state) return;
     setSaving(true);
     setError(null);
-    // Se vuelven a mandar los pasos con valores por defecto: quien llegó al
-    // final saltándoselos tiene que acabar igual con un perfil coherente.
     saveOnboardingStep({
       language: draft.language,
       stack: draft.stack, core: draft.core, vetoEcosystems: draft.vetoEcosystems,
@@ -102,12 +80,6 @@ const WelcomePage = () => {
       .finally(() => setSaving(false));
   };
 
-  /**
-   * El idioma se aplica EN EL ACTO, sin esperar a guardar: quien lo cambia es
-   * porque no entiende lo que está leyendo, y pedirle que pulse «Siguiente»
-   * para verlo en su idioma es pedirle que avance a ciegas. El guardado va
-   * igualmente al pasar de paso.
-   */
   const changeDraft = (next: Draft): void => {
     if (draft && next.language !== draft.language) setLanguage(next.language);
     setDraft(next);

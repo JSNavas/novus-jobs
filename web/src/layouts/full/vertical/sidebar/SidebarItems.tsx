@@ -14,14 +14,6 @@ import { INBOX_VIEWS, showsCount, titleOf } from '../../../../views/jobs/inbox';
 import { t } from '../../../../i18n';
 import NextSearchIndicator from './NextSearchIndicator';
 
-/**
- * The menu IS the inbox map: one entry per status, each with its counter.
- *
- * It used to be a single entry with the statuses hidden in a filter dropdown.
- * That forces you to remember the filter exists in order to revisit what you
- * saved, and a list that is not visible from the menu is a list nobody visits.
- * The counter beside each entry answers "do I have anything there?" without entering it.
- */
 const ICONS: Record<string, TablerIcon> = {
   '/nuevas': IconInbox,
   '/vistas': IconEye,
@@ -29,7 +21,6 @@ const ICONS: Record<string, TablerIcon> = {
   '/descartadas': IconArchive,
 };
 
-/** How often the counters refresh. Same cadence as the dashboard. */
 const POLL_INTERVAL_MS = 15_000;
 
 interface SidebarItemsProps {
@@ -38,20 +29,11 @@ interface SidebarItemsProps {
 
 const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
   const [stats, setStats] = useState<Stats | null>(null);
-  /**
-   * El menú NO sabe qué plataformas hay: se las pregunta al servidor.
-   *
-   * Es la misma regla que en el resto del proyecto —solo `JOB_SOURCES` conoce
-   * el catálogo— llevada hasta la navegación. Enchufar InfoJobs mañana le pone
-   * su entrada aquí sin que nadie edite este fichero.
-   */
   const [integrations, setIntegrations] = useState<Integration[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     const load = (): void => {
-      // Un contador que no carga no es motivo para romper la navegación: el
-      // menú tiene que seguir funcionando aunque la API no conteste.
       getStats().then((next) => { if (!cancelled) setStats(next); }).catch(() => undefined);
       listIntegrations().then((next) => { if (!cancelled) setIntegrations(next); }).catch(() => undefined);
     };
@@ -71,9 +53,6 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
 
   return (
     <>
-      {/* The dashboard sits OUTSIDE the "Ofertas" group and comes first: it is not
-          a list of offers, it is the summary of what the searcher did, and the
-          answer to "I have no information" when the inbox is empty. */}
       <List sx={{ px: 2 }}>
         <ListItemButton
           component={NavLink}
@@ -118,8 +97,6 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
       })}
     </List>
 
-      {/* The filter's archive. Kept apart from the inbox because it is not pending
-          work: it is what you check when you suspect it discarded something good. */}
       <List sx={{ px: 2 }} subheader={<ListSubheader disableSticky sx={{ bgcolor: 'transparent', px: 1 }}>{t('nav.group.audit')}</ListSubheader>}>
         <ListItemButton
           component={NavLink}
@@ -136,8 +113,6 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
         </ListItemButton>
       </List>
 
-      {/* El enfoque va con la auditoría y no con las bandejas: no es trabajo
-          pendiente, es qué dicen en conjunto las ofertas que entraron. */}
       <List sx={{ px: 2 }}>
         <ListItemButton
           component={NavLink}
@@ -150,16 +125,10 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
             <IconTargetArrow size="20" stroke={1.5} />
           </ListItemIcon>
           <ListItemText primary={t('nav.focus')} />
-          {/* Lo que apareció desde la última vez que entró. Sin esto, una
-              tendencia nueva solo se descubre abriendo la página a ver si
-              acaso — que es pedirle que recuerde cómo estaba la lista. */}
           {stats?.focusNew ? <AppChip label={String(stats.focusNew)} tone="success" /> : null}
         </ListItemButton>
       </List>
 
-      {/* INTEGRACIONES: una entrada por plataforma montada, con su horario.
-          Van juntas y aparte de Configuración porque lo que se ajusta aquí no
-          es cómo se comporta la aplicación, sino el trato con un tercero. */}
       {integrations.length ? (
         <List
           sx={{ px: 2 }}

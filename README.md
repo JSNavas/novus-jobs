@@ -81,9 +81,10 @@ convenient it is.
    to fix a typo is not acceptable.
 5. **No platform is special.** Sources are interchangeable implementations
    behind one interface. Deleting the biggest one is a file and a line.
-6. **Comments say why, not what.** Most odd-looking rules in the filter name
-   the real posting that made them necessary. A fix without its case is not a
-   fix anyone can verify later.
+6. **The tests carry the reasons.** The code has no comments: what explains a
+   rule that looks wrong is the test beside it, named after the real posting
+   that made it necessary. A fix without its case is not a fix anyone can
+   verify later.
 
 How each is enforced: [CONTRIBUTING.md](CONTRIBUTING.md) for the code,
 [docs/SOURCES.md](docs/SOURCES.md) for platforms,
@@ -205,11 +206,12 @@ Turning one off is a switch; deleting it is a file and a line.
 ## Status
 
 Used daily by its author since 2026. The filter has been tuned against real
-postings, and most of the odd-looking rules in `server/src/filters/` have a
-comment naming the posting that made them necessary. Expect that style
-throughout: the code explains **why**, not what.
+postings: the rules in `server/src/filters/` that look wrong are the ones a
+real ad made necessary, and each is pinned by a test named after that case.
+The code itself carries no comments — if you want to know why a rule exists,
+the test says it.
 
-Tests: `cd server && npm test`.
+Tests: `cd server && npm test` (237 of them).
 
 ## License
 

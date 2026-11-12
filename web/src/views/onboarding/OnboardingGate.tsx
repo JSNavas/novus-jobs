@@ -6,28 +6,12 @@ import { setDisplayTimeZone } from '../../format';
 import { setLanguage } from '../../i18n';
 import FullLayout from '../../layouts/full/FullLayout';
 
-/**
- * LA PUERTA. Mientras el alta no esté hecha, la aplicación manda a la
- * bienvenida.
- *
- * Es una redirección y no un aviso dentro del dashboard porque sin perfil no
- * hay nada que enseñar: el filtro descartaría cuanto llegue y el servidor ni
- * siquiera lanza búsquedas. Un dashboard con ceros y un cartel sería peor que
- * la pantalla que pide los datos.
- *
- * Si la pregunta falla —servidor caído, API a medias— se deja pasar en vez de
- * bloquear: una instalación ya en marcha no puede quedarse fuera de su propio
- * dashboard porque una petición se cayó.
- */
 const OnboardingGate = () => {
   const [needsOnboarding, setNeedsOnboarding] = useState<boolean | null>(null);
 
   useEffect(() => {
     getOnboarding()
       .then((state) => {
-        // La misma respuesta que decide si hay que mandar al alta trae la zona
-        // del perfil: se aprovecha, y así no hay una petición extra solo para
-        // saber en qué hora pintar las fechas.
         setDisplayTimeZone(state.profile.geo.timezone);
         setLanguage(state.profile.language);
         setNeedsOnboarding(!state.completed);

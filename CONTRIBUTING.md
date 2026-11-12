@@ -26,10 +26,11 @@ DATA_DIR=/tmp/novus-dev PORT=47999 SCHEDULER_ENABLED=false npm start
 
 ## How this code is written
 
-**Comments say why, not what.** The hardest part of a job filter is not the
-code, it is knowing why a rule that looks wrong is right. Most odd-looking rules
-in `server/src/filters/` carry a comment naming the actual posting that made
-them necessary. Keep that up: if you fix a filter bug, write down the case.
+**The code carries no comments, so the tests have to explain it.** The hardest
+part of a job filter is not the code, it is knowing why a rule that looks wrong
+is right. Here that lives in the test next to it, named after the actual
+posting that made the rule necessary. Keep that up: if you fix a filter bug,
+the case goes in as a test with a name that says what happened.
 
 **A filter fix comes with its posting as a test.** That is how the filter stays
 trustworthy. Tests here are mostly real cases, not invented ones.

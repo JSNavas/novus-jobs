@@ -1,4 +1,3 @@
-// project imports
 import './DefaultColors';
 import { Theme, ThemeOptions } from '@mui/material/styles';
 

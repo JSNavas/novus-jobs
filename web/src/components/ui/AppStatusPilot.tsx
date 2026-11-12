@@ -5,7 +5,6 @@ export type AppStatusTone = 'success' | 'error' | 'neutral';
 interface AppStatusPilotProps {
   tone: AppStatusTone;
   label?: string;
-  /** Accessible name when the pilot is a bare dot without visible text. */
   srLabel?: string;
 }
 
@@ -15,10 +14,6 @@ const pilotColor = {
   neutral: 'text.secondary',
 } as const;
 
-/*
- * The pilot is a light, not the message: the text sits beside it and is what
- * gets read without color. That is why failure also gets its label in red and bold.
- */
 const AppStatusPilot = ({ tone, label, srLabel }: AppStatusPilotProps) => {
   const light = (
     <Box

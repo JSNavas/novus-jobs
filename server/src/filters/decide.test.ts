@@ -22,7 +22,6 @@ describe('decideShipping', () => {
   it('rechaza la oferta que exige inglés avanzado', () => {
     const verdict = decideShipping({ text: `${REMOTE_TS_OFFER}\nSe requiere inglés avanzado (C1).`, url: null }, PROFILE);
     assert.equal(verdict.accepted, false);
-    // El código y sus datos; la frase se traduce y puede cambiar de redacción.
     assert.deepEqual(verdict.rejection, { code: 'reject.english', params: { demanded: 'C1', yours: 'B1' } });
   });
 
@@ -31,12 +30,6 @@ describe('decideShipping', () => {
     assert.equal(verdict.accepted, false);
   });
 
-  /**
-   * LA OFERTA QUE SE COLÓ. Texto real del feed del 2026-11-10, el que el usuario
-   * señaló: encaja de sobra por Node/React/TypeScript y aun así no le sirve,
-   * porque pide tres años de C++ que no tiene. Y, de propina, un inglés B2
-   * marcado como excluyente.
-   */
   const OFERTA_CPP = [
     '🚀 ¡Nueva oportunidad laboral! | Sr Fullstack Developer C++ / React / Node.js | LATAM',
     'Buscamos un perfil Senior con sólida experiencia en desarrollo backend con C++.',
@@ -58,8 +51,6 @@ describe('decideShipping', () => {
   });
 
   it('el "Se valorará" de la viñeta siguiente no convierte el inglés excluyente en deseable', () => {
-    // Sin el C++ de por medio, el inglés tiene que tumbarla igual: era el
-    // segundo motivo, y lo tapaba una ventana que cruzaba de requisito.
     const sinCpp = OFERTA_CPP.replace(/C\+\+/g, 'Node.js');
     const verdict = decideShipping({ text: sinCpp, url: null }, PROFILE);
     assert.equal(verdict.accepted, false);

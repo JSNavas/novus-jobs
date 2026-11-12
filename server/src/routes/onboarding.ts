@@ -1,7 +1,6 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { FastifyInstance } from 'fastify';
-// El import da por efecto los tipos de `request.file()` en FastifyRequest.
 import '@fastify/multipart';
 import { mergeExtraction, type CvEnhancer } from '../cv/enhance.js';
 import { extractFromCv, vetoesOf } from '../cv/extract.js';
@@ -11,64 +10,28 @@ import { ECOSYSTEM_LABELS, VETOABLE_ECOSYSTEMS, type Ecosystem } from '../profil
 import type { ProfileRepository } from '../profile/profile.repository.js';
 import { ENGLISH_LEVELS, LANGUAGES, type CandidateProfile, type EnglishLevel, type Language } from '../profile/types.js';
 
-/**
- * EL ALTA. Lo que convierte este proyecto en algo que puede usar cualquiera.
- *
- * Tres rutas y ninguna magia:
- *
- *   POST /api/onboarding/cv       sube el CV y devuelve lo que se pudo leer
- *   PUT  /api/onboarding/profile  guarda un paso (o varios) del formulario
- *   POST /api/onboarding/complete da el alta por terminada
- *
- * El alta se guarda PASO A PASO y no al final: se puede cerrar el navegador en
- * el paso 3 y volver mañana. Lo que marca el final es una clave aparte
- * (`onboardingCompletedAt`), no que el perfil parezca completo — un perfil a
- * medias es un estado normal y el servidor no tiene que adivinarlo.
- *
- * El CV se guarda en el directorio de datos del usuario, fuera del repo, por lo
- * mismo que las sesiones del navegador: es suyo, no se puede regenerar y no lo
- * toca ningún `build` ni ningún `npm ci`. Y no se sirve de vuelta por HTTP: ya
- * está en su disco.
- */
 export interface OnboardingRoutesDeps {
   profiles: ProfileRepository;
   dataDir: string;
-  /** `null` si no hay GEMINI_API_KEY: entonces solo hay lectura por reglas. */
   enhancer: CvEnhancer | null;
 }
 
-/** 8 MB. Un CV es texto; lo que pase de aquí es un PDF con fotos a tamaño imprenta. */
 const MAX_CV_BYTES = 8 * 1024 * 1024;
 
 export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingRoutesDeps): void {
-  /**
-   * El estado del alta. Lo pide la interfaz al arrancar para saber si tiene que
-   * mandar a la bienvenida o al dashboard.
-   */
   app.get('/api/onboarding', () => ({
     completed: deps.profiles.isOnboarded(),
     profile: deps.profiles.get(),
-    /** El catálogo que necesitan los desplegables, para no duplicarlo en React. */
     catalogue: {
       countries: COUNTRIES.map((c) => ({ code: c.code, label: c.label })),
       englishLevels: ENGLISH_LEVELS,
       languages: LANGUAGES,
       ecosystems: VETOABLE_ECOSYSTEMS.map((eco) => ({ id: eco, label: ECOSYSTEM_LABELS[eco] })),
     },
-    /** Si se puede ofrecer la mejora con el modelo, que exige clave propia. */
     canEnhance: deps.enhancer !== null,
     acceptedFiles: ACCEPTED_EXTENSIONS,
   }));
 
-  /**
-   * Sube el CV y devuelve lo que se leyó. NO guarda nada en el perfil: lo que
-   * sale de aquí es una PROPUESTA que el usuario revisa y confirma en el
-   * formulario. Un CV mal leído que se guardase solo dejaría vetos que él no
-   * puso y ofertas descartadas sin que nadie se enterase.
-   *
-   * `?enhance=true` manda además el texto al modelo. Es una decisión explícita
-   * suya, con el aviso en la pantalla: por defecto el CV no sale de su máquina.
-   */
   app.post<{ Querystring: { enhance?: string } }>('/api/onboarding/cv', async (request, reply) => {
     const upload = await request.file({ limits: { fileSize: MAX_CV_BYTES } });
     if (!upload) return reply.code(400).send({ error: 'no llegó ningún fichero' });
@@ -109,13 +72,6 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
     return { ...extraction, enhanced: enhanced !== null };
   });
 
-  /**
-   * Guarda un paso. Lo que no venga en el cuerpo no se toca: así el paso 2 no
-   * puede borrar lo que eligió el paso 4, y guardar a medias es seguro.
-   *
-   * `vetoEcosystems` es azúcar del formulario: el usuario marca "Java y JVM" y
-   * aquí se traduce a las tecnologías que el filtro mira de verdad.
-   */
   app.put('/api/onboarding/profile', (request, reply) => {
     const body = (request.body ?? {}) as Record<string, unknown>;
     const changes: { -readonly [K in keyof CandidateProfile]?: CandidateProfile[K] } = {};
@@ -190,15 +146,6 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
     return { profile: deps.profiles.patch(changes), completed: deps.profiles.isOnboarded() };
   });
 
-  /**
-   * Cierra el alta y deja que empiecen las búsquedas.
-   *
-   * Se exige lo mínimo con lo que una búsqueda tiene sentido: al menos una
-   * tecnología de núcleo. Sin eso, el filtro descartaría todo lo que encuentre y
-   * el usuario vería un dashboard vacío sin saber por qué, que es la peor
-   * primera impresión posible. Lo demás —la motivación, la antigüedad, el
-   * ritmo— tiene valores por defecto y se puede dejar para después.
-   */
   app.post('/api/onboarding/complete', (_request, reply) => {
     const profile = deps.profiles.get();
     if (!profile.core.length) {
@@ -212,19 +159,13 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
   });
 }
 
-/**
- * Guarda el CV junto a los datos del usuario, con un nombre fijo por extensión:
- * subir uno nuevo sustituye al viejo en vez de ir dejando copias.
- */
 function saveCv(dataDir: string, filename: string, bytes: Buffer): void {
   const dir = join(dataDir, 'cv');
   mkdirSync(dir, { recursive: true });
   const extension = filename.toLowerCase().match(/\.[a-z]+$/)?.[0] ?? '.pdf';
-  // Permisos 600: vale lo mismo que la cookie de sesión, y por el mismo motivo.
   writeFileSync(join(dir, `cv${extension}`), bytes, { mode: 0o600 });
 }
 
-/** Lo valida el propio runtime: la lista de zonas la trae `Intl`, no nosotros. */
 function isKnownTimeZone(name: string): boolean {
   try {
     new Intl.DateTimeFormat('en-US', { timeZone: name });

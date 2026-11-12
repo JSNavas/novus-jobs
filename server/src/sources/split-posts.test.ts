@@ -12,7 +12,6 @@ describe('splitMergedPosts', () => {
     assert.equal(parts.length, 2);
     assert.match(parts[0]!.text, /Seguimos buscando talento IT/);
     assert.match(parts[1]!.text, /Sr Fullstack Developer C\+\+/);
-    // Ninguna venía sola: su enlace permanente no es de fiar.
     assert.deepEqual(parts.map((p) => p.alone), [false, false]);
   });
 
@@ -22,7 +21,6 @@ describe('splitMergedPosts', () => {
   });
 
   it('no parte si el nombre repetido deja trozos demasiado cortos', () => {
-    // El autor se cita a sí mismo en una línea suelta: no es otra publicación.
     const text = `Ana Pérez\nBuscamos desarrollador Node.js remoto desde Venezuela con experiencia en NestJS y PostgreSQL para un equipo distribuido.\nAna Pérez`;
     assert.equal(splitMergedPosts(text).length, 1);
   });

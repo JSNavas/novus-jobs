@@ -182,7 +182,7 @@ To stop using one without deleting it, use the switch in Integrations.
   tells the user all is well while their account is logged out.
 - **Respect the other side.** The ceilings exist for accounts you can lose and
   servers that are not yours. If a new platform needs a gentler rhythm than both
-  policies, add a third one with a comment saying what it protects.
-- **Say why in the code.** Most of the odd-looking rules in this project carry a
-  comment naming the real posting that made them necessary. Follow that: the
-  next person needs the reason, not the restatement.
+  policies, add a third one and name it after what it protects.
+- **Say why in a test.** The code carries no comments, so a rule that looks
+  wrong is explained by the test beside it, named after the real case that made
+  it necessary. The next person needs the reason, not a restatement of the code.

@@ -34,32 +34,20 @@ export interface AppDeps {
   scheduleHours: readonly number[];
   schedules: SourceSchedules;
   gmailAccount: string | null;
-  /** Dónde viven la base, los logs y el CV del usuario. */
   dataDir: string;
-  /** Lectura del CV con el modelo. `null` sin GEMINI_API_KEY: entonces solo hay reglas. */
   enhancer: CvEnhancer | null;
-  /** El perfil, para leerlo y escribirlo desde el alta y desde Configuración. */
   profiles: ProfileRepository;
-  /** Qué plataformas están encendidas. La ruta de integraciones las lee y las cambia. */
   toggles: SourceToggles;
   settings: SettingsRepository;
-  /** Se lee en cada petición: el perfil cambia desde Configuración sin reiniciar. */
   profile: () => CandidateProfile;
-  /** La zona horaria efectiva: la que el usuario eligió, o la de la máquina. */
   timeZone: () => string;
-  /** Carpeta con la UI compilada. Si no existe, el servidor solo sirve la API. */
   webDist: string | null;
 }
 
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({ logger: false });
-  // Solo para el CV del alta. El tope real lo pone la ruta; aquí va el del
-  // plugin, que corta la subida en caliente en vez de leerla entera primero.
   await app.register(fastifyMultipart, { limits: { files: 1, fileSize: 8 * 1024 * 1024 } });
   app.get('/api/health', () => ({ ok: true }));
-  // El contador de novedades del Enfoque se calcula aquí, una vez, y lo usan
-  // las dos rutas. Sale de lo mismo que la pantalla, así que el número del
-  // menú y lo resaltado dentro no pueden desmentirse.
   const focusNew = (): number => withNews(
     buildFocus(
       deps.jobs.list({

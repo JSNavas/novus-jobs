@@ -1,10 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { TypographyVariantsOptions } from '@mui/material/styles';
 
-/*
- * No external fonts: the stack is the system one, so the tool works offline.
- * The monospace face is used for figures, ids and dates.
- */
 const sansFamily = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 const monoFamily = 'ui-monospace, SFMono-Regular, Menlo, monospace';
 
