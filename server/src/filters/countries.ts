@@ -160,7 +160,7 @@ export const COUNTRIES: readonly Country[] = [
   },
   {
     code: 'US', label: 'Estados Unidos', region: 'north-america',
-    names: ['estados unidos', 'united states', 'usa', 'u.s.a.'],
+    names: ['estados unidos', 'united states', 'usa', 'u.s.a.', 'ee. uu', 'ee.uu', 'ee uu', 'eeuu'],
     adjectives: ['estadounidense', 'american citizen', 'us citizen'],
     cities: ['new york', 'nueva york', 'san francisco', 'los angeles', 'seattle', 'austin', 'chicago', 'boston', 'miami', 'denver', 'atlanta'],
     currency: [],
@@ -174,7 +174,7 @@ export const COUNTRIES: readonly Country[] = [
   },
   {
     code: 'GB', label: 'Reino Unido', region: 'europe',
-    names: ['reino unido', 'united kingdom'],
+    names: ['reino unido', 'united kingdom', 'uk', 'u.k.'],
     adjectives: ['británico', 'britanico', 'british'],
     cities: ['londres', 'london', 'manchester', 'edimburgo', 'edinburgh', 'birmingham'],
     currency: [],

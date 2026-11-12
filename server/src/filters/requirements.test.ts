@@ -58,6 +58,22 @@ describe('unknownRequiredTech', () => {
     assert.match(veto('Buscamos Frontend Angular senior con 5 años.') ?? '', /angular/);
   });
 
+  it('una lista unida por «y» exige las dos cosas: no es alternativa', () => {
+    // Caso real: oferta 639, «Ingeniero Junior de IA» de Freelanly, 11 nov 2026.
+    // Entró a la bandeja porque la coma de «Python, Java y fundamentos de la
+    // nube» se leyó como «Python O Java», y al reconocer Python se perdonó el
+    // veto de Java. Una coma no dice «elige una»; una barra o un «o» sí.
+    assert.match(
+      veto('Requiere prompt engineering, Python, Java y fundamentos de la nube.') ?? '',
+      /java/,
+    );
+  });
+
+  it('con «o» entre medias sí es alternativa, y se perdona', () => {
+    assert.equal(veto('Buscamos experiencia en Python o Java para el backend.'), null);
+    assert.equal(veto('Stack: Node.js / Go, elige el que domines.'), null);
+  });
+
   it('NO veta lo que el CV sí tiene', () => {
     assert.equal(veto('Buscamos desarrollador PHP con Symfony y Doctrine.'), null);
     assert.equal(veto('Python con FastAPI y PostgreSQL.'), null);

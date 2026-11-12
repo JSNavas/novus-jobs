@@ -102,6 +102,7 @@ const LIST_SEPARATOR = String.raw`(?:\s*(?:,|/|\||·|•|;|\by\/o\b|\bo\b|\bu\b|
 const LIST_ITEM = String.raw`\.?[a-záéíóúñ0-9][a-záéíóúñ0-9.#+_-]*(?:\s+(?!(?:o|u|y|or|and)\b)\.?[a-záéíóúñ0-9][a-záéíóúñ0-9.#+_-]*){0,2}`;
 const KNOWN_TECH = /\b(node(?:js|\.js)?|typescript|javascript|react|reactjs|vue(?:js|\.js)?|nuxt|next(?:js|\.js)?|php|laravel|python|nest(?:js|\.js)?|fastapi|express)\b/i;
 const CHOOSE_ONE = /al\s+menos\s+uno|alguno?\s+de\s+(?:los|las)|cualquiera\s+de|o\s+similar(?:es)?|u\s+otr[ao]s?|entre\s+otr[ao]s|o\s+equivalentes?/i;
+const DISJUNCTIVE = /\/|\||\by\/o\b|\bo\b|\bu\b|\bor\b/i;
 
 function isAlternativeToKnownTech(t: string, i: number, length: number): boolean {
   const chain = new RegExp(`${LIST_ITEM}(?:${LIST_SEPARATOR}${LIST_ITEM})+`, 'gi');
@@ -109,7 +110,7 @@ function isAlternativeToKnownTech(t: string, i: number, length: number): boolean
   for (const c of t.matchAll(chain)) {
     const from = c.index ?? 0;
     if (from > i || from + c[0].length < end) continue;
-    if (KNOWN_TECH.test(c[0])) return true;
+    if (KNOWN_TECH.test(c[0]) && DISJUNCTIVE.test(c[0])) return true;
   }
   const sentence = t.slice(Math.max(0, i - 120), end + 120);
   return CHOOSE_ONE.test(sentence) && KNOWN_TECH.test(sentence);

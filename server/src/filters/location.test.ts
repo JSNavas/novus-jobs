@@ -6,6 +6,34 @@ import { classifyLocation } from './location.js';
 
 const HOGAR = { country: findCountry('VE'), city: null };
 
+describe('classifyLocation — abreviaturas de país', () => {
+  // Caso real: oferta 639, «Ingeniero Junior de IA» de Freelanly, 11 nov 2026.
+  // Decía «Remoto EE. UU.» y entró a la bandeja como remoto global porque el
+  // catálogo solo conocía «estados unidos», «united states», «usa» y «u.s.a.».
+  it('«Remoto EE. UU.» es Estados Unidos, no remoto global', () => {
+    assert.equal(
+      classifyLocation('Ingeniero de IA\n📍 Remoto EE. UU.\nUSD 58/hora', HOGAR),
+      JobLocation.OtherCountry,
+    );
+  });
+
+  for (const forma of ['EE.UU.', 'EEUU', 'EE UU']) {
+    it(`«${forma}» también se reconoce`, () => {
+      assert.equal(
+        classifyLocation(`Ingeniero de IA\n📍 Remoto ${forma}\nUSD 58/hora`, HOGAR),
+        JobLocation.OtherCountry,
+      );
+    });
+  }
+
+  it('«Remoto UK» es Reino Unido', () => {
+    assert.equal(
+      classifyLocation('Backend Node.js, remoto UK.', HOGAR),
+      JobLocation.OtherCountry,
+    );
+  });
+});
+
 describe('classifyLocation — región contra modalidad', () => {
   const BUENOS_AIRES = [
     'Hola a todos! buscamos 10 Node.Js con mucha experiencia en fintech.',
