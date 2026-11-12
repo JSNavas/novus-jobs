@@ -128,6 +128,32 @@ convierte de esta lista.
 
 ---
 
+### 1.7 Una pasada sin juez no puede salir verde · 1 hora
+**Incumple la regla 2 del proyecto**, que es la que sostiene todo lo demás:
+nada se descarta en silencio.
+
+El 12 nov 2026, con nueve plataformas corriendo cada hora, la capa gratuita de
+Gemini (20 peticiones al día) se agotó a media mañana: **502 de las 875 ofertas
+del día las decidieron solo las reglas**. El juez degrada como está diseñado y
+lo escribe en el log —`[juez] 4 tanda(s) sin veredicto`—, pero el panel enseña
+la pasada en verde y la oferta guardada dice `judge_status = skipped`, que no
+se ve por ningún lado.
+
+Hace falta que la pasada lo diga: un aviso en el dashboard cuando una pasada se
+quedó sin segunda opinión, y que la tarjeta de una oferta no juzgada lo
+indique. Mitigado en parte subiendo la tanda del juez de 20 a 60 y bajando el
+ritmo de las fuentes a 3 h, pero mitigar no es avisar.
+
+### 1.8 Probar el alta de una fuente de punta a punta · 15 minutos
+La pantalla de **Integraciones → Añadir fuente** está terminada y probada por
+partes, pero el paso del modelo —el que escribe el mapeo— solo se ha visto
+funcionar fuera de la pantalla, contra la API de Greenhouse de Duolingo. El día
+que se probó dentro, la cuota de Gemini ya estaba agotada.
+
+Queda pegar una API cualquiera con cuota disponible y recorrer el camino
+entero: descubrir → el modelo escribe el mapeo → ver las tres ofertas de
+muestra → guardar → verla encendida en Integraciones → quitarla.
+
 ## 2. El lanzamiento (un día, y hay que elegirlo)
 
 Nada de esto lo puedo hacer yo: son cuentas tuyas y mensajes con tu nombre.
@@ -156,6 +182,12 @@ de una línea. Es el buscador de GitHub y se rellena en dos minutos.
 
 ## 3. Para que no se caiga después
 
+- **Poder ocultar una fuente del catálogo.** Hoy las que trae el repositorio
+  solo se apagan con el interruptor, y la tarjeta sigue ocupando sitio; el
+  botón «Quitar» es solo para las que añade el usuario, porque borrar un
+  fichero del repositorio lo desharía el siguiente `git pull`. Con quince
+  fuentes la pantalla aguanta; con treinta, no. La salida es una lista de
+  ignoradas en la base del usuario, con un «ver ocultas».
 - **Releases con versión y changelog.** Un repositorio sin releases parece
   abandonado aunque tenga commits de ayer.
 - **Imagen de Docker publicada** en GHCR, construida por el CI.
@@ -193,6 +225,10 @@ de una línea. Es el buscador de GitHub y se rellena en dos minutos.
 
 ## 5. Decisiones tuyas que siguen abiertas
 
+- **El repositorio no tiene remoto.** `git remote -v` está vacío y hay 43
+  commits del 12 nov sin publicar. Antes del primer `push` hay que decidir las
+  dos de abajo, porque el correo del autor queda en el historial para siempre y
+  cambiarlo después obliga a reescribirlo.
 - La URL del repositorio en el README (`YOUR_USER`).
 - Si el commit público va con tu correo personal o con el
   `@users.noreply.github.com` de GitHub.
