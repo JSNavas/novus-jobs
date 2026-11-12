@@ -331,6 +331,15 @@ entrado por ahí**. Ahora un rescate vuelve a comprobar la ubicación y el núcl
 antes de aceptar, y las dos comprobaciones salen de la misma función que usan
 las reglas, para que no haya dos verdades sobre qué ubicación vale.
 
+Con una excepción que costó un segundo error: **un puesto que es su oficio entra
+aunque no nombre ni una tecnología**. «Senior Backend Engineer» en un anuncio
+vago no es una oferta ajena, es una oferta mal escrita, y `judgeCore` ya la
+aceptaba marcándola por confirmar. La primera versión de esta comprobación no
+conocía esa excepción y descartó 16 ofertas buenas — un falso descarte, el error
+que este proyecto considera el más caro, introducido justo al arreglar el
+contrario. Lo encontró una auditoría que compara cada veredicto guardado con lo
+que las reglas dirían hoy; conviene repetirla cuando se toque el filtro.
+
 Que el juez pudiera **solo** descartar fue la decisión original, y estaba mal: medido sobre el feed real, de 117 descartes 114 no habían pasado nunca por el juez, y solo 17 eran del stack. Los otros 100 se tiraban sin segunda opinión pudiendo tenerla, y un falso descarte de una regex no tenía vuelta: se guardaba con `judge_status = skipped` y nadie lo volvía a mirar.
 
 Un rescate entra marcado como **«por confirmar»**, no como oferta limpia; y si lo revocado fue la ubicación, la ubicación pasa a «no dice desde dónde se puede trabajar», porque la regla que afirmaba «presencial» es justo la que acaba de caerse.
