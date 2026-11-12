@@ -260,7 +260,11 @@ export const en: Record<keyof typeof es, string> = {
   'focus.lastMonths': 'Last {months} months',
   'focus.topics': 'What the postings are asking for',
   'focus.topics.empty': 'Nothing repeats across two postings yet.',
-  'focus.emerging': 'Coming up',
+  'focus.requirements': 'Recurring requirements',
+  'focus.rank.head': 'Postings / %',
+  'focus.mentions': '{count} mentions',
+  'focus.analysed': '{count} postings analysed',
+  'focus.emerging': 'Emerging terms',
   'focus.emerging.help': 'Words that repeat in the requirements and are not measured above yet. This comes out on its own, with nobody predicting it: if something new starts being asked for, it shows up here first.',
 
   'set.title': 'Settings',

@@ -258,7 +258,11 @@ export const es = {
   'focus.lastMonths': 'Últimos {months} meses',
   'focus.topics': 'Qué están pidiendo las vacantes',
   'focus.topics.empty': 'Nada se repite en dos vacantes todavía.',
-  'focus.emerging': 'Apareciendo',
+  'focus.requirements': 'Requisitos recurrentes',
+  'focus.rank.head': 'Ofertas / %',
+  'focus.mentions': '{count} menciones',
+  'focus.analysed': '{count} ofertas analizadas',
+  'focus.emerging': 'Términos emergentes',
   'focus.emerging.help': 'Palabras que se repiten en los requisitos y que todavía no se miden arriba. Esto sale solo, sin que nadie las haya previsto: si algo nuevo empieza a pedirse, asoma aquí primero.',
 
   'set.title': 'Configuración',
