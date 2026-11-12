@@ -300,7 +300,7 @@ const IntegrationsPage = () => {
 
   useEffect(() => {
     if (!notice) return;
-    const timer = window.setTimeout(() => setNotice(null), 6000);
+    const timer = window.setTimeout(() => setNotice(null), 3000);
     return () => window.clearTimeout(timer);
   }, [notice]);
 
