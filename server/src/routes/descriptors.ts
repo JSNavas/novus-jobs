@@ -5,6 +5,7 @@ import type { SourceDescriptors } from '../sources/descriptors.js';
 import type { BrowserPool } from '../browser/session.js';
 import { biggestList, discover } from '../sources/discover.js';
 import { sniff } from '../sources/sniff.js';
+import type { HiddenSources } from '../sources/hidden.js';
 import type { DescriptorInventor } from '../sources/invent.js';
 import type { SourceToggles } from '../sources/toggles.js';
 import type { JobSource } from '../sources/types.js';
@@ -20,6 +21,7 @@ export interface DescriptorRoutesDeps {
   isNative: (name: string) => boolean;
   reload: () => void;
   pool: BrowserPool;
+  hidden: HiddenSources;
 }
 
 function message(error: unknown): string {
@@ -127,9 +129,20 @@ export function registerDescriptorRoutes(app: FastifyInstance, deps: DescriptorR
 
   app.delete('/api/descriptors/:name', async (request, reply) => {
     const { name } = request.params as { name: string };
-    if (!deps.descriptors.remove(name)) {
-      return reply.code(404).send({ error: `No hay ninguna fuente tuya llamada "${name}".` });
+    const known = deps.sources.some((source) => source.name === name);
+    const mine = deps.descriptors.remove(name);
+    if (!mine && !known) {
+      return reply.code(404).send({ error: `No hay ninguna plataforma llamada "${name}".` });
     }
+    if (!mine) deps.hidden.hide(name);
+    deps.reload();
+    return { ok: true, removed: mine };
+  });
+
+  app.get('/api/descriptors/hidden', () => deps.hidden.names());
+
+  app.post('/api/descriptors/hidden/clear', () => {
+    deps.hidden.showAll();
     deps.reload();
     return { ok: true };
   });

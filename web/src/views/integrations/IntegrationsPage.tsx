@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
+import { IconTrash } from '@tabler/icons-react';
 import {
-  Box, Button, CircularProgress, Stack, Switch, TextField, ToggleButton, ToggleButtonGroup, Tooltip,
+  Box, Button, CircularProgress, IconButton, Stack, Switch, TextField, ToggleButton, ToggleButtonGroup, Tooltip,
   Typography,
 } from '@mui/material';
 import {
-  deleteSource, listIntegrations, listSources, updateIntegrationEnabled, updateIntegrationSchedule,
-  type Integration,
+  deleteSource, listHiddenSources, listIntegrations, listSources, showHiddenSources,
+  updateIntegrationEnabled, updateIntegrationSchedule, type Integration,
 } from '../../api/client';
-import { AppAlert, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
+import { AppAlert, AppDialog, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { PlatformIcon } from '../dashboard/panels';
 import { t } from '../../i18n';
 import { formatDateTime } from '../../format';
@@ -224,9 +225,9 @@ const IntegrationCard = ({ integration, onSaved, onRemove }: CardProps) => {
           </Typography>
           {onRemove ? (
             <Tooltip title={t('int.remove')}>
-              <Button size="small" variant="text" color="inherit" onClick={onRemove} sx={{ minWidth: 0, px: 1, opacity: 0.6 }}>
-                {t('int.remove')}
-              </Button>
+              <IconButton size="small" onClick={onRemove} aria-label={t('int.remove')} sx={{ opacity: 0.55 }}>
+                <IconTrash size={16} />
+              </IconButton>
             </Tooltip>
           ) : null}
           <EnabledSwitch integration={integration} onSaved={onSaved} />
@@ -292,6 +293,8 @@ const IntegrationsPage = () => {
   const [error, setError] = useState<string | null>(null);
 
   const [mine, setMine] = useState<Set<string>>(new Set());
+  const [hidden, setHidden] = useState<string[]>([]);
+  const [asking, setAsking] = useState<Integration | null>(null);
 
   const load = useCallback(() => {
     listIntegrations()
@@ -300,6 +303,7 @@ const IntegrationsPage = () => {
     listSources()
       .then((own) => setMine(new Set(own.map((entry) => String(entry.name)))))
       .catch(() => undefined);
+    listHiddenSources().then(setHidden).catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -319,10 +323,18 @@ const IntegrationsPage = () => {
     return () => window.clearTimeout(timer);
   }, [notice]);
 
-  const remove = (name: string): void => {
-    if (!window.confirm(t('int.remove.sure', { name }))) return;
-    deleteSource(name)
-      .then(() => { setNotice(t('int.remove.done', { name })); load(); })
+  const confirmRemove = (): void => {
+    const target = asking;
+    if (!target) return;
+    setAsking(null);
+    deleteSource(target.name)
+      .then(() => { setNotice(t('int.remove.done', { name: target.label })); load(); })
+      .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
+  };
+
+  const restore = (): void => {
+    showHiddenSources()
+      .then(() => { setNotice(t('int.hidden.restored')); load(); })
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
   };
 
@@ -371,10 +383,34 @@ const IntegrationsPage = () => {
             key={integration.name}
             integration={integration}
             onSaved={replace}
-            onRemove={mine.has(integration.name) ? () => remove(integration.name) : undefined}
+            onRemove={() => setAsking(integration)}
           />
         ))}
       </Box>
+      {hidden.length ? (
+        <Stack direction="row" spacing={1.5} alignItems="center" mt={2.5}>
+          <Typography variant="caption" color="text.secondary">
+            {t('int.hidden.count', { count: hidden.length })}
+          </Typography>
+          <Button size="small" variant="text" onClick={restore}>{t('int.hidden.restore')}</Button>
+        </Stack>
+      ) : null}
+
+      <AppDialog
+        open={asking !== null}
+        title={t('int.remove.title', { name: asking?.label ?? '' })}
+        onClose={() => setAsking(null)}
+        confirmLabel={t('int.remove')}
+        onConfirm={confirmRemove}
+      >
+        <Typography variant="body2" sx={{ mb: 1.5 }}>
+          {asking && mine.has(asking.name) ? t('int.remove.mine') : t('int.remove.catalogue')}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {t('int.remove.keeps')}
+        </Typography>
+      </AppDialog>
+
     </PageContainer>
   );
 };

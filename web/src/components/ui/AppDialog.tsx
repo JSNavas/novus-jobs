@@ -1,5 +1,6 @@
 import { Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
 import type { ReactNode } from 'react';
+import { t } from '../../i18n';
 
 interface AppDialogProps {
   open: boolean;
@@ -16,7 +17,7 @@ const AppDialog = ({ open, title, children, onClose, confirmLabel, onConfirm }: 
     <DialogContent>{children}</DialogContent>
     <DialogActions>
       <Button variant="text" onClick={onClose}>
-        Cancelar
+        {t('int.cancel')}
       </Button>
       {onConfirm && confirmLabel ? (
         <Button variant="contained" onClick={onConfirm}>

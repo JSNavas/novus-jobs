@@ -1,6 +1,6 @@
 import { t } from '../../i18n';
-import { Checkbox, FormControlLabel, InputAdornment, MenuItem, Stack, TextField } from '@mui/material';
-import { IconSearch } from '@tabler/icons-react';
+import { Checkbox, FormControlLabel, IconButton, InputAdornment, MenuItem, Stack, TextField } from '@mui/material';
+import { IconSearch, IconX } from '@tabler/icons-react';
 import { Tooltip } from '@mui/material';
 import type { Integration } from '../../api/client';
 
@@ -49,6 +49,20 @@ const JobFilters = ({
               <IconSearch size={16} stroke={1.6} />
             </InputAdornment>
           ),
+          endAdornment: values.q ? (
+            <InputAdornment position="end">
+              <Tooltip title={t('filters.search.clear')}>
+                <IconButton
+                  size="small"
+                  aria-label={t('filters.search.clear')}
+                  onClick={() => onChange({ ...values, q: '' })}
+                  sx={{ opacity: 0.6 }}
+                >
+                  <IconX size={15} stroke={1.8} />
+                </IconButton>
+              </Tooltip>
+            </InputAdornment>
+          ) : null,
         },
         htmlInput: { 'aria-label': t('filters.search') },
       }}

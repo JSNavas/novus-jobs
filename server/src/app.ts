@@ -17,6 +17,7 @@ import { registerJobRoutes } from './routes/jobs.js';
 import { registerIntegrationRoutes } from './routes/integrations.js';
 import { registerDescriptorRoutes } from './routes/descriptors.js';
 import type { SourceDescriptors } from './sources/descriptors.js';
+import type { HiddenSources } from './sources/hidden.js';
 import type { DescriptorInventor } from './sources/invent.js';
 import { registerRunRoutes } from './routes/runs.js';
 import type { Runner } from './runner.js';
@@ -35,6 +36,7 @@ export interface AppDeps {
   pool: BrowserPool;
   sources: JobSource[];
   descriptors: SourceDescriptors;
+  hidden: HiddenSources;
   inventor: DescriptorInventor | null;
   isNativeSource: (name: string) => boolean;
   reloadDescribed: () => void;
@@ -80,7 +82,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   registerDescriptorRoutes(app, {
     descriptors: deps.descriptors, inventor: deps.inventor, toggles: deps.toggles,
     sources: deps.sources, isNative: deps.isNativeSource, reload: deps.reloadDescribed,
-    pool: deps.pool,
+    pool: deps.pool, hidden: deps.hidden,
   });
   registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler });
   registerSettingsRoute(app, {

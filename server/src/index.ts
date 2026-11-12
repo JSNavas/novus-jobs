@@ -24,6 +24,7 @@ import { SourceSchedules } from './sources/schedules.js';
 import { buildDescribedSources, buildSources, isNativeSource, registerDescriptors } from './sources/registry.js';
 import { DescriptorInventor } from './sources/invent.js';
 import { readCatalog, SourceDescriptors } from './sources/descriptors.js';
+import { HiddenSources } from './sources/hidden.js';
 import { SourceToggles } from './sources/toggles.js';
 
 async function main(): Promise<void> {
@@ -46,11 +47,16 @@ async function main(): Promise<void> {
   if (described.length) {
     console.log(`[arranque] ${described.length} fuente(s) descrita(s) con JSON: ${described.map((d) => d.label).join(', ')}`);
   }
-  const sources = buildSources(config, pool);
+  const sources = buildSources(config, pool).filter((source) => !new HiddenSources(settings).has(source.name));
+  const hidden = new HiddenSources(settings);
   const reloadDescribed = (): void => {
     registerDescriptors([...catalog, ...descriptors.all()]);
-    const natives = sources.filter((source) => isNativeSource(source.name));
-    sources.splice(0, sources.length, ...natives, ...buildDescribedSources());
+    const natives = buildSources(config, pool).filter((source) => isNativeSource(source.name));
+    sources.splice(
+      0,
+      sources.length,
+      ...[...natives, ...buildDescribedSources()].filter((source) => !hidden.has(source.name)),
+    );
   };
   const gemini = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;
   const judge = gemini ? new LlmJudge(gemini, config.judgeModel) : null;
@@ -99,6 +105,7 @@ async function main(): Promise<void> {
     inventor: gemini ? new DescriptorInventor(gemini, config.judgeModel) : null,
     isNativeSource,
     reloadDescribed,
+    hidden,
     settings,
     profile,
     jobs,

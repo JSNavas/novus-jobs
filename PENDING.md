@@ -182,12 +182,6 @@ de una línea. Es el buscador de GitHub y se rellena en dos minutos.
 
 ## 3. Para que no se caiga después
 
-- **Poder ocultar una fuente del catálogo.** Hoy las que trae el repositorio
-  solo se apagan con el interruptor, y la tarjeta sigue ocupando sitio; el
-  botón «Quitar» es solo para las que añade el usuario, porque borrar un
-  fichero del repositorio lo desharía el siguiente `git pull`. Con quince
-  fuentes la pantalla aguanta; con treinta, no. La salida es una lista de
-  ignoradas en la base del usuario, con un «ver ocultas».
 - **Releases con versión y changelog.** Un repositorio sin releases parece
   abandonado aunque tenga commits de ayer.
 - **Imagen de Docker publicada** en GHCR, construida por el CI.

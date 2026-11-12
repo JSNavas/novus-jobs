@@ -448,7 +448,11 @@ que le toque. Se construyen todas las conocidas aunque estén apagadas
 se construye no existe para la interfaz, y entonces no habría desde dónde
 encenderla.
 
-Para dejar de usarla, el interruptor. Para quitarla del todo, borrar su fichero
+Para dejar de usarla un rato, el interruptor. Para que desaparezca de la
+pantalla, el icono de la papelera: si la añadiste tú se borra, y si viene con el
+proyecto se oculta —su fichero no se toca, porque volvería en la siguiente
+actualización— y se recupera desde «volver a mostrarlas». Para quitarla del
+todo, borrar su fichero
 (y su línea, si era una clase); nada más la nombra. Un descriptor del catálogo
 viene encendido el primer arranque sin que nadie lo apunte en ningún sitio:
 añadir una fuente es un fichero, y solo uno.

@@ -342,6 +342,14 @@ export function listSources(): Promise<Record<string, unknown>[]> {
   return request('/descriptors');
 }
 
-export function deleteSource(name: string): Promise<{ ok: boolean }> {
+export function listHiddenSources(): Promise<string[]> {
+  return request('/descriptors/hidden');
+}
+
+export function showHiddenSources(): Promise<{ ok: boolean }> {
+  return request('/descriptors/hidden/clear', { method: 'POST' });
+}
+
+export function deleteSource(name: string): Promise<{ ok: boolean; removed?: boolean }> {
   return request(`/descriptors/${encodeURIComponent(name)}`, { method: 'DELETE' });
 }
