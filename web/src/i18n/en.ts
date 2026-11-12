@@ -361,4 +361,6 @@ export const en: Record<keyof typeof es, string> = {
   'nav.integrations.count': '{count} platforms',
   'wiz.exit': 'Back to the dashboard',
   'wiz.exitEditing': 'Back to Settings',
+  'apply.theCompany': 'the company',
+  'apply.theVacancy': 'the role',
 };

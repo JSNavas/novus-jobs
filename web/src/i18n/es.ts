@@ -359,4 +359,6 @@ export const es = {
   'nav.integrations.count': '{count} plataformas',
   'wiz.exit': 'Volver al dashboard',
   'wiz.exitEditing': 'Volver a Configuración',
+  'apply.theCompany': 'la empresa',
+  'apply.theVacancy': 'la vacante',
 } as const;

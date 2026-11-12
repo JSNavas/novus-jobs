@@ -34,7 +34,7 @@ export function runFailureLabel(failure: RunFailure): string {
   }
 }
 
-export function runFailureAdvice(failure: RunFailure, source = 'linkedin'): string {
+export function runFailureAdvice(failure: RunFailure, source: string): string {
   switch (failure) {
     case RunFailure.LoginRequired: return t('failure.loginRequired.advice', { source });
     case RunFailure.ProfileBusy: return t('failure.profileBusy.advice');

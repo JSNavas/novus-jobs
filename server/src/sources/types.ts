@@ -12,6 +12,13 @@ export interface PostMetrics {
 export interface RawPost {
   text: string;
   author: string | null;
+  /**
+   * Quién contrata, cuando la plataforma lo da como dato y no hay que
+   * adivinarlo del texto. En un feed social el autor es una persona —un
+   * reclutador—, y en una bolsa de empleo es la empresa: quien sabe cuál de
+   * las dos cosas es su `author` es la fuente, no la pantalla.
+   */
+  employer?: string | null;
   url: string | null;
   metrics?: PostMetrics;
 }

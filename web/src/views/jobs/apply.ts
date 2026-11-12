@@ -40,14 +40,11 @@ const STACK_IN_LETTER = 4;
 const MAX_LETTER_CHARS = 1000;
 
 function employerName(job: Job): string {
-  const company = job.company?.trim();
-  if (company) return company;
-  const author = job.author?.trim();
-  return job.source === 'getonbrd' && author ? author : 'la empresa';
+  return job.company?.trim() || t('apply.theCompany');
 }
 
 function positionName(job: Job): string {
-  return job.role?.trim() || job.title?.trim() || 'la vacante';
+  return job.role?.trim() || job.title?.trim() || t('apply.theVacancy');
 }
 
 function withoutRedundant(stack: readonly string[]): string[] {

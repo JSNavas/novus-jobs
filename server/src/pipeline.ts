@@ -61,6 +61,7 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
   const posts = await source.fetch((list) => indicesToFetchPermalink(list, deps.profile, isFresh));
   const offers: Offer[] = posts.map(toOffer);
   const metricsOf = new Map(posts.map((post) => [fingerprint(post.text), post.metrics ?? null]));
+  const employerOf = new Map(posts.map((post) => [fingerprint(post.text), post.employer ?? null]));
   const fresh = offers.filter((o) => isFresh(o.text));
 
   for (const post of posts) {
@@ -92,6 +93,7 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
       judgment ? JudgeStatus.Judged : JudgeStatus.Skipped,
       deps.runId,
       metrics,
+      employerOf.get(fingerprint(offer.text)) ?? null,
     );
     if (!deps.jobs.insert(job)) continue;
     if (verdict.accepted) {
@@ -208,6 +210,7 @@ function toNewJob(
   judgeStatus: JudgeStatus,
   runId: number,
   metrics: PostMetrics | null,
+  employer: string | null,
 ): NewJob {
   const ad = stripAuthorHeaders(offer.text);
   return {
@@ -215,7 +218,7 @@ function toNewJob(
     fingerprint: fingerprint(offer.text),
     title: offerTitle(ad),
     role: roleOnly(offerTitle(ad)),
-    company: companyName(ad),
+    company: employer ?? companyName(ad),
     author: offer.author ?? null,
     text: storedText(ad),
     url: offer.url,

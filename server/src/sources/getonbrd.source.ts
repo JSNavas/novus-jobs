@@ -136,6 +136,7 @@ function toRawPost(job: ApiJob, categories: Map<string, string>): RawPost | null
   return {
     text: body,
     author: company || null,
+    employer: company || null,
     url: jobUrl(String(job.id), categories.get(category) ?? null),
     metrics: toMetrics(job.attributes!),
   };
