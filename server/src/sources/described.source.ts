@@ -12,6 +12,7 @@ import type { FreshnessCheck, JobSource, PermalinkSelector, PostMetrics, RawPost
 const TIMEOUT_MS = 20_000;
 const USER_AGENT = 'novus-jobs (https://github.com/novus-jobs)';
 const SECONDS_IN_2001 = 978_307_200;
+const NOT_A_COMPANY = new Set(['confidential', 'confidencial', 'n/a', 'na', 'none', 'undisclosed', 'anonymous', 'anónimo', 'anonimo', '-', '--']);
 
 function text(value: unknown): string {
   if (typeof value === 'string') return value;
@@ -57,10 +58,15 @@ function splitTitle(title: string, separator: string | null): { title: string; c
   };
 }
 
+function namedCompany(entry: unknown, fields: DescriptorFields): string {
+  const named = text(first(entry, fields.company)).trim();
+  return NOT_A_COMPANY.has(named.toLowerCase()) ? '' : named;
+}
+
 function headlineOf(entry: unknown, fields: DescriptorFields, description: string): { title: string; company: string } {
   const raw = text(first(entry, fields.title)).trim()
     || (fields.titleFromDescription ? firstLine(description) : '');
-  const named = text(first(entry, fields.company)).trim();
+  const named = namedCompany(entry, fields);
   if (named) return { title: raw, company: named };
   return splitTitle(raw, fields.companySeparator);
 }

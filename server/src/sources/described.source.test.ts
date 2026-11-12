@@ -250,6 +250,13 @@ describe('DescribedSource', () => {
     assert.equal(pages, 3);
   });
 
+  it('EL CASO REAL (puentetalent, 12 nov 2026): "confidential" no es el nombre de una empresa', async () => {
+    reply({ jobs: [{ title: 'Permits Coordinator', company_name: 'confidential', description: 'Node y Postgres' }] });
+    const post = await onePost(describedFrom(REMOTIVE));
+    assert.equal(post.employer, null, 'con 55 de 62 ofertas así, "confidential busca:" sale en toda la bandeja');
+    assert.match(post.text, /^Permits Coordinator\n/);
+  });
+
   it('no pide sesión ni navegador: por eso una fuente descrita funciona el primer día', () => {
     const source = describedFrom(REMOTIVE);
     assert.equal(source.profileId, null);

@@ -173,15 +173,16 @@ give it its own rhythm. Nothing in the project depends on any single platform.
 | **Remote OK** | `GET /api` | No | descriptor |
 | **Himalayas** | `GET /jobs/api` | No | descriptor |
 | **We Work Remotely** | RSS feed of programming jobs | No | descriptor |
+| **Puente Talent** | `GET /api/jobs` (LATAM) | No | descriptor |
 
-**Six of the seven need no account at all**, so the project does something
+**Seven of the eight need no account at all**, so the project does something
 useful the first time you run it, before you have logged into anything. The
 public ones run every 60 minutes; LinkedIn gets three time slots a day. What
 sets the pace is **what is at risk when you read**: an open API only needs good
 manners towards someone else's server, while an account that can be flagged
 gets a human pace and a hard daily ceiling.
 
-**Four of them are not code.** They are JSON descriptors in
+**Five of them are not code.** They are JSON descriptors in
 `server/descriptors/`, which is why this list is meant to grow without going
 through a maintainer: see [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md). If a board
 you use is missing, write a descriptor and

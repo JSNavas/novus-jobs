@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "name": "puentetalent",
+  "label": "Puente Talent",
+  "homepage": "https://puentetalent.com",
+  "request": {
+    "url": "https://puentetalent.com/api/jobs",
+    "method": "GET",
+    "query": { "page": "40" }
+  },
+  "fields": {
+    "list": "jobs",
+    "title": "title",
+    "company": "hiringOrganizationName",
+    "description": "descriptionText",
+    "url": ["applyUrl", "resourceUrl"],
+    "location": ["applicantCountries", "locationLabel"],
+    "postedAt": "createdOn",
+    "salary": "salaryLabel"
+  }
+}

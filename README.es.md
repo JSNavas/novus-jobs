@@ -439,8 +439,8 @@ los descriptores en [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md).
 
 ### Plataformas soportadas
 
-Siete, y cuatro de ellas no tienen código propio. Cada una se enciende, se
-apaga y se le pone su ritmo desde Integraciones.
+Ocho, y cinco de ellas no tienen código propio. Cada una se enciende, se apaga
+y se le pone su ritmo desde Integraciones.
 
 | Plataforma | Cómo lee | Cuenta | Cómo está hecha |
 |---|---|---|---|
@@ -451,8 +451,9 @@ apaga y se le pone su ritmo desde Integraciones.
 | **Remote OK** | `GET /api` | ninguna | descriptor |
 | **Himalayas** | `GET /jobs/api` | ninguna | descriptor |
 | **We Work Remotely** | RSS de empleo en programación | ninguna | descriptor |
+| **Puente Talent** | `GET /api/jobs` | ninguna | descriptor |
 
-Las cinco sin cuenta funcionan **el primer día, sin configurar nada**: vienen
+Las siete sin cuenta funcionan **el primer día, sin configurar nada**: vienen
 encendidas y no piden iniciar sesión en ningún sitio. LinkedIn es la única que
 exige algo tuyo, y por eso no es el punto de entrada del proyecto.
 
@@ -464,6 +465,12 @@ Tres cosas que se aprendieron montándolas, y que valen para la siguiente:
   `Empresa: Puesto`. De ahí `companySeparator`.
 - **Hacker News** no es una bolsa de empleo sino un hilo de comentarios, y el
   hilo cambia cada mes. Por eso es la única de las nuevas con clase propia.
+- **Puente Talent** publica `applicantCountries`, la lista de países desde los
+  que se puede trabajar. Es el dato que a Get on Board le falta, así que su
+  descriptor lo pone en la línea de ubicación: el filtro ve «Venezuela» escrito
+  y no tiene que adivinarlo de la prosa. Y 55 de sus 62 ofertas dicen
+  `confidential` como empresa, que el motor trata como «no se sabe» en vez de
+  escribir «confidential busca:» en toda la bandeja.
 
 Y una advertencia que vale para casi todas: Get on Board **no** dice desde qué país se puede trabajar. `remote_zone` viene siempre `null` y el país de un remoto llega como `["Remote"]`, así que la elegibilidad geográfica sigue estando solo en la prosa del anuncio. Las reglas y el juez hablan igual.
 
