@@ -25,6 +25,44 @@ Es un dashboard y el README no enseña ni un píxel. Hace falta:
 - Imagen de *social preview* (1280×640) para que el enlace no salga desnudo en
   X, Slack o Reddit. Se sube en Settings del repositorio, no en el código.
 
+### 1.1b Pruebas que funcionan, para grabarlas · comprobadas el 12 nov 2026
+
+Casos reales, verificados contra las APIs en vivo ese día. Sirven para el GIF,
+para las capturas y para el primer comentario del Show HN. Antes de grabar hay
+que volver a correrlos: las cifras cambian y una cifra inventada se nota.
+
+**EL PLANO BUENO — «Duolingo» en Integraciones → Añadir fuente.**
+Se escribe el nombre de una empresa, nada más, y salen sus dos tableros:
+
+```
+Duolingo  →  Greenhouse · 61 vacantes   https://boards-api.greenhouse.io/v1/boards/duolingo/jobs?content=true
+             Breezy     ·  3 vacantes   https://duolingo.breezy.hr/json
+```
+
+Funciona porque detrás se prueban nueve tableros a la vez. Es el plano que
+cuenta la idea entera sin una palabra de explicación: **escribes un nombre y la
+empresa queda vigilada**. Ningún agregador puede ofrecer eso, porque vigilar el
+tablero de una empresa concreta solo compensa si corre en la máquina de quien
+quiere ese trabajo.
+
+Otros que se graban igual de bien:
+
+| Se escribe | Sale |
+|---|---|
+| `Ramp` | Ashby · 176 vacantes |
+| `interfell` | «No hay ningún tablero público a nombre de…» — el no también hay que enseñarlo |
+| `https://interfell.simera.io/interfell/jobs` | «la página trae sus vacantes dentro, en JSON» · 25 |
+| una URL de API cualquiera | el modelo escribe el mapeo y se ven 3 ofertas antes de guardar |
+
+**El segundo plano: el mapeo escrito por la IA.** Con la API de Greenhouse de
+Duolingo, el modelo devolvió el descriptor correcto a la primera —lista, los
+seis campos, y `content=true` separado de la URL—. Lo que hay que decir en voz
+alta mientras se ve: **la IA escribe el adaptador una vez y se guarda como
+datos**; las siguientes diez mil vacantes se leen sin IA y sin coste.
+
+**Lo que NO hay que grabar:** una fuente que pida iniciar sesión, y el atracón
+de la primera pasada (500+ ofertas) si el juez se ha quedado sin cuota.
+
 ### 1.2 El alta tiene que enseñar que lee el CV · media tarde
 El GIF de arriba no existe hasta que el paso 2 del alta lo merezca. Hoy es una
 lista fija de casillas: el usuario no ve que la máquina ha leído su currículum,
