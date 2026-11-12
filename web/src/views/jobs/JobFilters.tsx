@@ -1,6 +1,7 @@
 import { t } from '../../i18n';
 import { Checkbox, FormControlLabel, InputAdornment, MenuItem, Stack, TextField } from '@mui/material';
 import { IconSearch } from '@tabler/icons-react';
+import { Tooltip } from '@mui/material';
 import type { Integration } from '../../api/client';
 
 export type DateWindow = 'all' | 'today' | 'week';
@@ -22,13 +23,19 @@ export function sinceOfWindow(window: DateWindow): string | undefined {
   return new Date(Date.now() - 7 * 24 * 3_600_000).toISOString();
 }
 
+export const MAX_AGE_OPTIONS = [1, 2, 3, 6, 12];
+
 interface JobFiltersProps {
   values: FilterValues;
   integrations?: readonly Integration[];
+  maxAgeMonths?: number | null;
   onChange: (next: FilterValues) => void;
+  onMaxAgeChange?: (months: number) => void;
 }
 
-const JobFilters = ({ values, integrations = [], onChange }: JobFiltersProps) => (
+const JobFilters = ({
+  values, integrations = [], maxAgeMonths = null, onChange, onMaxAgeChange,
+}: JobFiltersProps) => (
   <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5} alignItems={{ md: 'center' }} mb={2.5}>
     <TextField
       size="small"
@@ -76,6 +83,24 @@ const JobFilters = ({ values, integrations = [], onChange }: JobFiltersProps) =>
       <MenuItem value="today">{t('filters.date.today')}</MenuItem>
       <MenuItem value="week">{t('filters.date.week')}</MenuItem>
     </TextField>
+
+    {maxAgeMonths !== null && onMaxAgeChange ? (
+      <Tooltip title={t('filters.maxAge.help')}>
+        <TextField
+          size="small"
+          select
+          label={t('filters.maxAge')}
+          value={maxAgeMonths}
+          onChange={(event) => onMaxAgeChange(Number(event.target.value))}
+          slotProps={{ inputLabel: { shrink: true } }}
+          sx={{ minWidth: 150 }}
+        >
+          {MAX_AGE_OPTIONS.map((months) => (
+            <MenuItem key={months} value={months}>{t('filters.maxAge.option', { months })}</MenuItem>
+          ))}
+        </TextField>
+      </Tooltip>
+    ) : null}
 
     <FormControlLabel
       control={

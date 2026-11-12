@@ -3,7 +3,7 @@ import { useLocation } from 'react-router';
 import { Button, Stack, Typography } from '@mui/material';
 import { t } from '../../i18n';
 import {
-  listIntegrations, PAGE_SIZE, updateJobStatus, type Integration, type JobQuery,
+  listIntegrations, PAGE_SIZE, updateJobStatus, updateSettings, type Integration, type JobQuery,
 } from '../../api/client';
 import { AppAlert, AppPagination, AppSnackbar, PageContainer, Rise } from '../../components/ui';
 import { JobStatus, type Job } from '../../types';
@@ -89,7 +89,20 @@ const JobsPage = () => {
     >
       {stats ? <LastRunAlert lastRun={stats.lastRun} /> : null}
 
-      <JobFilters values={filters} integrations={integrations} onChange={setFilters} />
+      <JobFilters
+        values={filters}
+        integrations={integrations}
+        maxAgeMonths={settings?.maxAgeMonths ?? null}
+        onChange={setFilters}
+        onMaxAgeChange={(months) => {
+          updateSettings({ maxAgeMonths: months })
+            .then(() => {
+              setNotice({ message: t('filters.maxAge.saved', { months }), severity: 'success' });
+              reload();
+            })
+            .catch((cause: unknown) => setNotice({ message: errorMessage(cause), severity: 'error' }));
+        }}
+      />
 
       {page ? (
         <Typography variant="label" color="text.secondary" sx={{ display: 'block', mb: 1.75 }}>
