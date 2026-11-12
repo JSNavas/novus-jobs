@@ -63,6 +63,13 @@ export function formatDate(iso: string | null): string {
   return `${p.day} ${p.month} ${p.year}`;
 }
 
+export function utcOffsetLabel(): string {
+  const name = new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'shortOffset' })
+    .formatToParts(new Date())
+    .find((part) => part.type === 'timeZoneName')?.value;
+  return (name ?? 'UTC').replace('GMT', 'UTC').replace('-', '\u2212');
+}
+
 export function hourInUserZone(instant: Date): number {
   const hour = new Intl.DateTimeFormat('en-US', { timeZone, hour: 'numeric', hour12: false })
     .formatToParts(instant)

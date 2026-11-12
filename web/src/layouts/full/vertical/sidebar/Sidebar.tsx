@@ -1,6 +1,4 @@
 import { Box, Drawer, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { IconLock } from '@tabler/icons-react';
-import { t } from '../../../../i18n';
 import SidebarItems from './SidebarItems';
 
 const fullWidth = 224;
@@ -31,27 +29,8 @@ const SidebarContent = ({ onNavigate, collapsed }: { onNavigate: () => void; col
       )}
     </Stack>
 
-    {collapsed ? null : (
-      <Stack direction="row" spacing={0.75} alignItems="center" sx={{ px: 2.5, pb: 1.5, color: 'text.secondary' }}>
-        <IconLock size={11} />
-        <Typography variant="label">{t('sidebar.workspace')}</Typography>
-      </Stack>
-    )}
-
     <SidebarItems onNavigate={onNavigate} collapsed={collapsed} />
 
-    <Stack
-      direction="row"
-      spacing={1}
-      alignItems="center"
-      justifyContent={collapsed ? 'center' : 'flex-start'}
-      sx={{ px: collapsed ? 0 : 2.5, height: 46, borderTop: 1, borderColor: 'divider', color: 'text.secondary', flexShrink: 0 }}
-    >
-      <IconLock size={12} />
-      {collapsed ? null : (
-        <Typography variant="mono" sx={{ fontSize: '0.6875rem' }}>{t('sidebar.local')}</Typography>
-      )}
-    </Stack>
   </>
 );
 

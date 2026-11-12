@@ -73,9 +73,9 @@ export const en: Record<keyof typeof es, string> = {
   'stats.read.one': '1 posting read',
   'stats.read.many': '{count} postings read',
   'stats.lastRun.none': 'No search has run yet',
+  'header.searcherActive': 'Searcher active',
+  'header.newPostings': 'New postings',
   'sidebar.lastRunFailed': 'The last search failed',
-  'sidebar.workspace': 'Personal space',
-  'sidebar.local': 'Local and private',
   'sidebar.nextSearch': 'Next search',
   'stats.noRuns': 'No searches yet',
 

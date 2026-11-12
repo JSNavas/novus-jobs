@@ -71,9 +71,9 @@ export const es = {
   'stats.read.one': '1 publicación leída',
   'stats.read.many': '{count} publicaciones leídas',
   'stats.lastRun.none': 'Todavía no se ha buscado',
+  'header.searcherActive': 'Buscador activo',
+  'header.newPostings': 'Ofertas nuevas',
   'sidebar.lastRunFailed': 'La última búsqueda falló',
-  'sidebar.workspace': 'Espacio personal',
-  'sidebar.local': 'Local y privado',
   'sidebar.nextSearch': 'Próxima búsqueda',
   'stats.noRuns': 'Sin búsquedas todavía',
 
