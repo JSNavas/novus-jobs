@@ -281,6 +281,7 @@ export const es = {
   'int.hidden.restore': 'Volver a mostrarlas',
   'int.hidden.restored': 'Las fuentes ocultas vuelven a consultarse.',
   'filters.search.clear': 'Limpiar la búsqueda',
+  'int.endpoint': 'De dónde lee',
   'int.save': 'Guardar',
   'int.hours.atLeastOne': 'Deja al menos una hora: sin ninguna, esta integración no buscaría nunca.',
   'int.turnOff': 'Dejar de buscar aquí',

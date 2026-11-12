@@ -40,6 +40,7 @@ export interface JobSource {
   readonly profileId: string | null;
   readonly loginUrl: string | null;
   readonly policy: SourcePolicy;
+  readonly endpoint: string | null;
   fetch(selectPermalinks: PermalinkSelector, isFresh?: FreshnessCheck): Promise<RawPost[]>;
   close(): Promise<void>;
 }

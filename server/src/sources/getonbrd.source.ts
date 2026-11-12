@@ -127,6 +127,7 @@ function toRawPost(job: ApiJob, categories: Map<string, string>): RawPost | null
 }
 
 export class GetOnBoardSource implements JobSource {
+  readonly endpoint = SEARCH_URL;
   readonly name = 'getonbrd';
   readonly label = 'Get on Board';
   readonly profileId = null;

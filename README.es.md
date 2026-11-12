@@ -418,6 +418,10 @@ Eso es una plataforma entera: aparece en Integraciones con su interruptor y su
 ritmo. El formato completo —paginación, `POST` para Workday, feeds RSS, la lista
 en la raíz— está en [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md).
 
+Cada tarjeta de Integraciones dice **de dónde lee**, con la dirección exacta y
+enlazable. Sirve para dos cosas: saber qué está consultando tu máquina, y tener
+delante un ejemplo real cuando vas a buscar la API de otro portal.
+
 **Por qué esto importa más de lo que parece.** Un agregador vive en el servidor
 de alguien, así que solo puede leer portales lo bastante grandes como para que
 compense mantenerlos, y cuando lo bloquean lo bloquean para todo el mundo a la

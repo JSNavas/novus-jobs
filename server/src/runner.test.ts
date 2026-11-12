@@ -17,6 +17,7 @@ function fakeSource(name: string, policy: JobSource['policy']): JobSource {
   return {
     name,
     label: name,
+    endpoint: null,
     profileId: null,
     loginUrl: null,
     policy,

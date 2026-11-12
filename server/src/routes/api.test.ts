@@ -51,6 +51,7 @@ function newJob(overrides: Partial<NewJob>): NewJob {
 const FAKE_SOURCE: JobSource = {
   name: 'linkedin',
   label: 'LinkedIn',
+  endpoint: null,
   profileId: null,
   loginUrl: null,
   policy: WATCHED_ACCOUNT_POLICY,

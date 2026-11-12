@@ -145,6 +145,10 @@ export class DescribedSource implements JobSource {
     return this.descriptor.label;
   }
 
+  get endpoint(): string {
+    return this.descriptor.request.url;
+  }
+
   async fetch(_selectPermalinks: PermalinkSelector, isFresh?: FreshnessCheck): Promise<RawPost[]> {
     const { paging } = this.descriptor.request;
     const posts: RawPost[] = [];

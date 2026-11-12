@@ -283,6 +283,7 @@ export const en: Record<keyof typeof es, string> = {
   'int.hidden.restore': 'Show them again',
   'int.hidden.restored': 'The hidden sources are read again.',
   'filters.search.clear': 'Clear the search',
+  'int.endpoint': 'Reads from',
   'int.save': 'Save',
   'int.hours.atLeastOne': 'Leave at least one hour: with none, this integration would never search.',
   'int.turnOff': 'Stop searching here',

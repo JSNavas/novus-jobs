@@ -190,6 +190,7 @@ export type IntegrationSchedule =
 export interface Integration {
   name: string;
   label: string;
+  endpoint: string | null;
   needsLogin: boolean;
   enabled: boolean;
   schedule: IntegrationSchedule;

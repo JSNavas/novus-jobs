@@ -35,6 +35,10 @@ export class LinkedInSource implements JobSource {
   readonly policy = WATCHED_ACCOUNT_POLICY;
   private readonly session: BrowserSession;
 
+  get endpoint(): string {
+    return this.config.linkedinFeedUrl;
+  }
+
   constructor(private readonly config: Config, pool: BrowserPool) {
     this.session = pool.session(LINKEDIN_PROFILE_ID);
   }

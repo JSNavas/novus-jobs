@@ -13,7 +13,7 @@ function fakeSettings(): Pick<ConstructorParameters<typeof SourceSchedules>[0], 
 }
 
 const source = (name: string, policy: JobSource['policy']): JobSource => ({
-  name, label: name, profileId: null, loginUrl: null, policy,
+  name, label: name, endpoint: null, profileId: null, loginUrl: null, policy,
   fetch: async () => [], close: async () => undefined,
 });
 

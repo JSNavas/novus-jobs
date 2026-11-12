@@ -76,6 +76,7 @@ function fakeSource(texts: readonly string[]): JobSource {
   return {
     name: 'linkedin',
     label: 'LinkedIn',
+    endpoint: null,
     profileId: null,
     loginUrl: null,
     policy: OPEN_API_POLICY,

@@ -31,6 +31,7 @@ export function registerIntegrationRoutes(app: FastifyInstance, deps: Integratio
       name: source.name,
       label: source.label,
       needsLogin: source.loginUrl !== null,
+      endpoint: source.endpoint,
       enabled: deps.toggles.isEnabled(source.name),
       schedule: schedule.kind === 'every-minutes'
         ? { kind: 'every-minutes' as const, minutes: schedule.minutes }

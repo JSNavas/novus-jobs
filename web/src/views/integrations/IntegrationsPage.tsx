@@ -238,6 +238,33 @@ const IntegrationCard = ({ integration, onSaved, onRemove }: CardProps) => {
           </Typography>
         </Line>
 
+        {integration.endpoint ? (
+          <Line label={t('int.endpoint')}>
+            <Tooltip title={integration.endpoint}>
+              <Typography
+                component="a"
+                href={integration.endpoint}
+                target="_blank"
+                rel="noreferrer noopener"
+                variant="mono"
+                sx={{
+                  fontSize: '0.6875rem',
+                  color: 'text.secondary',
+                  textDecoration: 'none',
+                  display: 'block',
+                  maxWidth: 260,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  '&:hover': { color: 'primary.main', textDecoration: 'underline' },
+                }}
+              >
+                {integration.endpoint.replace(/^https?:\/\//, '')}
+              </Typography>
+            </Tooltip>
+          </Line>
+        ) : null}
+
         <Line label={t('int.lastPass')}>
           <Typography variant="mono" sx={{ fontSize: '0.6875rem' }}>
             {integration.lastRunAt ? formatDateTime(integration.lastRunAt) : '—'}

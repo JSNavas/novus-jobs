@@ -57,6 +57,7 @@ function toMetrics(comment: Comment): PostMetrics {
 export class HackerNewsSource implements JobSource {
   readonly name = 'hackernews';
   readonly label = 'Hacker News (Who is hiring)';
+  readonly endpoint = `${STORIES_URL}?tags=story,author_whoishiring`;
   readonly profileId = null;
   readonly loginUrl = null;
   readonly policy = OPEN_API_POLICY;
