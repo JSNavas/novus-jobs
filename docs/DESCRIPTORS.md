@@ -100,6 +100,7 @@ key without anyone rewriting it. Paths are dotted:
 | `description` | yes | The body of the ad. HTML is flattened to text |
 | `company` | — | Who is hiring |
 | `url` | — | Where to apply |
+| `urlTemplate` | — | Build the link from the entry when the API gives none: `https://site/jobs/{_id}` |
 | `location` | — | Printed as `Ubicación:` above the ad |
 | `postedAt` | — | ISO text, or epoch seconds or milliseconds |
 | `salary` | — | Printed as `Sueldo:` |
@@ -108,6 +109,11 @@ key without anyone rewriting it. Paths are dotted:
 | `companySeparator` | — | Split the title on this to get the company |
 
 \* unless `titleFromDescription` is on.
+
+`urlTemplate` fills `{path}` with the same dotted paths as everything else. If
+any placeholder comes out empty the link is dropped rather than half-built,
+because a link to an error page is worse than no link. `url` wins when both are
+set, so a template is a fallback for the entries that lack one.
 
 An entry with no title or no description is dropped rather than stored as an
 empty posting. A pass that produces nothing usable fails loudly with the URL in

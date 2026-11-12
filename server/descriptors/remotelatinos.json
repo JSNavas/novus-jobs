@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "name": "remotelatinos",
+  "label": "Remote Latinos",
+  "homepage": "https://remotelatinos.com",
+  "request": {
+    "url": "https://remote-latino-backend-skw3xphdsq-uc.a.run.app/api/v1/posts",
+    "method": "GET",
+    "query": { "take": "50", "sort": "most_recent:true" },
+    "paging": { "param": "page", "start": 1, "max": 3, "totalPages": "data.pages" }
+  },
+  "fields": {
+    "list": "data.result",
+    "title": "job_title",
+    "company": "company.name",
+    "description": "description",
+    "urlTemplate": "https://app.remotelatinos.com/jobs/{_id}",
+    "postedAt": "createdAt",
+    "applications": "numberApplicants"
+  }
+}

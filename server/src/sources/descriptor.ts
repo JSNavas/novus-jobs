@@ -32,6 +32,7 @@ export interface DescriptorFields {
   readonly company: readonly FieldPath[];
   readonly description: readonly FieldPath[];
   readonly url: readonly FieldPath[];
+  readonly urlTemplate: string | null;
   readonly location: readonly FieldPath[];
   readonly postedAt: readonly FieldPath[];
   readonly salary: readonly FieldPath[];
@@ -238,6 +239,7 @@ export function parseDescriptor(input: unknown): SourceDescriptor {
       company: asPaths(fields.company, 'fields.company', false),
       description: asPaths(fields.description, 'fields.description', true),
       url: asPaths(fields.url, 'fields.url', false),
+      urlTemplate: optionalText(fields.urlTemplate),
       location: asPaths(fields.location, 'fields.location', false),
       postedAt: asPaths(fields.postedAt, 'fields.postedAt', false),
       salary: asPaths(fields.salary, 'fields.salary', false),

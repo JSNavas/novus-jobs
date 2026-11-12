@@ -80,7 +80,7 @@ function toPostText(entry: unknown, fields: DescriptorFields): string | null {
 
   const location = text(first(entry, fields.location)).trim();
   const salary = text(first(entry, fields.salary)).trim();
-  const url = text(first(entry, fields.url)).trim();
+  const url = urlOf(entry, fields);
 
   const head = [company ? `${company} busca: ${title}` : title];
   if (location) head.push(`Ubicación: ${location}`);
@@ -88,6 +88,22 @@ function toPostText(entry: unknown, fields: DescriptorFields): string | null {
   if (url) head.push(`Postular: ${url}`);
 
   return [head.join('\n'), description].join('\n\n');
+}
+
+function fillTemplate(template: string, entry: unknown): string {
+  let complete = true;
+  const filled = template.replace(/\{([A-Za-z0-9_.]+)\}/g, (_, path: string) => {
+    const value = text(pick(entry, path)).trim();
+    if (!value) complete = false;
+    return value;
+  });
+  return complete ? filled : '';
+}
+
+function urlOf(entry: unknown, fields: DescriptorFields): string {
+  const direct = text(first(entry, fields.url)).trim();
+  if (direct) return direct;
+  return fields.urlTemplate ? fillTemplate(fields.urlTemplate, entry) : '';
 }
 
 function toMetrics(entry: unknown, fields: DescriptorFields): PostMetrics {
@@ -103,7 +119,7 @@ function toRawPost(entry: unknown, fields: DescriptorFields): RawPost | null {
   if (!body) return null;
   const description = plainText(text(first(entry, fields.description))).trim();
   const { company } = headlineOf(entry, fields, description);
-  const url = text(first(entry, fields.url)).trim();
+  const url = urlOf(entry, fields);
   return {
     text: body,
     author: company || null,

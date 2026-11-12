@@ -272,6 +272,32 @@ describe('DescribedSource', () => {
     assert.deepEqual(posts, [], 'una empresa sin vacantes abiertas no es una fuente rota');
   });
 
+  it('EL CASO REAL (remotelatinos): sin enlace en la respuesta, se arma con el id', async () => {
+    reply({ data: { result: [{ _id: 'abc123', job_title: 'Senior Full Stack', company: { name: 'Nxt Level' }, description: '<p>Node y React</p>' }] } });
+    const post = await onePost(describedFrom({
+      name: 'remotelatinos',
+      request: { url: 'https://api.test/api/v1/posts' },
+      fields: {
+        list: 'data.result',
+        title: 'job_title',
+        company: 'company.name',
+        description: 'description',
+        urlTemplate: 'https://app.remotelatinos.com/jobs/{_id}',
+      },
+    }));
+    assert.equal(post.url, 'https://app.remotelatinos.com/jobs/abc123');
+    assert.match(post.text, /Postular: https:\/\/app\.remotelatinos\.com\/jobs\/abc123/);
+  });
+
+  it('una plantilla con un hueco que no se puede rellenar no inventa un enlace roto', async () => {
+    reply({ jobs: [{ title: 'Dev', company_name: 'Acme', description: 'Node' }] });
+    const post = await onePost(describedFrom({
+      ...REMOTIVE,
+      fields: { ...REMOTIVE.fields, url: [], urlTemplate: 'https://x.test/jobs/{missing}' },
+    }));
+    assert.equal(post.url, null, 'mejor sin enlace que con uno que lleva a una página de error');
+  });
+
   it('no pide sesión ni navegador: por eso una fuente descrita funciona el primer día', () => {
     const source = describedFrom(REMOTIVE);
     assert.equal(source.profileId, null);

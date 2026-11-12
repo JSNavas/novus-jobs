@@ -440,7 +440,7 @@ los descriptores en [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md).
 
 ### Plataformas soportadas
 
-Nueve, y seis de ellas no tienen código propio. Cada una se enciende, se apaga
+Diez, y siete de ellas no tienen código propio. Cada una se enciende, se apaga
 y se le pone su ritmo desde Integraciones.
 
 | Plataforma | Cómo lee | Cuenta | Cómo está hecha |
@@ -454,8 +454,9 @@ y se le pone su ritmo desde Integraciones.
 | **We Work Remotely** | RSS de empleo en programación | ninguna | descriptor |
 | **Puente Talent** | `GET /api/jobs` | ninguna | descriptor |
 | **TLNT Group** | su tablero de Lever | ninguna | descriptor |
+| **Remote Latinos** | `GET /api/v1/posts` | ninguna | descriptor |
 
-Las ocho sin cuenta funcionan **el primer día, sin configurar nada**: vienen
+Las nueve sin cuenta funcionan **el primer día, sin configurar nada**: vienen
 encendidas y no piden iniciar sesión en ningún sitio. LinkedIn es la única que
 exige algo tuyo, y por eso no es el punto de entrada del proyecto.
 
