@@ -34,6 +34,8 @@ export interface AppDeps {
   scheduleHours: readonly number[];
   schedules: SourceSchedules;
   gmailAccount: string | null;
+  mailConfigured: boolean;
+  mailFallbackTo: string | null;
   dataDir: string;
   enhancer: CvEnhancer | null;
   profiles: ProfileRepository;
@@ -70,7 +72,11 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   });
   registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler });
   registerSettingsRoute(app, {
-    gmailAccount: deps.gmailAccount, settings: deps.settings, language: () => deps.profile().language,
+    gmailAccount: deps.gmailAccount,
+    settings: deps.settings,
+    language: () => deps.profile().language,
+    mailConfigured: deps.mailConfigured,
+    mailFallbackTo: deps.mailFallbackTo,
   });
   registerFocusRoute(app, { jobs: deps.jobs, profile: deps.profile, settings: deps.settings });
   registerOnboardingRoutes(app, { profiles: deps.profiles, dataDir: deps.dataDir, enhancer: deps.enhancer });

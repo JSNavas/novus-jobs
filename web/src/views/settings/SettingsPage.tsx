@@ -2,8 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link as RouterLink } from 'react-router';
 import { Box, Button, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import { language, t, type Language, type TranslationKey } from '../../i18n';
-import { getSettings, saveOnboardingStep, updateSettings, type Settings } from '../../api/client';
-import { AppAlert, BlankCard, PageContainer } from '../../components/ui';
+import {
+  getOnboarding, getSettings, saveOnboardingStep, updateSettings,
+  type OnboardingState, type Settings,
+} from '../../api/client';
+import { AppAlert, AppSnackbar, BlankCard, PageContainer } from '../../components/ui';
+import CvSection from './CvSection';
+import MailSection from './MailSection';
 
 const PLACEHOLDERS = [
   { token: '{puesto}', help: 'set.placeholder.role' },
@@ -21,6 +26,12 @@ const SettingsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [months, setMonths] = useState('');
+  const [onboarding, setOnboarding] = useState<OnboardingState | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const reloadOnboarding = (): void => {
+    getOnboarding().then(setOnboarding).catch(() => undefined);
+  };
 
   useEffect(() => {
     getSettings()
@@ -30,6 +41,7 @@ const SettingsPage = () => {
         setMonths(String(loaded.maxAgeMonths));
       })
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
+    getOnboarding().then(setOnboarding).catch(() => undefined);
   }, []);
 
   const changeLanguage = async (next: Language): Promise<void> => {
@@ -80,11 +92,34 @@ const SettingsPage = () => {
     <PageContainer
       title={t('set.title')}
       subtitle={t('set.subtitle')}
-      breadcrumbs={[{ title: t('set.title') }]}
     >
       <Stack spacing={3}>
         {error ? <AppAlert severity="error">{error}</AppAlert> : null}
         {saved ? <AppAlert severity="info">{t('set.saved')}</AppAlert> : null}
+
+        <BlankCard>
+          <Stack spacing={2} p={3} id="perfil">
+            <Typography variant="h5">{t('set.cv.title')}</Typography>
+            {onboarding ? (
+              <CvSection
+                onboarding={onboarding}
+                onApplied={(message) => { setNotice(message); reloadOnboarding(); }}
+              />
+            ) : null}
+          </Stack>
+        </BlankCard>
+
+        <BlankCard>
+          <Stack spacing={2} p={3} id="notificaciones">
+            <Typography variant="h5">{t('set.mail.title')}</Typography>
+            {settings ? (
+              <MailSection
+                settings={settings}
+                onSaved={(next, message) => { setSettings(next); setNotice(message); }}
+              />
+            ) : null}
+          </Stack>
+        </BlankCard>
 
         <BlankCard>
           <Stack spacing={2} p={3}>
@@ -215,6 +250,7 @@ const SettingsPage = () => {
             <Typography variant="body2">{settings?.gmailAccount ?? t('set.account.unset')}</Typography>
           </Stack>
         </BlankCard>
+        <AppSnackbar message={notice} severity="success" onClose={() => setNotice(null)} />
       </Stack>
     </PageContainer>
   );

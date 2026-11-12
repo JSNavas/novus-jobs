@@ -15,6 +15,7 @@ import { LlmJudge } from './filters/judge.js';
 import { CvEnhancer } from './cv/enhance.js';
 import { ProfileRepository } from './profile/profile.repository.js';
 import { Mailer } from './notify/mailer.js';
+import { readMailOnlyNew, readMailTo } from './routes/settings.js';
 import { Runner } from './runner.js';
 import { LastPassStore, Scheduler } from './scheduler/scheduler.js';
 import { systemTimeZone } from './scheduler/timing.js';
@@ -43,12 +44,17 @@ async function main(): Promise<void> {
     ? `[arranque] juez LLM activo (${config.judgeModel})`
     : '[arranque] sin GEMINI_API_KEY: el juez LLM queda desactivado y mandan las reglas');
 
-  const mailer = new Mailer(config.mail);
-  console.log(config.mail
-    ? `[arranque] avisos por correo a ${config.mail.to}`
-    : '[arranque] sin RESEND_API_KEY / MAIL_FROM / MAIL_TO: no se mandan correos');
-
   const settings = new SettingsRepository(db);
+
+  const mailer = new Mailer(config.mail, {
+    to: () => readMailTo(settings, config.mail?.to ?? null) || null,
+    onlyNewOffers: () => readMailOnlyNew(settings),
+  });
+  console.log(mailer.enabled()
+    ? `[arranque] avisos por correo a ${mailer.recipient()}`
+      + `${mailer.warnsEnabled() ? '' : ' (solo ofertas nuevas)'}`
+    : '[arranque] sin RESEND_API_KEY / MAIL_FROM o sin destinatario: no se mandan correos');
+
   const toggles = new SourceToggles(settings, config.enabledSources);
   const enabled = (name: string): boolean => toggles.isEnabled(name);
   console.log(`[arranque] plataformas: ${sources.map((s) => `${s.label}${enabled(s.name) ? '' : ' (apagada)'}`).join(', ') || 'ninguna'}`);
@@ -87,6 +93,8 @@ async function main(): Promise<void> {
     scheduleHours: config.scheduleHours,
     schedules,
     gmailAccount: config.gmailAccount,
+    mailConfigured: config.mail !== null,
+    mailFallbackTo: config.mail?.to || null,
     toggles,
     dataDir: config.dataDir,
     timeZone,

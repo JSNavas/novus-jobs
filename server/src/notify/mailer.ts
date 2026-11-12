@@ -4,6 +4,13 @@ export interface MailConfig {
   to: string;
 }
 
+export interface MailPreferences {
+  /** Destinatario elegido en la aplicación; si no hay, manda el del fichero. */
+  to: () => string | null;
+  /** Con esto puesto solo salen los avisos de ofertas nuevas. */
+  onlyNewOffers: () => boolean;
+}
+
 export interface Mail {
   subject: string;
   html: string;
@@ -11,10 +18,22 @@ export interface Mail {
 }
 
 export class Mailer {
-  constructor(private readonly config: MailConfig | null) {}
+  constructor(
+    private readonly config: MailConfig | null,
+    private readonly preferences: MailPreferences = { to: () => null, onlyNewOffers: () => false },
+  ) {}
 
   enabled(): boolean {
-    return this.config !== null;
+    return this.config !== null && this.recipient() !== '';
+  }
+
+  /** Avisos que no son «hay ofertas nuevas»: fallos, sesión caducada. */
+  warnsEnabled(): boolean {
+    return this.enabled() && !this.preferences.onlyNewOffers();
+  }
+
+  recipient(): string {
+    return (this.preferences.to() ?? this.config?.to ?? '').trim();
   }
 
   async send(mail: Mail): Promise<boolean> {
@@ -31,7 +50,7 @@ export class Mailer {
         },
         body: JSON.stringify({
           from: this.config.from,
-          to: [this.config.to],
+          to: [this.recipient()],
           subject: mail.subject,
           html: mail.html,
           text: mail.text,

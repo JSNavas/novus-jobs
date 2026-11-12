@@ -87,7 +87,10 @@ describe('API HTTP', () => {
     const pool = new BrowserPool(join(dir, 'profiles'), true);
     app = await buildApp({
       jobs, runs, runner, scheduler, pool, sources: [], scheduleHours: [9, 13, 18], schedules,
-      gmailAccount: null, settings, profile: () => PROFILE, toggles, webDist: null, timeZone: () => 'America/Caracas',
+      gmailAccount: null,
+      mailConfigured: false,
+      mailFallbackTo: null,
+      settings, profile: () => PROFILE, toggles, webDist: null, timeZone: () => 'America/Caracas',
       dataDir: dir, enhancer: null, profiles: new ProfileRepository(settings),
     });
   });

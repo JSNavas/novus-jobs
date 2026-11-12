@@ -173,7 +173,7 @@ export class Runner implements PassRunner {
   }
 
   private async warn(id: number, failure: RunFailure, detail: string): Promise<void> {
-    if (!this.deps.mailer.enabled()) return;
+    if (!this.deps.mailer.warnsEnabled()) return;
     const previous = this.deps.runs.previousTo(id);
     if (previous?.status === RunStatus.Error && previous.failure === failure) return;
     await this.deps.mailer.send(

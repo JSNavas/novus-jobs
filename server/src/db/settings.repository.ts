@@ -23,4 +23,7 @@ export const MAX_AGE_MONTHS_KEY = 'vacancyMaxAgeMonths';
 
 export const FOCUS_SEEN_KEY = 'focusSeen';
 
+export const MAIL_TO_KEY = 'mail:to';
+export const MAIL_ONLY_NEW_KEY = 'mail:onlyNewOffers';
+
 export const FOCUS_WINDOW_MONTHS_KEY = 'focusWindowMonths';

@@ -26,8 +26,8 @@ export interface Config {
 function mailConfig(): Config['mail'] {
   const apiKey = optional('RESEND_API_KEY');
   const from = optional('MAIL_FROM');
-  const to = optional('MAIL_TO');
-  return apiKey && from && to ? { apiKey, from, to } : null;
+  // El destinatario puede venir de la aplicación: aquí solo hace falta con qué mandar.
+  return apiKey && from ? { apiKey, from, to: optional('MAIL_TO') ?? '' } : null;
 }
 
 const SERVER_ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));

@@ -175,7 +175,7 @@ const RejectedPage = () => {
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}
 
       {!rows && !error ? (
-        <Box sx={{ minHeight: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress /></Box>
+        <Box sx={{ minHeight: 'max(240px, calc(100vh - 320px))', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress /></Box>
       ) : null}
 
       {rows && rows.items.length === 0 ? (

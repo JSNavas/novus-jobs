@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import {
-  FOCUS_WINDOW_MONTHS_KEY, MAX_AGE_MONTHS_KEY, MOTIVATION_TEMPLATE_KEY, type SettingsRepository,
+  FOCUS_WINDOW_MONTHS_KEY, MAIL_ONLY_NEW_KEY, MAIL_TO_KEY, MAX_AGE_MONTHS_KEY,
+  MOTIVATION_TEMPLATE_KEY, type SettingsRepository,
 } from '../db/settings.repository.js';
 import {
   DEFAULT_FOCUS_MONTHS, DEFAULT_MAX_AGE_MONTHS, defaultMotivationTemplate, MAX_FOCUS_MONTHS,
@@ -12,6 +13,19 @@ export interface SettingsRoutesDeps {
   gmailAccount: string | null;
   settings: SettingsRepository;
   language: () => Language;
+  /** RESEND_API_KEY y MAIL_FROM presentes en el fichero: sin eso no hay correo posible. */
+  mailConfigured: boolean;
+  mailFallbackTo: string | null;
+}
+
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function readMailTo(settings: SettingsRepository, fallback: string | null): string {
+  return settings.get(MAIL_TO_KEY) ?? fallback ?? '';
+}
+
+export function readMailOnlyNew(settings: SettingsRepository): boolean {
+  return settings.get(MAIL_ONLY_NEW_KEY) !== 'false';
 }
 
 const MIN_MOTIVATION_CHARS = 50;
@@ -27,12 +41,45 @@ export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutes
     defaultMotivationTemplate: fallbackTemplate(),
     maxAgeMonths: readMaxAgeMonths(deps.settings),
     focusWindowMonths: readFocusWindowMonths(deps.settings),
+    mailConfigured: deps.mailConfigured,
+    mailTo: readMailTo(deps.settings, deps.mailFallbackTo),
+    mailOnlyNewOffers: readMailOnlyNew(deps.settings),
   }));
 
   app.put('/api/settings', (request, reply) => {
     const body = request.body as {
       motivationTemplate?: unknown; maxAgeMonths?: unknown; focusWindowMonths?: unknown;
+      mailTo?: unknown; mailOnlyNewOffers?: unknown;
     } | undefined;
+
+    if (body?.mailTo !== undefined) {
+      const to = String(body.mailTo).trim();
+      if (to !== '' && !EMAIL.test(to)) {
+        return reply.code(400).send({ error: 'el correo de aviso no tiene forma de correo' });
+      }
+      deps.settings.set(MAIL_TO_KEY, to);
+    }
+
+    if (body?.mailOnlyNewOffers !== undefined) {
+      if (typeof body.mailOnlyNewOffers !== 'boolean') {
+        return reply.code(400).send({ error: '«mailOnlyNewOffers» tiene que ser true o false' });
+      }
+      deps.settings.set(MAIL_ONLY_NEW_KEY, String(body.mailOnlyNewOffers));
+    }
+
+    if (body?.mailTo !== undefined || body?.mailOnlyNewOffers !== undefined) {
+      if (body.motivationTemplate === undefined && body.maxAgeMonths === undefined
+        && body.focusWindowMonths === undefined) {
+        return {
+          motivationTemplate: motivationTemplate(),
+          maxAgeMonths: readMaxAgeMonths(deps.settings),
+          focusWindowMonths: readFocusWindowMonths(deps.settings),
+          mailConfigured: deps.mailConfigured,
+          mailTo: readMailTo(deps.settings, deps.mailFallbackTo),
+          mailOnlyNewOffers: readMailOnlyNew(deps.settings),
+        };
+      }
+    }
 
     if (body?.focusWindowMonths !== undefined) {
       const months = Number(body.focusWindowMonths);

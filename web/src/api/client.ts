@@ -60,7 +60,11 @@ export interface Schedule {
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`/api${path}`, {
     ...init,
-    headers: init?.body ? { 'Content-Type': 'application/json', ...init.headers } : init?.headers,
+    // Solo el cuerpo de texto es JSON: un FormData trae su propio límite multipart
+    // y ponerle la cabecera a mano lo rompe.
+    headers: typeof init?.body === 'string'
+      ? { 'Content-Type': 'application/json', ...init.headers }
+      : init?.headers,
   });
 
   if (!response.ok) {
@@ -151,6 +155,9 @@ export interface Settings {
   defaultMotivationTemplate: string;
   maxAgeMonths: number;
   focusWindowMonths: number;
+  mailConfigured: boolean;
+  mailTo: string;
+  mailOnlyNewOffers: boolean;
 }
 
 export function getSettings(): Promise<Settings> {
@@ -158,7 +165,13 @@ export function getSettings(): Promise<Settings> {
 }
 
 export function updateSettings(
-  changes: { motivationTemplate?: string; maxAgeMonths?: number; focusWindowMonths?: number },
+  changes: {
+    motivationTemplate?: string;
+    maxAgeMonths?: number;
+    focusWindowMonths?: number;
+    mailTo?: string;
+    mailOnlyNewOffers?: boolean;
+  },
 ): Promise<Settings> {
   return request<Settings>('/settings', {
     method: 'PUT',
@@ -228,6 +241,7 @@ export interface OnboardingState {
   };
   canEnhance: boolean;
   acceptedFiles: string[];
+  cv: { name: string; updatedAt: string; bytes: number } | null;
 }
 
 export interface CvReading {
@@ -240,6 +254,12 @@ export interface CvReading {
   years: number | null;
   foundInCv: boolean;
   enhanced: boolean;
+}
+
+export function uploadCv(file: File, enhance: boolean): Promise<CvReading> {
+  const body = new FormData();
+  body.append('cv', file);
+  return request<CvReading>(`/onboarding/cv?enhance=${enhance ? 'true' : 'false'}`, { method: 'POST', body });
 }
 
 export function getOnboarding(): Promise<OnboardingState> {

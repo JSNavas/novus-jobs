@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { FastifyInstance } from 'fastify';
 import '@fastify/multipart';
@@ -30,6 +30,7 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
     },
     canEnhance: deps.enhancer !== null,
     acceptedFiles: ACCEPTED_EXTENSIONS,
+    cv: storedCv(deps.dataDir),
   }));
 
   app.post<{ Querystring: { enhance?: string } }>('/api/onboarding/cv', async (request, reply) => {
@@ -157,6 +158,16 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
     console.log('[alta] terminada: las búsquedas quedan habilitadas');
     return { completed: true, profile };
   });
+}
+
+/** Qué CV hay guardado, para poder decir cuándo se actualizó por última vez. */
+function storedCv(dataDir: string): { name: string; updatedAt: string; bytes: number } | null {
+  const dir = join(dataDir, 'cv');
+  if (!existsSync(dir)) return null;
+  const found = readdirSync(dir).find((name) => name.startsWith('cv.'));
+  if (!found) return null;
+  const info = statSync(join(dir, found));
+  return { name: found, updatedAt: new Date(info.mtimeMs).toISOString(), bytes: info.size };
 }
 
 function saveCv(dataDir: string, filename: string, bytes: Buffer): void {
