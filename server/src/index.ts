@@ -55,7 +55,7 @@ async function main(): Promise<void> {
     sources.splice(
       0,
       sources.length,
-      ...[...natives, ...buildDescribedSources()].filter((source) => !hidden.has(source.name)),
+      ...[...natives, ...buildDescribedSources(pool)].filter((source) => !hidden.has(source.name)),
     );
   };
   const gemini = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;

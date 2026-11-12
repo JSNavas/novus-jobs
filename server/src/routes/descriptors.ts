@@ -49,7 +49,7 @@ export function registerDescriptorRoutes(app: FastifyInstance, deps: DescriptorR
     if (typeof url !== 'string' || url.trim() === '') {
       return reply.code(400).send({ error: 'Falta la dirección.' });
     }
-    const found = await discover(url.trim());
+    const found = await discover(url.trim(), deps.pool);
     if (found.candidates.length > 0 || !/^https?:\/\//i.test(url.trim())) return found;
 
     const sniffed = await sniff(deps.pool, url.trim()).catch(() => []);

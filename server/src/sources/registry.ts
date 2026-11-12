@@ -33,7 +33,7 @@ function asDefinition(descriptor: SourceDescriptor): SourceDefinition {
   return {
     name: descriptor.name,
     label: descriptor.label,
-    create: () => new DescribedSource(descriptor),
+    create: (_config, pool) => new DescribedSource(descriptor, pool),
   };
 }
 
@@ -67,8 +67,8 @@ export function describedSources(): readonly SourceDescriptor[] {
   return described;
 }
 
-export function buildDescribedSources(): JobSource[] {
-  return described.map((descriptor) => new DescribedSource(descriptor));
+export function buildDescribedSources(pool: BrowserPool): JobSource[] {
+  return described.map((descriptor) => new DescribedSource(descriptor, pool));
 }
 
 export function knownSourceNames(): string[] {

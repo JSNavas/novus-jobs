@@ -4,10 +4,16 @@ import {
   type DescriptorFields,
   type SourceDescriptor,
 } from './descriptor.js';
+import type { BrowserPool } from '../browser/session.js';
 import { plainText } from './html.js';
+import { jobPostings, pageLinks, readableText } from './jsonld.js';
+import { PageReader } from './reader.js';
 import { embeddedList } from './embedded.js';
 import { parseFeed } from './rss.js';
 import { OPEN_API_POLICY } from './policy.js';
+
+const STOP_AFTER_KNOWN = 8;
+const MIN_DESCRIPTION_CHARS = 600;
 import type { FreshnessCheck, JobSource, PermalinkSelector, PostMetrics, RawPost } from './types.js';
 
 const TIMEOUT_MS = 20_000;
@@ -130,12 +136,27 @@ function toRawPost(entry: unknown, fields: DescriptorFields): RawPost | null {
   };
 }
 
+function withWholePage(
+  posting: Record<string, unknown>,
+  html: string,
+  fields: DescriptorFields,
+): Record<string, unknown> {
+  const written = text(first(posting, fields.description));
+  if (written.length >= MIN_DESCRIPTION_CHARS) return posting;
+  const page = readableText(html);
+  if (page.length <= written.length) return posting;
+  return { ...posting, description: `${written}\n\n${page}`.trim() };
+}
+
 export class DescribedSource implements JobSource {
   readonly profileId = null;
   readonly loginUrl = null;
   readonly policy = OPEN_API_POLICY;
 
-  constructor(private readonly descriptor: SourceDescriptor) {}
+  constructor(
+    private readonly descriptor: SourceDescriptor,
+    private readonly pool: BrowserPool | null = null,
+  ) {}
 
   get name(): string {
     return this.descriptor.name;
@@ -150,6 +171,42 @@ export class DescribedSource implements JobSource {
   }
 
   async fetch(_selectPermalinks: PermalinkSelector, isFresh?: FreshnessCheck): Promise<RawPost[]> {
+    const posts = this.descriptor.request.format === 'jsonld'
+      ? await this.fromJobPostings(isFresh)
+      : await this.fromOneResponse(isFresh);
+
+    if (posts.length === 0 && !this.descriptor.allowEmpty) {
+      throw new Error(
+        `${this.descriptor.request.url} respondió sin vacantes utilizables: ` +
+        'o cambió la forma de la respuesta, o el descriptor apunta a campos que ya no existen.',
+      );
+    }
+    return posts;
+  }
+
+  private async fromJobPostings(isFresh?: FreshnessCheck): Promise<RawPost[]> {
+    const reader = new PageReader(this.pool);
+    const index = await reader.read(this.descriptor.request.url);
+    const links = pageLinks(index, this.descriptor.request.url).slice(0, this.descriptor.request.pages);
+
+    const posts: RawPost[] = [];
+    let known = 0;
+    for (const link of links) {
+      if (known >= STOP_AFTER_KNOWN) break;
+      await reader.pause();
+      const html = await reader.read(link).catch(() => null);
+      if (html === null) continue;
+      for (const posting of jobPostings(html)) {
+        const post = toRawPost({ url: link, ...withWholePage(posting, html, this.descriptor.fields) }, this.descriptor.fields);
+        if (!post) continue;
+        posts.push(post);
+        known = isFresh && isFresh(post.text) ? 0 : known + 1;
+      }
+    }
+    return posts;
+  }
+
+  private async fromOneResponse(isFresh?: FreshnessCheck): Promise<RawPost[]> {
     const { paging } = this.descriptor.request;
     const posts: RawPost[] = [];
     const seen = new Set<string>();
@@ -180,12 +237,6 @@ export class DescribedSource implements JobSource {
       if (isFresh && !pagePosts.some((post) => isFresh(post.text))) break;
     }
 
-    if (posts.length === 0 && !this.descriptor.allowEmpty) {
-      throw new Error(
-        `${this.descriptor.request.url} respondió sin vacantes utilizables: ` +
-        'o cambió la forma de la respuesta, o el descriptor apunta a campos que ya no existen.',
-      );
-    }
     return posts;
   }
 

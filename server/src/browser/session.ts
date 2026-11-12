@@ -189,11 +189,11 @@ export class BrowserPool {
 
   constructor(private readonly root: string, private readonly headless: boolean) {}
 
-  session(profileId: string, locale = 'es-ES'): BrowserSession {
+  session(profileId: string, locale = 'es-ES', headless = this.headless): BrowserSession {
     const existing = this.sessions.get(profileId);
     if (existing) return existing;
     const created = new BrowserSession(profileId, join(this.root, profileId), this.root, {
-      headless: this.headless,
+      headless,
       locale,
     });
     this.sessions.set(profileId, created);

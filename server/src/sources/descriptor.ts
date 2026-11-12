@@ -4,7 +4,7 @@ export type FieldPath = string;
 
 export type DescriptorMethod = 'GET' | 'POST';
 
-export type DescriptorFormat = 'json' | 'rss' | 'embedded';
+export type DescriptorFormat = 'json' | 'rss' | 'embedded' | 'jsonld';
 
 export interface DescriptorPaging {
   readonly param: string;
@@ -21,6 +21,7 @@ export interface DescriptorRequest {
   readonly query: Readonly<Record<string, string>>;
   readonly body: Readonly<Record<string, unknown>> | null;
   readonly paging: DescriptorPaging | null;
+  readonly pages: number;
 }
 
 export interface DescriptorFields {
@@ -55,6 +56,8 @@ const MAX_PAGES_CEILING = 20;
 const DEFAULT_MAX_PAGES = 3;
 const DEFAULT_FIRST_PAGE = 1;
 const MAX_SKIP = 10;
+const DEFAULT_DETAIL_PAGES = 25;
+const MAX_DETAIL_PAGES = 120;
 
 export class DescriptorError extends Error {
   constructor(message: string) {
@@ -131,8 +134,8 @@ function asMethod(value: unknown): DescriptorMethod {
 function asFormat(value: unknown): DescriptorFormat {
   if (value === undefined || value === null) return 'json';
   const text = asString(value, 'request.format').toLowerCase();
-  if (text !== 'json' && text !== 'rss' && text !== 'embedded') {
-    throw new DescriptorError(`request.format solo puede ser json, rss o embedded, no "${text}".`);
+  if (text !== 'json' && text !== 'rss' && text !== 'embedded' && text !== 'jsonld') {
+    throw new DescriptorError(`request.format solo puede ser json, rss, embedded o jsonld, no "${text}".`);
   }
   return text;
 }
@@ -151,6 +154,14 @@ function asSkip(value: unknown): number {
     throw new DescriptorError(`fields.skip tiene que ser un entero entre 0 y ${MAX_SKIP}.`);
   }
   return value as number;
+}
+
+function asPages(value: unknown): number {
+  if (value === undefined || value === null) return DEFAULT_DETAIL_PAGES;
+  if (!Number.isInteger(value) || (value as number) < 1) {
+    throw new DescriptorError('request.pages tiene que ser un entero de 1 o más.');
+  }
+  return Math.min(value as number, MAX_DETAIL_PAGES);
 }
 
 function parsePaging(value: unknown): DescriptorPaging | null {
@@ -193,6 +204,31 @@ function optionalText(value: unknown): string | null {
   return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
 }
 
+const SCHEMA_ORG: Readonly<Record<string, readonly string[]>> = {
+  title: ['title'],
+  company: ['hiringOrganization.name'],
+  description: ['description'],
+  url: ['url'],
+  location: [
+    'jobLocation.address.addressLocality',
+    'jobLocation.address.addressRegion',
+    'jobLocation.address.addressCountry',
+    'applicantLocationRequirements.name',
+    'jobLocationType',
+  ],
+  postedAt: ['datePosted'],
+  salary: ['baseSalary.value.value', 'baseSalary.value.minValue'],
+};
+
+function withSchemaOrg(fields: DescriptorFields): DescriptorFields {
+  const filled = { ...fields } as Record<string, unknown>;
+  for (const [key, paths] of Object.entries(SCHEMA_ORG)) {
+    const current = filled[key];
+    if (Array.isArray(current) && current.length === 0) filled[key] = paths;
+  }
+  return filled as unknown as DescriptorFields;
+}
+
 export function parseDescriptor(input: unknown): SourceDescriptor {
   const raw = asObject(input, 'el descriptor');
 
@@ -211,6 +247,7 @@ export function parseDescriptor(input: unknown): SourceDescriptor {
   const request = asObject(raw.request, 'request');
   const fields = asObject(raw.fields, 'fields');
   const method = asMethod(request.method);
+  const format = asFormat(request.format);
 
   return {
     version,
@@ -224,28 +261,34 @@ export function parseDescriptor(input: unknown): SourceDescriptor {
     request: {
       url: parseHttpsUrl(request.url, 'request.url'),
       method,
-      format: asFormat(request.format),
+      format,
       headers: asStringMap(request.headers, 'request.headers'),
       query: asStringMap(request.query, 'request.query'),
       body: asBody(request.body, method),
       paging: parsePaging(request.paging),
+      pages: asPages(request.pages),
     },
-    fields: {
-      list: optionalText(fields.list),
-      skip: asSkip(fields.skip),
-      titleFromDescription: fields.titleFromDescription === true,
-      companySeparator: optionalText(fields.companySeparator),
-      title: asPaths(fields.title, 'fields.title', fields.titleFromDescription !== true),
-      company: asPaths(fields.company, 'fields.company', false),
-      description: asPaths(fields.description, 'fields.description', true),
-      url: asPaths(fields.url, 'fields.url', false),
-      urlTemplate: optionalText(fields.urlTemplate),
-      location: asPaths(fields.location, 'fields.location', false),
-      postedAt: asPaths(fields.postedAt, 'fields.postedAt', false),
-      salary: asPaths(fields.salary, 'fields.salary', false),
-      applications: asPaths(fields.applications, 'fields.applications', false),
-    },
+    fields: fieldsOf(fields, format),
   };
+}
+
+function fieldsOf(fields: Record<string, unknown>, format: DescriptorFormat): DescriptorFields {
+  const parsed: DescriptorFields = {
+    list: optionalText(fields.list),
+    skip: asSkip(fields.skip),
+    titleFromDescription: fields.titleFromDescription === true,
+    companySeparator: optionalText(fields.companySeparator),
+    title: asPaths(fields.title, 'fields.title', fields.titleFromDescription !== true && format !== 'jsonld'),
+    company: asPaths(fields.company, 'fields.company', false),
+    description: asPaths(fields.description, 'fields.description', format !== 'jsonld'),
+    url: asPaths(fields.url, 'fields.url', false),
+    urlTemplate: optionalText(fields.urlTemplate),
+    location: asPaths(fields.location, 'fields.location', false),
+    postedAt: asPaths(fields.postedAt, 'fields.postedAt', false),
+    salary: asPaths(fields.salary, 'fields.salary', false),
+    applications: asPaths(fields.applications, 'fields.applications', false),
+  };
+  return format === 'jsonld' ? withSchemaOrg(parsed) : parsed;
 }
 
 export function serializeDescriptor(descriptor: SourceDescriptor): string {

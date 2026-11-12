@@ -1,13 +1,17 @@
+import type { BrowserPool } from '../browser/session.js';
 import { embeddedList } from './embedded.js';
 import { jobLikeness, MIN_JOB_SCORE } from './joblike.js';
+import { jobPostings, pageLinks } from './jsonld.js';
+import { looksLikeABotWall, PageReader } from './reader.js';
 
 const TIMEOUT_MS = 15_000;
 const MAX_HTML_BYTES = 2_000_000;
 const USER_AGENT = 'novus-jobs (https://github.com/novus-jobs)';
+const JSONLD_SAMPLE = 3;
 
 export interface Candidate {
   readonly url: string;
-  readonly format: 'json' | 'rss' | 'embedded';
+  readonly format: 'json' | 'rss' | 'embedded' | 'jsonld';
   readonly how: string;
   readonly count: number;
   readonly score?: number;
@@ -215,7 +219,41 @@ export async function searchByName(name: string): Promise<Discovery> {
   return { candidates: candidates.sort((a, b) => b.count - a.count), notes: [] };
 }
 
-export async function discover(input: string): Promise<Discovery> {
+async function jobPostingCandidate(
+  target: URL,
+  html: string,
+  reader: PageReader,
+): Promise<Candidate | null> {
+  const indexes: { url: string; page: string | null }[] = [
+    { url: target.href, page: html },
+    { url: new URL('/sitemap.xml', target.origin).href, page: null },
+  ];
+
+  for (const index of indexes) {
+    const body = index.page ?? await reader.read(index.url).catch(() => null);
+    if (body === null) continue;
+    const links = pageLinks(body, index.url);
+    if (links.length === 0) continue;
+
+    let withPosting = 0;
+    for (const link of links.slice(0, JSONLD_SAMPLE)) {
+      await reader.pause();
+      const detail = await reader.read(link).catch(() => null);
+      if (detail !== null && jobPostings(detail).length > 0) withPosting++;
+    }
+    if (withPosting === 0) continue;
+    return {
+      url: index.url,
+      format: 'jsonld',
+      how: 'cada vacante publica sus datos en JobPosting, el formato que lee Google',
+      count: links.length,
+      score: MIN_JOB_SCORE,
+    };
+  }
+  return null;
+}
+
+export async function discover(input: string, pool: BrowserPool | null = null): Promise<Discovery> {
   const notes: string[] = [];
   const looksLikeAddress = /^https?:\/\//i.test(input) || (/\./.test(input) && !/\s/.test(input));
   if (!looksLikeAddress) return searchByName(input);
@@ -236,11 +274,29 @@ export async function discover(input: string): Promise<Discovery> {
   const feed = await asFeedCandidate(target.href, 'la dirección que pegaste ya es un feed');
   if (feed) return { candidates: [feed], notes };
 
+  const reader = new PageReader(pool);
   const page = await get(target.href, 'text/html');
-  if (!page?.ok) {
-    return { candidates: [], notes: [`No se pudo abrir ${target.href}${page ? ` (respondió ${page.status})` : ''}.`] };
+  let html: string;
+  if (page?.ok) {
+    html = (await page.text()).slice(0, MAX_HTML_BYTES);
+  } else {
+    const body = page ? await page.text() : '';
+    if (!page || !looksLikeABotWall(page.status, body)) {
+      return { candidates: [], notes: [`No se pudo abrir ${target.href}${page ? ` (respondió ${page.status})` : ''}.`] };
+    }
+    const opened = await reader.read(target.href, true).catch(() => null);
+    if (opened === null) {
+      return {
+        candidates: [],
+        notes: [
+          `${target.href} está detrás de un muro antibot y no se pudo abrir ni con un navegador de verdad.`,
+          'No es cosa tuya ni del descriptor: ese sitio rechaza a cualquiera que no sea una persona delante de la pantalla.',
+        ],
+      };
+    }
+    html = opened.slice(0, MAX_HTML_BYTES);
+    notes.push(`${target.hostname} rechaza las peticiones normales, así que se abrió en un navegador de verdad para leerla.`);
   }
-  const html = (await page.text()).slice(0, MAX_HTML_BYTES);
 
   const tried: { url: string; how: string; format: 'json' | 'rss' }[] = [
     ...atsIn(html).map((a) => ({ ...a, format: 'json' as const })),
@@ -276,6 +332,11 @@ export async function discover(input: string): Promise<Discovery> {
       ? await asFeedCandidate(attempt.url, attempt.how)
       : await asJsonCandidate(attempt.url, attempt.how);
     if (found) candidates.push(found);
+  }
+
+  if (candidates.length === 0) {
+    const posting = await jobPostingCandidate(target, html, reader).catch(() => null);
+    if (posting) candidates.push(posting);
   }
 
   if (candidates.length === 0) {
