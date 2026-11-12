@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="logos/novus-jobs-mark-128.png" alt="Novus Jobs" width="96" height="96">
+  <img src="logos/novus-jobs-mark-dark-128.png" alt="Novus Jobs" width="96" height="96">
 </p>
 
 <h1 align="center">Novus Jobs</h1>

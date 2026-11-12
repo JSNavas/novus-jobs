@@ -8,9 +8,23 @@ las dos letras son una sola pieza continua, no dos siluetas pegadas.
 | --- | --- | --- |
 | `novus-jobs-mark.svg` | La marca completa: pastilla cian con el monograma hueco. | Favicon y barra lateral. |
 | `novus-jobs-mark-solid.svg` | Solo el monograma, sin pastilla. | Donde la pastilla no cabe o estorba: tamaños muy pequeños, fondos ya teñidos. |
-| `novus-jobs-mark-*.png` | Rasterizados a 512, 128, 64 y 32 px, con transparencia. | README, tiendas, sitios que no aceptan SVG. |
+| `novus-jobs-mark-dark.svg` | La inversa: pastilla oscura con el monograma y el chaflán en cian. | README. |
+| `novus-jobs-mark-*.png` | Rasterizados a 512, 128, 64 y 32 px, con transparencia. | Tiendas y sitios que no aceptan SVG. |
+| `novus-jobs-mark-dark-*.png` | Lo mismo para la variante oscura. | README. |
 
 Color: `#7FB8C4`.
+
+## Por qué hay una variante oscura
+
+La marca cian es una mancha de color del tamaño de la pastilla entera, y sobre el
+fondo oscuro de GitHub pesa demasiado: lo primero que se ve del proyecto es un
+bloque azul. La variante oscura invierte la relación —fondo oscuro, letras y
+chaflán en cian— y la marca pasa a leerse como el icono de una aplicación.
+
+No es la misma figura reescalada: el monograma va al 70 % y el chaflán al 86 %,
+porque al dejar de ser un hueco y pasar a ser un trazo las letras se comían la
+línea del marco. Si tocas una de las dos escalas, mira el resultado a 32 px antes
+de darlo por bueno: es donde el trazo se empasta.
 
 ## El recorte va por máscara, no por `fill-rule`
 
@@ -22,7 +36,7 @@ fusionado antes las dos letras en un solo contorno.
 
 ## Si cambias la marca
 
-Hay tres copias del mismo dibujo y se tocan juntas:
+Hay cuatro copias del mismo dibujo y se tocan juntas:
 
 1. `logos/novus-jobs-mark.svg` — el original.
 2. `web/public/logoIcon.svg` — el favicon. **No es copia literal del original**: ahí
@@ -31,7 +45,10 @@ Hay tres copias del mismo dibujo y se tocan juntas:
    restringido y hay navegadores que no lo pintan si depende de una máscara o si no
    declara tamaño intrínseco. Sus respaldos PNG son `logoIcon-32.png` y
    `logoIcon-180.png`, enlazados desde `web/index.html`.
-3. `BrandMark`, en `web/src/layouts/full/vertical/sidebar/Sidebar.tsx` — va en línea,
+3. `logos/novus-jobs-mark-dark.svg` — la variante oscura del README, con sus
+   cuatro PNG. Se rasteriza con el navegador y fondo transparente, para que las
+   esquinas redondeadas no salgan con un cuadrado detrás.
+4. `BrandMark`, en `web/src/layouts/full/vertical/sidebar/Sidebar.tsx` — va en línea,
    y no copiado, para que tome el cian del tema con `currentColor` en vez de
    llevarlo escrito.
 
