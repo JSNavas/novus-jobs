@@ -24,6 +24,7 @@ const SIX_HOURS_IN_MINUTES = 360;
 export interface NextSearch {
   hour: number;
   minutesLeft: number;
+  secondsLeft: number;
 }
 
 export function nextSearchIn(hours: number[], now: Date): NextSearch | null {
@@ -39,18 +40,22 @@ export function nextSearchIn(hours: number[], now: Date): NextSearch | null {
     ? earliest * SECONDS_PER_HOUR + SECONDS_PER_DAY
     : following * SECONDS_PER_HOUR;
 
+  const left = targetSeconds - nowSeconds;
   return {
     hour: following ?? earliest,
-    minutesLeft: Math.floor((targetSeconds - nowSeconds) / 60),
+    minutesLeft: Math.floor(left / 60),
+    secondsLeft: left,
   };
 }
 
 export function nextSearchAt(nextAt: string, now: Date): NextSearch | null {
   const target = Date.parse(nextAt);
   if (Number.isNaN(target)) return null;
+  const left = Math.max(0, Math.round((target - now.getTime()) / 1_000));
   return {
     hour: hourInUserZone(new Date(target)),
-    minutesLeft: Math.max(0, Math.floor((target - now.getTime()) / 60_000)),
+    minutesLeft: Math.floor(left / 60),
+    secondsLeft: left,
   };
 }
 
@@ -63,4 +68,29 @@ export function formatNextSearch(next: NextSearch): string {
   if (hours === 0) return t('schedule.nextInMinutes', { minutes });
   if (minutes === 0) return t('schedule.nextInHours', { hours });
   return t('schedule.nextInHoursMinutes', { hours, minutes });
+}
+
+export function countdownOf(secondsLeft: number): string {
+  const safe = Math.max(0, secondsLeft);
+  const parts = [Math.floor(safe / SECONDS_PER_HOUR), Math.floor(safe / 60) % 60, safe % 60];
+  return parts.map((part) => String(part).padStart(2, '0')).join(':');
+}
+
+export function searchHourLabel(hour: number): string {
+  return hourLabel(hour);
+}
+
+export function elapsedShare(hours: number[], next: NextSearch): number | null {
+  if (hours.length === 0) return null;
+  const sorted = [...hours].sort((a, b) => a - b);
+  const index = sorted.indexOf(next.hour);
+  if (index === -1) return null;
+
+  const previous = sorted.length === 1
+    ? next.hour
+    : sorted[(index - 1 + sorted.length) % sorted.length]!;
+  const spanHours = sorted.length === 1 ? 24 : (next.hour - previous + 24) % 24 || 24;
+  const span = spanHours * SECONDS_PER_HOUR;
+
+  return Math.min(1, Math.max(0, (span - next.secondsLeft) / span));
 }

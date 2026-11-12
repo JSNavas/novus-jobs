@@ -142,12 +142,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
             <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
               <IconPlug size="19" stroke={1.6} />
             </ListItemIcon>
-            <ListItemText
-              primary={t('nav.group.integrations')}
-              secondary={integrations.length ? t('nav.integrations.count', { count: integrations.length }) : undefined}
-              sx={labelSx}
-              secondaryTypographyProps={{ variant: 'caption' }}
-            />
+            <ListItemText primary={t('nav.group.integrations')} sx={labelSx} />
           </ListItemButton>
           <ListItemButton component={NavLink} to="/configuracion" end onClick={onNavigate} sx={itemSx}>
             <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
@@ -158,7 +153,7 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
         </List>
       </Box>
 
-      <NextSearchIndicator lastRunFailed={lastRunFailed} />
+      <NextSearchIndicator lastRunFailed={lastRunFailed} platforms={integrations.length} />
     </Box>
   );
 };
