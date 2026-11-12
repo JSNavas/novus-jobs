@@ -5,7 +5,8 @@ import {
   Typography,
 } from '@mui/material';
 import {
-  listIntegrations, updateIntegrationEnabled, updateIntegrationSchedule, type Integration,
+  deleteSource, listIntegrations, listSources, updateIntegrationEnabled, updateIntegrationSchedule,
+  type Integration,
 } from '../../api/client';
 import { AppAlert, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { PlatformIcon } from '../dashboard/panels';
@@ -21,6 +22,7 @@ const POLL_INTERVAL_MS = 30_000;
 export interface CardProps {
   integration: Integration;
   onSaved: (next: Integration, message?: string) => void;
+  onRemove?: () => void;
 }
 
 /** El editor que se enseña tras cambiar de modo sin guardar: nada se ha escrito todavía. */
@@ -202,7 +204,7 @@ const Line = ({ label, children }: { label: string; children: React.ReactNode })
   </Stack>
 );
 
-const IntegrationCard = ({ integration, onSaved }: CardProps) => {
+const IntegrationCard = ({ integration, onSaved, onRemove }: CardProps) => {
   const next = integration.nextAt ? nextSearchAt(integration.nextAt, new Date()) : null;
   const off = !integration.enabled;
   const kind = integration.schedule.kind;
@@ -220,6 +222,13 @@ const IntegrationCard = ({ integration, onSaved }: CardProps) => {
           <Typography variant="h6" sx={{ fontSize: 16, flex: 1, minWidth: 0, opacity: off ? 0.6 : 1 }} noWrap>
             {integration.label}
           </Typography>
+          {onRemove ? (
+            <Tooltip title={t('int.remove')}>
+              <Button size="small" variant="text" color="inherit" onClick={onRemove} sx={{ minWidth: 0, px: 1, opacity: 0.6 }}>
+                {t('int.remove')}
+              </Button>
+            </Tooltip>
+          ) : null}
           <EnabledSwitch integration={integration} onSaved={onSaved} />
         </Stack>
 
@@ -282,10 +291,15 @@ const IntegrationsPage = () => {
   const [integrations, setIntegrations] = useState<Integration[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const [mine, setMine] = useState<Set<string>>(new Set());
+
   const load = useCallback(() => {
     listIntegrations()
       .then((next) => { setIntegrations(next); setError(null); })
       .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
+    listSources()
+      .then((own) => setMine(new Set(own.map((entry) => String(entry.name)))))
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => {
@@ -304,6 +318,13 @@ const IntegrationsPage = () => {
     const timer = window.setTimeout(() => setNotice(null), 3000);
     return () => window.clearTimeout(timer);
   }, [notice]);
+
+  const remove = (name: string): void => {
+    if (!window.confirm(t('int.remove.sure', { name }))) return;
+    deleteSource(name)
+      .then(() => { setNotice(t('int.remove.done', { name })); load(); })
+      .catch((cause: unknown) => setError(cause instanceof Error ? cause.message : String(cause)));
+  };
 
   const replace = (saved: Integration, message?: string): void => {
     setIntegrations((prev) => prev?.map((item) => (item.name === saved.name ? saved : item)) ?? null);
@@ -346,7 +367,12 @@ const IntegrationsPage = () => {
         }}
       >
         {integrations?.map((integration) => (
-          <IntegrationCard key={integration.name} integration={integration} onSaved={replace} />
+          <IntegrationCard
+            key={integration.name}
+            integration={integration}
+            onSaved={replace}
+            onRemove={mine.has(integration.name) ? () => remove(integration.name) : undefined}
+          />
         ))}
       </Box>
     </PageContainer>
