@@ -2,6 +2,8 @@ export const DESCRIPTOR_VERSION = 1;
 
 export type FieldPath = string;
 
+export type DescriptorMethod = 'GET' | 'POST';
+
 export interface DescriptorPaging {
   readonly param: string;
   readonly start: number;
@@ -11,13 +13,16 @@ export interface DescriptorPaging {
 
 export interface DescriptorRequest {
   readonly url: string;
+  readonly method: DescriptorMethod;
   readonly headers: Readonly<Record<string, string>>;
   readonly query: Readonly<Record<string, string>>;
+  readonly body: Readonly<Record<string, unknown>> | null;
   readonly paging: DescriptorPaging | null;
 }
 
 export interface DescriptorFields {
-  readonly list: FieldPath;
+  readonly list: FieldPath | null;
+  readonly skip: number;
   readonly title: readonly FieldPath[];
   readonly company: readonly FieldPath[];
   readonly description: readonly FieldPath[];
@@ -33,6 +38,7 @@ export interface SourceDescriptor {
   readonly name: string;
   readonly label: string;
   readonly author: string | null;
+  readonly homepage: string | null;
   readonly request: DescriptorRequest;
   readonly fields: DescriptorFields;
 }
@@ -41,6 +47,7 @@ const NAME_SHAPE = /^[a-z0-9][a-z0-9-]*$/;
 const MAX_PAGES_CEILING = 20;
 const DEFAULT_MAX_PAGES = 3;
 const DEFAULT_FIRST_PAGE = 1;
+const MAX_SKIP = 10;
 
 export class DescriptorError extends Error {
   constructor(message: string) {
@@ -49,7 +56,8 @@ export class DescriptorError extends Error {
   }
 }
 
-export function pick(root: unknown, path: FieldPath): unknown {
+export function pick(root: unknown, path: FieldPath | null): unknown {
+  if (path === null || path === '') return root;
   let current = root;
   for (const key of path.split('.')) {
     if (current === null || typeof current !== 'object') return undefined;
@@ -63,6 +71,7 @@ export function first(root: unknown, paths: readonly FieldPath[]): unknown {
     const value = pick(root, path);
     if (value === undefined || value === null) continue;
     if (typeof value === 'string' && value.trim() === '') continue;
+    if (Array.isArray(value) && value.length === 0) continue;
     return value;
   }
   return undefined;
@@ -87,7 +96,7 @@ function asStringMap(value: unknown, what: string): Record<string, string> {
   const raw = asObject(value, what);
   const map: Record<string, string> = {};
   for (const [key, entry] of Object.entries(raw)) {
-    map[key] = asString(entry, `${what}.${key}`);
+    map[key] = typeof entry === 'string' ? entry : asString(entry, `${what}.${key}`);
   }
   return map;
 }
@@ -101,6 +110,31 @@ function asPaths(value: unknown, what: string, required: boolean): string[] {
   }
   const list = Array.isArray(value) ? value : [value];
   return list.map((entry, index) => asString(entry, `${what}[${index}]`));
+}
+
+function asMethod(value: unknown): DescriptorMethod {
+  if (value === undefined || value === null) return 'GET';
+  const text = asString(value, 'request.method').toUpperCase();
+  if (text !== 'GET' && text !== 'POST') {
+    throw new DescriptorError(`request.method solo puede ser GET o POST, no "${text}".`);
+  }
+  return text;
+}
+
+function asBody(value: unknown, method: DescriptorMethod): Record<string, unknown> | null {
+  if (value === undefined || value === null) return null;
+  if (method !== 'POST') {
+    throw new DescriptorError('request.body solo tiene sentido con request.method POST.');
+  }
+  return asObject(value, 'request.body');
+}
+
+function asSkip(value: unknown): number {
+  if (value === undefined || value === null) return 0;
+  if (!Number.isInteger(value) || (value as number) < 0 || (value as number) > MAX_SKIP) {
+    throw new DescriptorError(`fields.skip tiene que ser un entero entre 0 y ${MAX_SKIP}.`);
+  }
+  return value as number;
 }
 
 function parsePaging(value: unknown): DescriptorPaging | null {
@@ -125,18 +159,22 @@ function parsePaging(value: unknown): DescriptorPaging | null {
   };
 }
 
-function parseUrl(value: unknown): string {
-  const text = asString(value, 'request.url');
+function parseHttpsUrl(value: unknown, what: string): string {
+  const text = asString(value, what);
   let parsed: URL;
   try {
     parsed = new URL(text);
   } catch {
-    throw new DescriptorError(`request.url no es una URL válida: "${text}".`);
+    throw new DescriptorError(`${what} no es una URL válida: "${text}".`);
   }
   if (parsed.protocol !== 'https:' && parsed.hostname !== 'localhost') {
-    throw new DescriptorError('request.url tiene que ser https (salvo localhost, para probar).');
+    throw new DescriptorError(`${what} tiene que ser https (salvo localhost, para probar).`);
   }
   return text;
+}
+
+function optionalText(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
 }
 
 export function parseDescriptor(input: unknown): SourceDescriptor {
@@ -151,27 +189,32 @@ export function parseDescriptor(input: unknown): SourceDescriptor {
 
   const name = asString(raw.name, 'name');
   if (!NAME_SHAPE.test(name)) {
-    throw new DescriptorError(
-      `name "${name}" no vale: en minúsculas, sin espacios ni acentos.`,
-    );
+    throw new DescriptorError(`name "${name}" no vale: en minúsculas, sin espacios ni acentos.`);
   }
 
   const request = asObject(raw.request, 'request');
   const fields = asObject(raw.fields, 'fields');
+  const method = asMethod(request.method);
 
   return {
     version,
     name,
-    label: typeof raw.label === 'string' && raw.label.trim() !== '' ? raw.label.trim() : name,
-    author: typeof raw.author === 'string' && raw.author.trim() !== '' ? raw.author.trim() : null,
+    label: optionalText(raw.label) ?? name,
+    author: optionalText(raw.author),
+    homepage: raw.homepage === undefined || raw.homepage === null
+      ? null
+      : parseHttpsUrl(raw.homepage, 'homepage'),
     request: {
-      url: parseUrl(request.url),
+      url: parseHttpsUrl(request.url, 'request.url'),
+      method,
       headers: asStringMap(request.headers, 'request.headers'),
       query: asStringMap(request.query, 'request.query'),
+      body: asBody(request.body, method),
       paging: parsePaging(request.paging),
     },
     fields: {
-      list: asString(fields.list, 'fields.list'),
+      list: optionalText(fields.list),
+      skip: asSkip(fields.skip),
       title: asPaths(fields.title, 'fields.title', true),
       company: asPaths(fields.company, 'fields.company', false),
       description: asPaths(fields.description, 'fields.description', true),

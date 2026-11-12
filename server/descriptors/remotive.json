@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "name": "remotive",
+  "label": "Remotive",
+  "homepage": "https://remotive.com",
+  "request": {
+    "url": "https://remotive.com/api/remote-jobs",
+    "method": "GET",
+    "query": { "limit": "100" }
+  },
+  "fields": {
+    "list": "jobs",
+    "title": "title",
+    "company": "company_name",
+    "description": "description",
+    "url": "url",
+    "location": "candidate_required_location",
+    "postedAt": "publication_date",
+    "salary": "salary"
+  }
+}

@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { buildApp } from './app.js';
 import type { CandidateProfile } from './profile/types.js';
 import { migrateProfile } from './browser/migrate.js';
@@ -21,7 +22,8 @@ import { LastPassStore, Scheduler } from './scheduler/scheduler.js';
 import { systemTimeZone } from './scheduler/timing.js';
 import { LINKEDIN_PROFILE_ID } from './sources/linkedin.source.js';
 import { SourceSchedules } from './sources/schedules.js';
-import { buildSources } from './sources/registry.js';
+import { buildSources, registerDescriptors } from './sources/registry.js';
+import { readCatalog, SourceDescriptors } from './sources/descriptors.js';
 import { SourceToggles } from './sources/toggles.js';
 
 async function main(): Promise<void> {
@@ -29,6 +31,7 @@ async function main(): Promise<void> {
   const db = openDatabase(config.dataDir);
   const jobs = new JobsRepository(db);
   const runs = new RunsRepository(db);
+  const settings = new SettingsRepository(db);
 
   const interrupted = runs.failInterrupted();
   if (interrupted) console.log(`[arranque] ${interrupted} pasada(s) interrumpida(s) cerrada(s) como error`);
@@ -36,6 +39,13 @@ async function main(): Promise<void> {
   const pool = new BrowserPool(config.browserProfilesRoot, config.browserHeadless);
   migrateProfile(legacyLinkedinProfileDir(config), pool.session(LINKEDIN_PROFILE_ID).dir);
 
+  const descriptors = new SourceDescriptors(settings);
+  const catalog = readCatalog(join(dirname(fileURLToPath(import.meta.url)), '..', 'descriptors'));
+  const described = [...catalog, ...descriptors.all()];
+  registerDescriptors(described);
+  if (described.length) {
+    console.log(`[arranque] ${described.length} fuente(s) descrita(s) con JSON: ${described.map((d) => d.label).join(', ')}`);
+  }
   const sources = buildSources(config, pool);
   const gemini = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;
   const judge = gemini ? new LlmJudge(gemini, config.judgeModel) : null;
@@ -43,8 +53,6 @@ async function main(): Promise<void> {
   console.log(judge
     ? `[arranque] juez LLM activo (${config.judgeModel})`
     : '[arranque] sin GEMINI_API_KEY: el juez LLM queda desactivado y mandan las reglas');
-
-  const settings = new SettingsRepository(db);
 
   const mailer = new Mailer(config.mail, {
     to: () => readMailTo(settings, config.mail?.to ?? null) || null,

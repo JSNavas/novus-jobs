@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "name": "remoteok",
+  "label": "Remote OK",
+  "homepage": "https://remoteok.com",
+  "request": {
+    "url": "https://remoteok.com/api",
+    "method": "GET"
+  },
+  "fields": {
+    "list": null,
+    "skip": 1,
+    "title": "position",
+    "company": "company",
+    "description": "description",
+    "url": ["url", "apply_url"],
+    "location": "location",
+    "postedAt": ["date", "epoch"]
+  }
+}
