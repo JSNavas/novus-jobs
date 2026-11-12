@@ -17,7 +17,7 @@ const Header = ({ onMenuClick }: HeaderProps) => (
         <IconMenu2 size="20" />
       </IconButton>
       <Typography variant="overline" color="textSecondary">
-        Ofertas de empleo
+        {t('app.name')}
       </Typography>
     </Toolbar>
   </AppBar>

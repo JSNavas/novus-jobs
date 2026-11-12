@@ -364,4 +364,10 @@ export const en: Record<keyof typeof es, string> = {
   'badge.other': 'Other reason',
   'card.uncertain': 'To confirm',
   'card.rejected': 'Discarded by the filter',
+  'app.name': 'Job postings',
+  'page.range': '{first}-{last} of {total} {noun}',
+  'dash.runs.help': 'Each search, with what it read and what it did with it. Click a row to see its postings.',
+  'locale': 'en-GB',
+  'card.apply': 'Apply',
+  'card.composeGmail': 'Compose in Gmail',
 };

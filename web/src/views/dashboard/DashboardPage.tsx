@@ -152,7 +152,7 @@ const DashboardPage = () => {
 
       <Typography variant="h6" mb={1}>{t('dash.runs')}</Typography>
       <Typography variant="body2" color="textSecondary" mb={2}>
-        Cada búsqueda, con lo que leyó y lo que hizo con ello. Pulsa una fila para ver sus ofertas.
+        {t('dash.runs.help')}
       </Typography>
 
       <BlankCard>

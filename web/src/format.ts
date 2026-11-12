@@ -1,3 +1,5 @@
+import { t } from './i18n';
+
 /**
  * TODAS las fechas del dashboard, en la zona del usuario y con am/pm.
  *
@@ -30,7 +32,7 @@ let timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 export function setDisplayTimeZone(name: string | null | undefined): void {
   if (!name || name === timeZone) return;
   try {
-    new Intl.DateTimeFormat('es-ES', { timeZone: name });
+    new Intl.DateTimeFormat(t('locale'), { timeZone: name });
     timeZone = name;
     parts = buildFormatter();
   } catch {
@@ -39,7 +41,9 @@ export function setDisplayTimeZone(name: string | null | undefined): void {
 }
 
 function buildFormatter(): Intl.DateTimeFormat {
-  return new Intl.DateTimeFormat('es-ES', {
+  // El locale sale del idioma elegido: los meses de una fecha en inglés no
+  // pueden salir en español.
+  return new Intl.DateTimeFormat(t('locale'), {
     timeZone,
     day: 'numeric',
     month: 'short',
@@ -51,8 +55,14 @@ function buildFormatter(): Intl.DateTimeFormat {
 }
 
 let parts = buildFormatter();
+/** Con qué locale se construyó: si cambia el idioma, hay que rehacerlo. */
+let builtFor = t('locale');
 
 export function partsOf(date: Date): Record<string, string> {
+  if (builtFor !== t('locale')) {
+    parts = buildFormatter();
+    builtFor = t('locale');
+  }
   return Object.fromEntries(parts.formatToParts(date).map((p) => [p.type, p.value]));
 }
 

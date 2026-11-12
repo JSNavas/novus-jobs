@@ -1,3 +1,4 @@
+import { t } from '../../i18n';
 import { Box, Pagination, Typography } from '@mui/material';
 
 /**
@@ -37,7 +38,7 @@ const AppPagination = ({ page, pageSize, total, onChange, noun }: AppPaginationP
       py={2}
     >
       <Typography variant="body2" color="textSecondary">
-        {first}-{last} de {total} {noun}
+        {t('page.range', { first, last, total, noun })}
       </Typography>
       <Pagination
         page={page}

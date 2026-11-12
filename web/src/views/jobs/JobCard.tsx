@@ -219,7 +219,7 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
           <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap" useFlexGap>
             {job.applyUrl ? (
               <Button variant="contained" component="a" href={job.applyUrl} target="_blank" rel="noopener noreferrer">
-                Postularse
+                {t('card.apply')}
               </Button>
             ) : null}
             {canApplyByEmail ? (
@@ -230,7 +230,7 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Redactar en Gmail
+                {t('card.composeGmail')}
               </Button>
             ) : null}
             {/* Si el enlace de la publicación ES el de postulación, un segundo

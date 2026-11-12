@@ -369,4 +369,10 @@ export const es = {
   'badge.other': 'Otro motivo',
   'card.uncertain': 'Por confirmar',
   'card.rejected': 'Descartada por el filtro',
+  'app.name': 'Ofertas de empleo',
+  'page.range': '{first}-{last} de {total} {noun}',
+  'dash.runs.help': 'Cada búsqueda, con lo que leyó y lo que hizo con ello. Pulsa una fila para ver sus ofertas.',
+  'locale': 'es-ES',
+  'card.apply': 'Postularse',
+  'card.composeGmail': 'Redactar en Gmail',
 } as const;
