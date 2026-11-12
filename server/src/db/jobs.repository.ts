@@ -2,10 +2,19 @@ import type { PostMetrics } from '../sources/types.js';
 import { JobLocation, JobSeniority, JobStatus, JobVerdict, JudgeStatus, type Job } from '../types.js';
 import type { Db } from './database.js';
 
-export type NewJob = Omit<Job, 'id' | 'status' | 'foundAt' | 'runId' | 'applications' | 'responseDays'>
+export type NewJob = Omit<
+  Job,
+  'id' | 'status' | 'foundAt' | 'runId' | 'applications' | 'responseDays' | 'rejectionCode' | 'rejectionParams'
+>
   & {
     foundAt?: string;
     runId?: number | null;
+    /**
+     * El motivo sin idioma. Opcional porque una oferta aceptada no tiene, y
+     * porque quien inserta a mano —las pruebas— no debería tener que decirlo.
+     */
+    rejectionCode?: string | null;
+    rejectionParams?: Record<string, string | number> | null;
     /** Opcionales: solo los trae la fuente que los publica. */
     applications?: number | null;
     responseDays?: { min: number | null; max: number | null } | null;
@@ -49,6 +58,8 @@ interface JobRow {
   location_kind: JobLocation;
   verdict: JobVerdict;
   rejection_reason: string | null;
+  rejection_code: string | null;
+  rejection_params: string | null;
   seniority: JobSeniority;
   is_aggregator: number;
   is_uncertain: number;
@@ -66,9 +77,22 @@ interface JobRow {
 }
 
 const JOB_COLUMNS = `id, source, fingerprint, title, role, company, author, text, url, location, location_kind,
-  verdict, rejection_reason, seniority, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
+  verdict, rejection_reason, rejection_code, rejection_params, seniority, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
   judge_status, status, found_at, posted_at, run_id,
   applications, response_days_min, response_days_max`;
+
+/** Los datos del motivo. Un JSON roto no puede tumbar la lista: se ignora. */
+function parseParams(raw: string | null): Record<string, string | number> | null {
+  if (!raw) return null;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)
+      ? (parsed as Record<string, string | number>)
+      : null;
+  } catch {
+    return null;
+  }
+}
 
 function toJob(row: JobRow): Job {
   return {
@@ -84,6 +108,8 @@ function toJob(row: JobRow): Job {
     location: row.location,
     verdict: row.verdict,
     rejectionReason: row.rejection_reason,
+    rejectionCode: row.rejection_code,
+    rejectionParams: parseParams(row.rejection_params),
     seniority: row.seniority,
     isAggregator: row.is_aggregator === 1,
     judgeStatus: row.judge_status,
@@ -110,11 +136,11 @@ export class JobsRepository {
   insert(job: NewJob): boolean {
     const result = this.db.prepare(`
       INSERT OR IGNORE INTO jobs (source, fingerprint, title, role, company, author, text, url, location, location_kind,
-        verdict, rejection_reason, seniority, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
+        verdict, rejection_reason, rejection_code, rejection_params, seniority, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
         judge_status, status, found_at, posted_at, run_id,
         applications, response_days_min, response_days_max)
       VALUES (@source, @fingerprint, @title, @role, @company, @author, @text, @url, @location, @locationKind,
-        @verdict, @rejectionReason, @seniority, @isAggregator, @isUncertain, @stackMatch, @applyUrl, @contactEmail,
+        @verdict, @rejectionReason, @rejectionCode, @rejectionParamsJson, @seniority, @isAggregator, @isUncertain, @stackMatch, @applyUrl, @contactEmail,
         @judgeStatus, @status, @foundAt, @postedAt, @runId,
         @applications, @responseDaysMin, @responseDaysMax)
     `).run({
@@ -122,6 +148,8 @@ export class JobsRepository {
       isAggregator: job.isAggregator ? 1 : 0,
       isUncertain: job.isUncertain ? 1 : 0,
       stackMatch: JSON.stringify(job.stackMatch),
+      rejectionCode: job.rejectionCode ?? null,
+      rejectionParamsJson: job.rejectionParams ? JSON.stringify(job.rejectionParams) : null,
       applications: job.applications ?? null,
       responseDaysMin: job.responseDays?.min ?? null,
       responseDaysMax: job.responseDays?.max ?? null,

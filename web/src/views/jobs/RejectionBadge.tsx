@@ -1,9 +1,14 @@
 import { Box, Stack, Tooltip, Typography } from '@mui/material';
 import { AppChip } from '../../components/ui';
-import { rejectionCategory } from './rejectionReason';
+import type { Job } from '../../types';
+import { rejectionCategory, rejectionText } from './rejectionReason';
 
 interface RejectionBadgeProps {
-  reason: string;
+  /**
+   * La oferta entera y no su frase: el motivo se escribe aquí, a partir del
+   * código que mandó el servidor, en el idioma de quien está mirando.
+   */
+  job: Job;
 }
 
 /**
@@ -12,8 +17,9 @@ interface RejectionBadgeProps {
  * and screen reader users get. The chip is not focusable on purpose: it would
  * be a tab stop with no announced purpose, and the reason is already on screen.
  */
-const RejectionBadge = ({ reason }: RejectionBadgeProps) => {
-  const { label, tone } = rejectionCategory(reason);
+const RejectionBadge = ({ job }: RejectionBadgeProps) => {
+  const { label, tone } = rejectionCategory(job);
+  const reason = rejectionText(job);
 
   return (
     <Stack spacing={0.5} alignItems="flex-start">

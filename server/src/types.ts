@@ -78,6 +78,12 @@ export interface Job {
   location: string | null;
   verdict: JobVerdict;
   rejectionReason: string | null;
+  /**
+   * El motivo sin idioma: la regla que descartó y sus datos. `null` en lo
+   * guardado antes de que existiera, que enseña la frase tal cual se guardó.
+   */
+  rejectionCode: string | null;
+  rejectionParams: Record<string, string | number> | null;
   seniority: JobSeniority;
   isAggregator: boolean;
   judgeStatus: JudgeStatus;

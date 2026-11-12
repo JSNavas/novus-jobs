@@ -22,7 +22,8 @@ describe('decideShipping', () => {
   it('rechaza la oferta que exige inglés avanzado', () => {
     const verdict = decideShipping({ text: `${REMOTE_TS_OFFER}\nSe requiere inglés avanzado (C1).`, url: null }, PROFILE);
     assert.equal(verdict.accepted, false);
-    assert.equal(verdict.reason, 'exigen inglés C1 y tiene B1');
+    // El código y sus datos; la frase se traduce y puede cambiar de redacción.
+    assert.deepEqual(verdict.rejection, { code: 'reject.english', params: { demanded: 'C1', yours: 'B1' } });
   });
 
   it('rechaza la oferta presencial fuera de Venezuela', () => {
@@ -62,7 +63,7 @@ describe('decideShipping', () => {
     const sinCpp = OFERTA_CPP.replace(/C\+\+/g, 'Node.js');
     const verdict = decideShipping({ text: sinCpp, url: null }, PROFILE);
     assert.equal(verdict.accepted, false);
-    assert.equal(verdict.reason, 'exigen inglés B2 y tiene B1');
+    assert.deepEqual(verdict.rejection, { code: 'reject.english', params: { demanded: 'B2', yours: 'B1' } });
   });
 
   it('Symfony NO se veta: está en el stack del perfil de ejemplo', () => {

@@ -47,7 +47,7 @@ const JOB_COLUMNS = [
   'location', 'location_kind', 'verdict', 'rejection_reason', 'seniority',
   'is_aggregator', 'is_uncertain', 'stack_match', 'apply_url', 'contact_email',
   'judge_status', 'status', 'found_at', 'posted_at', 'applications',
-  'response_days_min', 'response_days_max', 'run_id',
+  'response_days_min', 'response_days_max', 'run_id', 'rejection_code', 'rejection_params',
 ] as const;
 
 /**
@@ -113,6 +113,8 @@ export function openDatabase(dataDir: string): Db {
   ensureColumn(db, 'jobs', 'applications', 'INTEGER');
   ensureColumn(db, 'jobs', 'response_days_min', 'INTEGER');
   ensureColumn(db, 'jobs', 'response_days_max', 'INTEGER');
+  ensureColumn(db, 'jobs', 'rejection_code', 'TEXT');
+  ensureColumn(db, 'jobs', 'rejection_params', 'TEXT');
   backfillRunId(db);
   // El orden importa: primero caen los CHECK viejos y solo entonces se puede
   // escribir el valor nuevo.

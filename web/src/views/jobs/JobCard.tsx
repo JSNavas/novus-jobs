@@ -180,8 +180,8 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
             </Typography>
           </Box>
           <Stack direction="row" spacing={1}>
-            {job.isUncertain ? <AppChip label="Por confirmar" tone="warning" /> : null}
-            {job.verdict === JobVerdict.Rejected ? <AppChip label="Descartada por el filtro" tone="error" /> : null}
+            {job.isUncertain ? <AppChip label={t('card.uncertain')} tone="warning" /> : null}
+            {job.verdict === JobVerdict.Rejected ? <AppChip label={t('card.rejected')} tone="error" /> : null}
             <AppChip label={jobStatusLabel(job.status)} />
           </Stack>
         </Stack>
@@ -191,7 +191,9 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
             opening the database. A criterion you can't read can't be corrected,
             and the one error that really matters — a good offer thrown out — is
             only visible here. */}
-        {job.rejectionReason ? <RejectionBadge reason={job.rejectionReason} /> : null}
+        {job.verdict === JobVerdict.Rejected || job.rejectionReason || job.rejectionCode
+          ? <RejectionBadge job={job} />
+          : null}
 
         <Typography variant="body2">{t('card.postedBy', { author: job.author ?? t('card.unknownAuthor') })}</Typography>
         {job.stackMatch.length > 0 ? (

@@ -36,6 +36,11 @@ CREATE TABLE IF NOT EXISTS jobs (
   location_kind    TEXT    NOT NULL,
   verdict          TEXT    NOT NULL,
   rejection_reason TEXT,
+  -- El mismo motivo sin idioma: el código de la regla y sus datos, para que la
+  -- pantalla lo escriba en el idioma de quien mira. La frase de arriba se queda
+  -- porque es la que leen los correos y las ofertas guardadas antes de esto.
+  rejection_code   TEXT,
+  rejection_params TEXT,
   seniority        TEXT    NOT NULL,
   is_aggregator    INTEGER NOT NULL DEFAULT 0 CHECK (is_aggregator IN (0, 1)),
   is_uncertain     INTEGER NOT NULL DEFAULT 0 CHECK (is_uncertain IN (0, 1)),

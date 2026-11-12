@@ -61,6 +61,9 @@ export interface Job {
   location: string | null;
   verdict: JobVerdict;
   rejectionReason: string | null;
+  /** El motivo sin idioma. `null` en lo guardado antes de que existiera. */
+  rejectionCode: string | null;
+  rejectionParams: Record<string, string | number> | null;
   seniority: JobSeniority;
   isAggregator: boolean;
   judgeStatus: JudgeStatus;

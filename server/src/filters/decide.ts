@@ -4,7 +4,8 @@ import { adBody, cleanLinkedInNoise, extractApplyUrl, extractEmail, isAggregator
 import { classifyLocation, isLocalEmployer, type HomeGeo } from './location.js';
 import { findCountry } from './countries.js';
 import { englishDemand, hasSeveralOpenings, isOtherEcosystem, isOwnRole, unknownRequiredTech } from './requirements.js';
-import { englishRank, type CandidateProfile } from '../profile/types.js';
+import { englishRank, type CandidateProfile, type Language } from '../profile/types.js';
+import { t } from '../i18n/index.js';
 
 export interface Offer {
   text: string;
@@ -22,9 +23,38 @@ export interface Offer {
  */
 export type RejectedBy = 'not-offer' | 'location' | 'veto' | 'stack' | 'stale';
 
+/**
+ * POR QUÉ EL MOTIVO ES UN CÓDIGO Y NO UNA FRASE.
+ *
+ * La frase se guarda igual —la leen los correos y las ofertas de antes—, pero
+ * lo que viaja a la pantalla es el código con sus datos, y el dashboard lo
+ * escribe en el idioma de quien mira. Mientras fue una frase, la interfaz la
+ * clasificaba con expresiones regulares sobre el texto español, y bastó
+ * cambiar "presencial o híbrido" por algo más claro para que esas etiquetas
+ * dejaran de reconocerla sin que fallara ningún test.
+ *
+ * `RejectedBy` dice QUÉ FAMILIA de reglas descartó —de eso depende si el juez
+ * puede revocarlo—; esto dice exactamente cuál, y con qué datos.
+ */
+export type RejectionCode =
+  | 'reject.notAVacancy' | 'reject.notAnOffer'
+  | 'reject.otherCountry' | 'reject.onsite' | 'reject.hybrid'
+  | 'reject.homeCountryOnly' | 'reject.globalRemote'
+  | 'reject.unknownTech' | 'reject.english' | 'reject.localEmployer'
+  | 'reject.otherEcosystem' | 'reject.peripheral' | 'reject.noStack'
+  | 'reject.stale' | 'reject.ai';
+
+export interface Rejection {
+  readonly code: RejectionCode;
+  readonly params: Readonly<Record<string, string | number>>;
+}
+
 export interface Verdict {
   accepted: boolean;
+  /** El motivo ya escrito, en el idioma del usuario. Lo guardan la BD y los correos. */
   reason: string | null;
+  /** El mismo motivo, sin idioma: lo que la pantalla vuelve a escribir. */
+  rejection: Rejection | null;
   /** `null` si está aceptada. Dice quién la descartó, no por qué. */
   rejectedBy: RejectedBy | null;
   uncertain: boolean;
@@ -40,6 +70,8 @@ export type { CandidateProfile } from '../profile/types.js';
 
 interface Context {
   text: string;
+  /** En qué idioma se le escribe el motivo a quien lo va a leer. */
+  language: Language;
   stackMatch: string[];
   location: JobLocation;
   seniority: JobSeniority;
@@ -51,6 +83,7 @@ interface Context {
 function buildContext(text: string, profile: CandidateProfile): Context {
   return {
     text,
+    language: profile.language,
     stackMatch: matchStack(text, profile.stack),
     location: classifyLocation(text, homeOf(profile)),
     seniority: isJuniorOrInternship(text) ? JobSeniority.Junior : JobSeniority.Regular,
@@ -60,15 +93,22 @@ function buildContext(text: string, profile: CandidateProfile): Context {
   };
 }
 
-function reject(ctx: Context, reason: string, by: RejectedBy): Verdict {
-  return { accepted: false, reason, rejectedBy: by, uncertain: false, ...publicFields(ctx) };
+function reject(ctx: Context, rejection: Rejection, by: RejectedBy): Verdict {
+  return {
+    accepted: false,
+    reason: t(ctx.language, rejection.code, rejection.params),
+    rejection,
+    rejectedBy: by,
+    uncertain: false,
+    ...publicFields(ctx),
+  };
 }
 
 function accept(ctx: Context, uncertain: boolean): Verdict {
-  return { accepted: true, reason: null, rejectedBy: null, uncertain, ...publicFields(ctx) };
+  return { accepted: true, reason: null, rejection: null, rejectedBy: null, uncertain, ...publicFields(ctx) };
 }
 
-function publicFields(ctx: Context): Omit<Verdict, 'accepted' | 'reason' | 'rejectedBy' | 'uncertain'> {
+function publicFields(ctx: Context): Omit<Verdict, 'accepted' | 'reason' | 'rejection' | 'rejectedBy' | 'uncertain'> {
   return {
     seniority: ctx.seniority,
     aggregator: ctx.aggregator,
@@ -81,8 +121,8 @@ function publicFields(ctx: Context): Omit<Verdict, 'accepted' | 'reason' | 'reje
 
 /** Lo primero: ¿es siquiera una oferta de trabajo? */
 function rejectNonOffer(ctx: Context): Verdict | null {
-  if (isCandidateSelfPromotion(ctx.text)) return reject(ctx, 'no es una vacante: es alguien ofreciéndose como candidato', 'not-offer');
-  if (!looksLikeOffer(ctx.text)) return reject(ctx, 'no es una oferta de trabajo (publicación técnica o de opinión)', 'not-offer');
+  if (isCandidateSelfPromotion(ctx.text)) return reject(ctx, { code: 'reject.notAVacancy', params: {} }, 'not-offer');
+  if (!looksLikeOffer(ctx.text)) return reject(ctx, { code: 'reject.notAnOffer', params: {} }, 'not-offer');
   return null;
 }
 
@@ -98,22 +138,22 @@ function homeOf(profile: CandidateProfile): HomeGeo {
  */
 function rejectByLocation(ctx: Context, profile: CandidateProfile): Verdict | null {
   const { modality } = profile;
-  if (ctx.location === JobLocation.OtherCountry) return reject(ctx, 'remoto restringido a otro país', 'location');
-  if (ctx.location === JobLocation.Onsite && !modality.onsite) return reject(ctx, 'es presencial y no busca presencial', 'location');
-  if (ctx.location === JobLocation.Hybrid && !modality.hybrid) return reject(ctx, 'es híbrida y no busca híbrido', 'location');
-  if (ctx.location === JobLocation.HomeCountry && !modality.remoteHomeCountry) return reject(ctx, 'es solo para residentes de su país', 'location');
-  if (ctx.location === JobLocation.Global && !modality.remoteGlobal) return reject(ctx, 'es remota global y no busca remoto', 'location');
+  if (ctx.location === JobLocation.OtherCountry) return reject(ctx, { code: 'reject.otherCountry', params: {} }, 'location');
+  if (ctx.location === JobLocation.Onsite && !modality.onsite) return reject(ctx, { code: 'reject.onsite', params: {} }, 'location');
+  if (ctx.location === JobLocation.Hybrid && !modality.hybrid) return reject(ctx, { code: 'reject.hybrid', params: {} }, 'location');
+  if (ctx.location === JobLocation.HomeCountry && !modality.remoteHomeCountry) return reject(ctx, { code: 'reject.homeCountryOnly', params: {} }, 'location');
+  if (ctx.location === JobLocation.Global && !modality.remoteGlobal) return reject(ctx, { code: 'reject.globalRemote', params: {} }, 'location');
   return null;
 }
 
 /** Los vetos por tecnología e idioma se juzgan sobre el anuncio sin la firma de quien lo publica. */
 function rejectByVetoes(ctx: Context, ad: string, profile: CandidateProfile): Verdict | null {
   const unknownTech = hasSeveralOpenings(ad) ? null : unknownRequiredTech(ad, profile.cannotDo);
-  if (unknownTech) return reject(ctx, `exigen ${unknownTech.trim()}, que no sabe`, 'veto');
+  if (unknownTech) return reject(ctx, { code: 'reject.unknownTech', params: { tech: unknownTech.trim() } }, 'veto');
   const english = rejectByEnglish(ctx, ad, profile);
   if (english) return english;
   if (profile.geo.excludeLocalEmployers && isLocalEmployer(ctx.text, homeOf(profile))) {
-    return reject(ctx, 'la contrata una empresa de su propio país', 'veto');
+    return reject(ctx, { code: 'reject.localEmployer', params: {} }, 'veto');
   }
   return null;
 }
@@ -128,7 +168,10 @@ function rejectByEnglish(ctx: Context, ad: string, profile: CandidateProfile): V
   const demand = englishDemand(ad);
   if (!demand.mandatory) return null;
   if (englishRank(demand.level) <= englishRank(profile.english.level)) return null;
-  return reject(ctx, `exigen inglés ${demand.level.toUpperCase()} y tiene ${profile.english.level.toUpperCase()}`, 'veto');
+  return reject(ctx, {
+    code: 'reject.english',
+    params: { demanded: demand.level.toUpperCase(), yours: profile.english.level.toUpperCase() },
+  }, 'veto');
 }
 
 /**
@@ -139,20 +182,20 @@ function judgeCore(ctx: Context, core: readonly string[]): Verdict | null {
   if (!core.length) return null;
   const coreMatch = matchStack(ctx.text, core);
   if (coreMatch.length && isOtherEcosystem(ctx.text, coreMatch)) {
-    return reject(ctx, 'es de otro ecosistema (solo coincide en JavaScript, de refilón)', 'stack');
+    return reject(ctx, { code: 'reject.otherEcosystem', params: {} }, 'stack');
   }
   if (coreMatch.length) return null;
   if (isOwnRole(ctx.text)) return accept(ctx, true);
-  const reason = ctx.stackMatch.length
-    ? `solo coincide en lo periférico (${ctx.stackMatch.join(', ')}), nada de su núcleo`
-    : 'no menciona nada de su stack';
-  return reject(ctx, reason, 'stack');
+  const rejection: Rejection = ctx.stackMatch.length
+    ? { code: 'reject.peripheral', params: { matches: ctx.stackMatch.join(', ') } }
+    : { code: 'reject.noStack', params: {} };
+  return reject(ctx, rejection, 'stack');
 }
 
 function judgeStack(ctx: Context): Verdict | null {
   if (ctx.stackMatch.length) return null;
   if (isOwnRole(ctx.text)) return accept(ctx, true);
-  return reject(ctx, 'no menciona nada de su stack', 'stack');
+  return reject(ctx, { code: 'reject.noStack', params: {} }, 'stack');
 }
 
 /**

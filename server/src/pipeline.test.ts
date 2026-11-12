@@ -219,9 +219,11 @@ describe('pipeline — el juez cruzado con las reglas', () => {
       status: null, verdict: null, runId: null, seniority: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
+    // Se comprueba el CÓDIGO y no la frase: la frase está en el idioma del
+    // usuario y se puede reescribir sin cambiar lo que la regla decidió.
     assert.equal(
-      stored.items[0]!.rejectionReason,
-      'es presencial y no busca presencial',
+      stored.items[0]!.rejectionCode,
+      'reject.onsite',
       'el motivo de la regla dice más que un "[IA] no es una vacante"',
     );
   });

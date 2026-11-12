@@ -1,13 +1,16 @@
+import { t } from '../i18n/index.js';
+import type { Language } from './types.js';
+
 /**
  * ═══ EL «¿POR QUÉ TE INTERESA TRABAJAR AQUÍ?» ═══
  *
- * Get on Board lo pide en cada postulación (entre 50 y 1000 caracteres). Este
- * es el texto por defecto; el usuario lo cambia desde Configuración y lo suyo
- * manda — esto solo es lo que hay el primer día, o si lo deja en blanco.
+ * Varias plataformas lo piden en cada postulación (Get on Board, entre 50 y
+ * 1000 caracteres). Esto es lo que hay el PRIMER DÍA: el usuario lo cambia
+ * desde Configuración y lo suyo manda.
  *
- * Son SUS palabras. Si algún día hay que tocarlo, se le pregunta: un párrafo
- * de presentación escrito con palabras que no son las tuyas se nota, y quien
- * lo recibe también lo nota.
+ * Es deliberadamente sobrio y sin datos inventados —ni años de experiencia, ni
+ * un puesto concreto— porque un párrafo por defecto que afirme cosas de alguien
+ * que no las ha dicho es peor que uno aburrido: se manda sin leer y miente.
  *
  * ═══ LOS HUECOS ═══
  *
@@ -15,21 +18,16 @@
  * oferta. Son la diferencia entre un párrafo genérico —que se reconoce a la
  * legua— y uno que demuestra que leyó el anuncio.
  *
- * La frase de `{tecnologias}` DESAPARECE ENTERA cuando no hay coincidencias
- * que nombrar, en vez de quedarse coja. Por eso conviene que viva en su propia
+ * La frase de `{tecnologias}` DESAPARECE ENTERA cuando no hay coincidencias que
+ * nombrar, en vez de quedarse coja. Por eso conviene que viva en su propia
  * frase y no incrustada en otra.
+ *
+ * Los nombres de los huecos NO se traducen: una plantilla escrita en español
+ * tiene que seguir funcionando si mañana se cambia el idioma de la interfaz.
  */
-export const DEFAULT_MOTIVATION_TEMPLATE =
-  'Me interesa el puesto de {puesto} en {empresa} ya que es un rol donde puedo aportar toda la ' +
-  'experiencia que he adquirido a lo largo de 9 años como desarrollador de software. ' +
-  'Vi que para la vacante requieren conocimientos en las tecnologías {tecnologias}, que son justo ' +
-  'las tecnologías que vengo usando desde hace varios años en los roles que he desempeñado ' +
-  'anteriormente. ' +
-  'Soy responsable y dedicado, me gusta trabajar en equipo y me adapto rápidamente a los nuevos ' +
-  'entornos de trabajo. Me fascina aprender nuevas tecnologías, cómo integrarlas y cómo mejorar mi ' +
-  'flujo de trabajo para que sea más rápido y productivo. Soy amante de las buenas prácticas y del ' +
-  'código escalable por lo que me mantengo en constante estudio para crecer cada día como ' +
-  'desarrollador.';
+export function defaultMotivationTemplate(language: Language): string {
+  return t(language, 'motivation.default');
+}
 
 /**
  * El tope de Get on Board. Se valida al guardar: una plantilla más larga que

@@ -1,9 +1,10 @@
 import type { FastifyInstance } from 'fastify';
 import { MAX_AGE_MONTHS_KEY, MOTIVATION_TEMPLATE_KEY, type SettingsRepository } from '../db/settings.repository.js';
 import {
-  DEFAULT_MAX_AGE_MONTHS, DEFAULT_MOTIVATION_TEMPLATE, MAX_MAX_AGE_MONTHS, MAX_MOTIVATION_CHARS,
+  DEFAULT_MAX_AGE_MONTHS, defaultMotivationTemplate, MAX_MAX_AGE_MONTHS, MAX_MOTIVATION_CHARS,
   MIN_MAX_AGE_MONTHS,
 } from '../profile/motivation.js';
+import type { Language } from '../profile/types.js';
 
 /**
  * Lo que la interfaz necesita saber para montar una candidatura.
@@ -22,19 +23,22 @@ import {
 export interface SettingsRoutesDeps {
   gmailAccount: string | null;
   settings: SettingsRepository;
+  /** El idioma del perfil: decide en cuál viene la plantilla de fábrica. */
+  language: () => Language;
 }
 
 /** El mínimo que exige el formulario de Get on Board. */
 const MIN_MOTIVATION_CHARS = 50;
 
 export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutesDeps): void {
+  const fallbackTemplate = (): string => defaultMotivationTemplate(deps.language());
   const motivationTemplate = (): string =>
-    deps.settings.get(MOTIVATION_TEMPLATE_KEY) ?? DEFAULT_MOTIVATION_TEMPLATE;
+    deps.settings.get(MOTIVATION_TEMPLATE_KEY) ?? fallbackTemplate();
 
   app.get('/api/settings', () => ({
     gmailAccount: deps.gmailAccount,
     motivationTemplate: motivationTemplate(),
-    defaultMotivationTemplate: DEFAULT_MOTIVATION_TEMPLATE,
+    defaultMotivationTemplate: fallbackTemplate(),
     maxAgeMonths: readMaxAgeMonths(deps.settings),
   }));
 
@@ -71,8 +75,8 @@ export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutes
 
     const template = value.trim();
     if (!template) {
-      deps.settings.set(MOTIVATION_TEMPLATE_KEY, DEFAULT_MOTIVATION_TEMPLATE);
-      return { motivationTemplate: DEFAULT_MOTIVATION_TEMPLATE, maxAgeMonths: readMaxAgeMonths(deps.settings) };
+      deps.settings.set(MOTIVATION_TEMPLATE_KEY, fallbackTemplate());
+      return { motivationTemplate: fallbackTemplate(), maxAgeMonths: readMaxAgeMonths(deps.settings) };
     }
     if (template.length < MIN_MOTIVATION_CHARS) {
       return reply.code(400).send({

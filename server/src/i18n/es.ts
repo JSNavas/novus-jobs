@@ -1,0 +1,61 @@
+/**
+ * El idioma de origen del servidor y el contrato de claves.
+ *
+ * Los `reject.*` son los motivos de descarte. Están escritos para que se
+ * entiendan sueltos, en una lista: no "por el idioma", sino "exigen inglés C1 y
+ * tienes B1". Quien abre la pantalla de descartadas lo hace sospechando que el
+ * filtro se equivocó, y un motivo vago no se puede discutir.
+ */
+export const es = {
+  'reject.notAVacancy': 'no es una vacante: es alguien ofreciéndose como candidato',
+  'reject.notAnOffer': 'no es una oferta de trabajo (publicación técnica o de opinión)',
+  'reject.otherCountry': 'remoto restringido a otro país',
+  'reject.onsite': 'es presencial y no buscas presencial',
+  'reject.hybrid': 'es híbrida y no buscas híbrido',
+  'reject.homeCountryOnly': 'es solo para residentes de tu país',
+  'reject.globalRemote': 'es remota global y no buscas remoto',
+  'reject.unknownTech': 'exigen {tech}, que no manejas',
+  'reject.english': 'exigen inglés {demanded} y tienes {yours}',
+  'reject.localEmployer': 'la contrata una empresa de tu propio país',
+  'reject.otherEcosystem': 'es de otro ecosistema (solo coincide en JavaScript, de refilón)',
+  'reject.peripheral': 'solo coincide en lo periférico ({matches}), nada de tu núcleo',
+  'reject.noStack': 'no menciona nada de tu stack',
+  'reject.stale': 'publicada hace {months} meses; el tope son {max}',
+  'reject.ai': '[IA] {reason}',
+  'reject.ai.fallback': 'no es una oferta',
+
+  // ── Los correos ──────────────────────────────────────────────────────────
+  'mail.offers.one': '1 oferta nueva',
+  'mail.offers.many': '{count} ofertas nuevas',
+  'mail.openDashboard': 'Abrir el dashboard',
+  'mail.failure.subject': 'Novus Jobs: la búsqueda falló',
+  'mail.failure.intro': 'La última búsqueda no terminó bien.',
+
+  // ── La instrucción del juez ──────────────────────────────────────────────
+  'judge.language': 'Responde en español.',
+
+  // ── La plantilla de motivación de fábrica ───────────────────────────────
+  'motivation.default': 'Me interesa el puesto de {puesto} en {empresa}: es un rol donde puedo aportar la experiencia que he ido acumulando como desarrollador de software. Vi que piden conocimientos en {tecnologias}, que son justo las tecnologías con las que vengo trabajando. Soy responsable, me gusta trabajar en equipo y me adapto rápido a entornos nuevos. Disfruto aprendiendo tecnologías, integrándolas y mejorando mi forma de trabajar, y cuido las buenas prácticas y el código que se puede mantener.',
+
+  // ── Los correos ─────────────────────────────────────────────────────────
+  'mail.subject.one': '1 oferta nueva para revisar',
+  'mail.subject.many': '{count} ofertas nuevas para revisar',
+  'mail.text.one': 'Llegó 1 oferta nueva. Revisa el dashboard:',
+  'mail.text.many': 'Llegaron {count} ofertas nuevas. Revisa el dashboard:',
+  'mail.html.one': 'Llegó <strong>1 oferta nueva</strong> que pasa tus reglas de perfil.',
+  'mail.html.many': 'Llegaron <strong>{count} ofertas nuevas</strong> que pasan tus reglas de perfil.',
+  'mail.more': '…y {count} más en el dashboard.',
+  'mail.more.html': '…y {count} más.',
+  'mail.noLocation': 'sin ubicación',
+  'mail.footer': 'El detalle, el enlace de postulación y los botones de guardar o descartar están en el dashboard.',
+  'mail.fail.loginRequired': 'La sesión de {source} caducó: la búsqueda está parada',
+  'mail.fail.profileBusy': 'La búsqueda no pudo correr: el navegador estaba ocupado',
+  'mail.fail.layout': 'La búsqueda no encontró publicaciones: puede haber cambiado la plataforma',
+  'mail.fail.other': 'La búsqueda de empleo falló',
+  'mail.fix.loginRequired': 'En el servidor: cd server && npm run login -- {source}, inicia sesión y cierra la ventana. Las pasadas se reanudan solas.',
+  'mail.fix.profileBusy': 'Cierra la ventana de Chromium que tenga abierto el perfil.',
+  'mail.fix.layout': 'Hay una captura en los logs del servidor para ver qué sirvió la plataforma.',
+  'mail.fix.other': 'Mira el detalle y los logs del servidor.',
+  'mail.detail': 'Detalle: {detail}',
+  'mail.dashboard': 'Dashboard: {url}',
+} as const;

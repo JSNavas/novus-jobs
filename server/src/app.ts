@@ -81,7 +81,9 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     hours: deps.scheduleHours, toggles: deps.toggles, timeZone: deps.timeZone,
   });
   registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler });
-  registerSettingsRoute(app, { gmailAccount: deps.gmailAccount, settings: deps.settings });
+  registerSettingsRoute(app, {
+    gmailAccount: deps.gmailAccount, settings: deps.settings, language: () => deps.profile().language,
+  });
   registerFocusRoute(app, { jobs: deps.jobs, profile: deps.profile, settings: deps.settings });
   registerOnboardingRoutes(app, { profiles: deps.profiles, dataDir: deps.dataDir, enhancer: deps.enhancer });
 

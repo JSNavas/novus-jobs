@@ -1,5 +1,7 @@
 import type { GoogleGenAI } from '@google/genai';
 import type { Config } from '../config.js';
+import { findCountry } from './countries.js';
+import { t } from '../i18n/index.js';
 import type { CandidateProfile, Offer } from './decide.js';
 
 /**
@@ -72,17 +74,59 @@ function parseJudgeItem(item: unknown, offset: number): JudgeVerdict | null {
   };
 }
 
-function instruction(profile: CandidateProfile): string {
+/** El país del perfil con su nombre, que es lo que el modelo entiende. */
+function countryName(profile: CandidateProfile): string | null {
+  return findCountry(profile.geo.country)?.label ?? null;
+}
+
+/** Cómo se le describe al modelo cada modalidad que el usuario NO acepta. */
+function unwantedModalities(profile: CandidateProfile): string[] {
+  const out: string[] = [];
+  if (!profile.modality.onsite) out.push('presencial');
+  if (!profile.modality.hybrid) out.push('híbrido');
+  if (!profile.modality.remoteGlobal) out.push('remoto sin más');
+  if (!profile.modality.remoteHomeCountry) out.push('remoto solo para su país');
+  return out;
+}
+
+/**
+ * LA INSTRUCCIÓN SE CONSTRUYE DEL PERFIL, no está escrita a mano.
+ *
+ * Estuvo escrita: decía la edad profesional, la ciudad y el nivel de inglés de
+ * una persona concreta, y a quien instalara esto le juzgaba las ofertas con el
+ * criterio de otro. Peor que inútil — el modelo descartaba por un inglés que sí
+ * tiene, o le dejaba pasar un presencial que no puede aceptar.
+ *
+ * Y se escribe en el idioma del usuario porque el modelo contesta en el idioma
+ * en que se le habla, y su `motivo` acaba en la pantalla de descartadas.
+ */
+function instruction(profile: CandidateProfile, country: string | null): string {
+  const unwanted = unwantedModalities(profile);
+  const accepted = [
+    profile.modality.remoteGlobal ? 'remoto' : null,
+    profile.modality.remoteHomeCountry ? 'remoto para su país' : null,
+    profile.modality.hybrid ? 'híbrido' : null,
+    profile.modality.onsite ? 'presencial' : null,
+  ].filter(Boolean).join(', ');
+
   return [
-    'Eres el filtro de ofertas de trabajo de un desarrollador. Juzga cada publicación de LinkedIn que te paso.',
+    'Eres el filtro de ofertas de trabajo de un desarrollador. Juzga cada publicación que te paso.',
     '',
     'EL CANDIDATO:',
-    '- Full Stack Engineer con 9 años de experiencia. Vive en Venezuela (estado Falcón).',
-    `- Sabe: ${profile.stack.join(', ')}.`,
-    `- NO sabe, y si lo EXIGEN el puesto no le sirve: ${profile.cannotDo.join(', ')}.`,
-    '- Inglés A2: lee documentación técnica, pero NO puede trabajar en inglés.',
-    '- Solo le sirve el trabajo REMOTO. No puede ir a ninguna oficina.',
-    '- Busca empresas EXTRANJERAS: las venezolanas no le interesan.',
+    `- Sabe: ${profile.stack.join(', ') || 'no lo ha dicho'}.`,
+    `- Su oficio lo definen: ${profile.core.join(', ') || 'no lo ha dicho'}.`,
+    profile.cannotDo.length
+      ? `- NO sabe, y si lo EXIGEN el puesto no le sirve: ${profile.cannotDo.join(', ')}.`
+      : '- No ha declarado tecnologías que no maneje.',
+    country ? `- Vive en: ${country}.` : '- No ha dicho dónde vive: no descartes por país.',
+    profile.english.filter
+      ? `- Inglés ${profile.english.level.toUpperCase()}: si EXIGEN más que eso, el puesto no le sirve.`
+      : `- Inglés ${profile.english.level.toUpperCase()}. NO descartes por idioma: quiere verlas igual.`,
+    `- Acepta: ${accepted || 'no lo ha dicho'}.`,
+    unwanted.length ? `- NO acepta: ${unwanted.join(', ')}.` : null,
+    profile.geo.excludeLocalEmployers && country
+      ? `- Busca empresas EXTRANJERAS: las de ${country} no le interesan.`
+      : null,
     '',
     'PARA CADA PUBLICACIÓN, RESPONDE:',
     '',
@@ -91,21 +135,24 @@ function instruction(profile: CandidateProfile): string {
     '   candidato ("Hola red, soy X, busco oportunidades").',
     '',
     '2. descarte: SOLO uno de estos valores, o null:',
-    '   "onsite"            → presencial, híbrido, o pide ir a una oficina.',
-    '   "other-country"     → el remoto exige residir en otro país ("remoto Argentina",',
-    '                         "must be based in Spain"), o la lista de países donde',
-    '                         contratan NO incluye Venezuela.',
-    '   "english"           → EXIGEN inglés por escrito.',
+    '   "onsite"            → la modalidad es una de las que NO acepta.',
+    country
+      ? `   "other-country"     → el remoto exige residir en otro país, o la lista de países\n                         donde contratan NO incluye ${country}.`
+      : '   "other-country"     → no lo uses: no ha dicho desde dónde busca.',
+    profile.english.filter
+      ? '   "english"           → EXIGEN un inglés por encima del suyo.'
+      : '   "english"           → no lo uses: no quiere filtrar por idioma.',
     '   "technology"        → EXIGEN algo que no sabe (de la lista de arriba).',
-    '   "venezuelan-employer" → la contrata una empresa de Venezuela.',
+    profile.geo.excludeLocalEmployers && country
+      ? `   "venezuelan-employer" → la contrata una empresa de ${country}.`
+      : '   "venezuelan-employer" → no lo uses.',
     '   "role"              → el puesto NO es de desarrollo de software, aunque el',
     '                         anuncio mencione tecnologías que él sabe. Es de',
     '                         seguridad/redes, datos (data engineer, analista BI),',
     '                         QA manual, soporte, diseño, producto, ventas o',
-    '                         reclutamiento. Él programa: backend, frontend o full',
-    '                         stack. Un puesto de desarrollo que ADEMÁS pida nociones',
-    '                         de seguridad o datos NO es "role": lo es cuando el',
-    '                         trabajo principal no es escribir software.',
+    '                         reclutamiento. Él programa. Un puesto de desarrollo que',
+    '                         ADEMÁS pida nociones de seguridad o datos NO es "role":',
+    '                         lo es cuando el trabajo principal no es escribir software.',
     '   null                → EL RESTO DE CASOS.',
     '',
     '   Si no está en esa lista, es null. Que no diga si es remoto NO es un descarte.',
@@ -113,28 +160,25 @@ function instruction(profile: CandidateProfile): string {
     '',
     '   DISTINGUE EXIGIR de MENCIONAR. Estas van con null:',
     '     · "inglés deseable", "se valora inglés", "English is a plus".',
-    '     · la publicación escrita en inglés (él lee inglés técnico sin problema).',
+    '     · la publicación escrita en inglés: escribirla en inglés no es exigirlo.',
     '     · cualquier lista de alternativas que incluya algo que SÍ sabe:',
     '       "React, Angular o similar" → sabe React → null.',
-    '       "Python / Go"              → sabe Python → null.',
     '     · "migrar nuestro legacy en Java" → buscan a alguien que NO venga de ahí.',
     '     · "remoto global, clientes en Estados Unidos" → dice dónde están los clientes.',
     '     · "empresa de Bogotá, trabajo 100% remoto" → la ciudad es de la empresa.',
-    '     · "remoto PARA Venezuela" de una extranjera → es justo lo que busca.',
     '',
     '3. esJunior: ¿es junior, trainee, becario o prácticas? Solo para la sección de',
     '   extras, NO es un descarte. "Semi Senior" y "Junior/Semi Senior" NO son junior.',
     '',
     '4. esAgregador: ¿la publica un intermediario que capturó la oferta de otro sitio',
-    '   y la revende? (Freelanly, Jobfound, "Jobs Watcher"). Una bolsa de empleo que',
-    '   publica SU propia vacante NO es agregador.',
+    '   y la revende? Una bolsa de empleo que publica SU propia vacante NO es agregador.',
     '',
-    '5. motivo: una frase corta explicando la decisión, en español.',
+    `5. motivo: una frase corta explicando la decisión. ${t(profile.language, 'judge.language')}`,
     '',
     'RESPONDE SOLO CON UN ARRAY JSON, sin markdown ni texto alrededor:',
     '[{"i":0,"esOferta":true,"descarte":null,"esJunior":false,"esAgregador":false,"motivo":"…"}]',
     'Un objeto por publicación, con su índice. Ni uno más ni uno menos.',
-  ].join('\n');
+  ].filter((line) => line !== null).join('\n');
 }
 
 /**
@@ -207,7 +251,7 @@ export class LlmJudge {
       try {
         const response = await this.client.models.generateContent({
           model: this.model,
-          contents: `${instruction(profile)}\n\n${posts}`,
+          contents: `${instruction(profile, countryName(profile))}\n\n${posts}`,
         });
         const array = firstJsonArray(response.text ?? '');
         if (array) return array.flatMap((item) => parseJudgeItem(item, offset) ?? []);

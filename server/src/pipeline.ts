@@ -1,5 +1,7 @@
 import type { JobsRepository, NewJob } from './db/jobs.repository.js';
 import type { RunOutcome } from './db/runs.repository.js';
+import { t } from './i18n/index.js';
+import type { Language } from './profile/types.js';
 import { decideShipping, fingerprint, locationLabel, storedText, type CandidateProfile, type Offer, type RejectedBy, type Verdict } from './filters/decide.js';
 import { companyName, offerTitle, roleOnly, stripAuthorHeaders } from './filters/headline.js';
 import type { LlmJudge, JudgeVerdict } from './filters/judge.js';
@@ -101,7 +103,10 @@ async function runSource(source: JobSource, deps: PipelineDeps): Promise<{ outco
     const metrics = metricsOf.get(fingerprint(offer.text)) ?? null;
     const ruleVerdict = decideShipping(offer, deps.profile);
     const judgment = judged.get(fingerprint(offer.text));
-    const verdict = rejectIfStale(applyJudgment(ruleVerdict, judgment), metrics, now, deps.maxAgeDays);
+    const language = deps.profile.language;
+    const verdict = rejectIfStale(
+      applyJudgment(ruleVerdict, judgment, language), metrics, now, deps.maxAgeDays, language,
+    );
     const job = toNewJob(
       source.name,
       offer,
@@ -166,14 +171,21 @@ function ageInDays(postedAt: string | null, now: number): number | null {
   return Number.isNaN(published) ? null : Math.floor((now - published) / DAY_MS);
 }
 
-function rejectIfStale(verdict: Verdict, metrics: PostMetrics | null, now: number, maxAgeDays: number): Verdict {
+function rejectIfStale(verdict: Verdict, metrics: PostMetrics | null, now: number, maxAgeDays: number, language: Language): Verdict {
   const days = ageInDays(metrics?.postedAt ?? null, now);
   if (days === null || days <= maxAgeDays) return verdict;
   return {
     ...verdict,
     accepted: false,
     uncertain: false,
-    reason: `publicada hace ${Math.floor(days / 30)} meses; el tope son ${Math.round(maxAgeDays / 30)}`,
+    reason: t(language, 'reject.stale', {
+      months: Math.floor(days / 30),
+      max: Math.round(maxAgeDays / 30),
+    }),
+    rejection: {
+      code: 'reject.stale',
+      params: { months: Math.floor(days / 30), max: Math.round(maxAgeDays / 30) },
+    },
     rejectedBy: 'stale',
   };
 }
@@ -225,7 +237,7 @@ function rejectedByOf(judgment: JudgeVerdict): RejectedBy {
  * «presencial» es justo la que el juez acaba de tumbar, así que seguir
  * mostrándola sería repetir el error con la etiqueta cambiada.
  */
-function applyJudgment(rules: Verdict, judgment: JudgeVerdict | undefined): Verdict {
+function applyJudgment(rules: Verdict, judgment: JudgeVerdict | undefined, language: Language): Verdict {
   if (!judgment) return rules;
 
   if (!judgment.isOffer || judgment.rejection) {
@@ -234,7 +246,15 @@ function applyJudgment(rules: Verdict, judgment: JudgeVerdict | undefined): Verd
     return {
       ...rules,
       accepted: false,
-      reason: `[IA] ${judgment.reason || judgment.rejection || 'no es una oferta'}`,
+      // El modelo contesta en el idioma en que se le habla, así que su frase
+      // ya viene en el del usuario; el código solo la envuelve.
+      reason: t(language, 'reject.ai', {
+        reason: judgment.reason || judgment.rejection || t(language, 'reject.ai.fallback'),
+      }),
+      rejection: {
+        code: 'reject.ai',
+        params: { reason: judgment.reason || judgment.rejection || t(language, 'reject.ai.fallback') },
+      },
       rejectedBy: rejectedByOf(judgment),
     };
   }
@@ -285,6 +305,9 @@ function toNewJob(
     locationKind: verdict.location,
     verdict: verdict.accepted ? JobVerdict.Accepted : JobVerdict.Rejected,
     rejectionReason: verdict.accepted ? null : verdict.reason,
+    // El mismo motivo sin idioma, para que la pantalla lo escriba en el suyo.
+    rejectionCode: verdict.accepted ? null : verdict.rejection?.code ?? null,
+    rejectionParams: verdict.accepted ? null : verdict.rejection?.params ?? null,
     seniority: verdict.seniority,
     isAggregator: verdict.aggregator,
     isUncertain: verdict.uncertain,

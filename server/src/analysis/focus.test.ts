@@ -14,7 +14,8 @@ function job(text: string, id = 1): Job {
   return {
     id, source: 'getonbrd', fingerprint: `fp-${id}`, title: 'Oferta', role: 'Developer',
     company: null, author: 'Empresa', text, url: null, location: null,
-    locationKind: JobLocation.Global, verdict: JobVerdict.Accepted, rejectionReason: null,
+    locationKind: JobLocation.Global, verdict: JobVerdict.Accepted,
+    rejectionReason: null, rejectionCode: null, rejectionParams: null,
     seniority: JobSeniority.Regular, isAggregator: false, isUncertain: false,
     judgeStatus: JudgeStatus.Judged, status: JobStatus.New, foundAt: '2026-11-11T00:00:00.000Z',
     postedAt: null, stackMatch: [], applyUrl: null, contactEmail: null, runId: 1,

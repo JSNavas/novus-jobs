@@ -43,21 +43,24 @@ describe('headline', () => {
 });
 
 describe('offersMail', () => {
+  // Los casos están escritos en español porque es el idioma en el que se
+  // midieron; lo que prueban —la concordancia, el resumen, el tope— no depende
+  // del idioma, y hay un caso al final que comprueba que el inglés también sale.
   it('el asunto dice cuántas son, en singular y en plural', () => {
-    assert.equal(offersSubject(1), '1 oferta nueva para revisar');
-    assert.equal(offersSubject(4), '4 ofertas nuevas para revisar');
+    assert.equal(offersSubject(1, 'es'), '1 oferta nueva para revisar');
+    assert.equal(offersSubject(4, 'es'), '4 ofertas nuevas para revisar');
   });
 
   it('concuerda en singular y en plural, sin "1 oferta que pasan"', () => {
-    const una = offersMail([job()], 'http://x/');
+    const una = offersMail([job()], 'http://x/', 'es');
     assert.match(una.html, /Llegó <strong>1 oferta nueva<\/strong> que pasa tus reglas/);
     assert.match(una.text, /^Llegó 1 oferta nueva\./m);
-    const varias = offersMail([job(), job()], 'http://x/');
+    const varias = offersMail([job(), job()], 'http://x/', 'es');
     assert.match(varias.html, /Llegaron <strong>2 ofertas nuevas<\/strong> que pasan tus reglas/);
   });
 
   it('lleva al dashboard y resume cada oferta con dónde y con qué encaja', () => {
-    const mail = offersMail([job()], 'http://127.0.0.1:47831/');
+    const mail = offersMail([job()], 'http://127.0.0.1:47831/', 'es');
     assert.match(mail.text, /Desarrollador Full Stack/);
     assert.match(mail.text, /Venezuela · TypeScript, Node\.js/);
     assert.match(mail.text, /http:\/\/127\.0\.0\.1:47831\//);
@@ -65,13 +68,13 @@ describe('offersMail', () => {
   });
 
   it('con muchas ofertas lista unas pocas y dice cuántas faltan', () => {
-    const mail = offersMail(Array.from({ length: 20 }, () => job()), 'http://x/');
+    const mail = offersMail(Array.from({ length: 20 }, () => job()), 'http://x/', 'es');
     assert.match(mail.text, /…y 8 más en el dashboard/);
   });
 
   it('escapa el HTML del texto de la oferta', () => {
     // El texto viene de LinkedIn: es de fuera y no puede inyectar marcado.
-    const mail = offersMail([job({ text: 'Buscamos\n<script>alert(1)</script> Node.js developer remoto' })], 'http://x/');
+    const mail = offersMail([job({ text: 'Buscamos\n<script>alert(1)</script> Node.js developer remoto' })], 'http://x/', 'es');
     assert.equal(mail.html.includes('<script>'), false);
     assert.match(mail.html, /&lt;script&gt;/);
   });
@@ -79,13 +82,20 @@ describe('offersMail', () => {
 
 describe('failureMail', () => {
   it('la sesión caída dice exactamente qué comando correr', () => {
-    const mail = failureMail(RunFailure.LoginRequired, 'url: /uas/login', 'http://x/');
+    const mail = failureMail(RunFailure.LoginRequired, 'url: /uas/login', 'http://x/', 'es');
     assert.match(mail.subject, /sesión de LinkedIn caducó/);
     assert.match(mail.text, /npm run login -- linkedin/);
   });
 
   it('cada motivo tiene su propio asunto y su propio arreglo', () => {
-    const subjects = Object.values(RunFailure).map((f) => failureMail(f, 'detalle', 'http://x/').subject);
+    const subjects = Object.values(RunFailure).map((f) => failureMail(f, 'detalle', 'http://x/', 'es').subject);
     assert.equal(new Set(subjects).size, subjects.length);
+  });
+
+  it('el mismo correo sale en inglés si ese es el idioma del perfil', () => {
+    const mail = offersMail([job()], 'http://x/', 'en');
+    assert.equal(mail.subject, '1 new posting to review');
+    assert.match(mail.html, /made it through your profile rules/);
+    assert.match(mail.html, /Open the dashboard/);
   });
 });

@@ -249,7 +249,7 @@ export class Runner implements PassRunner {
    */
   private async announce(accepted: readonly NewJob[]): Promise<void> {
     if (!accepted.length || !this.deps.mailer.enabled()) return;
-    await this.deps.mailer.send(offersMail(accepted, this.deps.dashboardUrl));
+    await this.deps.mailer.send(offersMail(accepted, this.deps.dashboardUrl, this.deps.profile().language));
   }
 
   /**
@@ -265,7 +265,9 @@ export class Runner implements PassRunner {
     if (!this.deps.mailer.enabled()) return;
     const previous = this.deps.runs.previousTo(id);
     if (previous?.status === RunStatus.Error && previous.failure === failure) return;
-    await this.deps.mailer.send(failureMail(failure, detail, this.deps.dashboardUrl));
+    await this.deps.mailer.send(
+      failureMail(failure, detail, this.deps.dashboardUrl, this.deps.profile().language),
+    );
   }
 
   private async execute(id: number, source: JobSource): Promise<void> {

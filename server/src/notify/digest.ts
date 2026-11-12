@@ -1,4 +1,6 @@
 import type { NewJob } from '../db/jobs.repository.js';
+import { t } from '../i18n/index.js';
+import type { Language } from '../profile/types.js';
 import { RunFailure } from '../types.js';
 import type { Mail } from './mailer.js';
 
@@ -31,14 +33,10 @@ function escapeHtml(value: string): string {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-function plural(count: number, one: string, many: string): string {
-  return count === 1 ? one : many;
-}
-
-export function offersSubject(count: number): string {
+export function offersSubject(count: number, language: Language): string {
   return count === 1
-    ? '1 oferta nueva para revisar'
-    : `${count} ofertas nuevas para revisar`;
+    ? t(language, 'mail.subject.one')
+    : t(language, 'mail.subject.many', { count });
 }
 
 /**
@@ -56,13 +54,13 @@ function sourceLabel(source: string): string {
 }
 
 /** El aviso de ofertas nuevas. `dashboardUrl` es a dónde tiene que ir. */
-export function offersMail(jobs: readonly NewJob[], dashboardUrl: string): Mail {
+export function offersMail(jobs: readonly NewJob[], dashboardUrl: string, language: Language): Mail {
   const listed = jobs.slice(0, MAX_LISTED);
   const rest = jobs.length - listed.length;
 
   const lines = listed.map((job) => {
     const stack = job.stackMatch.slice(0, 5).join(', ');
-    const where = job.location ?? 'sin ubicación';
+    const where = job.location ?? t(language, 'mail.noLocation');
     // De dónde viene, lo primero: con dos plataformas, dice si hay que
     // responderle a alguien o rellenar un formulario.
     return {
@@ -72,32 +70,32 @@ export function offersMail(jobs: readonly NewJob[], dashboardUrl: string): Mail 
   });
 
   const text = [
-    `${plural(jobs.length, 'Llegó 1 oferta nueva', `Llegaron ${jobs.length} ofertas nuevas`)}. Revisa el dashboard:`,
+    jobs.length === 1 ? t(language, 'mail.text.one') : t(language, 'mail.text.many', { count: jobs.length }),
     dashboardUrl,
     '',
     ...lines.map((l) => `• ${l.title}\n  ${l.meta}`),
-    rest > 0 ? `\n…y ${rest} más en el dashboard.` : '',
+    rest > 0 ? `\n${t(language, 'mail.more', { count: rest })}` : '',
   ].filter(Boolean).join('\n');
 
   const html = [
     '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5;color:#1f2937">',
     // La concordancia se arma entera por rama: con "Llegaron 1 oferta que pasan"
     // el correo parece generado por una plantilla, que es justo lo que es.
-    `<p>${plural(jobs.length,
-      'Llegó <strong>1 oferta nueva</strong> que pasa tus reglas de perfil.',
-      `Llegaron <strong>${jobs.length} ofertas nuevas</strong> que pasan tus reglas de perfil.`)}</p>`,
+    `<p>${jobs.length === 1
+      ? t(language, 'mail.html.one')
+      : t(language, 'mail.html.many', { count: jobs.length })}</p>`,
     '<ul style="padding-left:18px">',
     ...lines.map((l) =>
       `<li style="margin-bottom:10px"><strong>${escapeHtml(l.title)}</strong>` +
       `<br><span style="color:#6b7280;font-size:13px">${escapeHtml(l.meta)}</span></li>`),
     '</ul>',
-    rest > 0 ? `<p style="color:#6b7280">…y ${rest} más.</p>` : '',
-    `<p><a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;padding:10px 18px;background:#5d87ff;color:#fff;border-radius:6px;text-decoration:none">Abrir el dashboard</a></p>`,
-    `<p style="color:#9ca3af;font-size:12px">El detalle, el enlace de postulación y los botones de guardar o descartar están en el dashboard.</p>`,
+    rest > 0 ? `<p style="color:#6b7280">${t(language, 'mail.more.html', { count: rest })}</p>` : '',
+    `<p><a href="${escapeHtml(dashboardUrl)}" style="display:inline-block;padding:10px 18px;background:#5d87ff;color:#fff;border-radius:6px;text-decoration:none">${t(language, 'mail.openDashboard')}</a></p>`,
+    `<p style="color:#9ca3af;font-size:12px">${t(language, 'mail.footer')}</p>`,
     '</div>',
   ].filter(Boolean).join('');
 
-  return { subject: offersSubject(jobs.length), html, text };
+  return { subject: offersSubject(jobs.length, language), html, text };
 }
 
 /**
@@ -108,28 +106,39 @@ export function offersMail(jobs: readonly NewJob[], dashboardUrl: string): Mail 
  * pasan los días sin buscar nada. Fue exactamente lo que pasó antes de que
  * existiera este aviso.
  */
-export function failureMail(failure: RunFailure, detail: string, dashboardUrl: string): Mail {
+export function failureMail(
+  failure: RunFailure,
+  detail: string,
+  dashboardUrl: string,
+  language: Language,
+  /** Qué plataforma falló: el comando del correo tiene que nombrarla a ella. */
+  source = 'linkedin',
+): Mail {
   const what: Record<RunFailure, string> = {
-    [RunFailure.LoginRequired]: 'La sesión de LinkedIn caducó: la búsqueda está parada',
-    [RunFailure.ProfileBusy]: 'La búsqueda no pudo correr: el navegador estaba ocupado',
-    [RunFailure.Layout]: 'La búsqueda no encontró publicaciones: puede haber cambiado LinkedIn',
-    [RunFailure.Other]: 'La búsqueda de empleo falló',
+    [RunFailure.LoginRequired]: t(language, 'mail.fail.loginRequired', { source: sourceLabel(source) }),
+    [RunFailure.ProfileBusy]: t(language, 'mail.fail.profileBusy'),
+    [RunFailure.Layout]: t(language, 'mail.fail.layout'),
+    [RunFailure.Other]: t(language, 'mail.fail.other'),
   };
   const fix: Record<RunFailure, string> = {
-    [RunFailure.LoginRequired]: 'En el servidor: cd server && npm run login -- linkedin, inicia sesión y cierra la ventana. Las pasadas se reanudan solas.',
-    [RunFailure.ProfileBusy]: 'Cierra la ventana de Chromium que tenga abierto el perfil.',
-    [RunFailure.Layout]: 'Hay una captura en server/data/logs/ para ver qué sirvió LinkedIn.',
-    [RunFailure.Other]: 'Mira el detalle y los logs del servidor.',
+    [RunFailure.LoginRequired]: t(language, 'mail.fix.loginRequired', { source }),
+    [RunFailure.ProfileBusy]: t(language, 'mail.fix.profileBusy'),
+    [RunFailure.Layout]: t(language, 'mail.fix.layout'),
+    [RunFailure.Other]: t(language, 'mail.fix.other'),
   };
 
   const subject = what[failure];
-  const text = `${subject}\n\n${fix[failure]}\n\nDetalle: ${detail}\n\nDashboard: ${dashboardUrl}`;
+  const text = [
+    subject, '', fix[failure], '',
+    t(language, 'mail.detail', { detail }), '',
+    t(language, 'mail.dashboard', { url: dashboardUrl }),
+  ].join('\n');
   const html =
     '<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;font-size:15px;line-height:1.5;color:#1f2937">' +
     `<p><strong>${escapeHtml(subject)}</strong></p>` +
     `<p>${escapeHtml(fix[failure])}</p>` +
-    `<p style="color:#6b7280;font-size:13px">Detalle: ${escapeHtml(detail)}</p>` +
-    `<p><a href="${escapeHtml(dashboardUrl)}">Abrir el dashboard</a></p></div>`;
+    `<p style="color:#6b7280;font-size:13px">${escapeHtml(t(language, 'mail.detail', { detail }))}</p>` +
+    `<p><a href="${escapeHtml(dashboardUrl)}">${t(language, 'mail.openDashboard')}</a></p></div>`;
 
   return { subject, html, text };
 }
