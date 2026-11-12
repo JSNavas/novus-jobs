@@ -3,9 +3,7 @@ import { hourInUserZone } from '../../format';
 import { t } from '../../i18n';
 
 function hourLabel(hour: number): string {
-  const suffix = hour < 12 ? 'am' : 'pm';
-  const twelve = hour % 12 === 0 ? 12 : hour % 12;
-  return `${twelve}:00 ${suffix}`;
+  return `${String(hour).padStart(2, '0')}:00`;
 }
 
 export function nextSearchSentence(schedule: Schedule | null): string {
@@ -70,14 +68,23 @@ export function formatNextSearch(next: NextSearch): string {
   return t('schedule.nextInHoursMinutes', { hours, minutes });
 }
 
-export function countdownOf(secondsLeft: number): string {
+export function countdownOf(secondsLeft: number, withSeconds: boolean): string {
   const safe = Math.max(0, secondsLeft);
-  const parts = [Math.floor(safe / SECONDS_PER_HOUR), Math.floor(safe / 60) % 60, safe % 60];
+  const parts = [Math.floor(safe / SECONDS_PER_HOUR), Math.floor(safe / 60) % 60];
+  if (withSeconds) parts.push(safe % 60);
   return parts.map((part) => String(part).padStart(2, '0')).join(':');
 }
 
 export function searchHourLabel(hour: number): string {
   return hourLabel(hour);
+}
+
+export function shareSince(startedAt: string, next: NextSearch, now: Date): number | null {
+  const started = Date.parse(startedAt);
+  if (Number.isNaN(started)) return null;
+  const span = (now.getTime() - started) / 1_000 + next.secondsLeft;
+  if (span <= 0) return null;
+  return Math.min(1, Math.max(0, 1 - next.secondsLeft / span));
 }
 
 export function elapsedShare(hours: number[], next: NextSearch): number | null {

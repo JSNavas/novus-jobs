@@ -1,18 +1,10 @@
-import { Box, Drawer, Stack, Typography } from '@mui/material';
+import { Box, Drawer, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { IconLock } from '@tabler/icons-react';
 import { t } from '../../../../i18n';
 import SidebarItems from './SidebarItems';
 
-const drawerWidth = 224;
-
-const paperSx = {
-  width: drawerWidth,
-  boxSizing: 'border-box',
-  borderRight: 1,
-  borderColor: 'divider',
-  display: 'flex',
-  flexDirection: 'column',
-};
+const fullWidth = 224;
+const railWidth = 64;
 
 const BrandMark = () => (
   <Box aria-hidden sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 4px)', gap: '3px', transform: 'skewY(-18deg)' }}>
@@ -22,30 +14,41 @@ const BrandMark = () => (
   </Box>
 );
 
-const SidebarContent = ({ onNavigate }: { onNavigate: () => void }) => (
+const SidebarContent = ({ onNavigate, collapsed }: { onNavigate: () => void; collapsed: boolean }) => (
   <>
-    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ px: 2.5, pt: 2.5, pb: 1.25 }}>
+    <Stack
+      direction="row"
+      spacing={collapsed ? 0 : 1.25}
+      alignItems="center"
+      justifyContent={collapsed ? 'center' : 'flex-start'}
+      sx={{ px: collapsed ? 0 : 2.5, pt: 2.5, pb: collapsed ? 2.5 : 1.25 }}
+    >
       <BrandMark />
-      <Typography variant="mono" color="primary" sx={{ fontWeight: 600, fontSize: 15 }}>
-        NOVUS·JOBS
-      </Typography>
+      {collapsed ? null : (
+        <Typography variant="mono" color="primary" sx={{ fontWeight: 600, fontSize: 15 }}>
+          NOVUS·JOBS
+        </Typography>
+      )}
     </Stack>
 
-    <Stack direction="row" spacing={0.75} alignItems="center" sx={{ px: 2.5, pb: 1.5, color: 'text.secondary' }}>
-      <IconLock size={11} />
-      <Typography variant="label">{t('sidebar.workspace')}</Typography>
-    </Stack>
+    {collapsed ? null : (
+      <Stack direction="row" spacing={0.75} alignItems="center" sx={{ px: 2.5, pb: 1.5, color: 'text.secondary' }}>
+        <IconLock size={11} />
+        <Typography variant="label">{t('sidebar.workspace')}</Typography>
+      </Stack>
+    )}
 
-    <SidebarItems onNavigate={onNavigate} />
+    <SidebarItems onNavigate={onNavigate} collapsed={collapsed} />
 
     <Stack
       direction="row"
       spacing={1}
       alignItems="center"
-      sx={{ px: 2.5, height: 46, borderTop: 1, borderColor: 'divider', color: 'text.secondary', flexShrink: 0 }}
+      justifyContent={collapsed ? 'center' : 'flex-start'}
+      sx={{ px: collapsed ? 0 : 2.5, height: 46, borderTop: 1, borderColor: 'divider', color: 'text.secondary', flexShrink: 0 }}
     >
       <IconLock size={12} />
-      <Typography variant="label">{t('sidebar.local')}</Typography>
+      {collapsed ? null : <Typography variant="label">{t('sidebar.local')}</Typography>}
     </Stack>
   </>
 );
@@ -55,17 +58,42 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => (
-  <>
-    <Box sx={{ width: drawerWidth, flexShrink: 0, display: { xs: 'none', lg: 'block' } }}>
-      <Drawer variant="permanent" open sx={{ '& .MuiDrawer-paper': paperSx }}>
-        <SidebarContent onNavigate={() => undefined} />
-      </Drawer>
-    </Box>
-    <Drawer variant="temporary" open={mobileOpen} onClose={onClose} sx={{ display: { lg: 'none' }, '& .MuiDrawer-paper': paperSx }}>
-      <SidebarContent onNavigate={onClose} />
+const Sidebar = ({ mobileOpen, onClose }: SidebarProps) => {
+  const theme = useTheme();
+  const wide = useMediaQuery(theme.breakpoints.up('lg'));
+  const pinned = useMediaQuery(theme.breakpoints.up('sm'));
+  const collapsed = pinned && !wide;
+  const width = collapsed ? railWidth : fullWidth;
+
+  const paperSx = {
+    width,
+    boxSizing: 'border-box',
+    borderRight: 1,
+    borderColor: 'divider',
+    display: 'flex',
+    flexDirection: 'column',
+  };
+
+  if (pinned) {
+    return (
+      <Box sx={{ width, flexShrink: 0 }}>
+        <Drawer variant="permanent" open sx={{ '& .MuiDrawer-paper': paperSx }}>
+          <SidebarContent onNavigate={() => undefined} collapsed={collapsed} />
+        </Drawer>
+      </Box>
+    );
+  }
+
+  return (
+    <Drawer
+      variant="temporary"
+      open={mobileOpen}
+      onClose={onClose}
+      sx={{ '& .MuiDrawer-paper': { ...paperSx, width: fullWidth } }}
+    >
+      <SidebarContent onNavigate={onClose} collapsed={false} />
     </Drawer>
-  </>
-);
+  );
+};
 
 export default Sidebar;

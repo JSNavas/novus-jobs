@@ -13,7 +13,7 @@ const Header = ({ onMenuClick }: HeaderProps) => (
     sx={{ bgcolor: 'background.default', color: 'text.primary', borderBottom: 1, borderColor: 'divider' }}
   >
     <Toolbar variant="dense">
-      <IconButton aria-label={t('header.openMenu')} onClick={onMenuClick} sx={{ mr: 1, display: { lg: 'none' } }}>
+      <IconButton aria-label={t('header.openMenu')} onClick={onMenuClick} sx={{ mr: 1, display: { sm: 'none' } }}>
         <IconMenu2 size="20" />
       </IconButton>
       <Typography variant="overline" color="textSecondary">

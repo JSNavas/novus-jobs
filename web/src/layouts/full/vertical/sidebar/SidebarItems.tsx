@@ -1,4 +1,4 @@
-import { Box, List, ListItemButton, ListItemIcon, ListItemText, ListSubheader } from '@mui/material';
+import { Badge, Box, List, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Tooltip } from '@mui/material';
 import {
   IconArchive, IconBookmark, IconEye, IconFilterOff, IconInbox, IconLayoutDashboard, IconPlug, IconSettings,
   IconTargetArrow,
@@ -7,7 +7,7 @@ import {
 import { NavLink } from 'react-router';
 import { getStats, listIntegrations, type Integration, type Stats } from '../../../../api/client';
 import { AppChip, AppStatusPilot } from '../../../../components/ui';
-import { useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { JobStatus } from '../../../../types';
 import { setSourceLabels } from '../../../../labels';
 import { runStatusLabel, runStatusTone } from '../../../../views/dashboard/runStatus';
@@ -37,6 +37,8 @@ const itemSx = {
   '&.active': { bgcolor: 'grey.300', borderColor: 'divider', color: 'primary.main' },
 };
 
+const railItemSx = { ...itemSx, px: 0, justifyContent: 'center' };
+
 const groupSx = { px: 1.5, py: 0 };
 
 const subheaderSx = {
@@ -57,9 +59,10 @@ const labelSx = { my: 0, '& .MuiTypography-root': { fontSize: 13 } };
 
 interface SidebarItemsProps {
   onNavigate: () => void;
+  collapsed?: boolean;
 }
 
-const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
+const SidebarItems = ({ onNavigate, collapsed = false }: SidebarItemsProps) => {
   const [stats, setStats] = useState<Stats | null>(null);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
 
@@ -87,73 +90,99 @@ const SidebarItems = ({ onNavigate }: SidebarItemsProps) => {
     return stats.byStatus[view.status];
   };
 
+  const group = (labelKey: 'nav.group.monitor' | 'nav.group.offers' | 'nav.group.audit' | 'nav.group.system', children: ReactNode) => (
+    <List
+      sx={groupSx}
+      subheader={collapsed ? undefined : <ListSubheader disableSticky sx={subheaderSx}>{t(labelKey)}</ListSubheader>}
+    >
+      {children}
+    </List>
+  );
+
+  const item = (
+    to: string,
+    label: string,
+    Icon: TablerIcon,
+    options: { count?: number | null; tone?: 'success' | 'neutral'; trailing?: ReactNode } = {},
+  ) => {
+    const { count, tone = 'neutral', trailing } = options;
+    const icon = <Icon size="19" stroke={1.6} />;
+
+    const button = (
+      <ListItemButton
+        component={NavLink}
+        to={to}
+        end
+        onClick={onNavigate}
+        aria-label={collapsed ? label : undefined}
+        sx={collapsed ? railItemSx : itemSx}
+      >
+        <ListItemIcon sx={{ minWidth: collapsed ? 0 : 32, color: 'inherit' }}>
+          {collapsed && count ? (
+            <Badge
+              badgeContent={count}
+              max={999}
+              color={tone === 'success' ? 'success' : 'secondary'}
+              slotProps={{ badge: { style: { fontSize: 9, height: 15, minWidth: 15 } } }}
+            >
+              {icon}
+            </Badge>
+          ) : icon}
+        </ListItemIcon>
+        {collapsed ? null : <ListItemText primary={label} sx={labelSx} />}
+        {collapsed ? null : trailing}
+        {collapsed || !count ? null : <AppChip label={String(count)} tone={tone} />}
+      </ListItemButton>
+    );
+
+    if (!collapsed) return button;
+    return <Tooltip key={to} title={label} placement="right">{button}</Tooltip>;
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }}>
       <Box sx={{ flex: 1, overflowY: 'auto' }}>
-        <List sx={groupSx} subheader={<ListSubheader disableSticky sx={subheaderSx}>{t('nav.group.monitor')}</ListSubheader>}>
-          <ListItemButton component={NavLink} to="/" end onClick={onNavigate} sx={itemSx}>
-            <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
-              <IconLayoutDashboard size="19" stroke={1.6} />
-            </ListItemIcon>
-            <ListItemText primary={t('nav.dashboard')} sx={labelSx} />
-            {stats?.lastRun ? (
-              <AppStatusPilot tone={runStatusTone(stats.lastRun)} srLabel={runStatusLabel(stats.lastRun)} />
-            ) : null}
-          </ListItemButton>
-        </List>
+        {group('nav.group.monitor', (
+          <Box key="/">
+            {item('/', t('nav.dashboard'), IconLayoutDashboard, {
+              trailing: stats?.lastRun
+                ? <AppStatusPilot tone={runStatusTone(stats.lastRun)} srLabel={runStatusLabel(stats.lastRun)} />
+                : null,
+            })}
+          </Box>
+        ))}
 
-        <List sx={groupSx} subheader={<ListSubheader disableSticky sx={subheaderSx}>{t('nav.group.offers')}</ListSubheader>}>
-          {INBOX_VIEWS.map((view) => {
-            const Icon = ICONS[view.path] ?? IconInbox;
-            const count = countOf(view);
-            return (
-              <ListItemButton key={view.path} component={NavLink} to={view.path} end onClick={onNavigate} sx={itemSx}>
-                <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
-                  <Icon size="19" stroke={1.6} />
-                </ListItemIcon>
-                <ListItemText primary={titleOf(view)} sx={labelSx} />
-                {count ? (
-                  <AppChip label={String(count)} tone={view.status === JobStatus.New ? 'success' : 'neutral'} />
-                ) : null}
-              </ListItemButton>
-            );
-          })}
-        </List>
+        {group('nav.group.offers', INBOX_VIEWS.map((view) => (
+          <Box key={view.path}>
+            {item(view.path, titleOf(view), ICONS[view.path] ?? IconInbox, {
+              count: countOf(view),
+              tone: view.status === JobStatus.New ? 'success' : 'neutral',
+            })}
+          </Box>
+        )))}
 
-        <List sx={groupSx} subheader={<ListSubheader disableSticky sx={subheaderSx}>{t('nav.group.audit')}</ListSubheader>}>
-          <ListItemButton component={NavLink} to="/rechazadas" end onClick={onNavigate} sx={itemSx}>
-            <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
-              <IconFilterOff size="19" stroke={1.6} />
-            </ListItemIcon>
-            <ListItemText primary={t('nav.rejected')} sx={labelSx} />
-            {stats?.rejected ? <AppChip label={String(stats.rejected)} tone="neutral" /> : null}
-          </ListItemButton>
-          <ListItemButton component={NavLink} to="/enfoque" end onClick={onNavigate} sx={itemSx}>
-            <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
-              <IconTargetArrow size="19" stroke={1.6} />
-            </ListItemIcon>
-            <ListItemText primary={t('nav.focus')} sx={labelSx} />
-            {stats?.focusNew ? <AppChip label={String(stats.focusNew)} tone="success" /> : null}
-          </ListItemButton>
-        </List>
+        {group('nav.group.audit', (
+          <Box key="audit">
+            {item('/rechazadas', t('nav.rejected'), IconFilterOff, { count: stats?.rejected ?? null })}
+            {item('/enfoque', t('nav.focus'), IconTargetArrow, { count: stats?.focusNew ?? null, tone: 'success' })}
+          </Box>
+        ))}
 
-        <List sx={groupSx} subheader={<ListSubheader disableSticky sx={subheaderSx}>{t('nav.group.system')}</ListSubheader>}>
-          <ListItemButton component={NavLink} to="/integraciones" end onClick={onNavigate} sx={itemSx}>
-            <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
-              <IconPlug size="19" stroke={1.6} />
-            </ListItemIcon>
-            <ListItemText primary={t('nav.group.integrations')} sx={labelSx} />
-          </ListItemButton>
-          <ListItemButton component={NavLink} to="/configuracion" end onClick={onNavigate} sx={itemSx}>
-            <ListItemIcon sx={{ minWidth: 32, color: 'inherit' }}>
-              <IconSettings size="19" stroke={1.6} />
-            </ListItemIcon>
-            <ListItemText primary={t('nav.settings')} sx={labelSx} />
-          </ListItemButton>
-        </List>
+        {group('nav.group.system', (
+          <Box key="system">
+            {item('/integraciones', t('nav.group.integrations'), IconPlug)}
+            {item('/configuracion', t('nav.settings'), IconSettings)}
+          </Box>
+        ))}
       </Box>
 
-      <NextSearchIndicator lastRunFailed={lastRunFailed} platforms={integrations.length} />
+      {collapsed ? null : (
+        <NextSearchIndicator
+          lastRunFailed={lastRunFailed}
+          lastRunAt={stats?.lastRun?.startedAt ?? null}
+          platforms={integrations.length}
+        />
+      )}
     </Box>
   );
 };
