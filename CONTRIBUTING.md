@@ -23,6 +23,14 @@ DATA_DIR=/tmp/novus-dev PORT=47999 SCHEDULER_ENABLED=false npm start
 - `npm test` passes (`cd server`).
 - `npx tsc --noEmit` is clean in both `server/` and `web/`.
 - No new dependency unless it earns its place — the whole server runs on five.
+- **Commit messages are written in English**, subject and body, with no
+  exceptions. The product is deliberately bilingual — the tests, the discard
+  reasons and `README.es.md` are in Spanish on purpose — but the history is read
+  by whoever lands on the repository, and it reads alongside an English README.
+
+A good subject says what changed from the reader's side, not which file was
+touched, and the body says **why**: what was broken, how it was measured, and
+what was decided against. That is the one thing a diff cannot tell you later.
 
 ## How this code is written
 
