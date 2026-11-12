@@ -1,5 +1,5 @@
 import Database from 'better-sqlite3';
-import { mkdirSync } from 'node:fs';
+import { chmodSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { SCHEMA } from './schema.js';
 
@@ -59,9 +59,20 @@ function renameLegacyHomeLocation(db: Db): void {
   db.exec("UPDATE jobs SET location_kind = 'home_country' WHERE location_kind = 'venezuela'");
 }
 
+function onlyForYou(path: string): void {
+  try {
+    chmodSync(path, 0o600);
+  } catch {
+    return;
+  }
+}
+
 export function openDatabase(dataDir: string): Db {
-  mkdirSync(dataDir, { recursive: true });
-  const db = new Database(join(dataDir, 'jobs.db'));
+  mkdirSync(dataDir, { recursive: true, mode: 0o700 });
+  const file = join(dataDir, 'jobs.db');
+  const db = new Database(file);
+  onlyForYou(file);
+  for (const sidecar of ['-wal', '-shm']) onlyForYou(`${file}${sidecar}`);
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
   db.exec(SCHEMA);

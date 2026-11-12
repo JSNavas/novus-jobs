@@ -110,7 +110,7 @@ How each is enforced: [CONTRIBUTING.md](CONTRIBUTING.md) for the code,
 Requires **Node.js 22+** and about five minutes.
 
 ```bash
-git clone https://github.com/YOUR_USER/novus-jobs.git
+git clone https://github.com/JSNavas/novus-jobs.git
 cd novus-jobs
 
 # 1. The dashboard
@@ -204,9 +204,10 @@ reads. But the list is not the point — **adding your own is**:
 > Teamtailor, Personio). Or paste any job board address: the API behind it, its
 > RSS feed, and the postings carried inside the page are all looked for — and if
 > the page gives nothing away, it is opened in a real browser to see which
-> request brings the list, which is what a person does with F12. Then the model
-> writes the field mapping, you see three real postings before saving, and the
-> source is live without a restart.
+> request brings the list, which is what a person does with F12. Boards that
+> publish no data at all are read through the `JobPosting` each vacancy carries
+> to appear in Google. Then the model writes the field mapping, you see three
+> real postings before saving, and the source is live without a restart.
 
 The model is called **once**, to write the mapping. It is saved as data, so the
 next ten thousand postings are read with no LLM and no cost. That is the whole

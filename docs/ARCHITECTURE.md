@@ -55,13 +55,14 @@ jobs, and such a bug is invisible by definition unless you keep the evidence.
 | — a platform written as data | `descriptor.ts`, `described.source.ts`, `descriptors.ts` |
 | — the shipped catalogue | `server/descriptors/*.json` |
 | — finding a board from a name or a URL | `discover.ts`, `sniff.ts`, `joblike.ts` |
+| — reading a board that only has pages | `jsonld.ts`, `reader.ts` |
 | — writing the mapping with an LLM | `invent.ts` |
 | Scheduling | `server/src/scheduler/` |
 | Persistence | `server/src/db/` |
 | Market analysis | `server/src/analysis/` |
 | Dashboard | `web/src/views/`, with shared components in `web/src/components/ui/` |
 
-## Seven decisions worth knowing
+## Eight decisions worth knowing
 
 ### The profile is data, not code
 
@@ -107,6 +108,22 @@ The same line runs through the judge, which reads postings but cannot overrule
 the stack, a named country, or a rule that never got to run. An LLM in this
 project proposes structure and opinion; it is never the thing between you and
 your data.
+
+### A standard beats a selector
+
+A board with no API tempts you into CSS selectors, and a selector is a promise
+you cannot keep: it breaks the week they redesign, silently, one board at a
+time. So the project does not parse markup.
+
+What it reads instead is `JobPosting` in JSON-LD — the structure a site must
+publish to appear in Google's job search. The incentive is the point: the board
+maintains that data because its own traffic depends on it, which makes it the
+most durable thing on the page. Being a standard, the field mapping is known in
+advance, so a descriptor for such a board has an empty `fields`.
+
+The same reasoning draws the line at the bot wall. When a site answers only to a
+real browser window, the reader says so and opens one, rather than pretending
+the board published nothing.
 
 ### Discard reasons travel as codes, not sentences
 

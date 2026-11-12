@@ -39,6 +39,7 @@ Integrations with its own switch and its own rhythm.
 - [The fields](#the-fields)
 - [Reading a feed instead of JSON](#reading-a-feed-instead-of-json)
 - [When the page carries the postings inside it](#when-the-page-carries-the-postings-inside-it)
+- [When there is no data at all, only pages](#when-there-is-no-data-at-all-only-pages)
 - [When the title carries the company](#when-the-title-carries-the-company)
 - [When the API gives no link](#when-the-api-gives-no-link)
 - [A company with nothing open](#a-company-with-nothing-open)
@@ -107,7 +108,7 @@ source written in TypeScript; that name wins and the descriptor is ignored.
 |---|---|---|
 | `url` | required | Must be `https` (or `localhost`, to try things out) |
 | `method` | `"GET"` | `"POST"` for endpoints that take a query body, like Workday |
-| `format` | `"json"` | `"rss"` for a feed, `"embedded"` for postings carried inside an HTML page |
+| `format` | `"json"` | `"rss"` for a feed, `"embedded"` for postings carried inside an HTML page, `"jsonld"` for a board that publishes `JobPosting` on each vacancy's page |
 | `headers` | `{}` | Sent on every request |
 | `query` | `{}` | Query string sent on every page |
 | `body` | — | JSON body; only with `POST` |
@@ -115,6 +116,7 @@ source written in TypeScript; that name wins and the descriptor is ignored.
 | `paging.start` | `1` | `0` for APIs that count pages from zero |
 | `paging.max` | `3` | How many pages at most. The project caps this at 20 |
 | `paging.totalPages` | — | Where the response says how many pages there are |
+| `pages` | `25` | `jsonld` only: how many vacancy pages to read. Capped at 120 |
 
 ### `fields`
 
@@ -222,8 +224,9 @@ Be honest about the edge, so nobody debugs a wall:
   has a different id every month, so `hackernews.source.ts` resolves it first.
 - **Paginate by offset.** Paging is by page number today. A board that counts
   in rows gets one page until that changes.
-- **Parse HTML pages.** JSON, RSS, and JSON carried inside a page. Markup is
-  never parsed.
+- **Parse HTML pages.** JSON, RSS, JSON carried inside a page, and `JobPosting`
+  read off a page. Nobody writes CSS selectors here: a descriptor that depends
+  on one board's markup breaks the week they redesign it.
 
 The dividing line is the one the project already draws: a descriptor covers the
 boring case, and anything with logic in it earns a class and a test.
@@ -243,6 +246,49 @@ is the same thing that breaks a plain API descriptor.
 Reach for it only when there is no endpoint. Interfell is the example in the
 shipped catalogue: its board is served by Simera, whose data route answers 403
 to anyone outside the page, while the page itself carries all 25 postings.
+
+## When there is no data at all, only pages
+
+Some boards publish no API, no feed and no JSON inside the page — the vacancies
+are written into the markup and nothing else. Scraping that markup would mean a
+descriptor per layout, broken by the next redesign.
+
+There is a better door, and it is a standard. To appear in Google's job search a
+site has to publish [`JobPosting`](https://schema.org/JobPosting) as JSON-LD on
+each vacancy's page, so a great many boards that give you nothing else give you
+this — structured, versioned by schema.org, and maintained by them because their
+own traffic depends on it.
+
+```json
+{
+  "version": 1,
+  "name": "azka-it",
+  "label": "Azka IT Consulting",
+  "request": { "url": "https://azka-it.viterbit.site/", "format": "jsonld", "pages": 20 },
+  "fields": {}
+}
+```
+
+`fields` is empty on purpose. `JobPosting` is a standard, so the mapping is
+already known — `title`, `hiringOrganization.name`, `description`, `datePosted`,
+`jobLocation.address.addressLocality`. Name a field yourself and yours wins.
+
+How it reads: `url` points at a listing page **or a `sitemap.xml`**, its
+same-site links are followed, and each page's `JobPosting` becomes one vacancy.
+Pages whose path looks like `/blog/`, `/privacy/` and friends are skipped, and
+so is anything on another domain. When the standard description turns out to be
+just an intro — which happens — the page's readable text is added, because a
+vacancy with no requirements gives the filter nothing to measure.
+
+Two things to know before reaching for it:
+
+- **It costs one request per vacancy**, with a pause between them. Give these
+  sources a slow rhythm and keep `pages` honest.
+- **It may open a browser window.** Boards like this one sit behind Cloudflare,
+  which answers `403` to anything that is not a person. The reader notices, says
+  so, and opens a real window; see [PRIVACY.md](PRIVACY.md#when-a-site-opens-a-window).
+
+Prefer an API when there is one. This is the door for when there is not.
 
 ## Recipes: a company's own board
 

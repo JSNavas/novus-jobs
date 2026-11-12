@@ -459,6 +459,11 @@ en este orden:
    mira qué pide al cargar, que es lo que hace una persona con F12 → Red. Así
    entró Remote Latinos: la dirección de su backend no aparece en nada de lo que
    sirve el sitio, solo existe mientras la aplicación se ejecuta.
+4. **Y si no pide nada, porque las vacantes están escritas en el HTML**, se
+   busca el `JobPosting` que cada oferta publica para salir en Google. Es un
+   estándar, así que no hay que escribir el mapeo ni adivinar etiquetas. Así
+   entró Azka IT: Cloudflare le contesta 403 a cualquier petición y la página no
+   hace ni una llamada con las vacantes.
 
 Una lista de objetos no es una lista de vacantes, así que cada candidata se
 puntúa por sus campos y su dirección: un campo de título, un cuerpo largo,

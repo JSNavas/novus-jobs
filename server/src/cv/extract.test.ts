@@ -29,10 +29,7 @@ describe('extractFromCv', () => {
   });
 
 
-  it('el «nativo» de otro idioma no es inglés nativo', () => {
-    // Caso real: CV de Jesús Navas, 12 nov 2026. La línea decía
-    // «Idiomas: español nativo · inglés B1 en progreso, lectura técnica fluida»
-    // y salía inglés NATIVE, que apaga el filtro de inglés entero.
+  it('EL CASO REAL: el «nativo» de otro idioma daba inglés NATIVE, y eso apaga el filtro entero', () => {
     const linea = 'Idiomas: español nativo · inglés B1 en progreso, lectura técnica fluida.';
     assert.equal(extractFromCv(linea).english, 'b1');
   });

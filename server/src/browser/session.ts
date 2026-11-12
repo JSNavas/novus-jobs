@@ -52,7 +52,7 @@ export class BrowserSession {
     this.starting = (async () => {
       const pid = profileLockHolder(this.dir);
       if (pid !== null) throw new ProfileBusyError(this.dir, pid);
-      mkdirSync(this.dir, { recursive: true });
+      mkdirSync(this.dir, { recursive: true, mode: 0o700 });
       let ctx: BrowserContext;
       try {
         ctx = await chromium.launchPersistentContext(this.dir, {

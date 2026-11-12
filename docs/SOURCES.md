@@ -33,7 +33,8 @@ screen all work off the registry.
 | needs you to be logged in | a class, with `profileId` and `loginUrl` |
 | needs a signature or a token refreshed | a class |
 | needs one request to learn what the next asks for | a class |
-| hides the postings in HTML | a class |
+| writes the vacancies into its HTML, but publishes `JobPosting` on each one | a descriptor (`"format": "jsonld"`) |
+| hides the postings in HTML and publishes nothing structured | a class |
 
 The last three are not arbitrary. `hackernews.source.ts` is a class because the
 "Who is hiring" thread has a different id every month: a descriptor with the id

@@ -19,10 +19,10 @@ password.
 | | Location | Notes |
 |---|---|---|
 | Your CV | `<DATA_DIR>/cv/`, mode `0600` | Text is extracted locally with pdf.js |
-| Your profile | A row in `<DATA_DIR>/jobs.db` | Stack, English level, country, preferences |
+| Your profile | A row in `<DATA_DIR>/jobs.db`, mode `0600` | Stack, English level, country, preferences |
 | Postings found | Same file | Including the rejected ones, with their reason |
 | Your applications | Nowhere — the app opens a draft and you send it | |
-| Browser sessions | `~/.novus-jobs/browser-profiles/`, mode `0600` | Worth as much as your password |
+| Browser sessions | `~/.novus-jobs/browser-profiles/`, mode `0700` | Worth as much as your password |
 
 Delete the data directory and nothing of you is left.
 
@@ -65,6 +65,24 @@ If you configure Resend (`RESEND_API_KEY`, `MAIL_FROM`, `MAIL_TO`), the app
 sends **you** an email when a pass finds something, containing the postings'
 titles and links. That goes through Resend's servers like any email. Leave those
 variables empty and no mail is ever sent.
+
+## When a site opens a window
+
+Some sites answer a plain request with a bot wall — Cloudflare's "Just a
+moment…" and its relatives. A browser with no window never gets past it: the
+wall is looking for a person. When Novus Jobs meets one, it says so, and reads
+that site by **opening a real browser window on your screen**.
+
+That window is yours and you will see it. It uses its own profile,
+`~/.novus-jobs/browser-profiles/wall/`, kept apart from the one that holds your
+LinkedIn session, so a job board's cookies and your logged-in session never
+share a jar. Nothing is typed into it and nothing is signed into: it loads the
+page, the page is read, the window closes.
+
+A source read this way also costs more requests than an API does — it fetches
+the listing and then one page per vacancy, with a pause between them, capped by
+`request.pages` in its descriptor. That is why these sources deserve a slow
+rhythm. It is still your machine asking, from your IP, at a human pace.
 
 ## What the platforms see
 

@@ -246,13 +246,13 @@ de una línea. Es el buscador de GitHub y se rellena en dos minutos.
 
 ## 5. Decisiones tuyas que siguen abiertas
 
-- **El repositorio no tiene remoto.** `git remote -v` está vacío y hay 43
-  commits del 12 nov sin publicar. Antes del primer `push` hay que decidir las
-  dos de abajo, porque el correo del autor queda en el historial para siempre y
-  cambiarlo después obliga a reescribirlo.
-- La URL del repositorio en el README (`YOUR_USER`).
-- Si el commit público va con tu correo personal o con el
-  `@users.noreply.github.com` de GitHub.
+- **El correo del autor, antes del primer `push`.** Los 181 commits no van
+  todos a tu nombre: 133 llevan tu Gmail personal, **47 llevan
+  `navas@MacBook-Pro.local`** —que GitHub no sabe atribuirte, así que esos
+  aparecerán sin tu cara— y uno `backend@novus.local`. Publicar tal cual
+  significa dos cosas a la vez: tu correo personal queda a la vista para
+  siempre, y casi un tercio del trabajo no se te atribuye. Arreglarlo después
+  obliga a reescribir el historial entero.
 - Si el perfil de ejemplo (`server/src/profile/profile.ts`) se queda con tus
   listas de tecnología o lo cambiamos por uno inventado. Hoy las pruebas del
   filtro dependen de él.

@@ -30,7 +30,7 @@ No database to install: it is a SQLite file.
 ## Install
 
 ```bash
-git clone https://github.com/YOUR_USER/novus-jobs.git
+git clone https://github.com/JSNavas/novus-jobs.git
 cd novus-jobs
 
 cd web && npm ci && npm run build && cd ..
