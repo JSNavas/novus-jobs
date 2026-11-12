@@ -1,0 +1,422 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-12T07:51:44.385283+00:00",
+  "title": "Design System: Novus Jobs",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "Cian apagado",
+        "canonical": "#7FB8C4",
+        "tonalRamp": [
+          "#0E1719",
+          "#152528",
+          "#1E383D",
+          "#2C545B",
+          "#3F7680",
+          "#5F9AA8",
+          "#7FB8C4",
+          "#C2DEE5"
+        ]
+      },
+      "accent-deep": {
+        "role": "primary",
+        "displayName": "Cian profundo",
+        "canonical": "#5F9AA8",
+        "tonalRamp": [
+          "#0C1416",
+          "#121F22",
+          "#1A3034",
+          "#27484E",
+          "#36656D",
+          "#4A818B",
+          "#5F9AA8",
+          "#A9CDD5"
+        ]
+      },
+      "ok": {
+        "role": "tertiary",
+        "displayName": "Verde de búsqueda correcta",
+        "canonical": "#5BE38F",
+        "tonalRamp": [
+          "#0A1A11",
+          "#0F2A1B",
+          "#17412A",
+          "#20603D",
+          "#2C8553",
+          "#3FBF73",
+          "#5BE38F",
+          "#B4F2CD"
+        ]
+      },
+      "warning": {
+        "role": "tertiary",
+        "displayName": "Ámbar de aviso",
+        "canonical": "#E9A23B",
+        "tonalRamp": [
+          "#1A1409",
+          "#2A200E",
+          "#413115",
+          "#60481E",
+          "#86632A",
+          "#C7852A",
+          "#E9A23B",
+          "#F6D9A8"
+        ]
+      },
+      "failure": {
+        "role": "tertiary",
+        "displayName": "Rojo de fallo",
+        "canonical": "#FF5C5C",
+        "tonalRamp": [
+          "#1C0C0C",
+          "#2C1212",
+          "#431B1B",
+          "#632727",
+          "#8A3636",
+          "#D94646",
+          "#FF5C5C",
+          "#FFBDBD"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#0A0C0E",
+        "tonalRamp": [
+          "#0A0C0E",
+          "#101417",
+          "#161B1F",
+          "#222930",
+          "#3A444E",
+          "#8A96A3",
+          "#C9D1D9",
+          "#D5DCE3"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "#12161A",
+        "tonalRamp": [
+          "#0A0C0E",
+          "#101417",
+          "#12161A",
+          "#161B1F",
+          "#222930",
+          "#3A444E",
+          "#8A96A3",
+          "#D5DCE3"
+        ]
+      },
+      "divider": {
+        "role": "neutral",
+        "displayName": "Divider",
+        "canonical": "#232A31",
+        "tonalRamp": [
+          "#0A0C0E",
+          "#101417",
+          "#161B1F",
+          "#1D242A",
+          "#232A31",
+          "#3A444E",
+          "#8A96A3",
+          "#D5DCE3"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Gris azulado de apoyo",
+        "canonical": "#8A96A3",
+        "tonalRamp": [
+          "#0F1114",
+          "#171B1F",
+          "#232A31",
+          "#3A444E",
+          "#5A6673",
+          "#6B7785",
+          "#8A96A3",
+          "#D5DCE3"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Texto de lectura",
+        "canonical": "#D5DCE3",
+        "tonalRamp": [
+          "#0A0C0E",
+          "#161B1F",
+          "#222930",
+          "#3A444E",
+          "#8A96A3",
+          "#C9D1D9",
+          "#D5DCE3",
+          "#EEF2F5"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "page-title": {
+        "displayName": "Título de página",
+        "purpose": "Encabezado de cada pantalla, con subtítulo gris debajo."
+      },
+      "card-title": {
+        "displayName": "Título de tarjeta",
+        "purpose": "Título dentro de una tarjeta o de una oferta."
+      },
+      "section-title": {
+        "displayName": "Título de sección",
+        "purpose": "Encabezado de bloque; suele bajarse a 14px."
+      },
+      "body": {
+        "displayName": "Cuerpo",
+        "purpose": "Texto corriente, celdas y mensajes vacíos."
+      },
+      "body-small": {
+        "displayName": "Cuerpo pequeño",
+        "purpose": "Apoyo, estados y datos de tarjeta."
+      },
+      "mono": {
+        "displayName": "Dato",
+        "purpose": "Fechas, horas y recuentos dentro de una frase."
+      },
+      "label": {
+        "displayName": "Rótulo",
+        "purpose": "Rótulo corto en MAYÚSCULAS. Nunca contenido."
+      },
+      "figure": {
+        "displayName": "Cifra",
+        "purpose": "Solo los contadores grandes."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "rise",
+        "value": "160ms ease-out both; translateY(10px) → 0, opacity 0 → 1",
+        "purpose": "Entrada de una página, una tarjeta de lista o el contador lateral."
+      },
+      {
+        "name": "rise-stagger",
+        "value": "35ms × índice, máximo 5",
+        "purpose": "Escalonado de las tarjetas de una lista."
+      },
+      {
+        "name": "state",
+        "value": "140ms",
+        "purpose": "Color de fondo de un enlace de menú o una fila."
+      },
+      {
+        "name": "surface",
+        "value": "150ms",
+        "purpose": "Fondo y borde de una tarjeta pulsable."
+      },
+      {
+        "name": "fade-highlight",
+        "value": "420ms",
+        "purpose": "Apagado del resalte de la oferta a la que se saltó."
+      },
+      {
+        "name": "reduced",
+        "value": "ninguna",
+        "purpose": "Bajo prefers-reduced-motion no hay entrada, ni latido de segundos, ni desplazamiento suave."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "600px"
+      },
+      {
+        "name": "md",
+        "value": "900px"
+      },
+      {
+        "name": "lg",
+        "value": "1200px"
+      },
+      {
+        "name": "xl",
+        "value": "1536px"
+      },
+      {
+        "name": "content-max",
+        "value": "1600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botón primario",
+      "kind": "button",
+      "refersTo": "button-contained",
+      "description": "La acción de mayor peso de una pantalla: Guardar, Postularse.",
+      "html": "<button class=\"ds-btn-primary\">Guardar</button>",
+      "css": ".ds-btn-primary{background:#7FB8C4;color:#0A0C0E;border:0;border-radius:3px;padding:6px 16px;font:400 .875rem/1.334rem system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;cursor:pointer;transition:background 150ms}.ds-btn-primary:hover{background:#5F9AA8}.ds-btn-primary:focus-visible{outline:1px solid #7FB8C4;outline-offset:2px}.ds-btn-primary:disabled{background:rgba(213,220,227,.08);color:#8A96A3;cursor:default}"
+    },
+    {
+      "name": "Botón de contorno",
+      "kind": "button",
+      "refersTo": "button-outlined",
+      "description": "Acción secundaria: recargar, abrir el enlace, marcar como vista.",
+      "html": "<button class=\"ds-btn-outline\">Actualizar</button>",
+      "css": ".ds-btn-outline{background:transparent;color:#7FB8C4;border:1px solid #7FB8C4;border-radius:3px;padding:5px 15px;font:400 .875rem/1.334rem system-ui,sans-serif;cursor:pointer;transition:background 150ms,color 150ms}.ds-btn-outline:hover{background:#7FB8C4;color:#0A0C0E}.ds-btn-outline:focus-visible{outline:1px solid #7FB8C4;outline-offset:2px}"
+    },
+    {
+      "name": "Campo de texto",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo oscuro de trazo fino; el trazo se pone cian al enfocar.",
+      "html": "<input class=\"ds-input\" value=\"180\" aria-label=\"Minutos\">",
+      "css": ".ds-input{background:transparent;color:#D5DCE3;border:1px solid #161B1F;border-radius:3px;padding:8px 14px;width:104px;font:400 .875rem/1.334rem ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}.ds-input:hover,.ds-input:focus{border-color:#7FB8C4;outline:none}"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Una tecnología del stack o un estado de la oferta.",
+      "html": "<span class=\"ds-chip\">TypeScript</span><span class=\"ds-chip ds-chip-warn\">Por confirmar</span>",
+      "css": ".ds-chip{display:inline-flex;align-items:center;height:24px;padding:0 8px;margin-right:6px;border:1px solid #232A31;border-radius:3px;color:#D5DCE3;font:600 .75rem/1 system-ui,sans-serif}.ds-chip-warn{border-color:#E9A23B;color:#E9A23B}"
+    },
+    {
+      "name": "Piloto de estado",
+      "kind": "custom",
+      "refersTo": "status-pilot",
+      "description": "Punto de 8px más texto. El color ilumina, el texto informa.",
+      "html": "<span class=\"ds-pilot\"><i class=\"ds-dot ds-dot-ok\"></i>Correcta</span>",
+      "css": ".ds-pilot{display:inline-flex;align-items:center;gap:8px;color:#D5DCE3;font:400 .75rem/1rem system-ui,sans-serif}.ds-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:#8A96A3}.ds-dot-ok{background:#5BE38F}.ds-dot-fail{background:#FF5C5C}"
+    },
+    {
+      "name": "Cifra del dashboard",
+      "kind": "card",
+      "refersTo": "metric-tile",
+      "description": "Contador que también es enlace: rótulo, cifra mono y pista.",
+      "html": "<a class=\"ds-tile\" href=\"#\"><span class=\"ds-tile-label\">Nuevas</span><span class=\"ds-tile-figure\">14</span><span class=\"ds-tile-hint\">Sin mirar todavía</span></a>",
+      "css": ".ds-tile{display:block;background:#12161A;border:1px solid #232A31;border-radius:3px;padding:20px;text-decoration:none;transition:background 150ms,border-color 150ms}.ds-tile:hover{background:#222930;border-color:#3A444E}.ds-tile-label{display:block;color:#8A96A3;font:500 .6875rem/1rem ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase}.ds-tile-figure{display:block;margin-top:12px;color:#5BE38F;font:500 2rem/1 ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}.ds-tile-hint{display:block;margin-top:8px;color:#8A96A3;font:400 .75rem/1.66 system-ui,sans-serif}"
+    },
+    {
+      "name": "Enlace del menú",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Fila de 38px; la activa va en grafito con borde y texto cian.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-item ds-nav-active\" href=\"#\">Nuevas<span class=\"ds-nav-badge\">14</span></a><a class=\"ds-nav-item\" href=\"#\">Vistas</a></nav>",
+      "css": ".ds-nav{width:208px;padding:0 12px}.ds-nav-item{display:flex;align-items:center;justify-content:space-between;min-height:38px;padding:0 12px;margin-bottom:3px;border:1px solid transparent;border-radius:3px;color:#8A96A3;text-decoration:none;font:400 13px/1 system-ui,sans-serif;transition:background-color 140ms}.ds-nav-item:hover{background:rgba(213,220,227,.05);color:#D5DCE3}.ds-nav-active{background:#222930;border-color:#232A31;color:#7FB8C4}.ds-nav-badge{border:1px solid #232A31;border-radius:3px;padding:0 6px;color:#5BE38F;font:500 11px/18px ui-monospace,Menlo,monospace}"
+    },
+    {
+      "name": "Contador de próxima búsqueda",
+      "kind": "custom",
+      "refersTo": "next-search",
+      "description": "Recuadro final de la barra lateral: rótulo, cuenta atrás y barra de lo transcurrido.",
+      "html": "<div class=\"ds-next\"><div class=\"ds-next-head\"><span>Próxima búsqueda</span></div><p class=\"ds-next-figure\">05:48:32</p><span class=\"ds-next-meta\">9:32 am · 2 plataformas</span><div class=\"ds-next-track\"><div class=\"ds-next-fill\"></div></div></div>",
+      "css": ".ds-next{margin:16px;padding:12px;background:#0A0C0E;border:1px solid #232A31;border-radius:3px;width:192px}.ds-next-head span{color:#8A96A3;font:500 .6875rem/1rem ui-monospace,Menlo,monospace;letter-spacing:.08em;text-transform:uppercase}.ds-next-figure{margin:8px 0;color:#D5DCE3;font:500 1.5rem/1 ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}.ds-next-meta{display:block;color:#8A96A3;font:400 .6875rem/1.25rem ui-monospace,Menlo,monospace}.ds-next-track{margin-top:12px;height:2px;background:#222930}.ds-next-fill{width:62%;height:100%;background:#7FB8C4}"
+    },
+    {
+      "name": "Aviso de página",
+      "kind": "custom",
+      "refersTo": "alert",
+      "description": "Confirmación o error, arriba de la página, con 18px por debajo.",
+      "html": "<div class=\"ds-alert\">Ritmo guardado en Get on Board</div>",
+      "css": ".ds-alert{display:flex;align-items:center;gap:12px;padding:8px 16px;margin-bottom:18px;border:1px solid #5BE38F;border-radius:3px;color:#5BE38F;font:400 .875rem/1.334rem system-ui,sans-serif}"
+    },
+    {
+      "name": "Fila del ranking",
+      "kind": "custom",
+      "refersTo": "rank-row",
+      "description": "Fila de Enfoque: puesto, término, barra, fracción y porcentaje.",
+      "html": "<div class=\"ds-rank\"><span class=\"ds-rank-i\">01</span><span class=\"ds-rank-n\">TypeScript</span><span class=\"ds-rank-b\"><i></i></span><span class=\"ds-rank-v\">9/15</span><span class=\"ds-rank-p\">60%</span></div>",
+      "css": ".ds-rank{display:grid;grid-template-columns:22px minmax(150px,230px) 1fr 62px 46px;align-items:center;gap:15px;min-height:56px;border-bottom:1px solid #232A31;font:400 .8125rem/1.25rem ui-monospace,Menlo,monospace;font-variant-numeric:tabular-nums}.ds-rank-i{color:#8A96A3}.ds-rank-n{color:#D5DCE3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ds-rank-b{display:block;height:6px;background:#222930}.ds-rank-b i{display:block;width:100%;height:100%;background:#7FB8C4}.ds-rank-v{text-align:right;color:#D5DCE3}.ds-rank-p{text-align:right;color:#8A96A3}"
+    }
+  ],
+  "narrative": {
+    "northStar": "La Torre de control",
+    "overview": "Una pantalla de operaciones: oscura, gris grafito, con los datos en primer plano y poca decoración. El sistema existe para que se vea de un vistazo qué ha hecho el buscador, qué ha encontrado y dónde está cada oferta. No es un panel de marketing ni una app de lectura: es una herramienta de seguimiento que se mira muchas veces al día, y la pregunta que tiene que contestar en dos segundos es siempre la misma — ¿funcionó? ¿hay algo nuevo?\n\nEl tono es sobrio y denso. Las cifras van en monoespaciada, las etiquetas en mayúsculas pequeñas, y el color se reserva para decir algo: éxito, aviso o fallo. Lo demás es gris. La profundidad se logra con escalones de gris y líneas finas, no con sombras. El movimiento existe pero no se nota: entradas de 160 ms y transiciones de 140 ms, y nada de eso ocurre si el sistema pide movimiento reducido.",
+    "keyCharacteristics": [
+      "Fondo casi negro (#0A0C0E) con superficies grafito que suben de nivel.",
+      "Sin sombras: separación por borde de 1px y por el escalón entre superficies.",
+      "Un solo acento frío (cian apagado) y tres colores saturados reservados a estado.",
+      "Cifras y fechas en monoespaciada con números tabulares, y la hora siempre en 12h con am/pm.",
+      "Denso: tablas size=\"small\", texto de 12–14px, rejillas de hasta cinco columnas.",
+      "Solo modo oscuro: no hay conmutador.",
+      "Tres anchos de chasis: cajón temporal, carril de 64px y barra completa de 224px."
+    ],
+    "rules": [
+      {
+        "name": "The Three Colors Rule",
+        "body": "Solo hay tres colores saturados (verde, ámbar, rojo) y cada uno significa un estado. Un color de estado nunca decora: si no hay estado, es gris.",
+        "section": "colors"
+      },
+      {
+        "name": "The Pilot Not Message Rule",
+        "body": "El color de estado va en un punto de 8px o en un aviso. El mensaje va en texto, para que se lea sin color.",
+        "section": "colors"
+      },
+      {
+        "name": "The No Raw Color Rule",
+        "body": "Ningún #hex, rgb() ni rgba() fuera de src/theme/. El grep tiene que salir vacío.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono Figures Rule",
+        "body": "Cualquier cifra que se compare, una fecha o un identificador va en mono con números tabulares.",
+        "section": "typography"
+      },
+      {
+        "name": "The Label Is Not Content Rule",
+        "body": "La variante label pone el texto en MAYÚSCULAS, así que solo vale para rótulos de tres o cuatro palabras. Nunca para una frase, una empresa, un título ni una hora.",
+        "section": "typography"
+      },
+      {
+        "name": "The Twelve Hour Rule",
+        "body": "La hora se escribe siempre en formato de 12 horas con am/pm. No hay hora militar en ninguna pantalla.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Footer Rule",
+        "body": "El pie y el hueco final de la barra lateral miden lo mismo (46px) y comparten el borde superior: la línea cruza entera.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "Ninguna superficie tiene sombra, ni siquiera en hover. Para resaltar se usa outline, que no simula profundidad.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Explain The Empty Rule",
+        "body": "Cada vacío dice por qué. Una pantalla vacía sin explicación parece rota.",
+        "section": "components"
+      },
+      {
+        "name": "The Invisible Work Rule",
+        "body": "Lo que el sistema hizo y descartó se muestra y se puede abrir.",
+        "section": "components"
+      }
+    ],
+    "dos": [
+      "Do usar el cian para foco, selección, marca, enlace activo, botones de acción y resaltes. No para decorar texto.",
+      "Do poner el mensaje en texto junto al color de estado, y el fallo también en negrita.",
+      "Do usar mono y números tabulares para cifras, fechas e identificadores, y la hora en 12h con am/pm.",
+      "Do reservar la variante label para rótulos cortos: el tema los pone en mayúsculas.",
+      "Do separar superficies con un borde divider de 1px o un escalón de gris.",
+      "Do dejar 18px entre un aviso y el bloque que hay debajo.",
+      "Do dar a cada formulario un par Guardar / Cancelar, deshabilitados mientras no haya cambios.",
+      "Do enseñar el aviso de guardado arriba de la página, en verde, y quitarlo a los 3 segundos.",
+      "Do cargar una lista con esqueletos de su misma forma.",
+      "Do explicar cada vacío con una frase que diga por qué está vacío.",
+      "Do usar el borde dashed solo para datos de auditoría.",
+      "Do anular toda animación bajo prefers-reduced-motion."
+    ],
+    "donts": [
+      "Don't añadir sombras, ni siquiera en hover. Para resaltar, outline.",
+      "Don't usar verde, ámbar o rojo como decoración, ni como único indicador: siempre con texto.",
+      "Don't poner contenido en la variante label: una hora, un nombre o una frase en mayúsculas no se lee.",
+      "Don't escribir una hora en formato de 24 horas.",
+      "Don't guardar al cambiar un control de modo o al pulsar un preset: el que guarda es Guardar.",
+      "Don't sacar un AppSnackbar flotante para confirmar una acción: el sitio del aviso es arriba de la página.",
+      "Don't dejar un botón que no cambia nada visible: si no hay más historial que enseñar, el enlace no se pinta.",
+      "Don't añadir un segundo sondeo de /stats: el proveedor de notificaciones ya lo hace.",
+      "Don't introducir una fuente externa. La pila es la del sistema y debe funcionar sin conexión.",
+      "Don't añadir un modo claro ni un conmutador de tema.",
+      "Don't dejar un vacío sin frase, ni usar la misma frase para dos vacíos distintos."
+    ]
+  }
+}
