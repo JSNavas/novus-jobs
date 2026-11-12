@@ -137,12 +137,20 @@ function restrictionNear(t: string, country: string): boolean {
   return false;
 }
 
+function tiedTo(t: string, place: string): boolean {
+  return restrictionNear(t, place) || nearRemote(t, REMOTE, place) || nearRemote(t, place, REMOTE);
+}
+
+function foreignCities(home: HomeGeo): string[] {
+  const mine = homeCities(home);
+  return foreignCountries(home).flatMap((c) => c.cities).filter((c) => !mine.includes(c));
+}
+
 function restrictsToForeignCountry(t: string, home: HomeGeo, spelled: boolean): boolean {
   const named = foreignNames(home).filter((c) => wordIn(t, c));
-  return named.some((country) => restrictionNear(t, country)
-    || (!spelled && (labelledWithCountry(t, country)
-      || nearRemote(t, REMOTE, country)
-      || nearRemote(t, country, REMOTE))));
+  if (named.some((country) => tiedTo(t, country))) return true;
+  if (!spelled && named.some((country) => labelledWithCountry(t, country))) return true;
+  return foreignCities(home).filter((c) => wordIn(t, c)).some((city) => tiedTo(t, city));
 }
 
 export function classifyLocation(text: string, home: HomeGeo): JobLocation {
@@ -152,6 +160,7 @@ export function classifyLocation(text: string, home: HomeGeo): JobLocation {
 
   const marks = homeMarks(home);
   if (marks.some((m) => t.includes(m))) return JobLocation.HomeCountry;
+  if (homeCities(home).some((c) => wordIn(t, c))) return JobLocation.HomeCountry;
 
   const line = readPlaceLine(t, home);
   if (line === 'foreign') return JobLocation.OtherCountry;

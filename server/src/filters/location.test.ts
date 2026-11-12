@@ -119,6 +119,28 @@ describe('classifyLocation — región contra modalidad', () => {
     assert.equal(classifyLocation(oferta, HOGAR), JobLocation.Global);
   });
 
+  it('"remoto Colombia" es remoto, pero hay que vivir en Colombia: no sirve', () => {
+    assert.equal(classifyLocation('Backend Node.js. Remoto Colombia.', HOGAR), JobLocation.OtherCountry);
+  });
+
+  it('"remoto Buenos Aires" tampoco: un remoto atado a una ciudad ajena sigue siendo ajeno', () => {
+    assert.equal(
+      classifyLocation('Backend Node.js. Remoto desde Buenos Aires.', HOGAR),
+      JobLocation.OtherCountry,
+    );
+  });
+
+  it('y el sitio concreto del cuerpo manda aunque la cabecera prometa el mundo entero', () => {
+    assert.equal(
+      classifyLocation('Ubicación: Anywhere in the World\nBackend. Remoto Colombia.', HOGAR),
+      JobLocation.OtherCountry,
+    );
+  });
+
+  it('una ciudad de casa es casa, aunque no se nombre el país', () => {
+    assert.equal(classifyLocation('Remoto desde Caracas.', HOGAR), JobLocation.HomeCountry);
+  });
+
   it('la restricción tiene que estar junto al país: "revisa" no es "visa"', () => {
     const oferta = 'Remoto global. Hay que revisar el código del equipo. Nuestra matriz está en Sweden.';
     assert.equal(classifyLocation(oferta, HOGAR), JobLocation.Global);
