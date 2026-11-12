@@ -24,17 +24,17 @@ function backfillRunId(db: Db): void {
 
 const JOB_COLUMNS = [
   'id', 'source', 'fingerprint', 'title', 'role', 'company', 'author', 'text', 'url',
-  'location', 'location_kind', 'verdict', 'rejection_reason', 'seniority',
+  'location', 'location_kind', 'verdict', 'rejection_reason',
   'is_aggregator', 'is_uncertain', 'stack_match', 'apply_url', 'contact_email',
   'judge_status', 'status', 'found_at', 'posted_at', 'applications',
   'response_days_min', 'response_days_max', 'run_id', 'rejection_code', 'rejection_params',
 ] as const;
 
-function dropFrozenEnumChecks(db: Db): void {
+function rebuildJobs(db: Db, when: (ddl: string) => boolean): void {
   const ddl = db.prepare<[], { sql: string | null }>(
     "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'jobs'",
   ).get()?.sql;
-  if (!ddl?.includes("'venezuela'")) return;
+  if (!ddl || !when(ddl)) return;
 
   const columns = JOB_COLUMNS.join(', ');
   db.pragma('foreign_keys = OFF');
@@ -46,7 +46,7 @@ function dropFrozenEnumChecks(db: Db): void {
     db.exec('ALTER TABLE jobs_rebuilt RENAME TO jobs');
     db.exec('CREATE INDEX IF NOT EXISTS jobs_found_at ON jobs (found_at DESC)');
     db.exec('COMMIT');
-    console.log('[bd] tabla jobs rehecha sin los CHECK de enum congelados');
+    console.log('[bd] tabla jobs rehecha');
   } catch (error) {
     db.exec('ROLLBACK');
     throw error;
@@ -74,7 +74,7 @@ export function openDatabase(dataDir: string): Db {
   ensureColumn(db, 'jobs', 'rejection_code', 'TEXT');
   ensureColumn(db, 'jobs', 'rejection_params', 'TEXT');
   backfillRunId(db);
-  dropFrozenEnumChecks(db);
+  rebuildJobs(db, (ddl) => ddl.includes("'venezuela'") || ddl.includes('seniority'));
   renameLegacyHomeLocation(db);
   return db;
 }

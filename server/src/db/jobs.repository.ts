@@ -1,5 +1,5 @@
 import type { PostMetrics } from '../sources/types.js';
-import { JobLocation, JobSeniority, JobStatus, JobVerdict, JudgeStatus, type Job } from '../types.js';
+import { JobLocation, JobStatus, JobVerdict, JudgeStatus, type Job } from '../types.js';
 import type { Db } from './database.js';
 
 export type NewJob = Omit<
@@ -19,7 +19,6 @@ export interface JobQuery {
   status: JobStatus | null;
   verdict: JobVerdict | null;
   runId: number | null;
-  seniority: JobSeniority | null;
   source: string | null;
   search: string | null;
   hasApply: boolean | null;
@@ -51,7 +50,6 @@ interface JobRow {
   rejection_reason: string | null;
   rejection_code: string | null;
   rejection_params: string | null;
-  seniority: JobSeniority;
   is_aggregator: number;
   is_uncertain: number;
   stack_match: string;
@@ -68,7 +66,7 @@ interface JobRow {
 }
 
 const JOB_COLUMNS = `id, source, fingerprint, title, role, company, author, text, url, location, location_kind,
-  verdict, rejection_reason, rejection_code, rejection_params, seniority, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
+  verdict, rejection_reason, rejection_code, rejection_params, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
   judge_status, status, found_at, posted_at, run_id,
   applications, response_days_min, response_days_max`;
 
@@ -100,7 +98,6 @@ function toJob(row: JobRow): Job {
     rejectionReason: row.rejection_reason,
     rejectionCode: row.rejection_code,
     rejectionParams: parseParams(row.rejection_params),
-    seniority: row.seniority,
     isAggregator: row.is_aggregator === 1,
     judgeStatus: row.judge_status,
     status: row.status,
@@ -125,11 +122,11 @@ export class JobsRepository {
   insert(job: NewJob): boolean {
     const result = this.db.prepare(`
       INSERT OR IGNORE INTO jobs (source, fingerprint, title, role, company, author, text, url, location, location_kind,
-        verdict, rejection_reason, rejection_code, rejection_params, seniority, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
+        verdict, rejection_reason, rejection_code, rejection_params, is_aggregator, is_uncertain, stack_match, apply_url, contact_email,
         judge_status, status, found_at, posted_at, run_id,
         applications, response_days_min, response_days_max)
       VALUES (@source, @fingerprint, @title, @role, @company, @author, @text, @url, @location, @locationKind,
-        @verdict, @rejectionReason, @rejectionCode, @rejectionParamsJson, @seniority, @isAggregator, @isUncertain, @stackMatch, @applyUrl, @contactEmail,
+        @verdict, @rejectionReason, @rejectionCode, @rejectionParamsJson, @isAggregator, @isUncertain, @stackMatch, @applyUrl, @contactEmail,
         @judgeStatus, @status, @foundAt, @postedAt, @runId,
         @applications, @responseDaysMin, @responseDaysMax)
     `).run({
@@ -178,30 +175,20 @@ export class JobsRepository {
     return result.changes > 0 ? this.findById(id) : null;
   }
 
-  list(query: JobQuery): { items: Job[]; total: number; bySeniority: Record<JobSeniority, number> } {
+  list(query: JobQuery): { items: Job[]; total: number } {
     const { where, params } = this.buildWhere(query);
     const total = this.db.prepare<unknown[], { count: number }>(`SELECT COUNT(*) AS count FROM jobs ${where}`).get(...params)?.count ?? 0;
     const rows = this.db.prepare<unknown[], JobRow>(
       `SELECT ${JOB_COLUMNS} FROM jobs ${where}
        ORDER BY COALESCE(posted_at, found_at) DESC, id DESC LIMIT ? OFFSET ?`,
     ).all(...params, query.limit, query.offset);
-    return { items: rows.map(toJob), total, bySeniority: this.countBySeniority(query) };
-  }
-
-  private countBySeniority(query: JobQuery): Record<JobSeniority, number> {
-    const { where, params } = this.buildWhere({ ...query, seniority: null });
-    const rows = this.db.prepare<unknown[], { seniority: JobSeniority; count: number }>(
-      `SELECT seniority, COUNT(*) AS count FROM jobs ${where} GROUP BY seniority`,
-    ).all(...params);
-    const counts = Object.fromEntries(Object.values(JobSeniority).map((s) => [s, 0])) as Record<JobSeniority, number>;
-    for (const row of rows) counts[row.seniority] = row.count;
-    return counts;
+    return { items: rows.map(toJob), total };
   }
 
   stats(): JobStats {
     const rows = this.db.prepare<[], { status: JobStatus; count: number }>(
       `SELECT status, COUNT(*) AS count FROM jobs
-       WHERE verdict = '${JobVerdict.Accepted}' AND seniority = '${JobSeniority.Regular}'
+       WHERE verdict = '${JobVerdict.Accepted}'
        GROUP BY status`,
     ).all();
     const byStatus = Object.fromEntries(Object.values(JobStatus).map((s) => [s, 0])) as Record<JobStatus, number>;
@@ -222,7 +209,6 @@ export class JobsRepository {
     if (query.verdict) { clauses.push('verdict = ?'); params.push(query.verdict); }
     if (query.runId !== null) { clauses.push('run_id = ?'); params.push(query.runId); }
     if (query.status) { clauses.push('status = ?'); params.push(query.status); }
-    if (query.seniority) { clauses.push('seniority = ?'); params.push(query.seniority); }
     if (query.source) { clauses.push('source = ?'); params.push(query.source); }
     if (query.search) {
       clauses.push('(text LIKE ? OR author LIKE ?)');

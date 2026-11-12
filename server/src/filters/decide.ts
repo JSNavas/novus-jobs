@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { JobLocation, JobSeniority } from '../types.js';
-import { adBody, cleanLinkedInNoise, extractApplyUrl, extractEmail, isAggregatorPost, isCandidateSelfPromotion, isJuniorOrInternship, looksLikeOffer, matchStack } from './offer.js';
+import { JobLocation } from '../types.js';
+import { adBody, cleanLinkedInNoise, extractApplyUrl, extractEmail, isAggregatorPost, isCandidateSelfPromotion, looksLikeOffer, matchStack } from './offer.js';
 import { classifyLocation, isLocalEmployer, type HomeGeo } from './location.js';
 import { findCountry } from './countries.js';
 import { englishDemand, hasSeveralOpenings, isOtherEcosystem, isOwnRole, unknownRequiredTech } from './requirements.js';
@@ -34,7 +34,6 @@ export interface Verdict {
   rejection: Rejection | null;
   rejectedBy: RejectedBy | null;
   uncertain: boolean;
-  seniority: JobSeniority;
   aggregator: boolean;
   location: JobLocation;
   stackMatch: string[];
@@ -49,7 +48,6 @@ interface Context {
   language: Language;
   stackMatch: string[];
   location: JobLocation;
-  seniority: JobSeniority;
   aggregator: boolean;
   applyUrl: string | null;
   contactEmail: string | null;
@@ -61,7 +59,6 @@ function buildContext(text: string, profile: CandidateProfile): Context {
     language: profile.language,
     stackMatch: matchStack(text, profile.stack),
     location: classifyLocation(text, homeOf(profile)),
-    seniority: isJuniorOrInternship(text) ? JobSeniority.Junior : JobSeniority.Regular,
     aggregator: isAggregatorPost(text),
     applyUrl: extractApplyUrl(text),
     contactEmail: extractEmail(text),
@@ -85,7 +82,6 @@ function accept(ctx: Context, uncertain: boolean): Verdict {
 
 function publicFields(ctx: Context): Omit<Verdict, 'accepted' | 'reason' | 'rejection' | 'rejectedBy' | 'uncertain'> {
   return {
-    seniority: ctx.seniority,
     aggregator: ctx.aggregator,
     location: ctx.location,
     stackMatch: ctx.stackMatch,

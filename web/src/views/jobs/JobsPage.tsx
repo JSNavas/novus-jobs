@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router';
 import { Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
-import { t } from '../../i18n';
+import { plural, t } from '../../i18n';
 import { PAGE_SIZE, startRun, updateJobStatus, type JobQuery } from '../../api/client';
-import { AppAlert, AppChip, AppPagination, AppSnackbar, AppTabs, PageContainer } from '../../components/ui';
-import { findEnumValue } from '../../enumValue';
-import { jobSeniorityLabel } from '../../labels';
-import { JobSeniority, JobStatus, type Job } from '../../types';
+import { AppAlert, AppChip, AppPagination, AppSnackbar, PageContainer } from '../../components/ui';
+import { JobStatus, type Job } from '../../types';
 import JobCard from './JobCard';
 import { viewByPath, emptyOf, subtitleOf, titleOf } from './inbox';
 import { nextSearchSentence } from './scheduleText';
@@ -20,40 +18,29 @@ interface Notice {
   severity: 'success' | 'error';
 }
 
-const seniorityTabs = (counts: Record<JobSeniority, number> | undefined) =>
-  Object.values(JobSeniority).map((seniority) => ({
-    value: seniority,
-    label: counts ? `${jobSeniorityLabel(seniority)} (${counts[seniority]})` : jobSeniorityLabel(seniority),
-  }));
-
-const otherSeniority = (current: JobSeniority): JobSeniority =>
-  current === JobSeniority.Regular ? JobSeniority.Junior : JobSeniority.Regular;
-
-const newCountText = (count: number): string => (count === 1 ? '1 oferta nueva' : `${count} ofertas nuevas`);
+const newCountText = (count: number): string => plural(count, 'jobs.newCount.one', 'jobs.newCount.many');
 
 const errorMessage = (cause: unknown): string => (cause instanceof Error ? cause.message : t('run.unknownError'));
 
 const JobsPage = () => {
   const view = viewByPath(useLocation().pathname);
-  const [seniority, setSeniority] = useState<JobSeniority>(JobSeniority.Regular);
   const [filters, setFilters] = useState<FilterValues>({ q: '', hasApply: false });
   const [starting, setStarting] = useState(false);
   const [updatingId, setUpdatingId] = useState<number | null>(null);
   const [notice, setNotice] = useState<Notice | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
 
-  useEffect(() => { setPageNumber(1); }, [seniority, filters, view]);
+  useEffect(() => { setPageNumber(1); }, [filters, view]);
 
   const query = useMemo<JobQuery>(
     () => ({
-      seniority,
       status: view.status ?? undefined,
       q: filters.q.trim() || undefined,
       hasApply: filters.hasApply ? true : undefined,
       limit: PAGE_SIZE,
       offset: (pageNumber - 1) * PAGE_SIZE,
     }),
-    [seniority, filters, view, pageNumber],
+    [filters, view, pageNumber],
   );
 
   const { page, stats, schedule, settings, error, reload } = useDashboardData(query);
@@ -85,13 +72,6 @@ const JobsPage = () => {
 
   const emptyMessage = (): string => {
     if (filters.q || filters.hasApply) return t('jobs.empty.filters');
-    const elsewhere = page?.bySeniority[otherSeniority(seniority)] ?? 0;
-    if (elsewhere > 0) {
-      return t('jobs.empty.elsewhere', {
-        count: elsewhere,
-        tab: jobSeniorityLabel(otherSeniority(seniority)),
-      });
-    }
     const next = view.status === JobStatus.New ? nextSearchSentence(schedule) : '';
     return [emptyOf(view), next].filter(Boolean).join(' ');
   };
@@ -115,11 +95,6 @@ const JobsPage = () => {
       {stats ? <LastRunAlert lastRun={stats.lastRun} /> : null}
       {stats ? <StatsRow stats={stats} /> : null}
 
-      <AppTabs
-        tabs={seniorityTabs(page?.bySeniority)}
-        value={seniority}
-        onChange={(value) => setSeniority(findEnumValue(Object.values(JobSeniority), value) ?? JobSeniority.Regular)}
-      />
       <JobFilters values={filters} onChange={setFilters} />
 
       {error ? <AppAlert severity="error">{error}</AppAlert> : null}

@@ -1,11 +1,11 @@
 import { t } from '../../i18n';
-import { JobSeniority, type Job } from '../../types';
+import type { Job } from '../../types';
 
 const GREETING = (): string => t('apply.greeting');
 const BODY = (vacancy: string): string => t('apply.body', { vacancy });
 
 export function shouldOfferApplication(job: Job): boolean {
-  return job.seniority !== JobSeniority.Junior && !!job.contactEmail;
+  return !!job.contactEmail;
 }
 
 function vacancyName(job: Job): string {

@@ -24,7 +24,6 @@ export function registerFocusRoute(app: FastifyInstance, deps: FocusRoutesDeps):
     status: null,
     verdict: JobVerdict.Accepted,
     runId: null,
-    seniority: null,
     source: null,
     search: null,
     hasApply: null,

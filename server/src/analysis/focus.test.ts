@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { PROFILE } from '../profile/profile.js';
-import { JobLocation, JobSeniority, JobStatus, JobVerdict, JudgeStatus, type Job } from '../types.js';
+import { JobLocation, JobStatus, JobVerdict, JudgeStatus, type Job } from '../types.js';
 import { buildFocus } from './focus.js';
 
 function job(text: string, id = 1): Job {
@@ -9,8 +9,7 @@ function job(text: string, id = 1): Job {
     id, source: 'getonbrd', fingerprint: `fp-${id}`, title: 'Oferta', role: 'Developer',
     company: null, author: 'Empresa', text, url: null, location: null,
     locationKind: JobLocation.Global, verdict: JobVerdict.Accepted,
-    rejectionReason: null, rejectionCode: null, rejectionParams: null,
-    seniority: JobSeniority.Regular, isAggregator: false, isUncertain: false,
+    rejectionReason: null, rejectionCode: null, rejectionParams: null, isAggregator: false, isUncertain: false,
     judgeStatus: JudgeStatus.Judged, status: JobStatus.New, foundAt: '2026-11-11T00:00:00.000Z',
     postedAt: null, stackMatch: [], applyUrl: null, contactEmail: null, runId: 1,
     applications: null, responseDays: null,

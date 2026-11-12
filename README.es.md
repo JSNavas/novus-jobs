@@ -184,7 +184,7 @@ Nada se borra nunca: descartar es archivar.
 
 El contador solo está donde se actúa —cuántas quedan por mirar y cuántas hay que trabajar—. Vistas y Descartadas son el archivo: su número no cambia ninguna decisión, y un contador que nadie usa compite con los que sí importan.
 
-Las pestañas **Para Ti** y **Extras (Junior)** separan lo tuyo de lo junior. **Las junior no entran en ningún contador**: llegan como extra, por si quieres pasárselas a alguien, y no son trabajo tuyo pendiente. Un número que no corresponde con lo que hay que hacer deja de servir para decidir si vale la pena abrir el dashboard, que es lo único que ese número tiene que hacer.
+Una sola lista, sin pestañas. Las hubo —«Para ti» y «Extras (junior)»— cuando el proyecto daba por hecho que su usuario era senior; para alguien que empieza, esa división enseñaba dos veces lo mismo. Lo que separa una oferta útil de una que no lo es ya lo decide tu perfil, no una categoría escrita en el código.
 
 Cada tarjeta empieza diciendo **de dónde viene y de cuándo es**: `Get on Board · BC Tecnología · publicada el 2 nov 2026`. La fecha es la de la plataforma, no la de nuestra lectura — con una pasada cada media hora, «hace un rato» no informa de nada, mientras que «2 de noviembre, 298 postulaciones» dice que llegas tarde. Cuando la fuente no publica la fecha (LinkedIn), la tarjeta dice «encontrada el…», nombrándolo, en vez de hacer pasar una cosa por la otra.
 
@@ -200,7 +200,7 @@ Y en una sola fila, todo lo que se puede hacer con ella:
 | **Copiar enlace** | el enlace y nada más, para pasárselo a alguien |
 | Vista · Guardar · Descartar | moverla por la bandeja |
 
-Debajo del anuncio solo queda «Ver más», que es lo único que habla del texto y no de la oferta. En las junior no aparece ni el envío de CV ni la motivación: no te postulas a esas.
+Debajo del anuncio solo queda «Ver más», que es lo único que habla del texto y no de la oferta.
 
 ### La motivación de cada postulación
 

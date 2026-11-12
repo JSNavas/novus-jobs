@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { JobQuery, JobsRepository } from '../db/jobs.repository.js';
 import type { RunsRepository } from '../db/runs.repository.js';
-import { JobSeniority, JobStatus, JobVerdict } from '../types.js';
+import { JobStatus, JobVerdict } from '../types.js';
 import { isOneOf, optionalBoolean, optionalEnum, optionalInteger, stringParams, type Result } from './parse.js';
 
 const ALL_VERDICTS = 'todas';
@@ -24,8 +24,6 @@ function parseJobQuery(raw: unknown): Result<JobQuery> {
     ? ({ value: null } as Result<JobVerdict | null>)
     : optionalEnum(params.verdict, Object.values(JobVerdict), 'verdict');
   if ('error' in verdict) return verdict;
-  const seniority = optionalEnum(params.seniority, Object.values(JobSeniority), 'seniority');
-  if ('error' in seniority) return seniority;
   const hasApply = optionalBoolean(params.hasApply, 'hasApply');
   if ('error' in hasApply) return hasApply;
   const limit = optionalInteger(params.limit, DEFAULT_LIMIT, 1, MAX_LIMIT, 'limit');
@@ -39,7 +37,6 @@ function parseJobQuery(raw: unknown): Result<JobQuery> {
       status: status.value,
       verdict: wantsAll ? null : verdict.value ?? JobVerdict.Accepted,
       runId: params.runId ? runId.value : null,
-      seniority: seniority.value,
       source: params.source || null,
       search: params.q || null,
       hasApply: hasApply.value,

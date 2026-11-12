@@ -3,7 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, it } from 'node:test';
-import { JobLocation, JobSeniority, JobStatus, JobVerdict, JudgeStatus, RunTrigger } from '../types.js';
+import { JobLocation, JobStatus, JobVerdict, JudgeStatus, RunTrigger } from '../types.js';
 import { openDatabase, type Db } from './database.js';
 import { RunsRepository } from './runs.repository.js';
 
@@ -25,12 +25,11 @@ describe('RunsRepository — los contadores se cuentan contra jobs', () => {
 
   function addJob(runId: number, verdict: JobVerdict, n: number): void {
     db.prepare(
-      `INSERT INTO jobs (source, fingerprint, text, location_kind, verdict, seniority,
+      `INSERT INTO jobs (source, fingerprint, text, location_kind, verdict,
         is_aggregator, is_uncertain, stack_match, judge_status, status, found_at, run_id)
-       VALUES (?, ?, ?, ?, ?, ?, 0, 0, '[]', ?, ?, ?, ?)`,
+       VALUES (?, ?, ?, ?, ?, 0, 0, '[]', ?, ?, ?, ?)`,
     ).run(
-      'linkedin', `huella-${runId}-${verdict}-${n}`, 'texto', JobLocation.Global, verdict,
-      JobSeniority.Regular, JudgeStatus.Judged, JobStatus.New, '2026-11-10T21:07:02.550Z', runId,
+      'linkedin', `huella-${runId}-${verdict}-${n}`, 'texto', JobLocation.Global, verdict, JudgeStatus.Judged, JobStatus.New, '2026-11-10T21:07:02.550Z', runId,
     );
   }
 

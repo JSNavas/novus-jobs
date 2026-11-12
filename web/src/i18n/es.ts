@@ -3,8 +3,6 @@ export const es = {
   'status.seen': 'Vista',
   'status.saved': 'Guardada',
   'status.dismissed': 'Descartada',
-  'seniority.regular': 'Para ti',
-  'seniority.junior': 'Extras (junior)',
   'location.homeCountry': 'desde tu país',
   'location.global': 'remoto global / tu región',
   'location.otherCountry': 'remoto desde otro país',
@@ -49,7 +47,6 @@ export const es = {
 
   'jobs.runStarted': 'Búsqueda iniciada. Las ofertas nuevas aparecerán al terminar.',
   'jobs.empty.filters': 'No hay ofertas con estos filtros.',
-  'jobs.empty.elsewhere': 'Aquí no hay ninguna, pero tienes {count} en «{tab}».',
   'jobs.searchNow': 'Buscar ahora',
 
   'schedule.or': 'o',
@@ -361,4 +358,6 @@ export const es = {
   'wiz.exitEditing': 'Volver a Configuración',
   'apply.theCompany': 'la empresa',
   'apply.theVacancy': 'la vacante',
+  'jobs.newCount.one': '1 oferta nueva',
+  'jobs.newCount.many': '{count} ofertas nuevas',
 } as const;

@@ -12,7 +12,6 @@ export interface JudgeVerdict {
   isOffer: boolean;
   rejection: JudgeRejection | null;
   reason: string;
-  junior: boolean;
   aggregator: boolean;
 }
 
@@ -48,14 +47,13 @@ function isJudgeRejection(value: unknown): value is JudgeRejection {
 function parseJudgeItem(item: unknown, offset: number): JudgeVerdict | null {
   if (typeof item !== 'object' || item === null) return null;
   const fields: Record<string, unknown> = Object.fromEntries(Object.entries(item));
-  const { i, esOferta, descarte, motivo, esJunior, esAgregador } = fields;
+  const { i, esOferta, descarte, motivo, esAgregador } = fields;
   if (typeof i !== 'number' || !Number.isInteger(i)) return null;
   return {
     index: i + offset,
     isOffer: esOferta === true,
     rejection: isJudgeRejection(descarte) ? descarte : null,
     reason: typeof motivo === 'string' ? motivo.slice(0, 200) : '',
-    junior: esJunior === true,
     aggregator: esAgregador === true,
   };
 }
@@ -140,16 +138,13 @@ function instruction(profile: CandidateProfile, country: string | null): string 
     '     · "remoto global, clientes en Estados Unidos" → dice dónde están los clientes.',
     '     · "empresa de Bogotá, trabajo 100% remoto" → la ciudad es de la empresa.',
     '',
-    '3. esJunior: ¿es junior, trainee, becario o prácticas? Solo para la sección de',
-    '   extras, NO es un descarte. "Semi Senior" y "Junior/Semi Senior" NO son junior.',
-    '',
-    '4. esAgregador: ¿la publica un intermediario que capturó la oferta de otro sitio',
+    '3. esAgregador: ¿la publica un intermediario que capturó la oferta de otro sitio',
     '   y la revende? Una bolsa de empleo que publica SU propia vacante NO es agregador.',
     '',
-    `5. motivo: una frase corta explicando la decisión. ${t(profile.language, 'judge.language')}`,
+    `4. motivo: una frase corta explicando la decisión. ${t(profile.language, 'judge.language')}`,
     '',
     'RESPONDE SOLO CON UN ARRAY JSON, sin markdown ni texto alrededor:',
-    '[{"i":0,"esOferta":true,"descarte":null,"esJunior":false,"esAgregador":false,"motivo":"…"}]',
+    '[{"i":0,"esOferta":true,"descarte":null,"esAgregador":false,"motivo":"…"}]',
     'Un objeto por publicación, con su índice. Ni uno más ni uno menos.',
   ].filter((line) => line !== null).join('\n');
 }

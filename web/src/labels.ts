@@ -1,5 +1,5 @@
 import { t } from './i18n';
-import { JobLocation, JobSeniority, JobStatus, RunFailure } from './types';
+import { JobLocation, JobStatus, RunFailure } from './types';
 
 export function jobStatusLabel(status: JobStatus): string {
   switch (status) {
@@ -8,10 +8,6 @@ export function jobStatusLabel(status: JobStatus): string {
     case JobStatus.Saved: return t('status.saved');
     case JobStatus.Dismissed: return t('status.dismissed');
   }
-}
-
-export function jobSeniorityLabel(seniority: JobSeniority): string {
-  return seniority === JobSeniority.Junior ? t('seniority.junior') : t('seniority.regular');
 }
 
 export function jobLocationLabel(location: JobLocation): string {

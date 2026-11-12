@@ -4,7 +4,7 @@ import { AppAlert, AppChip, BlankCard } from '../../components/ui';
 import { formatDate, formatDateTime } from '../../format';
 import { jobLocationLabel, jobSourceLabel, jobStatusLabel } from '../../labels';
 import { plural, t, type TranslationKey } from '../../i18n';
-import { JobLocation, JobSeniority, JobStatus, JobVerdict, type Job } from '../../types';
+import { JobLocation, JobStatus, JobVerdict, type Job } from '../../types';
 import type { Settings } from '../../api/client';
 import { gmailComposeUrl, motivationLetter, shouldOfferApplication } from './apply';
 import RejectionBadge from './RejectionBadge';
@@ -167,7 +167,7 @@ const JobCard = ({ job, busy, settings, onStatusChange }: JobCardProps) => {
                 {linkLabel(job.url)}
               </Button>
             ) : null}
-            {job.seniority !== JobSeniority.Junior && settings?.motivationTemplate ? (
+            {settings?.motivationTemplate ? (
               <Button variant="outlined" onClick={() => void copyLetter()}>
                 {lettered ? t('card.copiedLetter') : t('card.copyLetter')}
               </Button>

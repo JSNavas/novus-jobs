@@ -17,7 +17,7 @@ function offers(n: number): Offer[] {
 
 function respuesta(n: number): { text: string } {
   const items = Array.from({ length: n }, (_, i) =>
-    `{"i":${i},"esOferta":true,"descarte":null,"esJunior":false,"esAgregador":false,"motivo":"ok"}`,
+    `{"i":${i},"esOferta":true,"descarte":null,"esAgregador":false,"motivo":"ok"}`,
   );
   return { text: `[${items.join(',')}]` };
 }

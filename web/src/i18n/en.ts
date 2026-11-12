@@ -5,8 +5,6 @@ export const en: Record<keyof typeof es, string> = {
   'status.seen': 'Seen',
   'status.saved': 'Saved',
   'status.dismissed': 'Dismissed',
-  'seniority.regular': 'For you',
-  'seniority.junior': 'Extras (junior)',
   'location.homeCountry': 'from your country',
   'location.global': 'fully remote / your region',
   'location.otherCountry': 'remote, another country only',
@@ -51,7 +49,6 @@ export const en: Record<keyof typeof es, string> = {
 
   'jobs.runStarted': 'Search started. New postings will show up when it finishes.',
   'jobs.empty.filters': 'No postings match these filters.',
-  'jobs.empty.elsewhere': 'None here, but you have {count} in “{tab}”.',
   'jobs.searchNow': 'Search now',
 
   'schedule.or': 'or',
@@ -363,4 +360,6 @@ export const en: Record<keyof typeof es, string> = {
   'wiz.exitEditing': 'Back to Settings',
   'apply.theCompany': 'the company',
   'apply.theVacancy': 'the role',
+  'jobs.newCount.one': '1 new posting',
+  'jobs.newCount.many': '{count} new postings',
 };

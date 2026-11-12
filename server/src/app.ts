@@ -51,7 +51,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   const focusNew = (): number => withNews(
     buildFocus(
       deps.jobs.list({
-        status: null, verdict: JobVerdict.Accepted, runId: null, seniority: null,
+        status: null, verdict: JobVerdict.Accepted, runId: null,
         source: null, search: null, hasApply: null, limit: 500, offset: 0,
       }).items,
       deps.profile(),

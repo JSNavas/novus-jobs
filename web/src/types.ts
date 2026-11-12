@@ -10,11 +10,6 @@ export enum JobStatus {
   Dismissed = 'dismissed',
 }
 
-export enum JobSeniority {
-  Regular = 'regular',
-  Junior = 'junior',
-}
-
 export enum JudgeStatus {
   Judged = 'judged',
   Skipped = 'skipped',
@@ -57,7 +52,6 @@ export interface Job {
   rejectionReason: string | null;
   rejectionCode: string | null;
   rejectionParams: Record<string, string | number> | null;
-  seniority: JobSeniority;
   isAggregator: boolean;
   judgeStatus: JudgeStatus;
   status: JobStatus;

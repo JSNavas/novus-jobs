@@ -19,7 +19,7 @@ import { LastPassStore, Scheduler } from '../scheduler/scheduler.js';
 import { SourceSchedules } from '../sources/schedules.js';
 import { SourceToggles } from '../sources/toggles.js';
 import { ProfileRepository } from '../profile/profile.repository.js';
-import { JobLocation, JobSeniority, JobVerdict, JudgeStatus } from '../types.js';
+import { JobLocation, JobVerdict, JudgeStatus } from '../types.js';
 
 function newJob(overrides: Partial<NewJob>): NewJob {
   return {
@@ -35,7 +35,6 @@ function newJob(overrides: Partial<NewJob>): NewJob {
     locationKind: JobLocation.HomeCountry,
     verdict: JobVerdict.Accepted,
     rejectionReason: null,
-    seniority: JobSeniority.Regular,
     isAggregator: false,
     isUncertain: false,
     judgeStatus: JudgeStatus.Skipped,
@@ -152,7 +151,7 @@ describe('API HTTP', () => {
   it('GET /api/jobs sin resultados es 200 con lista vacía', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/jobs?source=otra-fuente' });
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(res.json(), { items: [], total: 0, bySeniority: { regular: 0, junior: 0 } });
+    assert.deepEqual(res.json(), { items: [], total: 0 });
   });
 
   it('GET /api/jobs con un filtro inválido es 400', async () => {
@@ -187,14 +186,6 @@ describe('API HTTP', () => {
       byStatus: { new: 1, seen: 0, saved: 1, dismissed: 0 },
       focusNew: 0,
     });
-  });
-
-  it('GET /api/jobs dice cuántas hay en CADA pestaña, no solo en la abierta', async () => {
-    const res = await app.inject({ method: 'GET', url: '/api/jobs?seniority=junior' });
-    assert.equal(res.statusCode, 200);
-    const body = res.json<{ items: unknown[]; total: number; bySeniority: Record<string, number> }>();
-    assert.equal(body.items.length, 0, 'no hay ninguna junior');
-    assert.deepEqual(body.bySeniority, { regular: 2, junior: 0 }, 'pero sí las de la otra pestaña');
   });
 
   it('GET /api/settings trae la plantilla de fábrica cuando nunca se guardó ninguna', async () => {

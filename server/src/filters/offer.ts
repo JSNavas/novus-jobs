@@ -63,13 +63,7 @@ export function isAggregatorPost(text: string): boolean {
   return SOURCE_AGGREGATOR_MARKS.some((m) => t.includes(m));
 }
 
-const JUNIOR_TERMS = /\b(junior|jr\.?|trainee|intern(ship)?|becari[oa]|pasant[íi]a|practicante|pr[áa]cticas profesionales|entry[\s-]?level|reci[ée]n graduad|primer empleo|sin experiencia previa)\b/i;
 const SENIOR_TERMS = /\b(semi[\s-]?senior|semi[\s-]?sr|senior|sr\.?|ssr|especialista|lead|arquitect)\b/i;
-
-export function isJuniorOrInternship(text: string): boolean {
-  const t = text.toLowerCase();
-  return JUNIOR_TERMS.test(t) && !SENIOR_TERMS.test(t);
-}
 
 const CANDIDATE_PHRASES = [
   'busco trabajo', 'busco empleo', 'busco oportunidad', 'busco nuevas oportunidad',

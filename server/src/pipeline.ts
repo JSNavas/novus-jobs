@@ -7,7 +7,7 @@ import { companyName, offerTitle, roleOnly, stripAuthorHeaders } from './filters
 import type { LlmJudge, JudgeVerdict } from './filters/judge.js';
 import { classifyFailure, failureMessage, worstFailure } from './sources/failure.js';
 import type { JobSource, PostMetrics, RawPost } from './sources/types.js';
-import { JobLocation, JobSeniority, JudgeStatus, JobVerdict, type RunFailure } from './types.js';
+import { JobLocation, JudgeStatus, JobVerdict, type RunFailure } from './types.js';
 
 interface PipelineDeps {
   maxAgeDays: number;
@@ -187,7 +187,6 @@ function applyJudgment(rules: Verdict, judgment: JudgeVerdict | undefined, langu
 
   const refined = {
     ...rules,
-    seniority: judgment.junior ? JobSeniority.Junior : rules.seniority,
     aggregator: judgment.aggregator || rules.aggregator,
   };
   if (rules.accepted) return refined;
@@ -228,7 +227,6 @@ function toNewJob(
     rejectionReason: verdict.accepted ? null : verdict.reason,
     rejectionCode: verdict.accepted ? null : verdict.rejection?.code ?? null,
     rejectionParams: verdict.accepted ? null : verdict.rejection?.params ?? null,
-    seniority: verdict.seniority,
     isAggregator: verdict.aggregator,
     isUncertain: verdict.uncertain,
     judgeStatus,

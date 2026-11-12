@@ -88,7 +88,6 @@ function fakeJudge(decide: (text: string, index: number) => Partial<JudgeVerdict
           isOffer: true,
           rejection: null,
           reason: 'motivo de prueba',
-          junior: false,
           aggregator: false,
           ...decide(offer.text, index),
         };
@@ -126,7 +125,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     assert.equal(result.outcome.rejected, 0);
 
     const stored = jobs.list({
-      status: null, verdict: null, runId: null, seniority: null,
+      status: null, verdict: null, runId: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     assert.equal(stored.items.length, 1);
@@ -141,7 +140,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     await run([PRESENCIAL], judge);
 
     const stored = jobs.list({
-      status: null, verdict: null, runId: null, seniority: null,
+      status: null, verdict: null, runId: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     const job = stored.items[0]!;
@@ -164,7 +163,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
 
     assert.equal(result.outcome.accepted, 0);
     const stored = jobs.list({
-      status: null, verdict: null, runId: null, seniority: null,
+      status: null, verdict: null, runId: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     assert.match(stored.items[0]!.rejectionReason ?? '', /^\[IA\] pide ir a la oficina/);
@@ -180,7 +179,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
 
     assert.equal(result.outcome.accepted, 0);
     const stored = jobs.list({
-      status: null, verdict: null, runId: null, seniority: null,
+      status: null, verdict: null, runId: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     assert.match(stored.items[0]!.rejectionReason ?? '', /^\[IA\] es un puesto de seguridad de redes/);
@@ -191,7 +190,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     await run([PRESENCIAL], judge);
 
     const stored = jobs.list({
-      status: null, verdict: null, runId: null, seniority: null,
+      status: null, verdict: null, runId: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     assert.equal(
@@ -206,7 +205,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     await runPasses([source], { jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90 });
 
     const stored = jobs.list({
-      status: null, verdict: null, runId: null, seniority: null,
+      status: null, verdict: null, runId: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     const job = stored.items[0]!;
@@ -220,7 +219,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     await runPasses([fakeSourceWithMetrics([BUENA], 310)], { jobs, judge: null, profile: PROFILE, runId: 2, maxAgeDays: 90 });
 
     const stored = jobs.list({
-      status: null, verdict: null, runId: null, seniority: null,
+      status: null, verdict: null, runId: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     assert.equal(stored.items.length, 1, 'una sola fila: la huella no cambió');
@@ -230,7 +229,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
   it('refrescar los números NO toca el estado que él le puso a la oferta', async () => {
     await runPasses([fakeSourceWithMetrics([BUENA], 298)], { jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90 });
     const stored = jobs.list({
-      status: null, verdict: null, runId: null, seniority: null,
+      status: null, verdict: null, runId: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     jobs.updateStatus(stored.items[0]!.id, JobStatus.Saved);
@@ -245,7 +244,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
   it('una fuente que no publica números deja esos campos vacíos, sin inventar un cero', async () => {
     await run([BUENA], null);
     const stored = jobs.list({
-      status: null, verdict: null, runId: null, seniority: null,
+      status: null, verdict: null, runId: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     assert.equal(stored.items[0]!.applications, null, 'un 0 diría que no se ha postulado nadie');
@@ -259,7 +258,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
 
     assert.equal(result.outcome.accepted, 0);
     const stored = jobs.list({
-      status: null, verdict: null, runId: null, seniority: null,
+      status: null, verdict: null, runId: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     assert.match(stored.items[0]!.rejectionReason ?? '', /^publicada hace 8 meses/);
@@ -290,7 +289,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
     await runPasses([fakeSourceAged([OTRA_BUENA], 5)], { jobs, judge: null, profile: PROFILE, runId: 1, maxAgeDays: 90 });
 
     const stored = jobs.list({
-      status: null, verdict: null, runId: null, seniority: null,
+      status: null, verdict: null, runId: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     assert.match(stored.items[0]!.text, /Otra vacante/, 'la de hace 5 días va primero');
@@ -301,7 +300,7 @@ describe('pipeline — el juez cruzado con las reglas', () => {
 
     assert.equal(result.outcome.accepted, 0);
     const stored = jobs.list({
-      status: null, verdict: null, runId: null, seniority: null,
+      status: null, verdict: null, runId: null,
       source: null, search: null, hasApply: null, limit: 10, offset: 0,
     });
     assert.equal(stored.items[0]!.judgeStatus, JudgeStatus.Skipped);

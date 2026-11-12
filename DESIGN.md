@@ -245,7 +245,7 @@ Cada componente tiene una frase de carácter y luego sus estados. Los componente
 - **Con una sola página no se pinta.** Si el total cabe en `PAGE_SIZE`, el componente devuelve `null`: un control que dice "1" compite con lo que sí se pulsa.
 
 ### Pestañas (`AppTabs`)
-- **Shape:** `Tabs` de MUI sin override: indicador en cian (`primary`), con 16px de margen inferior. Se usan para filtrar la bandeja por seniority.
+- **Shape:** `Tabs` de MUI sin override: indicador en cian (`primary`), con 16px de margen inferior. Hoy ninguna pantalla las usa —la bandeja se partía por seniority y esa división se quitó—, pero el componente se queda para la siguiente lista que haya que separar.
 
 ### Diálogo (`AppDialog`)
 - **Shape:** `Dialog` `fullWidth` de tamaño `sm`, con fondo `surface` y sin sombra (la elevación de MUI está anulada en `Shadows.tsx`).

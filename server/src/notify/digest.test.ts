@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { NewJob } from '../db/jobs.repository.js';
-import { JobLocation, JobSeniority, JobVerdict, JudgeStatus, RunFailure } from '../types.js';
+import { JobLocation, JobVerdict, JudgeStatus, RunFailure } from '../types.js';
 import { failureMail, headline, offersMail, offersSubject } from './digest.js';
 
 function job(overrides: Partial<NewJob> = {}): NewJob {
@@ -18,7 +18,6 @@ function job(overrides: Partial<NewJob> = {}): NewJob {
     locationKind: JobLocation.HomeCountry,
     verdict: JobVerdict.Accepted,
     rejectionReason: null,
-    seniority: JobSeniority.Regular,
     isAggregator: false,
     isUncertain: false,
     judgeStatus: JudgeStatus.Skipped,

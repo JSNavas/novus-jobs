@@ -1,4 +1,4 @@
-import type { Job, JobSeniority, JobStatus, JobVerdict, RunInfo } from '../types';
+import type { Job, JobStatus, JobVerdict, RunInfo } from '../types';
 
 export class ApiError extends Error {
   readonly status: number;
@@ -20,7 +20,6 @@ export interface JobQuery {
   limit?: number;
   offset?: number;
   status?: JobStatus;
-  seniority?: JobSeniority;
   q?: string;
   hasApply?: boolean;
 }
@@ -28,7 +27,6 @@ export interface JobQuery {
 export interface JobsPage {
   items: Job[];
   total: number;
-  bySeniority: Record<JobSeniority, number>;
 }
 
 export interface Stats {
@@ -66,7 +64,6 @@ export function listJobs(query: JobQuery): Promise<JobsPage> {
   if (query.verdict) params.set('verdict', query.verdict);
   if (query.runId !== undefined) params.set('runId', String(query.runId));
   if (query.status) params.set('status', query.status);
-  if (query.seniority) params.set('seniority', query.seniority);
   if (query.q) params.set('q', query.q);
   if (query.hasApply !== undefined) params.set('hasApply', String(query.hasApply));
   if (query.limit !== undefined) params.set('limit', String(query.limit));
