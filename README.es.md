@@ -1,4 +1,8 @@
-# Novus Jobs
+<p align="center">
+  <img src="logos/novus-jobs-mark-128.png" alt="Novus Jobs" width="96" height="96">
+</p>
+
+<h1 align="center">Novus Jobs</h1>
 
 Busca trabajo por ti en los **sitios de empleo públicos** que tú enciendas, te avisa solo cuando aparece algo que de verdad encaja, y te dice qué están pidiendo las vacantes que te sirven. **Todo en tu máquina**: tu CV no se sube a ningún sitio y tus datos viven en un fichero que puedes borrar.
 

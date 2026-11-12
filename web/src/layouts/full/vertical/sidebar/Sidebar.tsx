@@ -4,11 +4,23 @@ import SidebarItems from './SidebarItems';
 const fullWidth = 224;
 const railWidth = 64;
 
+// El monograma NJ calado en la pastilla. El recorte va por máscara y no por
+// fill-rule: las siluetas de la N y de la J se solapan en el gancho, y con
+// evenodd ese solape se rellenaría de cian en vez de quedar hueco.
 const BrandMark = () => (
-  <Box aria-hidden sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 4px)', gap: '3px', transform: 'skewY(-18deg)' }}>
-    <Box sx={{ height: 17, bgcolor: 'primary.main' }} />
-    <Box sx={{ height: 23, bgcolor: 'primary.main' }} />
-    <Box sx={{ height: 17, bgcolor: 'primary.main' }} />
+  <Box
+    aria-hidden
+    component="svg"
+    viewBox="0 0 48 48"
+    sx={{ width: 26, height: 26, flexShrink: 0, color: 'primary.main', display: 'block' }}
+  >
+    <mask id="novus-jobs-mark" maskUnits="userSpaceOnUse" x="0" y="0" width="48" height="48">
+      <rect width="48" height="48" fill="#000" />
+      <path d="M13,3 H45 V35 L35,45 H3 V13 Z" fill="#fff" />
+      <path d="M9,38 H13.5 V22 L21,38 H25.5 V10 H21 V26 L13.5,10 H9 Z" fill="#000" />
+      <path d="M29,10 H39 V14.5 H33.5 V31 Q33.5,38 27,38 Q24,38 22,36.5 L23.8,32.5 Q25,33.5 26.4,33.5 Q29,33.5 29,30.3 Z" fill="#000" />
+    </mask>
+    <path d="M13,3 H45 V35 L35,45 H3 V13 Z" fill="currentColor" mask="url(#novus-jobs-mark)" />
   </Box>
 );
 

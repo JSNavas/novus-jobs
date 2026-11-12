@@ -1,4 +1,8 @@
-# Novus Jobs
+<p align="center">
+  <img src="logos/novus-jobs-mark-128.png" alt="Novus Jobs" width="96" height="96">
+</p>
+
+<h1 align="center">Novus Jobs</h1>
 
 **A job hunt that runs on your own machine.** Your CV never leaves your disk, your
 applications are yours, and no recruiting platform learns what you are looking

@@ -262,7 +262,7 @@ Forma casi cuadrada.
 - **Excepciones explícitas:** `LinearProgress`, con 6px; y la clase global `btn-xs` (botón cuadrado de 30px, radio 6px), que hoy no usa nadie.
 - **Barras sin radio:** las barras del ranking de Enfoque y la del contador lateral son rectángulos a propósito (`borderRadius: 0`, 2–6px de alto). Son medidas, no adornos.
 - **Punto de estado:** el único círculo del sistema (8px, `border-radius: 50%`).
-- **Marca:** tres barras verticales de 4px (17/23/17px de alto) inclinadas −18°, en cian. Es la única geometría decorativa que existe, y vive solo en la barra lateral.
+- **Marca:** el monograma **NJ** calado en una pastilla de 26px, en cian, con la esquina superior izquierda y la inferior derecha cortadas en chaflán. La pata derecha de la N y el gancho de la J son una sola pieza continua. Es la única geometría decorativa que existe, y vive solo en la barra lateral. El original vive en [`logos/`](logos/); el componente `BrandMark` lo lleva en línea para que tome el cian del tema, y `web/public/logoIcon.svg` es el mismo dibujo sirviendo de favicon. Los tres ficheros se cambian juntos.
 - **Bordes:** 1px sólidos en divider. El **dashed** está reservado a la tarjeta de auditoría.
 
 ## Components
