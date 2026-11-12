@@ -80,6 +80,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   registerDescriptorRoutes(app, {
     descriptors: deps.descriptors, inventor: deps.inventor, toggles: deps.toggles,
     sources: deps.sources, isNative: deps.isNativeSource, reload: deps.reloadDescribed,
+    pool: deps.pool,
   });
   registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler });
   registerSettingsRoute(app, {

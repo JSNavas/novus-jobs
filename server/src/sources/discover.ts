@@ -1,4 +1,5 @@
 import { embeddedList } from './embedded.js';
+import { jobLikeness, MIN_JOB_SCORE } from './joblike.js';
 
 const TIMEOUT_MS = 15_000;
 const MAX_HTML_BYTES = 2_000_000;
@@ -9,6 +10,7 @@ export interface Candidate {
   readonly format: 'json' | 'rss' | 'embedded';
   readonly how: string;
   readonly count: number;
+  readonly score?: number;
 }
 
 export interface Discovery {
@@ -39,6 +41,11 @@ const BOARDS: readonly { readonly name: string; readonly format: 'json' | 'rss';
 ];
 
 const MAX_SLUGS = 3;
+
+const MAX_SCRIPTS = 6;
+const MAX_SCRIPT_BYTES = 3_000_000;
+const MAX_FROM_SCRIPTS = 12;
+const JOBISH = /job|vacan|posting|position|opening|empleo|puesto|career/i;
 
 const SAME_ORIGIN_GUESSES = ['/api/jobs', '/api/positions', '/api/openings', '/api/vacancies', '/jobs.json'];
 
@@ -77,6 +84,16 @@ export function biggestList(payload: unknown): { path: string | null; length: nu
   return lists.reduce((a, b) => (b.length > a.length ? b : a));
 }
 
+function arrayAt(payload: unknown, path: string | null): unknown[] {
+  if (path === null) return Array.isArray(payload) ? payload : [];
+  let node: unknown = payload;
+  for (const key of path.split('.')) {
+    if (node === null || typeof node !== 'object') return [];
+    node = (node as Record<string, unknown>)[key];
+  }
+  return Array.isArray(node) ? node : [];
+}
+
 async function asJsonCandidate(url: string, how: string): Promise<Candidate | null> {
   const response = await get(url, 'application/json');
   if (!response?.ok) return null;
@@ -88,7 +105,9 @@ async function asJsonCandidate(url: string, how: string): Promise<Candidate | nu
   }
   const list = biggestList(payload);
   if (!list) return null;
-  return { url, format: 'json', how, count: list.length };
+  const score = jobLikeness(arrayAt(payload, list.path), url);
+  if (score < MIN_JOB_SCORE) return null;
+  return { url, format: 'json', how, count: list.length, score };
 }
 
 async function asFeedCandidate(url: string, how: string): Promise<Candidate | null> {
@@ -125,6 +144,41 @@ function atsIn(html: string): { url: string; how: string }[] {
     found.push({ url: ats.api(slug), how: `la página enlaza su tablero de ${ats.name} ("${slug}")` });
   }
   return found;
+}
+
+function scriptsIn(html: string, origin: string): string[] {
+  return [...html.matchAll(/<script[^>]+src="([^"]+)"/gi)]
+    .map((m) => m[1] ?? '')
+    .filter((src) => src.endsWith('.js') || src.includes('.js?'))
+    .map((src) => {
+      try {
+        return new URL(src, origin).href;
+      } catch {
+        return '';
+      }
+    })
+    .filter((url) => url.startsWith(origin))
+    .slice(0, MAX_SCRIPTS);
+}
+
+function endpointsIn(code: string, origin: string): string[] {
+  const absolute = [...code.matchAll(/https?:\/\/[a-zA-Z0-9.-]+\/[A-Za-z0-9/_.-]{2,60}/g)].map((m) => m[0]);
+  const relative = [...code.matchAll(/["'`](\/(?:api|rest|v\d)\/[A-Za-z0-9/_.-]{2,60})["'`]/g)]
+    .map((m) => new URL(m[1] ?? '/', origin).href);
+  return [...new Set([...absolute, ...relative])].filter((url) => JOBISH.test(url));
+}
+
+async function fromScripts(html: string, origin: string): Promise<string[]> {
+  const scripts = scriptsIn(html, origin);
+  const found: string[] = [];
+  for (const script of scripts) {
+    const response = await get(script, 'text/javascript');
+    if (!response?.ok) continue;
+    const code = (await response.text()).slice(0, MAX_SCRIPT_BYTES);
+    found.push(...endpointsIn(code, origin));
+    if (found.length >= MAX_FROM_SCRIPTS) break;
+  }
+  return [...new Set(found)].slice(0, MAX_FROM_SCRIPTS);
 }
 
 export function slugsOf(name: string): string[] {
@@ -196,16 +250,22 @@ export async function discover(input: string): Promise<Discovery> {
       how: `una dirección habitual del mismo sitio (${path})`,
       format: 'json' as const,
     })),
+    ...(await fromScripts(html, target.origin)).map((url) => ({
+      url,
+      how: 'una dirección que nombra su propio JavaScript',
+      format: 'json' as const,
+    })),
   ];
 
   const candidates: Candidate[] = [];
   const inPage = embeddedList(html);
-  if (inPage) {
+  if (inPage && jobLikeness(inPage, target.href) >= MIN_JOB_SCORE) {
     candidates.push({
       url: target.href,
       format: 'embedded',
       how: 'la página trae sus vacantes dentro, en JSON',
       count: inPage.length,
+      score: jobLikeness(inPage, target.href),
     });
   }
   const seen = new Set<string>();
@@ -226,5 +286,5 @@ export async function discover(input: string): Promise<Discovery> {
       'Copia esa dirección (botón derecho → Copiar → Copiar dirección del enlace) y pégala aquí arriba.',
     );
   }
-  return { candidates: candidates.sort((a, b) => b.count - a.count), notes };
+  return { candidates: candidates.sort((a, b) => (b.score ?? 0) - (a.score ?? 0) || b.count - a.count), notes };
 }

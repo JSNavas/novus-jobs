@@ -2,7 +2,9 @@ import type { FastifyInstance } from 'fastify';
 import { DescribedSource } from '../sources/described.source.js';
 import { DescriptorError, parseDescriptor, type SourceDescriptor } from '../sources/descriptor.js';
 import type { SourceDescriptors } from '../sources/descriptors.js';
+import type { BrowserPool } from '../browser/session.js';
 import { biggestList, discover } from '../sources/discover.js';
+import { sniff } from '../sources/sniff.js';
 import type { DescriptorInventor } from '../sources/invent.js';
 import type { SourceToggles } from '../sources/toggles.js';
 import type { JobSource } from '../sources/types.js';
@@ -17,6 +19,7 @@ export interface DescriptorRoutesDeps {
   sources: JobSource[];
   isNative: (name: string) => boolean;
   reload: () => void;
+  pool: BrowserPool;
 }
 
 function message(error: unknown): string {
@@ -44,7 +47,15 @@ export function registerDescriptorRoutes(app: FastifyInstance, deps: DescriptorR
     if (typeof url !== 'string' || url.trim() === '') {
       return reply.code(400).send({ error: 'Falta la dirección.' });
     }
-    return discover(url.trim());
+    const found = await discover(url.trim());
+    if (found.candidates.length > 0 || !/^https?:\/\//i.test(url.trim())) return found;
+
+    const sniffed = await sniff(deps.pool, url.trim()).catch(() => []);
+    if (sniffed.length === 0) return found;
+    return {
+      candidates: sniffed,
+      notes: ['Esa dirección no decía nada por sí sola, así que se abrió en un navegador para ver qué pide al cargar.'],
+    };
   });
 
   app.post('/api/descriptors/invent', async (request, reply) => {

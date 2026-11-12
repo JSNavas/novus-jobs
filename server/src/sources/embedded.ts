@@ -1,3 +1,5 @@
+import { mostJobLike } from './joblike.js';
+
 const MIN_BLOB_CHARS = 40;
 const MAX_BLOBS = 400;
 
@@ -35,17 +37,16 @@ function listsIn(value: unknown, depth = 0): unknown[][] {
   return Object.values(value as Record<string, unknown>).flatMap((inner) => listsIn(inner, depth + 1));
 }
 
-export function embeddedList(html: string): unknown[] | null {
-  let best: unknown[] | null = null;
+export function embeddedList(html: string, where = ''): unknown[] | null {
+  const found: { list: readonly unknown[]; where: string; carry: null }[] = [];
   let blobs = 0;
   for (let i = 0; i < html.length && blobs < MAX_BLOBS; i++) {
     if (html[i] !== '{' || html[i + 1] !== '"') continue;
     const parsed = parseFrom(html, i);
     if (parsed === null) continue;
     blobs++;
-    for (const list of listsIn(parsed)) {
-      if (!best || list.length > best.length) best = list;
-    }
+    for (const list of listsIn(parsed)) found.push({ list, where, carry: null });
   }
-  return best;
+  const best = mostJobLike(found);
+  return best ? [...best.list] : null;
 }

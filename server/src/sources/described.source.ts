@@ -228,7 +228,7 @@ export class DescribedSource implements JobSource {
     }
 
     if (format === 'embedded') {
-      const list = embeddedList(await response.text());
+      const list = embeddedList(await response.text(), target.href);
       if (!list) {
         throw new Error(
           `${target.href} no trae ninguna lista de vacantes dentro de la página. ` +
