@@ -298,6 +298,7 @@ export const es = {
   'set.cv.help': 'El punto de partida de todo lo que decide qué oferta te llega.',
   'set.cv.none': 'Todavía no has subido ningún CV.',
   'set.cv.stored': 'Actualizado el {date}',
+  'set.cv.upload': 'Subir CV',
   'set.cv.replace': 'Reemplazar CV',
   'set.cv.reading': 'Leyendo el CV…',
   'set.cv.readWith': 'Leer también con el modelo',

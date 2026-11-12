@@ -102,7 +102,7 @@ const CvSection = ({ onboarding, onApplied }: CvSectionProps) => {
           disabled={busy}
           onClick={() => input.current?.click()}
         >
-          {busy ? t('set.cv.reading') : t('set.cv.replace')}
+          {busy ? t('set.cv.reading') : t(onboarding.cv ? 'set.cv.replace' : 'set.cv.upload')}
         </Button>
       </Stack>
 

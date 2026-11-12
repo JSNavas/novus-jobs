@@ -300,6 +300,7 @@ export const en: Record<keyof typeof es, string> = {
   'set.cv.help': 'The starting point for everything that decides which posting reaches you.',
   'set.cv.none': 'You have not uploaded a CV yet.',
   'set.cv.stored': 'Updated on {date}',
+  'set.cv.upload': 'Upload CV',
   'set.cv.replace': 'Replace CV',
   'set.cv.reading': 'Reading the CV…',
   'set.cv.readWith': 'Also read it with the model',
