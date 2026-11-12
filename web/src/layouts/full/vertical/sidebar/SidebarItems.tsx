@@ -123,7 +123,9 @@ const SidebarItems = ({ onNavigate, collapsed = false }: SidebarItemsProps) => {
               badgeContent={count}
               max={999}
               color={tone === 'success' ? 'success' : 'secondary'}
-              slotProps={{ badge: { style: { fontSize: 9, height: 15, minWidth: 15 } } }}
+              slotProps={{
+                badge: { style: { fontSize: 9, height: 15, minWidth: 15, transform: 'translate(90%, -45%)' } },
+              }}
             >
               {icon}
             </Badge>

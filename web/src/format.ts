@@ -46,6 +46,15 @@ export function formatDateTime(iso: string | null): string {
   return `${p.day} ${month} ${p.year}, ${p.hour}:${p.minute} ${period}`;
 }
 
+export function formatTime(iso: string | null): string {
+  if (!iso) return '';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '';
+  const p = partsOf(date);
+  const period = (p.dayPeriod ?? '').replace(/[.\s\u202f\u00a0]/g, '').toLowerCase();
+  return `${p.hour}:${p.minute} ${period}`;
+}
+
 export function formatDate(iso: string | null): string {
   if (!iso) return '';
   const date = new Date(iso);

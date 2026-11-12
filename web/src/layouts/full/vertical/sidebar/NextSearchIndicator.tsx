@@ -6,6 +6,7 @@ import {
   countdownOf, elapsedShare, nextSearchAt, nextSearchIn, searchHourLabel, shareSince,
 } from '../../../../views/jobs/scheduleText';
 import { t } from '../../../../i18n';
+import { formatTime } from '../../../../format';
 
 const REFRESH_INTERVAL_MS = 30_000;
 const TICK_INTERVAL_MS = 1_000;
@@ -82,7 +83,7 @@ const NextSearchIndicator = ({ lastRunFailed, lastRunAt, platforms }: NextSearch
           </Typography>
 
           <Typography variant="mono" sx={{ display: 'block', fontSize: '0.6875rem', color: 'text.secondary' }}>
-            {searchHourLabel(next.hour)}
+            {schedule?.nextAt ? formatTime(schedule.nextAt) : searchHourLabel(next.hour)}
             {platforms ? ` · ${t('nav.integrations.count', { count: platforms })}` : ''}
           </Typography>
 

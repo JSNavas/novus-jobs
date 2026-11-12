@@ -48,7 +48,9 @@ const SidebarContent = ({ onNavigate, collapsed }: { onNavigate: () => void; col
       sx={{ px: collapsed ? 0 : 2.5, height: 46, borderTop: 1, borderColor: 'divider', color: 'text.secondary', flexShrink: 0 }}
     >
       <IconLock size={12} />
-      {collapsed ? null : <Typography variant="label">{t('sidebar.local')}</Typography>}
+      {collapsed ? null : (
+        <Typography variant="mono" sx={{ fontSize: '0.6875rem' }}>{t('sidebar.local')}</Typography>
+      )}
     </Stack>
   </>
 );
