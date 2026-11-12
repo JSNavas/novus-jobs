@@ -3,7 +3,9 @@ import { hourInUserZone } from '../../format';
 import { t } from '../../i18n';
 
 function hourLabel(hour: number): string {
-  return `${String(hour).padStart(2, '0')}:00`;
+  const suffix = hour < 12 ? 'am' : 'pm';
+  const twelve = hour % 12 === 0 ? 12 : hour % 12;
+  return `${twelve}:00 ${suffix}`;
 }
 
 export function nextSearchSentence(schedule: Schedule | null): string {
