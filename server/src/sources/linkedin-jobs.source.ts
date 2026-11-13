@@ -29,15 +29,22 @@ export interface JobCard {
   readonly id: string;
 }
 
+const CARD_BADGES = /^(promocionado|promoted|visto|viewed|solicitud sencilla|easy apply|evaluando solicitudes|actively reviewing|se ajusta a tu perfil)/i;
+
 export function cardFrom(lines: readonly string[], href: string): JobCard | null {
   const id = /\/jobs\/view\/(\d+)/.exec(href)?.[1] ?? '';
-  const clean: string[] = [];
-  for (const line of lines.map((l) => l.trim()).filter(Boolean)) {
-    if (clean[clean.length - 1] !== line) clean.push(line);
-  }
-  const title = clean[0] ?? '';
+  const written = lines.map((line) => line.trim()).filter(Boolean);
+  const title = written[0] ?? '';
   if (!id || !title) return null;
-  return { id, title, company: clean[1] ?? '', place: clean[2] ?? '' };
+
+  const rest: string[] = [];
+  for (const line of written.slice(1)) {
+    if (line === title || line.startsWith(title)) continue;
+    if (CARD_BADGES.test(line)) continue;
+    if (rest[rest.length - 1] === line) continue;
+    rest.push(line);
+  }
+  return { id, title, company: rest[0] ?? '', place: rest[1] ?? '' };
 }
 
 export function postTextOf(card: JobCard, description: string): string {
