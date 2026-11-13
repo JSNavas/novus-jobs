@@ -22,7 +22,7 @@ export function noticeOf(run: RunInfo): Omit<Notice, 'id'> | null {
     return {
       tone: 'error',
       title: run.failure ? runFailureLabel(run.failure) : t('notice.runFailed'),
-      detail: run.error ?? (run.failure ? runFailureAdvice(run.failure, run.source) : ''),
+      detail: run.failure ? runFailureAdvice(run.failure, run.source) : (run.error ?? ''),
       at: run.finishedAt ?? run.startedAt,
     };
   }

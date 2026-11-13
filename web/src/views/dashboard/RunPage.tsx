@@ -5,6 +5,7 @@ import { Box, Typography } from '@mui/material';
 import { ALL_VERDICTS, getRun, type JobQuery } from '../../api/client';
 import { AppAlert, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { formatDateTime } from '../../format';
+import { runFailureAdvice } from '../../labels';
 import { RunStatus, type RunInfo } from '../../types';
 import JobList from '../jobs/JobList';
 import { runStatusLabel, runStatusTone } from './runStatus';
@@ -44,7 +45,9 @@ const RunPage = () => {
       {run?.status === RunStatus.Error && run.error ? (
         <AppAlert severity="error">
           <Typography variant="body2" fontWeight={600} component="div">{t('run.failed.heading')}</Typography>
-          <Typography variant="caption" component="div" sx={{ opacity: 0.8 }}>{run.error}</Typography>
+          <Typography variant="caption" component="div" sx={{ opacity: 0.8 }}>
+            {run.failure ? runFailureAdvice(run.failure, run.source) : run.error}
+          </Typography>
         </AppAlert>
       ) : null}
 

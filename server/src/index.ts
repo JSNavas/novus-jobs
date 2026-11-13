@@ -88,7 +88,7 @@ async function main(): Promise<void> {
   const timeZone = (): string => profile().geo.timezone || systemTimeZone();
   console.log(onboarded()
     ? `[arranque] perfil cargado: ${profile().core.length} tecnologías de núcleo, inglés ${profile().english.level.toUpperCase()}, zona ${timeZone()}`
-    : '[arranque] sin alta: abre el dashboard y completa tu perfil para que empiecen las búsquedas');
+    : '[arranque] sin alta: abre Novus Jobs y completa tu perfil para que empiecen las búsquedas');
   const runner = new Runner({
     sources,
     maxAgeDays: () => readMaxAgeMonths(settings) * 30, jobs, runs, judge, profile, onboarded, enabled, timeZone,

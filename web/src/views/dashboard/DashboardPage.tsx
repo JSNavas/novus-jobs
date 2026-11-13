@@ -15,6 +15,7 @@ import {
 import { useNotifications } from '../../notifications';
 import { AppAlert, AppChip, AppPagination, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { t } from '../../i18n';
+import { runFailureLabel } from '../../labels';
 import { dayLabel, formatDate, formatTime } from '../../format';
 import { RunStatus, type RunInfo } from '../../types';
 import { runStatusLabel, runStatusTone } from './runStatus';
@@ -339,9 +340,9 @@ const DashboardPage = () => {
                     <TableCell>
                       <Stack direction="row" spacing={1} alignItems="center">
                         <AppStatusPilot label={runStatusLabel(run)} tone={runStatusTone(run)} />
-                        {run.error ? (
+                        {run.failure || run.error ? (
                           <Typography variant="caption" color="textSecondary" noWrap sx={{ maxWidth: 220 }}>
-                            {run.error}
+                            {run.failure ? runFailureLabel(run.failure) : run.error}
                           </Typography>
                         ) : null}
                       </Stack>

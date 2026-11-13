@@ -55,17 +55,17 @@ describe('offersMail', () => {
     assert.match(varias.html, /Llegaron <strong>2 ofertas nuevas<\/strong> que pasan tus reglas/);
   });
 
-  it('lleva al dashboard y resume cada oferta con dónde y con qué encaja', () => {
+  it('lleva a la aplicación y resume cada oferta con dónde y con qué encaja', () => {
     const mail = offersMail([job()], 'http://127.0.0.1:47831/', 'es');
     assert.match(mail.text, /Desarrollador Full Stack/);
     assert.match(mail.text, /Venezuela · TypeScript, Node\.js/);
     assert.match(mail.text, /http:\/\/127\.0\.0\.1:47831\//);
-    assert.match(mail.html, /Abrir el dashboard/);
+    assert.match(mail.html, /Abrir Novus Jobs/);
   });
 
   it('con muchas ofertas lista unas pocas y dice cuántas faltan', () => {
     const mail = offersMail(Array.from({ length: 20 }, () => job()), 'http://x/', 'es');
-    assert.match(mail.text, /…y 8 más en el dashboard/);
+    assert.match(mail.text, /…y 8 más dentro/);
   });
 
   it('escapa el HTML del texto de la oferta', () => {

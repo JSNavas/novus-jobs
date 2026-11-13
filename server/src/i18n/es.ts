@@ -18,7 +18,7 @@ export const es = {
 
   'mail.offers.one': '1 oferta nueva',
   'mail.offers.many': '{count} ofertas nuevas',
-  'mail.openDashboard': 'Abrir el dashboard',
+  'mail.openDashboard': 'Abrir Novus Jobs',
   'mail.failure.subject': 'Novus Jobs: la búsqueda falló',
   'mail.failure.intro': 'La última búsqueda no terminó bien.',
 
@@ -28,14 +28,14 @@ export const es = {
 
   'mail.subject.one': '1 oferta nueva para revisar',
   'mail.subject.many': '{count} ofertas nuevas para revisar',
-  'mail.text.one': 'Llegó 1 oferta nueva. Revisa el dashboard:',
-  'mail.text.many': 'Llegaron {count} ofertas nuevas. Revisa el dashboard:',
+  'mail.text.one': 'Llegó 1 oferta nueva. Revísala en Novus Jobs:',
+  'mail.text.many': 'Llegaron {count} ofertas nuevas. Revísalas en Novus Jobs:',
   'mail.html.one': 'Llegó <strong>1 oferta nueva</strong> que pasa tus reglas de perfil.',
   'mail.html.many': 'Llegaron <strong>{count} ofertas nuevas</strong> que pasan tus reglas de perfil.',
-  'mail.more': '…y {count} más en el dashboard.',
+  'mail.more': '…y {count} más dentro.',
   'mail.more.html': '…y {count} más.',
   'mail.noLocation': 'sin ubicación',
-  'mail.footer': 'El detalle, el enlace de postulación y los botones de guardar o descartar están en el dashboard.',
+  'mail.footer': 'El detalle, el enlace de postulación y los botones de guardar o descartar están en Novus Jobs.',
   'mail.fail.loginRequired': 'La sesión de {source} caducó: la búsqueda está parada',
   'mail.fail.profileBusy': 'La búsqueda no pudo correr: el navegador estaba ocupado',
   'mail.fail.layout': 'La búsqueda no encontró publicaciones: puede haber cambiado la plataforma',
@@ -45,5 +45,5 @@ export const es = {
   'mail.fix.layout': 'Hay una captura en los logs del servidor para ver qué sirvió la plataforma.',
   'mail.fix.other': 'Mira el detalle y los logs del servidor.',
   'mail.detail': 'Detalle: {detail}',
-  'mail.dashboard': 'Dashboard: {url}',
+  'mail.dashboard': 'Novus Jobs: {url}',
 } as const;
