@@ -78,6 +78,21 @@ describe('jobTitle', () => {
 });
 
 describe('offerTitle', () => {
+  it('EL CASO REAL (Puente Talent): un título corto perdía contra nuestra propia línea', () => {
+    const anuncio = [
+      'GTM Ops',
+      'Ubicación: Mexico, Colombia, Brazil, Argentina, Chile, Peru, Venezuela',
+      'Postular: https://puentetalent.com/jobs/1',
+      '',
+      'Buscamos a alguien para operaciones de go-to-market.',
+    ].join('\n');
+    assert.equal(offerTitle(anuncio), 'GTM Ops', 'el respaldo pedía 12 caracteres y «GTM Ops» tiene 7');
+  });
+
+  it('las líneas que escribimos nosotros nunca son el título', () => {
+    assert.equal(offerTitle('Bookkeeper\nUbicación: LATAM\nPostular: https://x/2'), 'Bookkeeper');
+  });
+
   it('siempre devuelve algo que ojear: una tarjeta sin título no se puede leer', () => {
     assert.equal(offerTitle('Tenemos novedades esta semana en la empresa.').length > 0, true);
   });

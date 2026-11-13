@@ -1,3 +1,4 @@
+import { isOurOwnLine } from './offer.js';
 const CONNECTION_LINE = /^[•·]\s*(1er|2o|2do|3er|3o|siguiendo|seguir|seguido por\b.*)\s*\+?$/i;
 const MAX_NAME_LINE = 60;
 const AUTHOR_HEADLINE = /\s[|·/]\s|@\w|\b(recruiter|talent|headhunter|founder|ceo|cto|coo|manager|partner|consultor|selecci[óo]n|recursos humanos|rrhh|hiring)\b/i;
@@ -38,6 +39,7 @@ const LOOKING_FOR = new RegExp(
 );
 const TITLE_LINE = new RegExp(String.raw`^.{0,80}${ROLE}.{0,60}$`, 'i');
 const MAX_TITLE = 90;
+const MIN_TITLE = 4;
 const SENTENCE = /[.!?]\s+\S|[.!?]$|,\s+(?:que|donde|porque|y\s+que)\b/;
 const HASHTAG_LINE = /#\w/;
 const DANGLING = /\b(?:de|del|en|para|con|por|a|al|y|o|the|of|for|el|la|los|las|un|una)$/i;
@@ -75,7 +77,8 @@ export function jobTitle(adText: string): string | null {
 export function offerTitle(adText: string): string {
   const title = jobTitle(adText);
   if (title) return title;
-  const line = adText.split('\n').map(clean).find((l) => l.length > 12);
+  const theirs = adText.split('\n').filter((line) => !isOurOwnLine(line)).map(clean);
+  const line = theirs.find((l) => l.length >= MIN_TITLE) ?? theirs.find((l) => l.length > 0);
   return shorten(line ?? clean(adText)) || 'Publicación sin título';
 }
 

@@ -121,6 +121,10 @@ const OFFER_SIGNALS = [
 
 const OUR_OWN_LINE = /^\s*(?:hilo|thread|postular|ubicaci[óo]n|localizaci[óo]n|location|nivel|modalidad|[áa]rea|area|sueldo|salary|url|headquarters|pa[íi]s|country|job\s+type|schedule|pay):/i;
 
+export function isOurOwnLine(line: string): boolean {
+  return OUR_OWN_LINE.test(line);
+}
+
 function theirWords(text: string): string {
   return text.split('\n').filter((line) => !OUR_OWN_LINE.test(line)).join('\n').toLowerCase();
 }
