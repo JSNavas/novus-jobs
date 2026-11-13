@@ -15,15 +15,27 @@ Un repositorio se lanza una vez. El día que aparece en Hacker News o en Reddit
 recibe el 90% de las visitas que tendrá en meses, y lo que haya en pantalla ese
 día decide si se queda en 40 estrellas o pasa de 1.000.
 
-### 1.1 Capturas y un GIF · media tarde
-Es un dashboard y el README no enseña ni un píxel. Hace falta:
-- El dashboard con datos reales (ofertas de verdad, no «Lorem»).
-- La pantalla de descartadas con sus motivos — es lo que nadie más hace y lo
-  que demuestra el argumento entero del proyecto.
-- Un GIF de 10–15 s del alta: subir el CV y ver cómo se rellenan el stack y el
-  inglés solos. Ese es el momento «ah, vale».
-- Imagen de *social preview* (1280×640) para que el enlace no salga desnudo en
-  X, Slack o Reddit. Se sube en Settings del repositorio, no en el código.
+### 1.1 Capturas y un GIF · HECHO a medias (12 nov 2026)
+
+**Hecho.** Seis capturas por idioma con datos reales (1.032 ofertas, 970
+descartadas, 12 plataformas) y un GIF de 14 s recorriendo dashboard → bandeja →
+descartadas → Enfoque → integraciones, con el reloj de la próxima búsqueda
+corriendo en el margen. Todo en `docs/img/`, enlazado desde los dos README.
+
+Se generan con Playwright contra la instalación local y ffmpeg para el GIF; no
+hay script guardado todavía, y debería haberlo para poder repetirlas cuando la
+interfaz cambie.
+
+**Falta:**
+- **La imagen de *social preview* (1280×640)**, para que el enlace no salga
+  desnudo en X, Slack o Reddit. Se sube en Settings del repositorio, no va en
+  el código.
+- **El GIF del alta**: subir el CV y ver cómo se rellenan el stack y el inglés
+  solos. Es el momento «ah, vale» y el que más convence, pero grabarlo con el
+  CV real del autor publica sus datos, así que hace falta un CV de prueba.
+- **Las capturas en inglés enseñan texto en español** y eso se ve en la
+  primera pantalla: las tarjetas dicen «Nxt Level **busca:** …» y
+  «**Postular:** https://…». Ver 1.9.
 
 ### 1.1b Pruebas que funcionan, para grabarlas · comprobadas el 12 nov 2026
 
@@ -86,6 +98,26 @@ fuera posible es el argumento**. Ninguna de las cuatro se encuentra leyendo
 código; se encontraron porque cada descarte queda guardado con su motivo.
 Verificado hasta converger: cero aceptadas que deban caer, cero descartadas que
 deban volver. 337 pruebas.
+
+### 1.9 El texto de la oferta se compone en español, siempre · 2 horas
+
+`described.source.ts`, `getonbrd.source.ts` y `hackernews.source.ts` arman el
+texto de cada vacante con literales en español —`busca:`, `Postular:`,
+`Ubicación:`, `Hilo:`— y eso se guarda así en la base. Con la interfaz en
+inglés, cada tarjeta enseña «Nxt Level busca:» y «Postular:». **893 de las
+1.032 ofertas guardadas lo llevan**, así que se ve en la captura que va primera
+en el README.
+
+El coste de arreglarlo no es el código, es la huella: el identificador que
+deduplica es un sha1 del texto, así que cambiar la composición vuelve a meter
+esas 893 como nuevas. Hay que decidir entre:
+
+1. Componer en el idioma del perfil y tragarse una tanda de duplicados una vez.
+2. Dejar de meter palabras nuestras en el texto (solo título, empresa,
+   ubicación y enlace como campos), que es más limpio y rompe la huella igual.
+3. Calcular la huella sobre el anuncio y no sobre el texto compuesto, y
+   entonces cambiar la composición ya no duplica nada. Es el arreglo bueno y el
+   más caro.
 
 ### 1.2 El alta tiene que enseñar que lee el CV · media tarde
 El GIF de arriba no existe hasta que el paso 2 del alta lo merezca. Hoy es una

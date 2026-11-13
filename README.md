@@ -23,6 +23,12 @@ for the format behind them.
 
 > Español: [README.es.md](README.es.md)
 
+<p align="center">
+  <img src="docs/img/tour.gif" alt="A walk through the dashboard, the inbox, the discard log, Focus and Integrations" width="900">
+</p>
+
+<p align="center"><sub>Real data, real postings. The clock at the bottom left is the next scheduled read.</sub></p>
+
 ```
 ┌──────────────┐     ┌─────────────┐     ┌──────────────┐     ┌───────────┐
 │  Public job  │     │             │     │              │     │           │
@@ -105,6 +111,37 @@ How each is enforced: [CONTRIBUTING.md](CONTRIBUTING.md) for the code,
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the structure, and
 [DESIGN.md](DESIGN.md) for the dashboard.
 
+## What it looks like
+
+The dashboard is dark, dense and flat: a tracking tool, not a landing page. Five
+screens — what it searched, what it found, what it discarded and why, what the
+market is asking for, and the settings.
+
+**The discard log is the screen nobody else has.** 970 decisions, one row each,
+with the reason and its detail — because a filter you cannot audit is a filter
+you have to trust.
+
+<img src="docs/img/descartadas-en.png" alt="Discard log: 970 decisions, each with its reason" width="100%">
+
+**Focus reads the market out of the postings you already accepted** — what they
+ask for in common, with the sentences exactly as the ads wrote them, plus terms
+that are starting to appear and are not in the catalogue yet.
+
+<img src="docs/img/enfoque-en.png" alt="Focus: what the vacancies ask for, ranked, with real sentences" width="100%">
+
+**Integrations is where a board becomes a line of JSON.** Each card says what
+address it reads, how often, and when it last ran.
+
+<img src="docs/img/integraciones-en.png" alt="Integrations: each platform with its rhythm and the address it reads" width="100%">
+
+<details>
+<summary>The dashboard and the inbox</summary>
+
+<img src="docs/img/dashboard-en.png" alt="Dashboard: counters, search history and platform status" width="100%">
+<img src="docs/img/nuevas-en.png" alt="Inbox: new postings with the technologies that matched" width="100%">
+
+</details>
+
 ## Quick start
 
 Requires **Node.js 22+** and about five minutes.
@@ -150,12 +187,6 @@ and **close the window when you are in** — closing it is what saves the sessio
 
 To keep it running after you close the terminal, see
 **[docs/INSTALL.md](docs/INSTALL.md)** — macOS, Linux and Windows.
-
-## What it looks like
-
-The dashboard is dark, dense and flat: a tracking tool, not a landing page. Five
-screens — what it searched, what it found, what it discarded and why, what the
-market is asking for, and the settings.
 
 ## Privacy, concretely
 

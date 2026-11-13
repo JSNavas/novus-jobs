@@ -8,6 +8,12 @@ Busca trabajo por ti en los **sitios de empleo públicos** que tú enciendas, te
 
 Y si falta un portal, **lo añades tú con un JSON**, sin tocar el código ni esperar a que nadie publique una versión: [cómo se describe una fuente](docs/DESCRIPTORS.md).
 
+<p align="center">
+  <img src="docs/img/tour.gif" alt="Un paseo por el dashboard, la bandeja, las descartadas, el Enfoque y las integraciones" width="900">
+</p>
+
+<p align="center"><sub>Datos reales, ofertas reales. El reloj de abajo a la izquierda es la próxima lectura programada.</sub></p>
+
 > English: [README.md](README.md) · Instalación paso a paso: [docs/INSTALL.md](docs/INSTALL.md)
 >
 > Esta página es la versión larga, con el porqué de cada decisión. Si solo quieres ponerlo a andar, el README en inglés y la guía de instalación son más directos.
@@ -78,6 +84,31 @@ una de ellas es un cambio que este proyecto no quiere, por cómodo que sea.
 | `/rechazadas` | lo que tumbó el filtro, con el motivo |
 | `/enfoque` | qué piden en común las vacantes que te sirven |
 | `/configuracion` | lo que puedes cambiar sin tocar código |
+
+**Las descartadas son la pantalla que no tiene nadie más.** 970 decisiones, una
+por fila, con su motivo y su detalle: un filtro que no se puede auditar es un
+filtro que hay que creerse.
+
+<img src="docs/img/descartadas-es.png" alt="Descartadas por el filtro: 970 decisiones, cada una con su motivo" width="100%">
+
+**El Enfoque lee el mercado** en las vacantes que ya aceptaste: qué piden en
+común, con las frases tal cual las escribieron, y los términos que empiezan a
+asomar y todavía no están en el catálogo.
+
+<img src="docs/img/enfoque-es.png" alt="Enfoque: lo que piden las vacantes, ordenado, con frases reales" width="100%">
+
+**En Integraciones un portal es una línea de JSON.** Cada tarjeta dice qué
+dirección lee, cada cuánto y cuándo fue la última pasada.
+
+<img src="docs/img/integraciones-es.png" alt="Integraciones: cada plataforma con su ritmo y la dirección que consulta" width="100%">
+
+<details>
+<summary>El dashboard y la bandeja</summary>
+
+<img src="docs/img/dashboard-es.png" alt="Dashboard: contadores, historial de búsquedas y estado de las plataformas" width="100%">
+<img src="docs/img/nuevas-es.png" alt="Bandeja: las ofertas nuevas con las tecnologías que coinciden" width="100%">
+
+</details>
 
 ## Estructura
 
