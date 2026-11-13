@@ -16,7 +16,7 @@ const NATIVE: readonly SourceDefinition[] = [
   },
   {
     name: 'linkedin-jobs',
-    label: 'LinkedIn (empleos)',
+    label: 'LinkedIn Jobs',
     create: (_config, pool) => new LinkedInJobsSource(pool, searches ?? undefined),
   },
   {

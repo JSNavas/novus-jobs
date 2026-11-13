@@ -375,6 +375,7 @@ export const en: Record<keyof typeof es, string> = {
   'set.focusWindow': 'Focus window (months)',
   'set.motivation': 'Cover note for applications',
   'set.motivation.help': 'The text the “Copy cover note” button copies on every posting, to paste into the “why do you want to work here?” box. What you write here is what gets pasted.',
+  'set.motivation.noMatch': 'If an offer matches none of your technologies, the sentence carrying {tecnologias} is dropped whole rather than left half-written. That is why it is worth giving it a sentence of its own.',
   'set.chars.tooLong': '{length} characters: the form takes {max} at most',
   'set.chars.tooShort': '{length} characters: the form wants at least {min}',
   'set.chars.ok': '{length} characters',

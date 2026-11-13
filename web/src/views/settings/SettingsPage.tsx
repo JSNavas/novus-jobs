@@ -205,9 +205,7 @@ const SettingsPage = () => {
                 </Typography>
               ))}
               <Typography variant="body2" color="textSecondary" mt={1}>
-                Si una oferta no coincide con ninguna tecnología, la frase que lleva{' '}
-                <Typography component="span" variant="mono">{'{tecnologias}'}</Typography> se quita
-                entera en vez de quedarse a medias. Por eso conviene que vaya en su propia frase.
+                {t('set.motivation.noMatch')}
               </Typography>
             </Box>
 

@@ -68,7 +68,7 @@ interface Harvest {
 
 export class LinkedInJobsSource implements JobSource {
   readonly name = 'linkedin-jobs';
-  readonly label = 'LinkedIn (empleos)';
+  readonly label = 'LinkedIn Jobs';
   readonly profileId = LINKEDIN_PROFILE_ID;
   readonly loginUrl = LOGIN_URL;
   readonly policy = WATCHED_ACCOUNT_POLICY;

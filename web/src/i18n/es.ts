@@ -373,6 +373,7 @@ export const es = {
   'set.focusWindow': 'Ventana del Enfoque (meses)',
   'set.motivation': 'Motivación de las postulaciones',
   'set.motivation.help': 'El texto que copia el botón «Copiar motivación» de cada oferta, para pegarlo en el «¿por qué te interesa trabajar aquí?». Lo que escribas aquí es lo que se pega.',
+  'set.motivation.noMatch': 'Si una oferta no coincide con ninguna tecnología, la frase que lleva {tecnologias} se quita entera en vez de quedarse a medias. Por eso conviene que vaya en su propia frase.',
   'set.chars.tooLong': '{length} caracteres: el formulario admite {max} como mucho',
   'set.chars.tooShort': '{length} caracteres: el formulario pide al menos {min}',
   'set.chars.ok': '{length} caracteres',
