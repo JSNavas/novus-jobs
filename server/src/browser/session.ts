@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium, type BrowserContext, type Cookie, type Page, type Route } from 'playwright';
+import { loginWallOf } from '../sources/login-wall.js';
 import { isProfileBusy, profileLockHolder } from './profile-lock.js';
 
 export class ProfileBusyError extends Error {
@@ -26,6 +27,12 @@ const IDLE_CLOSE_MS = 5 * 60_000;
 export const NAVIGATION_TIMEOUT_MS = 45_000;
 
 const STATE_SNAPSHOT_MS = 5_000;
+
+function stillAtTheDoor(ctx: BrowserContext): boolean {
+  const pages = ctx.pages();
+  if (pages.length === 0) return false;
+  return pages.every((page) => loginWallOf(page.url()) !== null);
+}
 
 export class BrowserSession {
   private ctx: BrowserContext | null = null;
@@ -166,12 +173,16 @@ export class BrowserSession {
     }
     const closed = new Promise<void>((resolve) => ctx.once('close', () => resolve()));
 
+    const keep = (): void => {
+      if (stillAtTheDoor(ctx)) return;
+      void this.saveCookies(ctx);
+    };
     const watch = (page: Page): void => {
-      page.on('domcontentloaded', () => void this.saveCookies(ctx));
+      page.on('domcontentloaded', keep);
     };
     ctx.on('page', watch);
     ctx.pages().forEach(watch);
-    const ticker = setInterval(() => void this.saveCookies(ctx), STATE_SNAPSHOT_MS);
+    const ticker = setInterval(keep, STATE_SNAPSHOT_MS);
     ticker.unref();
 
     try {

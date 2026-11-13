@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, it } from 'node:test';
+import { loginWallOf } from '../sources/login-wall.js';
 import { BrowserPool } from './session.js';
 
 describe('BrowserSession — la sesión sobrevive al cierre del navegador', () => {
@@ -65,5 +66,21 @@ describe('BrowserSession — la sesión sobrevive al cierre del navegador', () =
     const second = new BrowserPool(root, true);
     assert.deepEqual(await cookieNamesOf(second), []);
     await second.closeAll();
+  });
+});
+
+describe('la ventana de login y las cookies', () => {
+  it('EL CASO REAL: cerrarla sin entrar no puede llevarse por delante la sesión buena', () => {
+    const enLaPuerta = (urls: readonly string[]): boolean =>
+      urls.length > 0 && urls.every((url) => loginWallOf(url) !== null);
+
+    assert.equal(enLaPuerta(['https://www.linkedin.com/login']), true, 'ahí todavía no hay sesión que guardar');
+    assert.equal(enLaPuerta(['https://www.linkedin.com/checkpoint/challenge']), true);
+    assert.equal(enLaPuerta(['https://www.linkedin.com/feed/']), false, 'ya está dentro: esto sí se guarda');
+    assert.equal(
+      enLaPuerta(['https://www.linkedin.com/login', 'https://www.linkedin.com/feed/']),
+      false,
+      'con una pestaña dentro, la sesión vale',
+    );
   });
 });
