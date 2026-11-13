@@ -99,6 +99,21 @@ código; se encontraron porque cada descarte queda guardado con su motivo.
 Verificado hasta converger: cero aceptadas que deban caer, cero descartadas que
 deban volver. 337 pruebas.
 
+### 1.10 Una pasada de LinkedIn empleos tarda 6 minutos · 1 hora
+
+Medido el 12 nov 2026 con tres listas configuradas: **40 vacantes de 33
+empresas en 352 s**. La descripción no está en la tarjeta, así que hay que
+abrir cada una, y eso son ~3 s por vacante más la carga de cada página.
+
+En régimen normal no cuesta eso —`isFresh` corta en cuanto encadena seis ya
+conocidas—, pero la primera pasada de cada día sí, y con el ritmo en 6 h se
+nota en el reloj de «próxima búsqueda», que pasa varios minutos en «En curso».
+
+Lo que lo arreglaría de raíz: saber si una vacante ya está guardada **por su
+URL** antes de abrirla. Hoy `isFresh` recibe el texto, y el texto exige abrir
+la tarjeta. Un `isKnownUrl` en el contrato de fuente ahorraría casi todas las
+aperturas en régimen.
+
 ### 1.9 El texto de la oferta se compone en español, siempre · 2 horas
 
 `described.source.ts`, `getonbrd.source.ts` y `hackernews.source.ts` arman el

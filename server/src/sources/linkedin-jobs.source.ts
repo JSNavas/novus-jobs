@@ -11,9 +11,11 @@ const LOGIN_URL = 'https://www.linkedin.com/login';
 
 const SETTLE_MS = 7_000;
 const CARD_WAIT_MS = 2_600;
-const SCROLL_PAUSE_MS = 1_800;
-const SCROLLS = 3;
-const MAX_CARDS = 25;
+const SCROLL_PAUSE_MS = 2_000;
+const MAX_SCROLLS = 10;
+const PAGE_SIZE = 25;
+const MAX_PAGES = 3;
+const MAX_CARDS = 60;
 const STOP_AFTER_KNOWN = 6;
 const MIN_DESCRIPTION_CHARS = 120;
 
@@ -46,58 +48,88 @@ export function postTextOf(card: JobCard, description: string): string {
   return normalizeText(`${lines.join('\n')}\n\n${description}`.trim());
 }
 
+export interface SearchList {
+  urls(): string[];
+}
+
+interface Harvest {
+  posts: RawPost[];
+  seen: Set<string>;
+  known: number;
+  isFresh: FreshnessCheck | undefined;
+}
+
 export class LinkedInJobsSource implements JobSource {
   readonly name = 'linkedin-jobs';
   readonly label = 'LinkedIn (empleos)';
   readonly profileId = LINKEDIN_PROFILE_ID;
   readonly loginUrl = LOGIN_URL;
   readonly policy = WATCHED_ACCOUNT_POLICY;
-  readonly endpoint = LINKEDIN_JOBS_URL;
   private readonly session: BrowserSession;
 
-  constructor(pool: BrowserPool) {
+  get endpoint(): string {
+    return this.searches.urls()[0] ?? LINKEDIN_JOBS_URL;
+  }
+
+  constructor(pool: BrowserPool, private readonly searches: SearchList = { urls: () => [LINKEDIN_JOBS_URL] }) {
     this.session = pool.session(LINKEDIN_PROFILE_ID);
   }
 
   async fetch(_selectPermalinks: PermalinkSelector, isFresh?: FreshnessCheck): Promise<RawPost[]> {
     const context = await this.session.context();
     const page = await context.newPage();
+    const harvest: Harvest = { posts: [], seen: new Set<string>(), known: 0, isFresh };
     try {
-      await page.goto(LINKEDIN_JOBS_URL, { waitUntil: 'domcontentloaded', timeout: NAVIGATION_TIMEOUT_MS });
+      for (const [index, list] of this.searches.urls().entries()) {
+        await this.readList(page, list, harvest, index === 0);
+        if (harvest.known >= STOP_AFTER_KNOWN || harvest.posts.length >= MAX_CARDS) break;
+      }
+      await this.session.rememberSession();
+      return harvest.posts;
+    } finally {
+      await page.close().catch(() => undefined);
+      this.session.scheduleIdleClose();
+    }
+  }
+
+  private async readList(page: Page, list: string, harvest: Harvest, first: boolean): Promise<void> {
+    for (let index = 0; index < MAX_PAGES; index++) {
+      if (harvest.known >= STOP_AFTER_KNOWN || harvest.posts.length >= MAX_CARDS) return;
+
+      await page.goto(pageUrl(list, index * PAGE_SIZE), {
+        waitUntil: 'domcontentloaded',
+        timeout: NAVIGATION_TIMEOUT_MS,
+      });
       await page.waitForTimeout(SETTLE_MS);
       this.assertSignedIn(page);
       await scrollList(page);
 
-      const cards = await readCards(page);
+      const cards = (await readCards(page)).filter((card) => !harvest.seen.has(card.id));
       if (cards.length === 0) {
-        this.assertSignedIn(page);
-        throw new Error(
-          `la sesión está activa pero ${LINKEDIN_JOBS_URL} no listó ninguna vacante: ` +
-          `¿cambió el maquetado? (url: ${page.url()})`,
-        );
+        if (first && index === 0) {
+          this.assertSignedIn(page);
+          throw new Error(
+            `la sesión está activa pero ${list} no listó ninguna vacante: ` +
+            `¿cambió el maquetado? (url: ${page.url()})`,
+          );
+        }
+        return;
       }
 
-      const posts: RawPost[] = [];
-      let known = 0;
-      for (const card of cards.slice(0, MAX_CARDS)) {
-        if (known >= STOP_AFTER_KNOWN) break;
+      for (const card of cards) {
+        if (harvest.known >= STOP_AFTER_KNOWN || harvest.posts.length >= MAX_CARDS) return;
+        harvest.seen.add(card.id);
         const description = await openCard(page, card.id);
         if (description.length < MIN_DESCRIPTION_CHARS) continue;
         const text = postTextOf(card, description);
-        posts.push({
+        harvest.posts.push({
           text,
           author: card.company || null,
           employer: card.company || null,
           url: `https://www.linkedin.com/jobs/view/${card.id}/`,
         });
-        known = isFresh && isFresh(text) ? 0 : known + 1;
+        harvest.known = harvest.isFresh && harvest.isFresh(text) ? 0 : harvest.known + 1;
       }
-
-      await this.session.rememberSession();
-      return posts;
-    } finally {
-      await page.close().catch(() => undefined);
-      this.session.scheduleIdleClose();
     }
   }
 
@@ -113,10 +145,34 @@ export class LinkedInJobsSource implements JobSource {
   }
 }
 
+export function pageUrl(base: string, start: number): string {
+  if (start === 0) return base;
+  const url = new URL(base);
+  url.searchParams.set('start', String(start));
+  return url.toString();
+}
+
 async function scrollList(page: Page): Promise<void> {
-  for (let i = 0; i < SCROLLS; i++) {
-    await page.mouse.wheel(0, 1200);
+  let before = await page.locator(CARD_LINK).count();
+  for (let i = 0; i < MAX_SCROLLS; i++) {
+    await page.evaluate((selector) => {
+      const anchor = document.querySelector(selector);
+      let box = anchor?.closest('li')?.parentElement ?? null;
+      while (box && box !== document.body) {
+        const style = getComputedStyle(box);
+        const scrolls = style.overflowY === 'auto' || style.overflowY === 'scroll';
+        if (scrolls && box.scrollHeight > box.clientHeight + 50) {
+          box.scrollTop = box.scrollHeight;
+          return;
+        }
+        box = box.parentElement;
+      }
+      window.scrollTo(0, document.body.scrollHeight);
+    }, CARD_LINK);
     await page.waitForTimeout(SCROLL_PAUSE_MS);
+    const after = await page.locator(CARD_LINK).count();
+    if (after === before && i > 0) return;
+    before = after;
   }
 }
 

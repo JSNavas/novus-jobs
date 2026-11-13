@@ -158,6 +158,7 @@ export interface Settings {
   mailConfigured: boolean;
   mailTo: string;
   mailOnlyNewOffers: boolean;
+  linkedinSearches: string[];
 }
 
 export function getSettings(): Promise<Settings> {
@@ -176,6 +177,13 @@ export function updateSettings(
   return request<Settings>('/settings', {
     method: 'PUT',
     body: JSON.stringify(changes),
+  });
+}
+
+export function updateLinkedInSearches(urls: readonly string[]): Promise<{ urls: string[] }> {
+  return request<{ urls: string[] }>('/settings/linkedin-searches', {
+    method: 'PUT',
+    body: JSON.stringify({ urls }),
   });
 }
 

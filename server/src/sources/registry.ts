@@ -4,7 +4,7 @@ import { DescribedSource } from './described.source.js';
 import type { SourceDescriptor } from './descriptor.js';
 import { GetOnBoardSource } from './getonbrd.source.js';
 import { HackerNewsSource } from './hackernews.source.js';
-import { LinkedInJobsSource } from './linkedin-jobs.source.js';
+import { LinkedInJobsSource, type SearchList } from './linkedin-jobs.source.js';
 import { LinkedInSource } from './linkedin.source.js';
 import type { JobSource, SourceDefinition } from './types.js';
 
@@ -17,7 +17,7 @@ const NATIVE: readonly SourceDefinition[] = [
   {
     name: 'linkedin-jobs',
     label: 'LinkedIn (empleos)',
-    create: (_config, pool) => new LinkedInJobsSource(pool),
+    create: (_config, pool) => new LinkedInJobsSource(pool, searches ?? undefined),
   },
   {
     name: 'getonbrd',
@@ -34,6 +34,11 @@ const NATIVE: readonly SourceDefinition[] = [
 const NATIVE_NAMES = new Set(NATIVE.map((d) => d.name));
 
 let described: readonly SourceDescriptor[] = [];
+let searches: SearchList | null = null;
+
+export function registerLinkedInSearches(list: SearchList): void {
+  searches = list;
+}
 
 function asDefinition(descriptor: SourceDescriptor): SourceDefinition {
   return {

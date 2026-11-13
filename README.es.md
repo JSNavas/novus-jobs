@@ -131,6 +131,14 @@ La primera vez te recibe el **alta**: seis pasos para subir el CV, revisar tu st
 
 Para que no se apague al cerrar la terminal, el servicio permanente está en [docs/INSTALL.md](docs/INSTALL.md), con macOS, Linux y Windows.
 
+### Qué listas de LinkedIn se leen
+
+`linkedin.com/jobs/` es una cáscara: sirve la página y rellena las vacantes después, así que leerla tal cual no devuelve ninguna. Lo que de verdad lleva la lista es `/jobs/collections/recommended/`, que es el «Empleos según tus preferencias» que ves tú, y con eso viene configurada.
+
+En **Configuración → LinkedIn** puedes añadir las tuyas, una por línea: en LinkedIn → Empleos, pulsa «Mostrar todo» en la sección que te interese y copia la dirección de la barra. Esas direcciones llevan tus palabras y tus zonas —son tuyas—, por eso viven en tu base de datos y no en el código. Al guardarlas se les quita el `currentJobId`, que es la oferta que estabas mirando en ese momento y no parte de la búsqueda.
+
+Cada lista se pagina hasta tres páginas. La descripción no está en la tarjeta, así que la fuente hace lo que harías tú: pulsa la tarjeta y lee el panel que se abre. Para y pasa a la siguiente en cuanto encadena varias que ya tenía.
+
 ### Iniciar sesión (una sola vez por plataforma)
 
 En **Integraciones**, busca la plataforma y pulsa **«Iniciar sesión»**. Se abre una ventana real de Chromium con tu perfil. Entra con calma —resuelve la verificación si la pide— y **cierra la ventana cuando estés dentro**: ese cierre es lo que guarda la sesión. No hay temporizador ni límite de tiempo, y las búsquedas se pausan mientras tanto.
@@ -595,7 +603,7 @@ y se le pone su ritmo desde Integraciones.
 | Plataforma | Cómo lee | Cuenta | Cómo está hecha |
 |---|---|---|---|
 | **LinkedIn** | navegador con tu sesión | la tuya, y es lo irremplazable | clase |
-| **LinkedIn (empleos)** | las vacantes que te recomienda, con la misma sesión | la tuya | clase |
+| **LinkedIn (empleos)** | las listas que arma con tus preferencias, con la misma sesión | la tuya | clase |
 | **Get on Board** | `GET /api/v0/search/jobs` | ninguna | clase |
 | **Hacker News** | el hilo «Who is hiring» del mes, vía Algolia | ninguna | clase |
 | **Remotive** | `GET /api/remote-jobs` | ninguna | descriptor |

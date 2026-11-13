@@ -8,6 +8,7 @@ import {
 } from '../../api/client';
 import { AppAlert, AppSnackbar, BlankCard, PageContainer } from '../../components/ui';
 import CvSection from './CvSection';
+import { LinkedInSearchesSection } from './LinkedInSearches';
 import MailSection from './MailSection';
 import ProfileSummary from './ProfileSummary';
 
@@ -22,6 +23,7 @@ const SECTIONS = [
   { id: 'criterio', label: 'set.nav.criteria' as const },
   { id: 'notificaciones', label: 'set.nav.mail' as const },
   { id: 'candidatura', label: 'set.nav.apply' as const },
+  { id: 'linkedin', label: 'set.nav.linkedin' as const },
 ];
 
 const MIN_CHARS = 50;
@@ -147,6 +149,20 @@ const SettingsPage = () => {
               <MailSection
                 settings={settings}
                 onSaved={(next, message) => { setSettings(next); setNotice(message); }}
+              />
+            ) : null}
+          </Stack>
+        </BlankCard>
+
+        <BlankCard>
+          <Stack spacing={2} p={3} sx={{ scrollMarginTop: 96 }} id="linkedin">
+            <Box>
+              <Typography variant="h5">{t('set.linkedin.title')}</Typography>
+            </Box>
+            {settings ? (
+              <LinkedInSearchesSection
+                urls={settings.linkedinSearches}
+                onSaved={(urls) => setSettings({ ...settings, linkedinSearches: urls })}
               />
             ) : null}
           </Stack>

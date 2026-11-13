@@ -212,7 +212,7 @@ give it its own rhythm. Nothing in the project depends on any single platform.
 | Platform | How it is read | Needs a login | Written as |
 |---|---|---|---|
 | **LinkedIn** | Your own feed, in a real browser with your session | Yes, once | class |
-| **LinkedIn (jobs)** | The postings it recommends to you, read from the same session | Yes, once | class |
+| **LinkedIn (jobs)** | The lists it builds from your preferences, read from the same session | Yes, once | class |
 | **Get on Board** | Public search API (`/api/v0/search/jobs`) | No | class |
 | **Hacker News** | This month's "Who is hiring" thread, via Algolia | No | class |
 | **Remotive** | `GET /api/remote-jobs` | No | descriptor |
@@ -223,6 +223,12 @@ give it its own rhythm. Nothing in the project depends on any single platform.
 | **Remote Latinos** | `GET /api/v1/posts` (LATAM) | No | descriptor |
 | **Interfell** | the postings its own page carries inside it | No | descriptor |
 | **TLNT Group** | its Lever board | No | descriptor |
+
+> **LinkedIn jobs reads the lists you choose.** It ships with the one LinkedIn
+> builds from your profile, and in Settings → LinkedIn you can paste any other
+> `linkedin.com/jobs/` address — press *Show all* on a section you care about
+> and copy the bar. Those addresses carry your keywords and your regions, so
+> they live in your database, not in the code.
 
 **Ten of the twelve need no account at all**, so the project does something
 useful the first time you run it, before you have logged into anything. What

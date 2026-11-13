@@ -21,10 +21,13 @@ import { LastPassStore, Scheduler } from './scheduler/scheduler.js';
 import { systemTimeZone } from './scheduler/timing.js';
 import { LINKEDIN_PROFILE_ID } from './sources/linkedin.source.js';
 import { SourceSchedules } from './sources/schedules.js';
-import { buildDescribedSources, buildSources, isNativeSource, registerDescriptors } from './sources/registry.js';
+import {
+  buildDescribedSources, buildSources, isNativeSource, registerDescriptors, registerLinkedInSearches,
+} from './sources/registry.js';
 import { DescriptorInventor } from './sources/invent.js';
 import { readCatalog, SourceDescriptors } from './sources/descriptors.js';
 import { HiddenSources } from './sources/hidden.js';
+import { LinkedInSearches } from './sources/linkedin-searches.js';
 import { SourceToggles } from './sources/toggles.js';
 
 async function main(): Promise<void> {
@@ -47,6 +50,8 @@ async function main(): Promise<void> {
   if (described.length) {
     console.log(`[arranque] ${described.length} fuente(s) descrita(s) con JSON: ${described.map((d) => d.label).join(', ')}`);
   }
+  const linkedinSearches = new LinkedInSearches(settings);
+  registerLinkedInSearches(linkedinSearches);
   const sources = buildSources(config, pool).filter((source) => !new HiddenSources(settings).has(source.name));
   const hidden = new HiddenSources(settings);
   const reloadDescribed = (): void => {

@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { LinkedInSearches, SearchNotFromLinkedInError } from '../sources/linkedin-searches.js';
 import {
   FOCUS_WINDOW_MONTHS_KEY, MAIL_ONLY_NEW_KEY, MAIL_TO_KEY, MAX_AGE_MONTHS_KEY,
   MOTIVATION_TEMPLATE_KEY, type SettingsRepository,
@@ -44,7 +45,21 @@ export function registerSettingsRoute(app: FastifyInstance, deps: SettingsRoutes
     mailConfigured: deps.mailConfigured,
     mailTo: readMailTo(deps.settings, deps.mailFallbackTo),
     mailOnlyNewOffers: readMailOnlyNew(deps.settings),
+    linkedinSearches: new LinkedInSearches(deps.settings).urls(),
   }));
+
+  app.put('/api/settings/linkedin-searches', (request, reply) => {
+    const { urls } = (request.body ?? {}) as { urls?: unknown };
+    if (!Array.isArray(urls) || urls.some((u) => typeof u !== 'string')) {
+      return reply.code(400).send({ error: 'falta "urls": una lista de direcciones' });
+    }
+    try {
+      return reply.send({ urls: new LinkedInSearches(deps.settings).save(urls as string[]) });
+    } catch (error) {
+      if (error instanceof SearchNotFromLinkedInError) return reply.code(400).send({ error: error.message });
+      throw error;
+    }
+  });
 
   app.put('/api/settings', (request, reply) => {
     const body = request.body as {
