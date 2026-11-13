@@ -93,6 +93,7 @@ async function main(): Promise<void> {
     sources,
     maxAgeDays: () => readMaxAgeMonths(settings) * 30, jobs, runs, judge, profile, onboarded, enabled, timeZone,
     mailer, dashboardUrl: config.dashboardUrl,
+    signedIn: (source) => source.profileId !== null && pool.session(source.profileId).hasSession,
   });
   const schedules = new SourceSchedules(settings, config.scheduleHours);
   const scheduler = new Scheduler({

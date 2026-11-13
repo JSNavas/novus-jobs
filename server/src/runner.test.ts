@@ -52,9 +52,10 @@ describe('Runner — suelo de las búsquedas manuales', () => {
 
   function runner(
     sources: readonly JobSource[] = [LINKEDIN],
-    gates: { onboarded?: boolean; enabled?: (source: string) => boolean } = {},
+    gates: { onboarded?: boolean; enabled?: (source: string) => boolean; signedIn?: boolean } = {},
   ): Runner {
     return new Runner({
+      signedIn: () => gates.signedIn ?? false,
       sources,
       maxAgeDays: () => 90,
       jobs: new JobsRepository(db),
@@ -112,12 +113,21 @@ describe('Runner — suelo de las búsquedas manuales', () => {
     assert.ok(runner().startManual().id);
   });
 
-  it('SIN SESIÓN no se reintenta nunca: se niega y manda a iniciar sesión', () => {
+  it('SIN SESIÓN se niega por mucho que pase el tiempo: esperar no la devuelve', () => {
     pastManual(RunFailure.LoginRequired);
     advance(6 * 60 * 60_000);
     const message = refusal(() => runner().startManual());
     assert.match(message, /sin sesión/);
-    assert.match(message, /npm run login/);
+    assert.match(message, /Iniciar sesión/);
+  });
+
+  it('EL CASO REAL: pero en cuanto vuelves a entrar, deja de negarse', () => {
+    pastManual(RunFailure.LoginRequired);
+    advance(6 * 60 * 60_000);
+    assert.ok(
+      runner([LINKEDIN], { signedIn: true }).startManual().id,
+      'el seguro miraba la pasada que falló y nada lo levantaba nunca, ni iniciar sesión',
+    );
   });
 
   it('con el PERFIL OCUPADO se puede reintentar a los 5 min: solo hay que cerrar una ventana', () => {

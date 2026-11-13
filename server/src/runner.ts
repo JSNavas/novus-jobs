@@ -27,6 +27,8 @@ interface RunnerDeps {
   enabled: (source: string) => boolean;
   timeZone: () => string;
   onboarded: () => boolean;
+  /** Si la plataforma tiene sesión guardada ahora mismo, no cuando falló la última pasada. */
+  signedIn?: (source: JobSource) => boolean;
   mailer: Mailer;
   dashboardUrl: string;
   clock?: () => Date;
@@ -92,11 +94,10 @@ export class Runner implements PassRunner {
     const policy = source.policy;
     const last = this.deps.runs.lastManual(source.name);
 
-    if (last?.failure === RunFailure.LoginRequired) {
+    if (last?.failure === RunFailure.LoginRequired && !(this.deps.signedIn?.(source) ?? false)) {
       return (
-        'la última búsqueda se encontró sin sesión. Inicia sesión otra vez ' +
-        `(\`npm run login -- ${source.name}\`) y la siguiente pasada funcionará; ` +
-        'insistir ahora solo arriesga la cuenta'
+        'la última búsqueda se encontró sin sesión. Entra otra vez desde ' +
+        'Integraciones → «Iniciar sesión»; insistir ahora solo arriesga la cuenta'
       );
     }
 
