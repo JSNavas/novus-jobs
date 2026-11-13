@@ -212,7 +212,7 @@ give it its own rhythm. Nothing in the project depends on any single platform.
 | Platform | How it is read | Needs a login | Written as |
 |---|---|---|---|
 | **LinkedIn** | Your own feed, in a real browser with your session | Yes, once | class |
-| **LinkedIn (jobs)** | The lists it builds from your preferences, read from the same session | Yes, once | class |
+| **LinkedIn Jobs** | The lists it builds from your preferences, read from the same session | Yes, once | class |
 | **Get on Board** | Public search API (`/api/v0/search/jobs`) | No | class |
 | **Hacker News** | This month's "Who is hiring" thread, via Algolia | No | class |
 | **Remotive** | `GET /api/remote-jobs` | No | descriptor |

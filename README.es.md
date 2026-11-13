@@ -603,7 +603,7 @@ y se le pone su ritmo desde Integraciones.
 | Plataforma | Cómo lee | Cuenta | Cómo está hecha |
 |---|---|---|---|
 | **LinkedIn** | navegador con tu sesión | la tuya, y es lo irremplazable | clase |
-| **LinkedIn Jobs** | las listas que arma con tus preferencias, con la misma sesión | la tuya | clase |
+| **LinkedIn (empleos)** | las listas que arma con tus preferencias, con la misma sesión | la tuya | clase |
 | **Get on Board** | `GET /api/v0/search/jobs` | ninguna | clase |
 | **Hacker News** | el hilo «Who is hiring» del mes, vía Algolia | ninguna | clase |
 | **Remotive** | `GET /api/remote-jobs` | ninguna | descriptor |

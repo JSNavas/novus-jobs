@@ -1,3 +1,4 @@
+import type { ServerKey } from '../i18n/index.js';
 import type { BrowserPool } from '../browser/session.js';
 import type { Config } from '../config.js';
 import type { LoginWall } from './login-wall.js';
@@ -37,6 +38,8 @@ export class LoginRequiredError extends Error {
 export interface JobSource {
   readonly name: string;
   readonly label: string;
+  /** Cuando el nombre de la fuente se traduce, su clave. Las demás son nombres propios. */
+  readonly labelKey?: ServerKey;
   readonly profileId: string | null;
   readonly loginUrl: string | null;
   readonly policy: SourcePolicy;

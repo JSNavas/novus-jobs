@@ -18,6 +18,7 @@ export const es = {
 
   'mail.offers.one': '1 oferta nueva',
   'mail.offers.many': '{count} ofertas nuevas',
+  'source.linkedinJobs': 'LinkedIn (empleos)',
   'mail.openDashboard': 'Abrir Novus Jobs',
   'mail.failure.subject': 'Novus Jobs: la búsqueda falló',
   'mail.failure.intro': 'La última búsqueda no terminó bien.',

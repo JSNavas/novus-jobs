@@ -23,6 +23,18 @@ screen all work off the registry.
 - [Removing one](#removing-one)
 - [Rules of the house](#rules-of-the-house)
 
+### Naming a source
+
+Most labels are brands and stay as they are: `Remotive`, `Get on Board`,
+`Hacker News (Who is hiring)` — the last one is the thread's own title, not a
+description of it. Those need no translation and must not get one.
+
+A label that is a *word* rather than a name is different. `LinkedIn (empleos)`
+read as Spanish on an English screen, because the label travels from the
+registry as one string with no language attached. When the name describes
+rather than brands, the source declares `labelKey` and the API resolves it in
+the reader's language.
+
 ## Code, or a descriptor?
 
 | The platform… | What it takes |
@@ -53,6 +65,8 @@ export interface JobSource {
   readonly name: string;
   /** What the dashboard shows. */
   readonly label: string;
+  /** Only if that name is a word rather than a brand: the key to translate it by. */
+  readonly labelKey?: ServerKey;
   /** The address it reads, shown on its Integrations card. null if there is none. */
   readonly endpoint: string | null;
   /** The browser profile it needs, or null if it needs no session. */

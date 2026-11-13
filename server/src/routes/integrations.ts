@@ -5,6 +5,8 @@ import {
   MAX_INTERVAL_MINUTES, MIN_INTERVAL_MINUTES, type SourceSchedules,
 } from '../sources/schedules.js';
 import type { SourceToggles } from '../sources/toggles.js';
+import { t } from '../i18n/index.js';
+import type { Language } from '../profile/types.js';
 import type { JobSource } from '../sources/types.js';
 
 interface IntegrationRoutesDeps {
@@ -14,9 +16,13 @@ interface IntegrationRoutesDeps {
   hours: readonly number[];
   timeZone: () => string;
   toggles: SourceToggles;
+  language: () => Language;
 }
 
 export function registerIntegrationRoutes(app: FastifyInstance, deps: IntegrationRoutesDeps): void {
+  const nameOf = (source: JobSource): string =>
+    source.labelKey ? t(deps.language(), source.labelKey) : source.label;
+
   const describe = (source: JobSource) => {
     const schedule = deps.schedules.of(source);
     const next = nextRunAt(
@@ -29,7 +35,7 @@ export function registerIntegrationRoutes(app: FastifyInstance, deps: Integratio
     const last = deps.runner.lastPassAt(source.name);
     return {
       name: source.name,
-      label: source.label,
+      label: nameOf(source),
       needsLogin: source.loginUrl !== null,
       profileId: source.profileId,
       endpoint: source.endpoint,

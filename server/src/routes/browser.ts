@@ -3,6 +3,8 @@ import { profileLockHolder } from '../browser/profile-lock.js';
 import { LoginWindows, WindowAlreadyOpenError } from '../browser/login-window.js';
 import type { BrowserPool } from '../browser/session.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
+import { t } from '../i18n/index.js';
+import type { Language } from '../profile/types.js';
 import type { JobSource } from '../sources/types.js';
 
 interface BrowserRoutesDeps {
@@ -10,6 +12,7 @@ interface BrowserRoutesDeps {
   sources: readonly JobSource[];
   scheduler: Scheduler;
   logins: LoginWindows;
+  language: () => Language;
 }
 
 export function registerBrowserRoutes(app: FastifyInstance, deps: BrowserRoutesDeps): void {
@@ -17,7 +20,7 @@ export function registerBrowserRoutes(app: FastifyInstance, deps: BrowserRoutesD
 
   app.get('/api/sources', () => deps.sources.map((source) => ({
     name: source.name,
-    label: source.label,
+    label: source.labelKey ? t(deps.language(), source.labelKey) : source.label,
     needsLogin: source.loginUrl !== null,
     profileId: source.profileId,
   })));

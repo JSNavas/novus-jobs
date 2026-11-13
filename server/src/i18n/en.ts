@@ -20,6 +20,7 @@ export const en: Record<keyof typeof es, string> = {
 
   'mail.offers.one': '1 new posting',
   'mail.offers.many': '{count} new postings',
+  'source.linkedinJobs': 'LinkedIn Jobs',
   'mail.openDashboard': 'Open the dashboard',
   'mail.failure.subject': 'Novus Jobs: the search failed',
   'mail.failure.intro': 'The last search did not finish well.',

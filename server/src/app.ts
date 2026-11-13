@@ -77,6 +77,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     hours: deps.scheduleHours, sources: deps.sources, schedules: deps.schedules, timeZone: deps.timeZone,
   });
   registerIntegrationRoutes(app, {
+    language: () => deps.profile().language,
     sources: deps.sources, schedules: deps.schedules, runner: deps.runner,
     hours: deps.scheduleHours, toggles: deps.toggles, timeZone: deps.timeZone,
   });
@@ -86,7 +87,13 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     pool: deps.pool, hidden: deps.hidden,
   });
   const logins = new LoginWindows(deps.pool, deps.scheduler);
-  registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler, logins });
+  registerBrowserRoutes(app, {
+    pool: deps.pool,
+    sources: deps.sources,
+    scheduler: deps.scheduler,
+    logins,
+    language: () => deps.profile().language,
+  });
   registerSettingsRoute(app, {
     gmailAccount: deps.gmailAccount,
     settings: deps.settings,
