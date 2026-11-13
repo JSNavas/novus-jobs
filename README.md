@@ -18,7 +18,7 @@ with an LLM, shows you three real postings, and starts reading it. A source is
 data, not a class — so it can be exported, pasted into an issue and shared.
 
 You pick which sites it reads. See [supported platforms](#supported-platforms)
-for the eleven that ship today, and [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md)
+for the twelve that ship today, and [docs/DESCRIPTORS.md](docs/DESCRIPTORS.md)
 for the format behind them.
 
 > Español: [README.es.md](README.es.md)
@@ -176,14 +176,17 @@ Open **http://127.0.0.1:47831** and the setup wizard walks you through it:
    prints every date in it.
 5. **Platforms.** Which ones to turn on.
 
-Platforms that need a session need one login, once:
+Platforms that need a session need one login, once. Open **Integrations**, find
+the platform and press **Sign in**: a real browser window opens on your screen.
+Log in calmly, solve the captcha if there is one, and **close the window when
+you are in** — closing it is what saves the session. Searches pause meanwhile.
+
+There is a terminal equivalent if you prefer one, or if you are setting the
+machine up over SSH:
 
 ```bash
 cd server && npm run login -- linkedin
 ```
-
-A real browser window opens. Log in calmly, solve the captcha if there is one,
-and **close the window when you are in** — closing it is what saves the session.
 
 To keep it running after you close the terminal, see
 **[docs/INSTALL.md](docs/INSTALL.md)** — macOS, Linux and Windows.
@@ -209,6 +212,7 @@ give it its own rhythm. Nothing in the project depends on any single platform.
 | Platform | How it is read | Needs a login | Written as |
 |---|---|---|---|
 | **LinkedIn** | Your own feed, in a real browser with your session | Yes, once | class |
+| **LinkedIn (jobs)** | The postings it recommends to you, read from the same session | Yes, once | class |
 | **Get on Board** | Public search API (`/api/v0/search/jobs`) | No | class |
 | **Hacker News** | This month's "Who is hiring" thread, via Algolia | No | class |
 | **Remotive** | `GET /api/remote-jobs` | No | descriptor |
@@ -220,7 +224,7 @@ give it its own rhythm. Nothing in the project depends on any single platform.
 | **Interfell** | the postings its own page carries inside it | No | descriptor |
 | **TLNT Group** | its Lever board | No | descriptor |
 
-**Ten of the eleven need no account at all**, so the project does something
+**Ten of the twelve need no account at all**, so the project does something
 useful the first time you run it, before you have logged into anything. What
 sets each one's pace is **what is at risk when you read it**: an open API only
 needs good manners towards someone else's server, while an account that can be

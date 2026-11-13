@@ -4,6 +4,7 @@ import { DescribedSource } from './described.source.js';
 import type { SourceDescriptor } from './descriptor.js';
 import { GetOnBoardSource } from './getonbrd.source.js';
 import { HackerNewsSource } from './hackernews.source.js';
+import { LinkedInJobsSource } from './linkedin-jobs.source.js';
 import { LinkedInSource } from './linkedin.source.js';
 import type { JobSource, SourceDefinition } from './types.js';
 
@@ -12,6 +13,11 @@ const NATIVE: readonly SourceDefinition[] = [
     name: 'linkedin',
     label: 'LinkedIn',
     create: (config, pool) => new LinkedInSource(config, pool),
+  },
+  {
+    name: 'linkedin-jobs',
+    label: 'LinkedIn (empleos)',
+    create: (_config, pool) => new LinkedInJobsSource(pool),
   },
   {
     name: 'getonbrd',

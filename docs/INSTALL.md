@@ -225,7 +225,7 @@ Moving to another machine is copying those two directories across.
 A platform that needs a browser could not find one. Run that command.
 
 **The dashboard says a search failed with "no session"**
-The platform logged you out. Run `npm run login -- <platform>` again. The app
+The platform logged you out. Open Integrations and press **Sign in** again (or run `npm run login -- <platform>`). The app
 refuses to retry that platform until you do — hammering a login page is exactly
 what gets an account flagged.
 

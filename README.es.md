@@ -133,11 +133,13 @@ Para que no se apague al cerrar la terminal, el servicio permanente está en [do
 
 ### Iniciar sesión (una sola vez por plataforma)
 
+En **Integraciones**, busca la plataforma y pulsa **«Iniciar sesión»**. Se abre una ventana real de Chromium con tu perfil. Entra con calma —resuelve la verificación si la pide— y **cierra la ventana cuando estés dentro**: ese cierre es lo que guarda la sesión. No hay temporizador ni límite de tiempo, y las búsquedas se pausan mientras tanto.
+
+Hay un equivalente en terminal, por si prefieres eso o estás montando la máquina por SSH:
+
 ```bash
 cd server && npm run login -- linkedin
 ```
-
-Se abre una ventana real. Inicia sesión con calma —resuelve la verificación si la pide— y **cierra la ventana cuando estés dentro**: ese cierre es lo que guarda la sesión. No hay temporizador ni límite de tiempo.
 
 La sesión vive en `~/.novus-jobs/browser-profiles/`: el perfil de Chromium en `<plataforma>/` y las cookies en `<plataforma>.cookies.json`. **Fuera del repo** a propósito: es lo único aquí que no se puede regenerar, así que no la toca ningún `build`, `npm ci` ni limpieza de `server/data`. Si venías de la versión que la guardaba en `server/data/linkedin-profile/`, el primer arranque la mueve sola.
 
@@ -153,7 +155,7 @@ El dashboard lo dice arriba, con qué hacer. Los motivos son cuatro y solo uno t
 
 | Motivo | Qué pasó | Qué hacer |
 |---|---|---|
-| `login_required` | La plataforma pidió entrar | `npm run login -- <plataforma>` |
+| `login_required` | La plataforma pidió entrar | Integraciones → «Iniciar sesión» |
 | `profile_busy` | Otra ventana de Chromium tenía el perfil | Cerrarla y reintentar |
 | `layout` | Hay sesión y el feed vino vacío: cambió el DOM | Mirar la captura en `server/data/logs/` |
 | `other` | Red, timeout, lo demás | Esperar la franja siguiente |
@@ -593,6 +595,7 @@ y se le pone su ritmo desde Integraciones.
 | Plataforma | Cómo lee | Cuenta | Cómo está hecha |
 |---|---|---|---|
 | **LinkedIn** | navegador con tu sesión | la tuya, y es lo irremplazable | clase |
+| **LinkedIn (empleos)** | las vacantes que te recomienda, con la misma sesión | la tuya | clase |
 | **Get on Board** | `GET /api/v0/search/jobs` | ninguna | clase |
 | **Hacker News** | el hilo «Who is hiring» del mes, vía Algolia | ninguna | clase |
 | **Remotive** | `GET /api/remote-jobs` | ninguna | descriptor |
