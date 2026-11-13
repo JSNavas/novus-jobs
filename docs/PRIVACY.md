@@ -70,8 +70,15 @@ variables empty and no mail is ever sent.
 
 Some sites answer a plain request with a bot wall — Cloudflare's "Just a
 moment…" and its relatives. A browser with no window never gets past it: the
-wall is looking for a person. When Novus Jobs meets one, it says so, and reads
-that site by **opening a real browser window on your screen**.
+wall is looking for a person, and a saved profile does not help — measured,
+the challenge is failed again every time with the cookies it had already
+earned.
+
+**A window only ever opens because you asked for something.** Adding a source
+opens one, and so does pressing Search yourself. A scheduled pass never does:
+a window appearing on its own in the middle of your day is not something a
+background job gets to do. A board that can only be read that way says so and
+is skipped until you run it.
 
 That window is yours and you will see it. It uses its own profile,
 `~/.novus-jobs/browser-profiles/wall/`, kept apart from the one that holds your

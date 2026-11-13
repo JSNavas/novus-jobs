@@ -26,8 +26,8 @@ export function looksLikeABotWall(status: number, body: string): boolean {
 export class BotWallError extends Error {
   constructor(readonly url: string) {
     super(
-      `${url} está detrás de un muro antibot: contesta como si fuéramos un robot. ` +
-      'Hace falta abrirla en un navegador de verdad.',
+      `${url} está detrás de un muro antibot y solo se deja leer con una ventana de navegador ` +
+      'abierta. Las búsquedas programadas no abren ventanas, así que esta fuente no puede correr sola.',
     );
     this.name = 'BotWallError';
   }
@@ -44,7 +44,14 @@ async function overHttp(url: string): Promise<{ status: number; body: string }> 
 export class PageReader {
   private walled = false;
 
-  constructor(private readonly pool: BrowserPool | null) {}
+  /**
+   * `mayOpenAWindow` solo es cierto cuando hay alguien delante: añadir una fuente.
+   * Una pasada programada no abre ventanas — aparecerían solas en mitad del día.
+   */
+  constructor(
+    private readonly pool: BrowserPool | null,
+    private readonly mayOpenAWindow = false,
+  ) {}
 
   get usedTheBrowser(): boolean {
     return this.walled;
@@ -59,7 +66,7 @@ export class PageReader {
       }
       this.walled = true;
     }
-    if (this.pool === null) throw new BotWallError(url);
+    if (this.pool === null || !this.mayOpenAWindow) throw new BotWallError(url);
     return this.inAWindow(url);
   }
 

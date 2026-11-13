@@ -290,9 +290,13 @@ Two things to know before reaching for it:
 
 - **It costs one request per vacancy**, with a pause between them. Give these
   sources a slow rhythm and keep `pages` honest.
-- **It may open a browser window.** Boards like this one sit behind Cloudflare,
-  which answers `403` to anything that is not a person. The reader notices, says
-  so, and opens a real window; see [PRIVACY.md](PRIVACY.md#when-a-site-opens-a-window).
+- **It may need a browser window, and then it cannot run unattended.** Boards
+  like this one sit behind Cloudflare, which answers `403` to anything that is
+  not a person — a saved profile does not get you past it either. The window
+  opens when you add the source or when you press Search yourself; a scheduled
+  pass refuses and says why, because windows appearing on their own are not
+  something a background job gets to do. See
+  [PRIVACY.md](PRIVACY.md#when-a-site-opens-a-window).
 
 Prefer an API when there is one. This is the door for when there is not.
 

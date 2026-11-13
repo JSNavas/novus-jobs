@@ -180,9 +180,9 @@ export class DescribedSource implements JobSource {
     return this.descriptor.request.url;
   }
 
-  async fetch(_selectPermalinks: PermalinkSelector, isFresh?: FreshnessCheck): Promise<RawPost[]> {
+  async fetch(_selectPermalinks: PermalinkSelector, isFresh?: FreshnessCheck, interactive = false): Promise<RawPost[]> {
     const posts = this.descriptor.request.format === 'jsonld'
-      ? await this.fromJobPostings(isFresh)
+      ? await this.fromJobPostings(isFresh, interactive)
       : await this.fromOneResponse(isFresh);
 
     if (posts.length === 0 && !this.descriptor.allowEmpty) {
@@ -194,8 +194,8 @@ export class DescribedSource implements JobSource {
     return posts;
   }
 
-  private async fromJobPostings(isFresh?: FreshnessCheck): Promise<RawPost[]> {
-    const reader = new PageReader(this.pool);
+  private async fromJobPostings(isFresh: FreshnessCheck | undefined, interactive: boolean): Promise<RawPost[]> {
+    const reader = new PageReader(this.pool, interactive);
     const index = await reader.read(this.descriptor.request.url);
     const links = pageLinks(index, this.descriptor.request.url).slice(0, this.descriptor.request.pages);
 

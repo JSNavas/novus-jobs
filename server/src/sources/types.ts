@@ -44,7 +44,8 @@ export interface JobSource {
   readonly loginUrl: string | null;
   readonly policy: SourcePolicy;
   readonly endpoint: string | null;
-  fetch(selectPermalinks: PermalinkSelector, isFresh?: FreshnessCheck): Promise<RawPost[]>;
+  /** `interactive` es cierto solo si la búsqueda la pidió una persona: entonces se puede abrir una ventana. */
+  fetch(selectPermalinks: PermalinkSelector, isFresh?: FreshnessCheck, interactive?: boolean): Promise<RawPost[]>;
   close(): Promise<void>;
 }
 

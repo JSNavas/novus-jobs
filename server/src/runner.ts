@@ -154,14 +154,14 @@ export class Runner implements PassRunner {
     const planned = sources.map((source) => ({ source, id: this.deps.runs.start(source.name, trigger, startedAt) }));
     const first = this.deps.runs.find(planned[0]!.id);
     if (!first) throw new Error(`la pasada ${planned[0]!.id} no se encontró tras crearla`);
-    void this.executeAll(planned);
+    void this.executeAll(planned, trigger === RunTrigger.Manual);
     return first;
   }
 
-  private async executeAll(planned: readonly { source: JobSource; id: number }[]): Promise<void> {
+  private async executeAll(planned: readonly { source: JobSource; id: number }[], interactive: boolean): Promise<void> {
     try {
       for (const { source, id } of planned) {
-        await this.execute(id, source);
+        await this.execute(id, source, interactive);
       }
     } finally {
       this.busy = false;
@@ -182,7 +182,7 @@ export class Runner implements PassRunner {
     );
   }
 
-  private async execute(id: number, source: JobSource): Promise<void> {
+  private async execute(id: number, source: JobSource, interactive: boolean): Promise<void> {
     try {
       const result = await runPasses([source], {
         maxAgeDays: this.deps.maxAgeDays(),
@@ -190,6 +190,7 @@ export class Runner implements PassRunner {
         judge: this.deps.judge,
         profile: this.deps.profile(),
         runId: id,
+        interactive,
       });
       const note = describe(result.failures);
 

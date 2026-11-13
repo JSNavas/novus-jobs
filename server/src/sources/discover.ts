@@ -274,7 +274,7 @@ export async function discover(input: string, pool: BrowserPool | null = null): 
   const feed = await asFeedCandidate(target.href, 'la dirección que pegaste ya es un feed');
   if (feed) return { candidates: [feed], notes };
 
-  const reader = new PageReader(pool);
+  const reader = new PageReader(pool, true);
   const page = await get(target.href, 'text/html');
   let html: string;
   if (page?.ok) {

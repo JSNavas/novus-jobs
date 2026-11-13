@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { jobPostings, pageLinks, readableText } from './jsonld.js';
-import { looksLikeABotWall } from './reader.js';
+import { looksLikeABotWall, PageReader } from './reader.js';
 import { parseDescriptor } from './descriptor.js';
 
 const PAGINA = `<!doctype html><html><head>
@@ -72,6 +72,20 @@ describe('looksLikeABotWall', () => {
 
   it('ni un 404, por mucho que hable de verificación', () => {
     assert.equal(looksLikeABotWall(404, 'security verification'), false);
+  });
+});
+
+describe('la ventana y las pasadas', () => {
+  it('EL CASO REAL: una pasada programada no abre ventanas solas en mitad del día', async () => {
+    const reader = new PageReader(null, false);
+    await assert.rejects(() => reader.read('https://azka-it.viterbit.site/', true), /muro antibot/);
+  });
+
+  it('el mensaje dice por qué no puede correr sola, no solo que falló', async () => {
+    const reader = new PageReader(null, false);
+    await reader.read('https://azka-it.viterbit.site/', true).catch((error: unknown) => {
+      assert.match(String(error), /no puede correr sola/);
+    });
   });
 });
 
