@@ -218,6 +218,7 @@ export interface LoginState {
   status: LoginStatus;
   message: string | null;
   since: string;
+  signedIn: boolean;
 }
 
 export function loginState(profileId: string): Promise<LoginState> {
@@ -226,6 +227,10 @@ export function loginState(profileId: string): Promise<LoginState> {
 
 export function openLoginWindow(profileId: string): Promise<LoginState> {
   return request<LoginState>(`/browser/${profileId}/login`, { method: 'POST' });
+}
+
+export function cancelLoginWindow(profileId: string): Promise<LoginState> {
+  return request<LoginState>(`/browser/${profileId}/login`, { method: 'DELETE' });
 }
 
 export function updateIntegrationEnabled(name: string, enabled: boolean): Promise<Integration> {

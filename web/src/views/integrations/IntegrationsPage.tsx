@@ -6,9 +6,9 @@ import {
   Typography,
 } from '@mui/material';
 import {
-  deleteSource, listHiddenSources, listIntegrations, listSources, loginState, openLoginWindow,
-  showHiddenSources, updateIntegrationEnabled, updateIntegrationSchedule,
-  type Integration, type LoginStatus,
+  cancelLoginWindow, deleteSource, listHiddenSources, listIntegrations, listSources, loginState,
+  openLoginWindow, showHiddenSources, updateIntegrationEnabled, updateIntegrationSchedule,
+  type Integration, type LoginState,
 } from '../../api/client';
 import { AppAlert, AppDialog, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { PlatformIcon } from '../dashboard/panels';
@@ -209,65 +209,93 @@ const Line = ({ label, children }: { label: string; children: React.ReactNode })
 const LOGIN_POLL_MS = 2_000;
 
 const SignIn = ({ profileId }: { profileId: string }) => {
-  const [status, setStatus] = useState<LoginStatus>('idle');
-  const [detail, setDetail] = useState<string | null>(null);
-  const [asking, setAsking] = useState(false);
+  const [state, setState] = useState<LoginState | null>(null);
+  const [working, setWorking] = useState(false);
 
   useEffect(() => {
     let alive = true;
     const read = (): void => {
-      loginState(profileId)
-        .then((state) => { if (alive) { setStatus(state.status); setDetail(state.message); } })
-        .catch(() => undefined);
+      loginState(profileId).then((next) => { if (alive) setState(next); }).catch(() => undefined);
     };
     read();
     const timer = setInterval(read, LOGIN_POLL_MS);
     return () => { alive = false; clearInterval(timer); };
   }, [profileId]);
 
-  const abrir = (): void => {
-    setAsking(true);
-    openLoginWindow(profileId)
-      .then((state) => { setStatus(state.status); setDetail(state.message); })
-      .catch((error: unknown) => {
-        setStatus('failed');
-        setDetail(error instanceof Error ? error.message : String(error));
-      })
-      .finally(() => setAsking(false));
+  const run = (call: () => Promise<LoginState>): void => {
+    setWorking(true);
+    call()
+      .then(setState)
+      .catch((error: unknown) => setState({
+        status: 'failed',
+        message: error instanceof Error ? error.message : String(error),
+        since: new Date().toISOString(),
+        signedIn: state?.signedIn ?? false,
+      }))
+      .finally(() => setWorking(false));
   };
 
-  const abierta = status === 'open';
-  const texto = abierta ? 'int.login.open' : status === 'saved' ? 'int.login.saved' : null;
+  const open = state?.status === 'open';
+  const signedIn = state?.signedIn === true;
 
   return (
     <Box sx={{ mb: 2.5 }}>
-      <Button
-        size="small"
-        variant="outlined"
-        disabled={asking || abierta}
-        onClick={abrir}
-        startIcon={asking || abierta
-          ? <CircularProgress size={14} thickness={5} />
-          : <IconLogin2 size={15} stroke={1.6} />}
-        sx={{ textTransform: 'none', fontSize: 12 }}
-      >
-        {asking ? t('int.login.opening') : t('int.login.button')}
-      </Button>
-      {texto ? (
-        <Typography
-          sx={{ fontSize: 12, mt: 1, color: status === 'saved' ? 'success.main' : 'text.secondary' }}
-        >
-          {t(texto)}
-        </Typography>
+      <Stack direction="row" spacing={1} alignItems="center">
+        {signedIn && !open ? (
+          <>
+            <AppStatusPilot tone="success" label={t('int.login.active')} />
+            <Button
+              size="small"
+              variant="text"
+              color="inherit"
+              disabled={working}
+              onClick={() => run(() => openLoginWindow(profileId))}
+              sx={{ textTransform: 'none', fontSize: 12, opacity: 0.7 }}
+            >
+              {t('int.login.again')}
+            </Button>
+          </>
+        ) : (
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={working || open}
+            onClick={() => run(() => openLoginWindow(profileId))}
+            startIcon={working || open
+              ? <CircularProgress size={14} thickness={5} />
+              : <IconLogin2 size={15} stroke={1.6} />}
+            sx={{ textTransform: 'none', fontSize: 12 }}
+          >
+            {open ? t('int.login.open') : t('int.login.button')}
+          </Button>
+        )}
+        {open ? (
+          <Button
+            size="small"
+            variant="text"
+            color="inherit"
+            disabled={working}
+            onClick={() => run(() => cancelLoginWindow(profileId))}
+            sx={{ textTransform: 'none', fontSize: 12 }}
+          >
+            {t('int.login.cancel')}
+          </Button>
+        ) : null}
+      </Stack>
+
+      {open ? (
+        <Typography sx={{ fontSize: 11, color: 'text.secondary', mt: 1 }}>{t('int.login.stuck')}</Typography>
       ) : null}
-      {status === 'failed' ? (
+      {state?.status === 'failed' ? (
         <Typography sx={{ fontSize: 12, mt: 1, color: 'error.main' }}>
-          {t('int.login.failed')}{detail ? `: ${detail}` : ''}
+          {t('int.login.failed')}{state.message ? `: ${state.message}` : ''}
         </Typography>
       ) : null}
-      <Typography sx={{ fontSize: 11, lineHeight: 1.7, color: 'text.secondary', mt: 1 }}>
-        {t('int.login.explain')}
-      </Typography>
+      {signedIn && !open ? null : (
+        <Typography sx={{ fontSize: 11, lineHeight: 1.7, color: 'text.secondary', mt: 1 }}>
+          {t('int.login.explain')}
+        </Typography>
+      )}
     </Box>
   );
 };

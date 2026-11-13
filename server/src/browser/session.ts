@@ -87,6 +87,10 @@ export class BrowserSession {
     return join(this.root, `${this.id}.cookies.json`);
   }
 
+  get hasSession(): boolean {
+    return existsSync(this.stateFile);
+  }
+
   private async saveCookies(ctx: BrowserContext): Promise<void> {
     if (this.savingCookies) return;
     this.savingCookies = true;

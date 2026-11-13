@@ -46,6 +46,14 @@ export function registerBrowserRoutes(app: FastifyInstance, deps: BrowserRoutesD
     }
   });
 
+  app.delete<{ Params: { profileId: string } }>('/api/browser/:profileId/login', async (request, reply) => {
+    const { profileId } = request.params;
+    if (!profileIds.has(profileId)) return reply.code(404).send({ error: `perfil "${profileId}" no está activo` });
+    const state = await deps.logins.cancel(profileId);
+    deps.scheduler.resume();
+    return reply.send(state);
+  });
+
   app.post<{ Params: { profileId: string } }>('/api/browser/:profileId/release', async (request, reply) => {
     const { profileId } = request.params;
     if (!profileIds.has(profileId)) return reply.code(404).send({ error: `perfil "${profileId}" no está activo` });

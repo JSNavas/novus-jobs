@@ -1,3 +1,4 @@
+import { profileLockHolder } from './profile-lock.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
 import type { BrowserPool } from './session.js';
 
@@ -7,9 +8,16 @@ export interface LoginState {
   readonly status: LoginStatus;
   readonly message: string | null;
   readonly since: string;
+  readonly signedIn: boolean;
 }
 
-const IDLE: LoginState = { status: 'idle', message: null, since: '' };
+interface Remembered {
+  status: LoginStatus;
+  message: string | null;
+  since: string;
+}
+
+const IDLE: Remembered = { status: 'idle', message: null, since: '' };
 
 export class WindowAlreadyOpenError extends Error {
   constructor(readonly profileId: string) {
@@ -19,7 +27,7 @@ export class WindowAlreadyOpenError extends Error {
 }
 
 export class LoginWindows {
-  private readonly states = new Map<string, LoginState>();
+  private readonly states = new Map<string, Remembered>();
 
   constructor(
     private readonly pool: BrowserPool,
@@ -27,13 +35,23 @@ export class LoginWindows {
   ) {}
 
   state(profileId: string): LoginState {
-    return this.states.get(profileId) ?? IDLE;
+    const session = this.pool.session(profileId);
+    const stored = this.states.get(profileId) ?? IDLE;
+    const status = stored.status === 'open' && profileLockHolder(session.dir) === null
+      ? 'saved' as const
+      : stored.status;
+    if (status !== stored.status) this.states.set(profileId, { ...stored, status });
+    return { ...stored, status, signedIn: session.hasSession };
   }
 
   private mark(profileId: string, status: LoginStatus, message: string | null = null): LoginState {
-    const state: LoginState = { status, message, since: new Date().toISOString() };
-    this.states.set(profileId, state);
-    return state;
+    this.states.set(profileId, { status, message, since: new Date().toISOString() });
+    return this.state(profileId);
+  }
+
+  async cancel(profileId: string): Promise<LoginState> {
+    await this.pool.session(profileId).close();
+    return this.mark(profileId, 'idle');
   }
 
   async open(profileId: string, loginUrl: string): Promise<LoginState> {
