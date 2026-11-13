@@ -17,7 +17,7 @@ export interface Notice {
   at: string;
 }
 
-export function noticeOf(run: RunInfo): Omit<Notice, 'id'> {
+export function noticeOf(run: RunInfo): Omit<Notice, 'id'> | null {
   if (run.status === RunStatus.Error) {
     return {
       tone: 'error',
@@ -34,14 +34,7 @@ export function noticeOf(run: RunInfo): Omit<Notice, 'id'> {
       at: run.finishedAt ?? run.startedAt,
     };
   }
-  if (run.accepted === 0) {
-    return {
-      tone: 'success',
-      title: t('notice.runNothing'),
-      detail: t('notice.runNothing.detail', { read: run.fetched }),
-      at: run.finishedAt ?? run.startedAt,
-    };
-  }
+  if (run.accepted === 0) return null;
   return {
     tone: 'success',
     title: t('notice.runDone'),
@@ -103,7 +96,8 @@ export const NotificationsProvider = ({ children }: { children: ReactNode }) => 
     }
     if (run.status === RunStatus.Running || run.id === lastRunId.current) return;
     lastRunId.current = run.id;
-    push(noticeOf(run));
+    const notice = noticeOf(run);
+    if (notice) push(notice);
   }, [stats, push]);
 
   const value = useMemo<NotificationsValue>(() => ({

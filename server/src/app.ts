@@ -6,6 +6,7 @@ import type { JobsRepository } from './db/jobs.repository.js';
 import type { RunsRepository } from './db/runs.repository.js';
 import type { SettingsRepository } from './db/settings.repository.js';
 import type { CandidateProfile } from './filters/decide.js';
+import { LoginWindows } from './browser/login-window.js';
 import { registerBrowserRoutes } from './routes/browser.js';
 import { buildFocus } from './analysis/focus.js';
 import { withNews } from './analysis/news.js';
@@ -84,7 +85,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     sources: deps.sources, isNative: deps.isNativeSource, reload: deps.reloadDescribed,
     pool: deps.pool, hidden: deps.hidden,
   });
-  registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler });
+  const logins = new LoginWindows(deps.pool, deps.scheduler);
+  registerBrowserRoutes(app, { pool: deps.pool, sources: deps.sources, scheduler: deps.scheduler, logins });
   registerSettingsRoute(app, {
     gmailAccount: deps.gmailAccount,
     settings: deps.settings,

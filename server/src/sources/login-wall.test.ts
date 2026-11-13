@@ -38,7 +38,8 @@ describe('loginWallOf', () => {
     for (const wall of Object.values(LoginWall)) {
       const advice = loginWallAdvice(wall, 'linkedin');
       assert.match(advice, /linkedin/);
-      assert.match(advice, /npm run login/);
+      assert.match(advice, /Integraciones/, 'manda al botón, que es donde se hace hoy');
+      assert.match(advice, /Iniciar sesión/);
     }
   });
 });

@@ -27,10 +27,10 @@ export function loginWallOf(finalUrl: string): LoginWall | null {
 export function loginWallAdvice(wall: LoginWall, source: string): string {
   switch (wall) {
     case LoginWall.Checkpoint:
-      return `${source} pide una verificación de seguridad (código o captcha): abre la ventana con \`npm run login -- ${source}\`, resuélvela y cierra la ventana.`;
+      return `${source} pide una verificación de seguridad (código o captcha): entra en Integraciones → ${source} → «Iniciar sesión», resuélvela y cierra la ventana.`;
     case LoginWall.AuthWall:
-      return `${source} sirvió el muro de invitados: la sesión no está llegando. Vuelve a iniciar sesión con \`npm run login -- ${source}\`.`;
+      return `${source} sirvió el muro de invitados: la sesión no está llegando. Vuelve a entrar desde Integraciones → ${source} → «Iniciar sesión».`;
     case LoginWall.Login:
-      return `la sesión de ${source} caducó: inicia sesión otra vez con \`npm run login -- ${source}\` y cierra la ventana al terminar.`;
+      return `la sesión de ${source} caducó: entra otra vez desde Integraciones → ${source} → «Iniciar sesión» y cierra la ventana al terminar.`;
   }
 }

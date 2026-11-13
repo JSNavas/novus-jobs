@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router';
-import { IconTrash } from '@tabler/icons-react';
+import { IconLogin2, IconTrash } from '@tabler/icons-react';
 import {
   Box, Button, CircularProgress, Stack, Switch, TextField, ToggleButton, ToggleButtonGroup, Tooltip,
   Typography,
 } from '@mui/material';
 import {
-  deleteSource, listHiddenSources, listIntegrations, listSources, showHiddenSources,
-  updateIntegrationEnabled, updateIntegrationSchedule, type Integration,
+  deleteSource, listHiddenSources, listIntegrations, listSources, loginState, openLoginWindow,
+  showHiddenSources, updateIntegrationEnabled, updateIntegrationSchedule,
+  type Integration, type LoginStatus,
 } from '../../api/client';
 import { AppAlert, AppDialog, AppStatusPilot, BlankCard, PageContainer } from '../../components/ui';
 import { PlatformIcon } from '../dashboard/panels';
@@ -205,6 +206,72 @@ const Line = ({ label, children }: { label: string; children: React.ReactNode })
   </Stack>
 );
 
+const LOGIN_POLL_MS = 2_000;
+
+const SignIn = ({ profileId }: { profileId: string }) => {
+  const [status, setStatus] = useState<LoginStatus>('idle');
+  const [detail, setDetail] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    const read = (): void => {
+      loginState(profileId)
+        .then((state) => { if (alive) { setStatus(state.status); setDetail(state.message); } })
+        .catch(() => undefined);
+    };
+    read();
+    const timer = setInterval(read, LOGIN_POLL_MS);
+    return () => { alive = false; clearInterval(timer); };
+  }, [profileId]);
+
+  const abrir = (): void => {
+    setAsking(true);
+    openLoginWindow(profileId)
+      .then((state) => { setStatus(state.status); setDetail(state.message); })
+      .catch((error: unknown) => {
+        setStatus('failed');
+        setDetail(error instanceof Error ? error.message : String(error));
+      })
+      .finally(() => setAsking(false));
+  };
+
+  const abierta = status === 'open';
+  const texto = abierta ? 'int.login.open' : status === 'saved' ? 'int.login.saved' : null;
+
+  return (
+    <Box sx={{ mb: 2.5 }}>
+      <Button
+        size="small"
+        variant="outlined"
+        disabled={asking || abierta}
+        onClick={abrir}
+        startIcon={asking || abierta
+          ? <CircularProgress size={14} thickness={5} />
+          : <IconLogin2 size={15} stroke={1.6} />}
+        sx={{ textTransform: 'none', fontSize: 12 }}
+      >
+        {asking ? t('int.login.opening') : t('int.login.button')}
+      </Button>
+      {texto ? (
+        <Typography
+          sx={{ fontSize: 12, mt: 1, color: status === 'saved' ? 'success.main' : 'text.secondary' }}
+        >
+          {t(texto)}
+        </Typography>
+      ) : null}
+      {status === 'failed' ? (
+        <Typography sx={{ fontSize: 12, mt: 1, color: 'error.main' }}>
+          {t('int.login.failed')}{detail ? `: ${detail}` : ''}
+        </Typography>
+      ) : null}
+      <Typography sx={{ fontSize: 11, lineHeight: 1.7, color: 'text.secondary', mt: 1 }}>
+        {t('int.login.explain')}
+      </Typography>
+    </Box>
+  );
+};
+
 const IntegrationCard = ({ integration, onSaved, onRemove }: CardProps) => {
   const next = integration.nextAt ? nextSearchAt(integration.nextAt, new Date()) : null;
   const off = !integration.enabled;
@@ -282,6 +349,10 @@ const IntegrationCard = ({ integration, onSaved, onRemove }: CardProps) => {
             ? t('int.off.explain')
             : integration.needsLogin ? t('int.login.help') : t('int.open.help')}
         </Typography>
+
+        {integration.needsLogin && integration.profileId ? (
+          <SignIn profileId={integration.profileId} />
+        ) : null}
 
         <Box sx={{ opacity: off ? 0.45 : 1, pointerEvents: off ? 'none' : 'auto' }}>
           <ToggleButtonGroup

@@ -192,6 +192,7 @@ export interface Integration {
   label: string;
   endpoint: string | null;
   needsLogin: boolean;
+  profileId: string | null;
   enabled: boolean;
   schedule: IntegrationSchedule;
   timezone: string;
@@ -201,6 +202,22 @@ export interface Integration {
 
 export function listIntegrations(): Promise<Integration[]> {
   return request<Integration[]>('/integrations');
+}
+
+export type LoginStatus = 'idle' | 'open' | 'saved' | 'failed';
+
+export interface LoginState {
+  status: LoginStatus;
+  message: string | null;
+  since: string;
+}
+
+export function loginState(profileId: string): Promise<LoginState> {
+  return request<LoginState>(`/browser/${profileId}/login`);
+}
+
+export function openLoginWindow(profileId: string): Promise<LoginState> {
+  return request<LoginState>(`/browser/${profileId}/login`, { method: 'POST' });
 }
 
 export function updateIntegrationEnabled(name: string, enabled: boolean): Promise<Integration> {
