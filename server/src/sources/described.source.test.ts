@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
-import { DescribedSource } from './described.source.js';
+import { DescribedSource, slugify } from './described.source.js';
 import { parseDescriptor } from './descriptor.js';
 import type { RawPost } from './types.js';
 
@@ -343,5 +343,43 @@ describe('DescribedSource', () => {
     assert.equal(source.loginUrl, null);
     assert.equal(source.name, 'remotive');
     assert.equal(source.label, 'Remotive');
+  });
+});
+
+describe('slugify y urlTemplate', () => {
+  it('EL CASO REAL (Remote Latinos): la API no da enlace, y /jobs/<id> abre la lista, no la oferta', async () => {
+    reply({
+      data: { result: [{
+        _id: '6af5e0aa334329a0e0cb4c20',
+        job_title: 'Senior Full Stack Developer',
+        description: '<p>Node.js y React.</p>',
+      }] },
+    });
+    const post = await onePost(describedFrom({
+      name: 'remotelatinos',
+      request: { url: 'https://api.test/posts' },
+      fields: {
+        list: 'data.result',
+        title: 'job_title',
+        description: 'description',
+        urlTemplate: 'https://app.remotelatinos.com/job/{job_title|slug}-id{_id}',
+      },
+    }));
+    assert.equal(post.url, 'https://app.remotelatinos.com/job/senior-full-stack-developer-id6af5e0aa334329a0e0cb4c20');
+  });
+
+  it('el slug pierde los acentos y la puntuación, que es lo que hace legible una URL', () => {
+    assert.equal(slugify('Diseñador UX/UI — Señor'), 'disenador-ux-ui-senor');
+    assert.equal(slugify('  Closser  '), 'closser');
+  });
+
+  it('sin filtro el valor va tal cual: el slug se pide, no se impone', async () => {
+    reply({ jobs: [{ id: 'AB-12', title: 'Backend', description: 'Node.js.' }] });
+    const post = await onePost(describedFrom({
+      name: 'x',
+      request: { url: 'https://api.test/jobs' },
+      fields: { list: 'jobs', title: 'title', description: 'description', urlTemplate: 'https://x.test/{id}' },
+    }));
+    assert.equal(post.url, 'https://x.test/AB-12');
   });
 });

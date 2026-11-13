@@ -133,7 +133,7 @@ key without anyone rewriting it. Paths are dotted:
 | `description` | yes | The body of the ad. HTML is flattened to text |
 | `company` | — | Who is hiring |
 | `url` | — | Where to apply |
-| `urlTemplate` | — | Build the link from the entry when the API gives none: `https://site/jobs/{_id}` |
+| `urlTemplate` | — | Build the link from the entry when the API gives none: `https://site/job/{title\|slug}-id{_id}` |
 | `location` | — | Printed as `Ubicación:` above the ad |
 | `postedAt` | — | ISO text, or epoch seconds or milliseconds |
 | `salary` | — | Printed as `Sueldo:` |
@@ -186,13 +186,19 @@ Many in-house APIs return an id and nothing else, because their own front end
 knows how to build the URL. `urlTemplate` does the same:
 
 ```json
-"urlTemplate": "https://app.remotelatinos.com/jobs/{_id}"
+"urlTemplate": "https://app.remotelatinos.com/job/{job_title|slug}-id{_id}"
 ```
 
-The braces take the same dotted paths as every other field. If any placeholder
-comes out empty the link is dropped rather than half-built — a link to an error
-page is worse than no link at all. A real `url` field always wins over the
-template.
+The braces take the same dotted paths as every other field. `|slug` turns a
+value into the hyphenated, unaccented form a URL path uses — `Diseñador UX/UI`
+becomes `disenador-ux-ui` — which is what sites that build their links from the
+title need. Remote Latinos is the example and it is worth knowing why: their
+API hands over `_id` only, and `/jobs/<id>` is not the posting, it is the job
+list. Pointing at it looked fine in a test and sent you to the wrong page.
+
+If any placeholder comes out empty the link is dropped rather than half-built —
+a link to an error page is worse than no link at all. A real `url` field always
+wins over the template.
 
 ## A company with nothing open
 

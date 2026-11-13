@@ -97,12 +97,22 @@ function toPostText(entry: unknown, fields: DescriptorFields): string | null {
   return [head.join('\n'), description].join('\n\n');
 }
 
+export function slugify(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
 function fillTemplate(template: string, entry: unknown): string {
   let complete = true;
-  const filled = template.replace(/\{([A-Za-z0-9_.]+)\}/g, (_, path: string) => {
+  const filled = template.replace(/\{([A-Za-z0-9_.]+)(\|slug)?\}/g, (_, path: string, filter?: string) => {
     const value = text(pick(entry, path)).trim();
-    if (!value) complete = false;
-    return value;
+    const written = filter ? slugify(value) : value;
+    if (!written) complete = false;
+    return written;
   });
   return complete ? filled : '';
 }
