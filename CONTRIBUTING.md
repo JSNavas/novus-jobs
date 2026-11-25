@@ -69,9 +69,14 @@ and every empty state explains why it is empty.
   heavily towards Latin America, Spain and a handful of others. If your country
   is missing, adding it is a small, high-impact PR.
 - **More technologies** in `server/src/profile/technologies.ts`, which is what
-  the CV reader recognises.
-- **Translations.** The UI is in Spanish today. It was written for one person
-  and now it is not; an i18n pass is wanted.
+  the CV reader recognises. `coreFor` marks the tools that define a trade
+  (Cypress for QA) without changing anyone else's core.
+- **More trades** in `server/src/profile/roles.ts`. A trade is a name for the
+  judge and the job titles that count as its own; titles, not mentions —
+  "QA Engineer" is a trade, "work with the QA team" is not.
+- **Translations.** The app speaks Spanish and English (`web/src/i18n/`,
+  `server/src/i18n/`). Another language is a dictionary on each side and an
+  entry in `LANGUAGES`.
 
 ## Reporting a bug
 

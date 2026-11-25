@@ -60,8 +60,8 @@ Open <http://127.0.0.1:47831>. The first run sends you to the setup wizard.
 
 Two separate things, split by whether a restart should be needed to change them.
 
-**In the app** — your profile (stack, English, location, time zone,
-arrangements), the
+**In the app** — your profile (trade, stack, English, years and the levels you
+want, location, time zone, arrangements), the
 motivation paragraph, how old a posting can be, which platforms are on and how
 often each runs. All stored in the database, all applied on the next search,
 none of it needing a restart. Correcting a typo in a sentence should never

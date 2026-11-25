@@ -399,19 +399,19 @@ Que el juez pudiera **solo** descartar fue la decisión original, y estaba mal: 
 
 Un rescate entra marcado como **«por confirmar»**, no como oferta limpia; y si lo revocado fue la ubicación, la ubicación pasa a «no dice desde dónde se puede trabajar», porque la regla que afirmaba «presencial» es justo la que acaba de caerse.
 
-El modelo por defecto es `gemini-3.5-flash`, no el `-lite`: el `lite` es el más barato y por eso el más disputado, y una pasada perdió sus 19 juicios con un `503 high demand` con reintento incluido. Clasificar texto corto no pide más inteligencia; pide que conteste.
+Cuando le toca a Gemini (el último de la cadena), el modelo es `gemini-3.5-flash`, no el `-lite`: el `lite` es el más barato y por eso el más disputado, y una pasada perdió sus 19 juicios con un `503 high demand` con reintento incluido. Clasificar texto corto no pide más inteligencia; pide que conteste.
 
 Se le manda casi toda la pasada (todo menos los descartes por stack): una llamada por pasada en tandas de 60 publicaciones. La llamada recorre una **cadena de modelos gratis**: primero los de `FREE_MODELS` en OpenRouter y, al final, Gemini. El primero que contesta decide; las reglas solo deciden solas si fallan todos.
 
 **Por qué no Gemini solo.** Su capa gratuita se agotaba (106 tandas perdidas por `429` en el log del 25 nov 2026), y en esas tandas entraron sin segunda opinión un puesto clínico de salud mental y trabajos de entrenar IA. **Por qué Ernie primero.** Se midió contra Gemini sobre 60 ofertas reales: coincidieron en 51, y las 9 diferencias eran todas descartes correctos que Gemini dejó pasar (ML, investigación, ServiceNow). Gemma 4 decide igual de bien pero da `429` a menudo, así que va de segunda. gpt-oss y Llama ya no son gratis en OpenRouter ni en NVIDIA. Antes de cambiar `FREE_MODELS`, compara el candidato con Gemini sobre ofertas reales de tu `jobs.db`.
 
-> **Cuidado con el presupuesto cuando crecen las fuentes.** La capa gratuita da 20 peticiones al día. Con dos plataformas y tres pasadas sobraba; con once cada hora, el 12 de noviembre de 2026 se agotó a media mañana y **502 de las 875 ofertas del día las decidieron solo las reglas**. El juez degrada como debe y lo escribe en el log, pero el panel todavía no lo enseña. Mientras tanto: ritmos de 3 h o más en las fuentes abiertas, y la tanda de 60 que ya está puesta.
+> **Cuidado con el presupuesto cuando crecen las fuentes.** La capa gratuita de Gemini da 20 peticiones al día; desde el 25 nov 2026 los modelos gratis de OpenRouter van delante y la amortiguan, pero también tienen sus límites. Con dos plataformas y tres pasadas sobraba; con once cada hora, el 12 de noviembre de 2026 se agotó a media mañana y **502 de las 875 ofertas del día las decidieron solo las reglas**. El juez degrada como debe y lo escribe en el log, pero el panel todavía no lo enseña. Mientras tanto: ritmos de 3 h o más en las fuentes abiertas, y la tanda de 60 que ya está puesta.
 
 Si una tanda falla se reintenta y, si vuelve a fallar, **las demás tandas se conservan** y esas ofertas las deciden las reglas: antes un 503 pasajero en la segunda tanda borraba los veredictos de la primera y la pasada entera volvía a cero.
 
 ## Afinar el criterio
 
-Todo lo que define a quién se le buscan ofertas vive en **tu base de datos**, y se edita en Configuración → «Editar mi perfil». Son tres listas:
+Todo lo que define a quién se le buscan ofertas vive en **tu base de datos**, y se edita en Configuración → «Editar mi perfil». Además del oficio y los niveles (más abajo), son tres listas:
 
 - `stack` — todo lo que sabes. Enriquece el «Coincide con», **no** abre la puerta.
 - `core` — al menos una tiene que aparecer, o la oferta no encaja.

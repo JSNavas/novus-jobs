@@ -24,11 +24,12 @@ Source.fetch() ──────────────► raw postings
    │
    ▼
 Filter (filters/decide.ts) ─── your profile decides: location, language,
-   │                           vetoed technology, core stack
+   │                           level, trade, vetoed technology, core stack
    │   accepted + "uncertain"
    ▼
 LLM judge (optional) ───────── can reject what rules let in, and overturn
    │                           certain rejections. Never invents a veto.
+   │                           Free models first, Gemini last (llm/).
    ▼
 JobsRepository.insert() ────── deduplicated by text fingerprint
    │
@@ -49,7 +50,8 @@ jobs, and such a bug is invisible by definition unless you keep the evidence.
 | Composition root | `server/src/index.ts` — the only place that wires everything |
 | HTTP | `server/src/app.ts` and `server/src/routes/` |
 | The decision | `server/src/filters/` |
-| Your profile | `server/src/profile/` |
+| Your profile | `server/src/profile/` — trades in `roles.ts`, levels in `seniority.ts` |
+| Calling an LLM | `server/src/llm/` — one interface, a chain of models tried in order |
 | Reading a CV | `server/src/cv/` |
 | Platforms | `server/src/sources/` |
 | — a platform written as data | `descriptor.ts`, `described.source.ts`, `descriptors.ts` |
@@ -62,18 +64,33 @@ jobs, and such a bug is invisible by definition unless you keep the evidence.
 | Market analysis | `server/src/analysis/` |
 | Dashboard | `web/src/views/`, with shared components in `web/src/components/ui/` |
 
-## Eight decisions worth knowing
+## Ten decisions worth knowing
 
 ### The profile is data, not code
 
-Your stack, your English level, your country and which arrangements you accept
-live in the database and are read **at the start of every pass**. Not cached,
+Your trade, the levels you want, your stack, your English level, your country
+and which arrangements you accept live in the database and are read **at the start of every pass**. Not cached,
 not injected once at boot: fixing a technology in your profile has to affect the
 next search, and nobody should have to restart a service to correct a typo.
 
 The same applies to the per-platform schedule and the on/off switch. The only
 things in `.env` are the ones where a restart is acceptable because they are
 infrastructure: ports, paths, API keys.
+
+### Nothing assumes the author
+
+The filter was written for one person and assumed him in four places: the job
+titles that counted as "your role" (web development), the judge's idea of
+"another trade" (QA, data, DevOps), a fixed list of "foreign stacks" and a fixed
+list of technologies taken as known. A QA engineer had their own postings
+thrown away as "not software development", and a junior got the same senior
+roles as a staff engineer, because the profile had no level at all.
+
+Each of those now reads the profile: the trades someone picks, the levels they
+tick, their vetoes and their core. `server/src/profile/profile.ts` is still the
+author's lists, but only as the example the tests run against. Checked against
+4,929 real postings with the author's profile: 10 verdicts changed, every one
+explained — two of them were `go-to` and `macrew.net` read as Go and .NET.
 
 ### Nothing depends on a specific platform
 
@@ -108,6 +125,18 @@ The same line runs through the judge, which reads postings but cannot overrule
 the stack, a named country, or a rule that never got to run. An LLM in this
 project proposes structure and opinion; it is never the thing between you and
 your data.
+
+### The judge runs on free models, in a chain
+
+No paid model and no single provider. `server/src/llm/` tries free OpenRouter
+models in order and Gemini last; a `429` or a timeout hands the call to the
+next, and only if all fail do the rules decide alone. Gemini alone ran out of
+free quota in 106 batches in one day, and in those batches a clinician role and
+AI-training gigs got in unjudged.
+
+A model earns its place in the chain by agreeing with the previous judge on
+real postings, not by its benchmark: Ernie went first after agreeing with Gemini
+on 51 of 60, with the other 9 being correct rejections Gemini had missed.
 
 ### A standard beats a selector
 

@@ -139,8 +139,9 @@ El GIF de arriba no existe hasta que el paso 2 del alta lo merezca. Hoy es una
 lista fija de casillas: el usuario no ve que la máquina ha leído su currículum,
 así que el momento «ah, vale» se pierde justo donde debería ocurrir.
 
-El back ya lo hace — `extractFromCv` devuelve stack, nivel de inglés, país y
-vetos sugeridos por ecosistema. Lo que falta es que la pantalla lo cuente:
+El back ya lo hace — `extractFromCv` devuelve stack, nivel de inglés, país,
+años de experiencia, oficio, niveles propuestos y vetos sugeridos por
+ecosistema. Lo que falta es que la pantalla lo cuente:
 - Las tecnologías llegan marcadas y etiquetadas como **detectadas en tu CV**.
 - El inglés, el país y la ciudad vienen rellenos con lo deducido, y se ve que
   no los escribió el usuario.
@@ -308,4 +309,6 @@ de una línea. Es el buscador de GitHub y se rellena en dos minutos.
   exista para entonces: cuanto antes, menos daño.
 - Si el perfil de ejemplo (`server/src/profile/profile.ts`) se queda con tus
   listas de tecnología o lo cambiamos por uno inventado. Hoy las pruebas del
-  filtro dependen de él.
+  filtro dependen de él. Los años y los niveles se dejaron fuera a propósito
+  (sin años, todos los niveles) para no añadir datos tuyos mientras lo decides;
+  las pruebas de nivel usan perfiles propios.

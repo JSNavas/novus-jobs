@@ -129,7 +129,7 @@ key without anyone rewriting it. Paths are dotted:
 |---|---|---|
 | `list` | — | Where the array of postings is. `null` means the response *is* the array |
 | `skip` | `0` | Entries to drop off the front. Remote OK puts a legal notice there |
-| `title` | yes* | The job title |
+| `title` | yes* | The job title. It is also where the posting's level is read ("Senior", "Jr", "Entry Level"), so map the real title, not a category |
 | `description` | yes | The body of the ad. HTML is flattened to text |
 | `company` | — | Who is hiring |
 | `url` | — | Where to apply |
