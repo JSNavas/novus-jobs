@@ -23,7 +23,11 @@ const ANYWHERE_MARKS = [
   'worldwide', 'work from anywhere', 'anywhere in the world', 'desde cualquier lugar',
 ];
 
+// The pin counts as a label: aggregators like Freelanly put the place alone on
+// a line after it ("📍 EE. UU. (Remoto)"), and without this the word "remoto"
+// elsewhere in the ad made a US-only role read as worldwide.
 const PLACE_LINE = /^[ \t]*(?:ubicaci[óo]n|localizaci[óo]n|location|pa[íi]s|country)[ \t]*:[ \t]*(.+)$/im;
+const PIN_LINE = /^[ \t]*📍[ \t]*(.+)$/mu;
 
 const NO_PLACE_IN_LINE = [
   'global', 'anywhere', 'worldwide', 'internacional', 'international', 'mundial',
@@ -103,22 +107,32 @@ function foreignNames(home: HomeGeo): string[] {
   return home.country ? [...catalogued, ...worldNamesExcept(home.country.code)] : catalogued;
 }
 
-function placeLine(t: string): string | null {
+function placeLine(t: string, home: HomeGeo): string | null {
   const line = PLACE_LINE.exec(t)?.[1]?.trim();
-  return line ? line : null;
+  if (line) return line;
+  // A pin heads all sorts of lines ("📍 Condiciones:"), so it only counts as a
+  // place when it names a country or a city.
+  const pinned = PIN_LINE.exec(t)?.[1]?.trim();
+  if (!pinned) return null;
+  const names = [...homeMarks(home), ...homeCities(home), ...foreignNames(home), ...foreignCities(home)];
+  return names.some((n) => wordIn(pinned, n)) || SCOPE_ABBREVIATIONS.some((a) => wordIn(pinned, a)) ? pinned : null;
 }
 
 type PlaceReading = 'reachable' | 'foreign' | null;
 
 function readPlaceLine(t: string, home: HomeGeo): PlaceReading {
-  const line = placeLine(t);
+  const line = placeLine(t, home);
   if (line === null) return null;
   if (homeMarks(home).some((m) => line.includes(m))) return 'reachable';
   if (homeCities(home).some((c) => line.includes(c))) return 'reachable';
   const region = home.country ? REGION_MARKS[home.country.region] : [];
   if (region.some((m) => line.includes(m))) return 'reachable';
   if (NO_PLACE_IN_LINE.some((m) => line.includes(m))) return 'reachable';
-  if (ANYWHERE_MARKS.some((m) => line.includes(m)) || REMOTE_RE.test(line)) return 'reachable';
+  if (ANYWHERE_MARKS.some((m) => line.includes(m))) return 'reachable';
+  // "Remote" next to a foreign country is that country's remote, not the world's.
+  // Only the first cell: "Remote | Long-term role with a U.S. company" names the employer, not you.
+  if (scopeNamesAPlace(line.split('|')[0] ?? line, home)) return 'foreign';
+  if (REMOTE_RE.test(line)) return 'reachable';
   return 'foreign';
 }
 

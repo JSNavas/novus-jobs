@@ -180,3 +180,30 @@ describe('classifyLocation — región contra modalidad', () => {
     assert.equal(classifyLocation(oferta, HOGAR), JobLocation.Global);
   });
 });
+
+describe('classifyLocation — the 📍 line', () => {
+  // Real cases: Freelanly posts 3108 and 4742 (Nov 2026) were accepted as
+  // worldwide remote. The pin named the US; "remotos" in the footer won.
+  const freelanly = (pin: string) =>
+    `Freelanly | Español\nDesarrollador Full Stack\n📍 ${pin}\n💰 USD 100000/año\nCientos de roles tech remotos llegan cada día.`;
+
+  it('"📍 Estados Unidos" is another country', () => {
+    assert.equal(classifyLocation(freelanly('Estados Unidos'), HOGAR), JobLocation.OtherCountry);
+  });
+
+  it('"📍 EE. UU. (Remoto)" is US remote, not worldwide', () => {
+    assert.equal(classifyLocation(freelanly('EE. UU. (Remoto)'), HOGAR), JobLocation.OtherCountry);
+  });
+
+  it('"📍 Remoto" alone stays worldwide', () => {
+    assert.equal(classifyLocation(freelanly('Remoto'), HOGAR), JobLocation.Global);
+  });
+
+  it('a pin that names no place is not a place line', () => {
+    assert.equal(classifyLocation('Buscamos dev Node remoto\n📍 Condiciones:\n- 100% remoto', HOGAR), JobLocation.Global);
+  });
+
+  it('a U.S. employer after the first cell does not restrict you', () => {
+    assert.equal(classifyLocation('Dev Node\n📍 Remote | Long-term role with a U.S. company', HOGAR), JobLocation.Global);
+  });
+});
