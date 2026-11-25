@@ -1,6 +1,6 @@
 import type { SettingsRepository } from '../db/settings.repository.js';
 import { DEFAULT_PROFILE } from './defaults.js';
-import { ENGLISH_LEVELS, LANGUAGES, type CandidateProfile, type EnglishLevel, type Language } from './types.js';
+import { ENGLISH_LEVELS, LANGUAGES, MAX_EXPERIENCE_YEARS, type CandidateProfile, type EnglishLevel, type Language } from './types.js';
 
 export const PROFILE_KEY = 'candidateProfile';
 
@@ -44,6 +44,10 @@ function parseProfile(raw: string | null): CandidateProfile {
     english: {
       level: level(record(stored.english)?.level) ?? DEFAULT_PROFILE.english.level,
       filter: bool(record(stored.english)?.filter) ?? DEFAULT_PROFILE.english.filter,
+    },
+    experience: {
+      years: experienceYears(record(stored.experience)?.years),
+      filter: bool(record(stored.experience)?.filter) ?? DEFAULT_PROFILE.experience.filter,
     },
     geo: {
       country: text(record(stored.geo)?.country) ?? DEFAULT_PROFILE.geo.country,
@@ -105,4 +109,11 @@ function timezone(value: unknown): string | null {
 
 function level(value: unknown): EnglishLevel | null {
   return ENGLISH_LEVELS.find((l) => l === value) ?? null;
+}
+
+/** Whole years, 0 to MAX_EXPERIENCE_YEARS. Anything else is "not said". */
+export function experienceYears(value: unknown): number | null {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return null;
+  const years = Math.floor(value);
+  return years <= MAX_EXPERIENCE_YEARS ? years : null;
 }

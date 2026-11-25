@@ -23,6 +23,7 @@ export interface Draft {
   core: string[];
   vetoEcosystems: string[];
   english: CandidateProfile['english'];
+  experience: CandidateProfile['experience'];
   geo: CandidateProfile['geo'];
   modality: CandidateProfile['modality'];
 }
@@ -34,6 +35,7 @@ export function draftFrom(state: OnboardingState): Draft {
     core: [...state.profile.core],
     vetoEcosystems: [],
     english: { ...state.profile.english },
+    experience: { ...state.profile.experience },
     geo: { ...state.profile.geo },
     modality: { ...state.profile.modality },
   };
@@ -48,6 +50,11 @@ export function applyReading(draft: Draft, cv: CvReading): Draft {
       ? draft.vetoEcosystems
       : cv.suggestedVetoes.map((v) => v.ecosystem),
     english: cv.english ? { level: cv.english, filter: draft.english.filter } : draft.english,
+    // The CV knew the years all along; until now nobody kept them.
+    experience: {
+      ...draft.experience,
+      years: draft.experience.years ?? cv.years,
+    },
     geo: {
       ...draft.geo,
       country: draft.geo.country || cv.country || '',

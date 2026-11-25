@@ -11,6 +11,20 @@ export interface EnglishPreference {
   filter: boolean;
 }
 
+/**
+ * Years of professional experience. `years: null` means the person has not
+ * said, and then nothing is filtered by level: a junior and a staff engineer
+ * would otherwise get the same inbox. `filter` mirrors the English one: some
+ * people want to see roles above their level anyway.
+ */
+export interface ExperiencePreference {
+  years: number | null;
+  filter: boolean;
+}
+
+/** More than this is a typo or a joke, not a career. */
+export const MAX_EXPERIENCE_YEARS = 50;
+
 export interface ModalityPreference {
   remoteGlobal: boolean;
   remoteHomeCountry: boolean;
@@ -35,6 +49,7 @@ export interface CandidateProfile {
   readonly core: readonly string[];
   readonly cannotDo: readonly string[];
   readonly english: EnglishPreference;
+  readonly experience: ExperiencePreference;
   readonly geo: GeoPreference;
   readonly modality: ModalityPreference;
 }

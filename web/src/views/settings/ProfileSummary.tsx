@@ -14,9 +14,12 @@ interface Draft {
   stack: string[];
   cannotDo: string[];
   english: CandidateProfile['english'];
+  experience: CandidateProfile['experience'];
   geo: CandidateProfile['geo'];
   modality: CandidateProfile['modality'];
 }
+
+const MAX_EXPERIENCE_YEARS = 50;
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
   <Box sx={{ mb: 2.5 }}>
@@ -91,6 +94,7 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
     stack: [...profile.stack],
     cannotDo: [...profile.cannotDo],
     english: { ...profile.english },
+    experience: { ...profile.experience },
     geo: { ...profile.geo },
     modality: { ...profile.modality },
   });
@@ -104,6 +108,7 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
   const dirty = (['core', 'stack', 'cannotDo'] as const)
       .some((field) => lists[field].join('|') !== profile[field].join('|'))
     || JSON.stringify(lists.english) !== JSON.stringify(profile.english)
+    || JSON.stringify(lists.experience) !== JSON.stringify(profile.experience)
     || JSON.stringify(lists.geo) !== JSON.stringify(profile.geo)
     || JSON.stringify(lists.modality) !== JSON.stringify(profile.modality);
 
@@ -119,6 +124,7 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
       stack: lists.stack,
       cannotDo: lists.cannotDo,
       english: lists.english,
+      experience: lists.experience,
       geo: lists.geo,
       modality: lists.modality,
     })
@@ -193,6 +199,42 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
                 />
               }
               label={t('set.profile.englishFilter')}
+            />
+          </Stack>
+        </Field>
+
+        <Field label={t('set.profile.experience')}>
+          <Stack spacing={1} alignItems="flex-start">
+            <TextField
+              size="small"
+              type="number"
+              label={t('exp.years')}
+              value={lists.experience.years ?? ''}
+              onChange={(event) => {
+                const raw = event.target.value.trim();
+                const parsed = Number.parseInt(raw, 10);
+                const years = raw === '' || Number.isNaN(parsed)
+                  ? null
+                  : Math.min(Math.max(parsed, 0), MAX_EXPERIENCE_YEARS);
+                setLists((prev) => ({ ...prev, experience: { ...prev.experience, years } }));
+              }}
+              slotProps={{ inputLabel: { shrink: true }, htmlInput: { min: 0, max: MAX_EXPERIENCE_YEARS, step: 1 } }}
+              helperText={lists.experience.years === null ? t('exp.summary.none') : undefined}
+              sx={{ minWidth: 140 }}
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  size="small"
+                  checked={lists.experience.filter}
+                  disabled={lists.experience.years === null}
+                  onChange={(event) => setLists((prev) => ({
+                    ...prev,
+                    experience: { ...prev.experience, filter: event.target.checked },
+                  }))}
+                />
+              }
+              label={t('exp.filter')}
             />
           </Stack>
         </Field>

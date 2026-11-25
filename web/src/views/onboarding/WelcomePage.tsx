@@ -38,7 +38,7 @@ const WelcomePage = () => {
     switch (index) {
       case 0: return { language: current.language };
       case 1: return { stack: current.stack, core: current.core, vetoEcosystems: current.vetoEcosystems };
-      case 2: return { english: current.english };
+      case 2: return { english: current.english, experience: current.experience };
       case 3: return { geo: current.geo, modality: current.modality };
       default: return null;
     }
@@ -71,7 +71,7 @@ const WelcomePage = () => {
     saveOnboardingStep({
       language: draft.language,
       stack: draft.stack, core: draft.core, vetoEcosystems: draft.vetoEcosystems,
-      english: draft.english, geo: draft.geo, modality: draft.modality,
+      english: draft.english, experience: draft.experience, geo: draft.geo, modality: draft.modality,
     })
       // Ya dado de alta, no se vuelve a marcar: la fecha del alta es cuándo
       // empezó a usarlo, no cuándo tocó el perfil por última vez.

@@ -3,7 +3,9 @@ import { JobLocation } from '../types.js';
 import { adBody, cleanLinkedInNoise, extractApplyUrl, extractEmail, isAggregatorPost, isCandidateSelfPromotion, looksLikeOffer, matchStack } from './offer.js';
 import { classifyLocation, isLocalEmployer, type HomeGeo } from './location.js';
 import { findCountry } from './countries.js';
-import { englishDemand, hasSeveralOpenings, isOtherEcosystem, isOwnRole, unknownRequiredTech } from './requirements.js';
+import {
+  demandedYears, englishDemand, hasSeveralOpenings, isOtherEcosystem, isOwnRole, statedLevel, unknownRequiredTech,
+} from './requirements.js';
 import { englishRank, type CandidateProfile, type Language, type ModalityPreference } from '../profile/types.js';
 import { t } from '../i18n/index.js';
 
@@ -20,6 +22,7 @@ export type RejectionCode =
   | 'reject.otherCountry' | 'reject.onsite' | 'reject.hybrid'
   | 'reject.homeCountryOnly' | 'reject.globalRemote'
   | 'reject.unknownTech' | 'reject.english' | 'reject.localEmployer'
+  | 'reject.seniority' | 'reject.seniorityLevel'
   | 'reject.otherEcosystem' | 'reject.peripheral' | 'reject.noStack'
   | 'reject.stale' | 'reject.ai';
 
@@ -122,8 +125,32 @@ function rejectByVetoes(ctx: Context, ad: string, profile: CandidateProfile): Ve
   if (unknownTech) return reject(ctx, { code: 'reject.unknownTech', params: { tech: unknownTech.trim() } }, 'veto');
   const english = rejectByEnglish(ctx, ad, profile);
   if (english) return english;
+  const seniority = rejectBySeniority(ctx, ad, profile);
+  if (seniority) return seniority;
   if (profile.geo.excludeLocalEmployers && isLocalEmployer(ctx.text, homeOf(profile))) {
     return reject(ctx, { code: 'reject.localEmployer', params: {} }, 'veto');
+  }
+  return null;
+}
+
+/**
+ * How far above your experience an ad may ask before it is discarded. Ads
+ * overshoot, and people with two years fewer than asked get hired every day;
+ * five years for someone with one is another job.
+ */
+export const SENIORITY_SLACK_YEARS = 2;
+
+function rejectBySeniority(ctx: Context, ad: string, profile: CandidateProfile): Verdict | null {
+  const { years, filter } = profile.experience;
+  if (!filter || years === null) return null;
+  if (hasSeveralOpenings(ad)) return null;
+  const level = statedLevel(ctx.text);
+  if (level && level.years > years + SENIORITY_SLACK_YEARS) {
+    return reject(ctx, { code: 'reject.seniorityLevel', params: { level: level.label, yours: years } }, 'veto');
+  }
+  const demanded = demandedYears(ad);
+  if (demanded !== null && demanded > years + SENIORITY_SLACK_YEARS) {
+    return reject(ctx, { code: 'reject.seniority', params: { demanded, yours: years } }, 'veto');
   }
   return null;
 }

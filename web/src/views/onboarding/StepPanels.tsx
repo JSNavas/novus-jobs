@@ -226,6 +226,54 @@ export const EnglishStep = ({ state, draft, onChange }: PanelProps) => (
     <Typography variant="caption" color="textSecondary">
       {t('eng.filter.help')}
     </Typography>
+
+    <ExperienceFields
+      value={draft.experience}
+      onChange={(experience) => onChange({ ...draft, experience })}
+    />
+  </Stack>
+);
+
+const MAX_EXPERIENCE_YEARS = 50;
+
+export interface ExperienceFieldsProps {
+  value: OnboardingState['profile']['experience'];
+  onChange: (next: OnboardingState['profile']['experience']) => void;
+}
+
+/** Years of experience and whether to hide what is far above them. Shared by the wizard and the profile editor. */
+export const ExperienceFields = ({ value, onChange }: ExperienceFieldsProps) => (
+  <Stack spacing={1.5}>
+    <TextField
+      type="number"
+      size="small"
+      label={t('exp.years')}
+      helperText={t('exp.years.help')}
+      value={value.years ?? ''}
+      onChange={(event) => {
+        const raw = event.target.value.trim();
+        const parsed = Number.parseInt(raw, 10);
+        const years = raw === '' || Number.isNaN(parsed)
+          ? null
+          : Math.min(Math.max(parsed, 0), MAX_EXPERIENCE_YEARS);
+        onChange({ ...value, years });
+      }}
+      slotProps={{ htmlInput: { min: 0, max: MAX_EXPERIENCE_YEARS, step: 1 } }}
+      sx={{ maxWidth: 240 }}
+    />
+    <FormControlLabel
+      control={
+        <Switch
+          checked={value.filter}
+          disabled={value.years === null}
+          onChange={(event) => onChange({ ...value, filter: event.target.checked })}
+        />
+      }
+      label={<Typography variant="body2">{t('exp.filter')}</Typography>}
+    />
+    <Typography variant="caption" color="textSecondary">
+      {t('exp.filter.help')}
+    </Typography>
   </Stack>
 );
 

@@ -148,6 +148,90 @@ export function isOtherEcosystem(text: string, coreMatch: readonly string[]): bo
   return onlyJs && STACKS_FOREIGN.test(text);
 }
 
+// ── Experience ────────────────────────────────────────────────────────────────
+// What the ad asks for, read two ways: the years it writes ("5+ years of
+// experience", "mínimo 3 años") and the level a board states on its own line
+// ("Nivel: Semi Senior" from Get on Board). Both are read conservatively: the
+// rule that uses them only discards what is clearly far above the person.
+
+const YEARS_UNIT = String.raw`(?:years?|yrs?\.?|años|anos)`;
+const YEARS_MENTION = new RegExp(
+  String.raw`(?:\+\s*)?(\d{1,2})\s*\+?\s*(?:(?:-|–|a|to|y|or|o)\s*(\d{1,2})\s*\+?\s*)?${YEARS_UNIT}`,
+  'gi',
+);
+const EXPERIENCE_CUE = /experien|trayectoria|track\s+record/i;
+const OPTIONAL_EXPERIENCE = /deseable|valorable|se\s+valora\w*|valoramos|\bplus\b|nice\s+to\s+have|no\s+excluyente|opcional|optional|preferibl\w*|preferr?ed|preferably|ideal(?:mente|ly)?|bonus/i;
+// "We have 15 years of experience", "una empresa con 10 años en el mercado":
+// the company bragging, not a requirement.
+const ABOUT_THE_COMPANY = /\b(?:we|we've|we're|our|us|tenemos|contamos|nuestr[oa]s?|empresa|company|compañía|founded|fundad[ao]s?|en\s+el\s+mercado|in\s+the\s+market|in\s+business|clientes|clients)\b/i;
+const EXPERIENCE_WINDOW = 60;
+const MAX_DEMANDED_YEARS = 20;
+// A clause ends at a line, a bullet or a punctuation mark followed by a space,
+// so "5 años de experiencia, deseable 2 con AWS" reads as two separate demands.
+const CLAUSE_BREAK = new RegExp(String.raw`${BULLET.source}|[.;,!?](?=\s|$)`, 'gu');
+
+function clauseAround(t: string, index: number, length: number): string {
+  const before = t.slice(Math.max(0, index - EXPERIENCE_WINDOW), index);
+  const after = t.slice(index + length, index + length + EXPERIENCE_WINDOW);
+  const breaksBefore = [...before.matchAll(CLAUSE_BREAK)];
+  const last = breaksBefore[breaksBefore.length - 1];
+  const start = last ? (last.index ?? 0) + last[0].length : 0;
+  const firstAfter = [...after.matchAll(CLAUSE_BREAK)][0];
+  const end = firstAfter ? firstAfter.index ?? after.length : after.length;
+  return before.slice(start) + t.slice(index, index + length) + after.slice(0, end);
+}
+
+/**
+ * The most years of experience the ad makes mandatory, or null when it asks
+ * for none. A range counts by its floor: "3-5 years" lets three in.
+ */
+export function demandedYears(text: string): number | null {
+  const t = text.toLowerCase();
+  let most: number | null = null;
+  for (const m of t.matchAll(YEARS_MENTION)) {
+    const years = Number(m[1]);
+    if (!Number.isInteger(years) || years > MAX_DEMANDED_YEARS) continue;
+    const window = clauseAround(t, m.index ?? 0, m[0].length);
+    if (!EXPERIENCE_CUE.test(window)) continue;
+    if (OPTIONAL_EXPERIENCE.test(window) || ABOUT_THE_COMPANY.test(window)) continue;
+    if (most === null || years > most) most = years;
+  }
+  return most;
+}
+
+export interface StatedLevel {
+  /** As the ad wrote it, for the reason shown to the person. */
+  readonly label: string;
+  /** The fewest years that level usually means. */
+  readonly years: number;
+}
+
+const LEVEL_LINE = /^[ \t]*(?:nivel|seniority(?:\s+level)?)[ \t]*:[ \t]*(.+)$/im;
+// Checked in this order: "semi senior" before "senior", "expert" before both.
+const LEVEL_YEARS: ReadonlyArray<readonly [RegExp, number]> = [
+  [/\bsemi[\s-]?senior\b|\bssr\b|\bmid(?:[\s-]?level)?\b/i, 2],
+  [/\bexpert[oa]?\b|\blead\b|\bstaff\b|\bprincipal\b|\barchitect\b|\barquitect[oa]\b/i, 7],
+  [/\bsenior\b|\bsr\b/i, 5],
+  [/\bjunior\b|\bjr\b/i, 0],
+  [/sin\s+experiencia|no\s+experience|\btrainee\b|\bintern(?:ship)?\b|pasant[ií]a|practicante|\bentry[\s-]?level\b/i, 0],
+];
+
+/**
+ * The level a board states on a line of its own ("Nivel: Senior"). When it
+ * names several ("Semisenior / Senior") the lowest one is the door.
+ */
+export function statedLevel(text: string): StatedLevel | null {
+  const line = LEVEL_LINE.exec(text)?.[1]?.trim();
+  if (!line) return null;
+  const parts = line.split(/\s*(?:\/|,|\bor\b|\bo\b|\by\b|\band\b)\s*/i).filter(Boolean);
+  let lowest: number | null = null;
+  for (const part of parts) {
+    const found = LEVEL_YEARS.find(([re]) => re.test(part));
+    if (found && (lowest === null || found[1] < lowest)) lowest = found[1];
+  }
+  return lowest === null ? null : { label: line.replace(/[.\s]+$/, ''), years: lowest };
+}
+
 const SEVERAL_OPENINGS = new RegExp(String.raw`\b[2-9]\s*(?:vacantes|posiciones|perfiles|oportunidades|roles|puestos|b[úu]squedas)\b`, 'i');
 const NUMBERED_ROLE = new RegExp(String.raw`[1-9][.)️⃣]?[\s️⃣]*(?:desarrollador\w*|ingenier\w*|developer|engineer|arquitect\w*|analista|tech\s*lead|dise[ñn]ador\w*|frontend|front-end|backend|back-end|full\s?stack|qa\b|data\b)`, 'gi');
 

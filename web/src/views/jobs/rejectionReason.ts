@@ -19,6 +19,8 @@ const BADGES: Record<string, { key: TranslationKey; tone: RejectionTone }> = {
   'reject.globalRemote': { key: 'badge.globalRemote', tone: 'neutral' },
   'reject.unknownTech': { key: 'badge.tech', tone: 'neutral' },
   'reject.english': { key: 'badge.english', tone: 'neutral' },
+  'reject.seniority': { key: 'badge.seniority', tone: 'neutral' },
+  'reject.seniorityLevel': { key: 'badge.seniority', tone: 'neutral' },
   'reject.localEmployer': { key: 'badge.localEmployer', tone: 'neutral' },
   'reject.otherEcosystem': { key: 'badge.otherEcosystem', tone: 'warning' },
   'reject.peripheral': { key: 'badge.peripheral', tone: 'warning' },

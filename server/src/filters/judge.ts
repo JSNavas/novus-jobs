@@ -2,9 +2,9 @@ import type { TextModel } from '../llm/client.js';
 import type { Config } from '../config.js';
 import { findCountry } from './countries.js';
 import { t } from '../i18n/index.js';
-import type { CandidateProfile, Offer } from './decide.js';
+import { SENIORITY_SLACK_YEARS, type CandidateProfile, type Offer } from './decide.js';
 
-const JUDGE_REJECTIONS = ['onsite', 'other-country', 'english', 'technology', 'local-employer', 'role'] as const;
+const JUDGE_REJECTIONS = ['onsite', 'other-country', 'english', 'seniority', 'technology', 'local-employer', 'role'] as const;
 type JudgeRejection = (typeof JUDGE_REJECTIONS)[number];
 
 export interface JudgeVerdict {
@@ -71,6 +71,26 @@ function unwantedModalities(profile: CandidateProfile): string[] {
   return out;
 }
 
+function experienceLine(profile: CandidateProfile): string {
+  const { years, filter } = profile.experience;
+  if (years === null) return '- No ha dicho cuántos años de experiencia tiene: no descartes por nivel.';
+  return filter
+    ? `- Experiencia: ${years} años. Si EXIGEN bastante más que eso, el puesto no le sirve.`
+    : `- Experiencia: ${years} años. NO descartes por nivel: quiere verlas igual.`;
+}
+
+function seniorityRule(profile: CandidateProfile): string {
+  const { years, filter } = profile.experience;
+  if (years === null || !filter) return '   "seniority"         → no lo uses: no quiere filtrar por nivel.';
+  return [
+    `   "seniority"         → EXIGEN bastante más experiencia que sus ${years} años: un`,
+    `                         mínimo obligatorio de más de ${years + SENIORITY_SLACK_YEARS} años, o un nivel`,
+    '                         (senior, lead, staff, principal, experto) que con su',
+    '                         experiencia no tiene. Un puesto de nivel IGUAL o INFERIOR',
+    '                         al suyo NO es descarte.',
+  ].join('\n');
+}
+
 function instruction(profile: CandidateProfile, country: string | null): string {
   const unwanted = unwantedModalities(profile);
   const accepted = [
@@ -93,6 +113,7 @@ function instruction(profile: CandidateProfile, country: string | null): string 
     profile.english.filter
       ? `- Inglés ${profile.english.level.toUpperCase()}: si EXIGEN más que eso, el puesto no le sirve.`
       : `- Inglés ${profile.english.level.toUpperCase()}. NO descartes por idioma: quiere verlas igual.`,
+    experienceLine(profile),
     `- Acepta: ${accepted || 'no lo ha dicho'}.`,
     unwanted.length ? `- NO acepta: ${unwanted.join(', ')}.` : null,
     profile.geo.excludeLocalEmployers && country
@@ -113,6 +134,7 @@ function instruction(profile: CandidateProfile, country: string | null): string 
     profile.english.filter
       ? '   "english"           → EXIGEN un inglés por encima del suyo.'
       : '   "english"           → no lo uses: no quiere filtrar por idioma.',
+    seniorityRule(profile),
     '   "technology"        → EXIGEN algo que no sabe (de la lista de arriba).',
     profile.geo.excludeLocalEmployers && country
       ? `   "local-employer" → la contrata una empresa de ${country}.`
@@ -131,6 +153,7 @@ function instruction(profile: CandidateProfile, country: string | null): string 
     '',
     '   DISTINGUE EXIGIR de MENCIONAR. Estas van con null:',
     '     · "inglés deseable", "se valora inglés", "English is a plus".',
+    '     · "5+ years preferred", "idealmente 3 años": los años deseables no se exigen.',
     '     · la publicación escrita en inglés: escribirla en inglés no es exigirlo.',
     '     · cualquier lista de alternativas que incluya algo que SÍ sabe:',
     '       "React, Angular o similar" → sabe React → null.',

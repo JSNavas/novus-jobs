@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { PROFILE } from '../profile/profile.js';
-import { englishDemand, unknownRequiredTech } from './requirements.js';
+import { demandedYears, englishDemand, statedLevel, unknownRequiredTech } from './requirements.js';
 import { englishRank, type EnglishLevel } from '../profile/types.js';
 
 describe('englishDemand', () => {
@@ -118,5 +118,68 @@ describe('unknownRequiredTech', () => {
     assert.equal(veto('Senior Full-Stack Engineer (Go + Next.JS). Requisitos del puesto.'), 'go');
     assert.equal(veto('Buscamos un iOS Engineer con Swift y experiencia en apps nativas.'), 'swift');
     assert.equal(veto('Se requiere experiencia desarrollando con Ruby on Rails.'), 'ruby on rails');
+  });
+});
+
+describe('demandedYears — the years an ad makes mandatory', () => {
+  it('reads the common ways of writing it, in English and Spanish', () => {
+    assert.equal(demandedYears('Requirements:\n- 5+ years of experience with Node.js'), 5);
+    assert.equal(demandedYears('At least 3 years of professional experience.'), 3);
+    assert.equal(demandedYears('Mínimo 4 años de experiencia como desarrollador'), 4);
+    assert.equal(demandedYears('Buscamos alguien con +2 años de experiencia en React'), 2);
+    assert.equal(demandedYears('Experiencia: 3 a 5 años en desarrollo web'), 3, 'a range counts by its floor');
+    assert.equal(demandedYears('3-5 years of experience building APIs'), 3);
+  });
+
+  it('keeps the highest mandatory demand', () => {
+    const ad = '• 2+ years of experience with React\n• 6+ years of experience in software development';
+    assert.equal(demandedYears(ad), 6);
+  });
+
+  it('desirable years are not demanded', () => {
+    assert.equal(demandedYears('5+ years of experience preferred'), null);
+    assert.equal(demandedYears('Nice to have: 3+ years of experience with Kubernetes'), null);
+    assert.equal(demandedYears('Idealmente 3 años de experiencia en fintech'), null);
+  });
+
+  it('a desirable clause does not cancel the mandatory one next to it', () => {
+    assert.equal(demandedYears('5 años de experiencia en desarrollo, deseable 2 años con AWS'), 5);
+  });
+
+  it('the company talking about itself is not a requirement', () => {
+    assert.equal(demandedYears('We have 15 years of experience building fintech products.'), null);
+    assert.equal(demandedYears('Somos una empresa con 10 años de experiencia en el mercado'), null);
+  });
+
+  it('years without the word experience are not a demand', () => {
+    assert.equal(demandedYears('Founded 12 years ago, we are a remote-first team'), null);
+    assert.equal(demandedYears('Contrato por 2 años, renovable'), null);
+  });
+
+  it('an ad that asks for nothing returns null', () => {
+    assert.equal(demandedYears('Buscamos desarrollador Node.js para proyecto remoto'), null);
+  });
+});
+
+describe('statedLevel — the level a board writes on its own line', () => {
+  it('reads the levels Get on Board uses', () => {
+    assert.deepEqual(statedLevel('X busca: Dev\nNivel: Senior\nModalidad: 100% remoto'), { label: 'Senior', years: 5 });
+    assert.equal(statedLevel('Nivel: Semi Senior')?.years, 2, '"semi senior" is not "senior"');
+    assert.equal(statedLevel('Nivel: Junior')?.years, 0);
+    assert.equal(statedLevel('Nivel: Expert')?.years, 7);
+    assert.equal(statedLevel('Nivel: Sin experiencia')?.years, 0);
+  });
+
+  it('when several are named, the lowest one is the door', () => {
+    assert.equal(statedLevel('Nivel: Semisenior / Senior.')?.years, 2);
+    assert.equal(statedLevel('Seniority: Senior / Lead / Architect')?.years, 5);
+  });
+
+  it('only a line of its own counts: a level in the prose is not the role\'s level', () => {
+    assert.equal(statedLevel('Trabajarás junto a desarrolladores senior del equipo'), null);
+  });
+
+  it('a level line about something else is ignored', () => {
+    assert.equal(statedLevel('Inglés\nNivel: avanzado'), null);
   });
 });

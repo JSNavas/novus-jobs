@@ -46,6 +46,7 @@ export const PROFILE: CandidateProfile = {
     'Salesforce', 'SharePoint', 'Dynamics', 'SAP', 'ABAP', 'COBOL', 'Camunda',
   ],
   english: { level: 'b1', filter: true },
+  experience: { years: 9, filter: true },
   geo: { country: 'VE', city: null, timezone: 'America/Caracas', excludeLocalEmployers: true },
   modality: { remoteGlobal: true, remoteHomeCountry: true, hybrid: false, onsite: false },
 };

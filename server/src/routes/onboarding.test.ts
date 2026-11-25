@@ -75,6 +75,23 @@ describe('rutas del alta', () => {
     assert.equal((await put({ english: { level: 'altísimo', filter: true } })).statusCode, 400);
   });
 
+  it('una instalación nueva no sabe tus años y no filtra por nivel hasta que los digas', () => {
+    assert.deepEqual(profiles.get().experience, { years: null, filter: true });
+  });
+
+  it('los años de experiencia se guardan, y vaciarlos vuelve a "no lo he dicho"', async () => {
+    assert.equal((await put({ experience: { years: 2, filter: true } })).statusCode, 200);
+    assert.deepEqual(profiles.get().experience, { years: 2, filter: true });
+    assert.equal((await put({ experience: { years: null, filter: true } })).statusCode, 200);
+    assert.equal(profiles.get().experience.years, null);
+  });
+
+  it('unos años imposibles se rechazan en vez de guardarse', async () => {
+    assert.equal((await put({ experience: { years: -1, filter: true } })).statusCode, 400);
+    assert.equal((await put({ experience: { years: 'muchos', filter: true } })).statusCode, 400);
+    assert.equal((await put({ experience: { years: 80, filter: true } })).statusCode, 400);
+  });
+
   it('no se cierra el alta sin una tecnología de núcleo', async () => {
     const res = await app.inject({ method: 'POST', url: '/api/onboarding/complete' });
     assert.equal(res.statusCode, 400);

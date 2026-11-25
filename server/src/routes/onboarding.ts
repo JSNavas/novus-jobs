@@ -7,8 +7,10 @@ import { extractFromCv, vetoesOf } from '../cv/extract.js';
 import { ACCEPTED_EXTENSIONS, extractCvText, UnsupportedCvError } from '../cv/text.js';
 import { COUNTRIES } from '../filters/countries.js';
 import { ECOSYSTEM_LABELS, VETOABLE_ECOSYSTEMS, type Ecosystem } from '../profile/technologies.js';
-import type { ProfileRepository } from '../profile/profile.repository.js';
-import { ENGLISH_LEVELS, LANGUAGES, type CandidateProfile, type EnglishLevel, type Language } from '../profile/types.js';
+import { experienceYears, type ProfileRepository } from '../profile/profile.repository.js';
+import {
+  ENGLISH_LEVELS, LANGUAGES, MAX_EXPERIENCE_YEARS, type CandidateProfile, type EnglishLevel, type Language,
+} from '../profile/types.js';
 
 export interface OnboardingRoutesDeps {
   profiles: ProfileRepository;
@@ -113,6 +115,18 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
         return reply.code(400).send({ error: `nivel de inglés inválido. Son: ${ENGLISH_LEVELS.join(', ')}` });
       }
       changes.english = { level: level as EnglishLevel, filter: english.filter === true };
+    }
+
+    if (body.experience !== undefined) {
+      const experience = body.experience as { years?: unknown; filter?: unknown };
+      const raw = experience?.years ?? null;
+      const years = raw === null ? null : experienceYears(raw);
+      if (raw !== null && years === null) {
+        return reply.code(400).send({
+          error: `los años de experiencia tienen que ser un número entre 0 y ${MAX_EXPERIENCE_YEARS}, o vacío si prefieres no decirlo`,
+        });
+      }
+      changes.experience = { years, filter: experience?.filter !== false };
     }
 
     if (body.geo !== undefined) {

@@ -10,6 +10,8 @@ export const en: Record<keyof typeof es, string> = {
   'reject.globalRemote': 'it is fully remote and you are not looking for remote',
   'reject.unknownTech': 'they require {tech}, which you do not work with',
   'reject.english': 'they require English {demanded} and you have {yours}',
+  'reject.seniority': 'they ask for {demanded} years of experience and you have {yours}',
+  'reject.seniorityLevel': 'it is a {level} role and you have {yours} years of experience',
   'reject.localEmployer': 'the employer is from your own country',
   'reject.otherEcosystem': 'it belongs to another ecosystem (it only matches JavaScript, in passing)',
   'reject.peripheral': 'it only matches peripheral things ({matches}), nothing from your core',

@@ -258,6 +258,8 @@ export interface CandidateProfile {
   core: string[];
   cannotDo: string[];
   english: { level: EnglishLevel; filter: boolean };
+  /** `years: null` = not said: nothing is filtered by level. */
+  experience: { years: number | null; filter: boolean };
   geo: { country: string; city: string | null; timezone: string; excludeLocalEmployers: boolean };
   modality: { remoteGlobal: boolean; remoteHomeCountry: boolean; hybrid: boolean; onsite: boolean };
 }
@@ -318,6 +320,7 @@ export function saveOnboardingStep(changes: {
   cannotDo?: string[];
   vetoEcosystems?: string[];
   english?: { level: EnglishLevel; filter: boolean };
+  experience?: CandidateProfile['experience'];
   geo?: CandidateProfile['geo'];
   modality?: CandidateProfile['modality'];
 }): Promise<{ profile: CandidateProfile; completed: boolean }> {

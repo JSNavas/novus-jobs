@@ -163,13 +163,16 @@ Open **http://127.0.0.1:47831** and the setup wizard walks you through it:
 
 1. **Your CV.** Pick the language first (English or Spanish — the whole app,
    including the emails and the reason each posting was discarded). Then upload
-   your CV and the stack, English level and location are read off it — locally,
-   with pattern rules, on your machine. You can skip the upload and type
-   everything by hand.
+   your CV and the stack, English level, years of experience and location are
+   read off it — locally, with pattern rules, on your machine. You can skip the
+   upload and type everything by hand.
 2. **Your stack.** What you know, which technologies define your trade, and which
    ecosystems you do not want to be offered.
-3. **English.** Your level, and whether postings demanding more than that should
-   be hidden.
+3. **English and experience.** Your English level and your years of experience,
+   and whether postings demanding much more than that should be hidden. A junior
+   with two years does not get "5+ years" or "Seniority: Senior" postings; a
+   role at your level or below always reaches you, and *desirable* years never
+   discard anything. Leave the years empty and nothing is filtered by level.
 4. **Where.** The country you work from, your time zone, and which arrangements
    you accept — fully remote, remote-in-your-country, hybrid, on-site. The time
    zone matters: search slots are hours on *your* clock, and the dashboard

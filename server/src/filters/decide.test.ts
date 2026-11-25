@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { PROFILE } from '../profile/profile.js';
 import { JobLocation } from '../types.js';
-import { decideShipping } from './decide.js';
+import { decideShipping, type CandidateProfile } from './decide.js';
 import { normalizeText } from './normalize.js';
 
 const REMOTE_TS_OFFER = [
@@ -70,5 +70,49 @@ describe('decideShipping', () => {
       + 'Dos herramientas que vale la pena incorporar a tu formación, con Python por debajo.';
     const verdict = decideShipping({ text: normalizeText(curso), url: null }, PROFILE);
     assert.equal(verdict.accepted, false);
+  });
+});
+
+describe('decideShipping — the level comes from the profile', () => {
+  const JUNIOR: CandidateProfile = { ...PROFILE, experience: { years: 1, filter: true } };
+  const decide = (text: string, profile: CandidateProfile = JUNIOR) => decideShipping({ text, url: null }, profile);
+
+  it('a junior does not get the ad that demands five years', () => {
+    const verdict = decide(`${REMOTE_TS_OFFER}\n- 5+ years of experience with Node.js`);
+    assert.equal(verdict.accepted, false);
+    assert.deepEqual(verdict.rejection, { code: 'reject.seniority', params: { demanded: 5, yours: 1 } });
+  });
+
+  it('but does get the one that asks a little more than they have: ads overshoot', () => {
+    assert.equal(decide(`${REMOTE_TS_OFFER}\nExperiencia: 3 años en desarrollo web`).accepted, true);
+  });
+
+  it('a board that states "Senior" is above a junior', () => {
+    const verdict = decide(`Acme busca: Desarrollador Full Stack\nNivel: Senior\n${REMOTE_TS_OFFER}`);
+    assert.deepEqual(verdict.rejection, { code: 'reject.seniorityLevel', params: { level: 'Senior', yours: 1 } });
+  });
+
+  it('"Semi Senior" is within reach of a junior', () => {
+    assert.equal(decide(`Acme busca: Desarrollador Full Stack\nNivel: Semi Senior\n${REMOTE_TS_OFFER}`).accepted, true);
+  });
+
+  it('nine years: senior roles and long demands pass', () => {
+    assert.equal(decide(`${REMOTE_TS_OFFER}\n- 8+ years of experience`, PROFILE).accepted, true);
+    assert.equal(decide(`Acme busca: Dev\nNivel: Expert\n${REMOTE_TS_OFFER}`, PROFILE).accepted, true);
+  });
+
+  it('a role below your level is not discarded for it', () => {
+    assert.equal(decide(`Acme busca: Dev\nNivel: Junior\n${REMOTE_TS_OFFER}`, PROFILE).accepted, true);
+  });
+
+  it('with the filter off, or without saying your years, nothing is discarded by level', () => {
+    const ad = `${REMOTE_TS_OFFER}\n- 7+ years of experience`;
+    assert.equal(decide(ad, { ...PROFILE, experience: { years: 1, filter: false } }).accepted, true);
+    assert.equal(decide(ad, { ...PROFILE, experience: { years: null, filter: true } }).accepted, true);
+  });
+
+  it('a post with several openings is not judged by one of their levels', () => {
+    const ad = `${REMOTE_TS_OFFER}\nTenemos 3 vacantes: junior, semi senior y senior (5+ years of experience).`;
+    assert.equal(decide(ad).accepted, true);
   });
 });
