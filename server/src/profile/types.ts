@@ -13,15 +13,20 @@ export interface EnglishPreference {
   filter: boolean;
 }
 
+/** From less to more experience. Lead covers staff, principal, architect and expert roles. */
+export const SENIORITY_LEVELS = ['trainee', 'junior', 'semi', 'senior', 'lead'] as const;
+
+export type SeniorityLevel = (typeof SENIORITY_LEVELS)[number];
+
 /**
- * Years of professional experience. `years: null` means the person has not
- * said, and then nothing is filtered by level: a junior and a staff engineer
- * would otherwise get the same inbox. `filter` mirrors the English one: some
- * people want to see roles above their level anyway.
+ * `levels` are the levels whose postings the person wants: a senior who ticks
+ * Semi Senior and Senior stops getting Junior ones; ticking all of them filters
+ * nothing. `years` is what the CV said, used to propose the levels and to tell
+ * the judge; null when not said.
  */
 export interface ExperiencePreference {
   years: number | null;
-  filter: boolean;
+  levels: readonly SeniorityLevel[];
 }
 
 /** More than this is a typo or a joke, not a career. */

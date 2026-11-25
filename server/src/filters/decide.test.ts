@@ -73,47 +73,66 @@ describe('decideShipping', () => {
   });
 });
 
-describe('decideShipping — the level comes from the profile', () => {
-  const JUNIOR: CandidateProfile = { ...PROFILE, experience: { years: 1, filter: true } };
-  const decide = (text: string, profile: CandidateProfile = JUNIOR) => decideShipping({ text, url: null }, profile);
+describe('decideShipping — the levels you tick are the levels you get', () => {
+  const ONLY: (levels: CandidateProfile['experience']['levels']) => CandidateProfile =
+    (levels) => ({ ...PROFILE, experience: { years: null, levels } });
+  const SENIOR = ONLY(['semi', 'senior']);
+  const JUNIOR = ONLY(['junior', 'semi']);
+  const decide = (text: string, profile: CandidateProfile) => decideShipping({ text, url: null }, profile);
+  const BOARD = (level: string) => `Acme busca: Desarrollador Full Stack\nNivel: ${level}\n${REMOTE_TS_OFFER}`;
 
-  it('a junior does not get the ad that demands five years', () => {
-    const verdict = decide(`${REMOTE_TS_OFFER}\n- 5+ years of experience with Node.js`);
+  it('a senior who ticked Semi Senior and Senior does not get Junior postings', () => {
+    const verdict = decide(BOARD('Junior'), SENIOR);
     assert.equal(verdict.accepted, false);
-    assert.deepEqual(verdict.rejection, { code: 'reject.seniority', params: { demanded: 5, yours: 1 } });
+    assert.deepEqual(verdict.rejection, { code: 'reject.seniorityLevel', params: { level: 'Junior' } });
   });
 
-  it('but does get the one that asks a little more than they have: ads overshoot', () => {
-    assert.equal(decide(`${REMOTE_TS_OFFER}\nExperiencia: 3 años en desarrollo web`).accepted, true);
+  it('but does get Semi Senior and Senior ones', () => {
+    assert.equal(decide(BOARD('Semi Senior'), SENIOR).accepted, true);
+    assert.equal(decide(BOARD('Senior'), SENIOR).accepted, true);
   });
 
-  it('a board that states "Senior" is above a junior', () => {
-    const verdict = decide(`Acme busca: Desarrollador Full Stack\nNivel: Senior\n${REMOTE_TS_OFFER}`);
-    assert.deepEqual(verdict.rejection, { code: 'reject.seniorityLevel', params: { level: 'Senior', yours: 1 } });
+  it('a posting for several levels gets through if one of them is ticked', () => {
+    assert.equal(decide(BOARD('Junior / Semi Senior'), SENIOR).accepted, true);
   });
 
-  it('"Semi Senior" is within reach of a junior', () => {
-    assert.equal(decide(`Acme busca: Desarrollador Full Stack\nNivel: Semi Senior\n${REMOTE_TS_OFFER}`).accepted, true);
+  it('the title of a board posting states the level too', () => {
+    const ad = `Acme busca: Junior Full Stack Developer\n${REMOTE_TS_OFFER}`;
+    assert.deepEqual(decide(ad, SENIOR).rejection, { code: 'reject.seniorityLevel', params: { level: 'Junior' } });
+    assert.equal(decide(ad, JUNIOR).accepted, true);
   });
 
-  it('nine years: senior roles and long demands pass', () => {
-    assert.equal(decide(`${REMOTE_TS_OFFER}\n- 8+ years of experience`, PROFILE).accepted, true);
-    assert.equal(decide(`Acme busca: Dev\nNivel: Expert\n${REMOTE_TS_OFFER}`, PROFILE).accepted, true);
+  it('a LinkedIn author\'s headline is not the job\'s title', () => {
+    const post = `Ana Pérez · Senior Recruiter at Acme\n${REMOTE_TS_OFFER}`;
+    assert.equal(decide(post, JUNIOR).accepted, true);
   });
 
-  it('a role below your level is not discarded for it', () => {
-    assert.equal(decide(`Acme busca: Dev\nNivel: Junior\n${REMOTE_TS_OFFER}`, PROFILE).accepted, true);
+  it('without a stated level, the years it demands point at one', () => {
+    const fiveYears = `${REMOTE_TS_OFFER}\n- 5+ years of experience with Node.js`;
+    assert.deepEqual(decide(fiveYears, JUNIOR).rejection, { code: 'reject.seniority', params: { demanded: 5 } });
+    assert.equal(decide(fiveYears, SENIOR).accepted, true);
+    const oneYear = `${REMOTE_TS_OFFER}\n- 1+ year of experience`;
+    assert.equal(decide(oneYear, SENIOR).accepted, false, '"1+ year" is a junior opening');
+    assert.equal(decide(oneYear, JUNIOR).accepted, true);
   });
 
-  it('with the filter off, or without saying your years, nothing is discarded by level', () => {
-    const ad = `${REMOTE_TS_OFFER}\n- 7+ years of experience`;
-    assert.equal(decide(ad, { ...PROFILE, experience: { years: 1, filter: false } }).accepted, true);
-    assert.equal(decide(ad, { ...PROFILE, experience: { years: null, filter: true } }).accepted, true);
+  it('"3+ years" is a floor, not a ceiling: a senior gets it', () => {
+    assert.equal(decide(`${REMOTE_TS_OFFER}\n- 3+ years of experience`, ONLY(['senior'])).accepted, true);
+  });
+
+  it('a posting that says nothing about its level always gets through', () => {
+    assert.equal(decide(REMOTE_TS_OFFER, ONLY(['senior'])).accepted, true);
+  });
+
+  it('every level ticked filters nothing', () => {
+    const all = ONLY(['trainee', 'junior', 'semi', 'senior', 'lead']);
+    assert.equal(decide(BOARD('Junior'), all).accepted, true);
+    assert.equal(decide(BOARD('Expert'), all).accepted, true);
   });
 
   it('a post with several openings is not judged by one of their levels', () => {
     const ad = `${REMOTE_TS_OFFER}\nTenemos 3 vacantes: junior, semi senior y senior (5+ years of experience).`;
-    assert.equal(decide(ad).accepted, true);
+    assert.equal(decide(ad, JUNIOR).accepted, true);
   });
 });
 
@@ -124,7 +143,7 @@ describe('decideShipping — a QA profile gets QA postings', () => {
     stack: ['Cypress', 'Selenium', 'Playwright', 'Postman', 'JavaScript', 'Java', 'Jira'],
     core: ['Cypress', 'Selenium', 'Playwright', 'Postman'],
     cannotDo: ['C#', '.NET'],
-    experience: { years: 3, filter: true },
+    experience: { years: 3, levels: ['semi', 'senior'] },
   };
   const decide = (text: string, profile: CandidateProfile = QA) => decideShipping({ text, url: null }, profile);
   const REMOTE = 'Trabajo 100% remoto, podemos contratar desde Venezuela.';

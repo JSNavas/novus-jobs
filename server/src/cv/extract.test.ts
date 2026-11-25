@@ -125,3 +125,30 @@ QA Automation Engineer — Acme (2021 – present), 4 years of experience
     assert.deepEqual(extractFromCv(dev).roles, ['software']);
   });
 });
+
+describe('extractFromCv — place and level, from the real CVs that broke them', () => {
+  const SENIOR = `JUAN PÉREZ
+Full Stack Engineer · 9 años de experiencia
+Venezuela, Estado Falcón · Remoto · Disponibilidad inmediata
+
+EXPERIENCIA
+- Entregué los módulos de liquidación de la plataforma de una caja de compensación.
+- Tableros con exportación a Excel y geolocalización con Leaflet.`;
+
+  it('"la plataforma" is not La Plata, nor "geolocalización" Cali: the header says Venezuela', () => {
+    const cv = extractFromCv(SENIOR);
+    assert.equal(cv.country, 'VE');
+  });
+
+  it('nine years propose Semi Senior, Senior and Lead — not Junior', () => {
+    assert.deepEqual(extractFromCv(SENIOR).levels, ['semi', 'senior', 'lead']);
+  });
+
+  it('two years propose Junior and Semi Senior', () => {
+    assert.deepEqual(extractFromCv('Ana Ruiz\nDesarrolladora web · 2 años de experiencia').levels, ['junior', 'semi']);
+  });
+
+  it('a CV that does not say its years proposes nothing', () => {
+    assert.deepEqual(extractFromCv('Ana Ruiz\nDesarrolladora web').levels, []);
+  });
+});

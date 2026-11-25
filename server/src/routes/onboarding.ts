@@ -7,10 +7,11 @@ import { extractFromCv, vetoesOf } from '../cv/extract.js';
 import { ACCEPTED_EXTENSIONS, extractCvText, UnsupportedCvError } from '../cv/text.js';
 import { COUNTRIES } from '../filters/countries.js';
 import { ECOSYSTEM_LABELS, VETOABLE_ECOSYSTEMS, type Ecosystem } from '../profile/technologies.js';
-import { experienceYears, roles, type ProfileRepository } from '../profile/profile.repository.js';
+import { experienceYears, roles, seniorityLevels, type ProfileRepository } from '../profile/profile.repository.js';
+import { isSeniorityLevel } from '../profile/seniority.js';
 import { isRole, ROLES } from '../profile/roles.js';
 import {
-  ENGLISH_LEVELS, LANGUAGES, MAX_EXPERIENCE_YEARS, type CandidateProfile, type EnglishLevel, type Language,
+  ENGLISH_LEVELS, LANGUAGES, MAX_EXPERIENCE_YEARS, SENIORITY_LEVELS, type CandidateProfile, type EnglishLevel, type Language,
 } from '../profile/types.js';
 
 export interface OnboardingRoutesDeps {
@@ -34,6 +35,7 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
       englishLevels: ENGLISH_LEVELS,
       languages: LANGUAGES,
       roles: ROLES,
+      seniorityLevels: SENIORITY_LEVELS,
       ecosystems: VETOABLE_ECOSYSTEMS.map((eco) => ({ id: eco, label: ECOSYSTEM_LABELS[eco] })),
     },
     canEnhance: deps.enhancer !== null,
@@ -133,7 +135,7 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
     }
 
     if (body.experience !== undefined) {
-      const experience = body.experience as { years?: unknown; filter?: unknown };
+      const experience = body.experience as { years?: unknown; levels?: unknown };
       const raw = experience?.years ?? null;
       const years = raw === null ? null : experienceYears(raw);
       if (raw !== null && years === null) {
@@ -141,7 +143,18 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
           error: `los años de experiencia tienen que ser un número entre 0 y ${MAX_EXPERIENCE_YEARS}, o vacío si prefieres no decirlo`,
         });
       }
-      changes.experience = { years, filter: experience?.filter !== false };
+      const list = Array.isArray(experience?.levels) ? experience.levels : null;
+      const unknown = list?.find((level) => !isSeniorityLevel(level));
+      if (!list || unknown !== undefined) {
+        return reply.code(400).send({
+          error: `${unknown === undefined ? '"levels" tiene que ser una lista' : `"${String(unknown)}" no es un nivel que conozca`}. Son: ${SENIORITY_LEVELS.join(', ')}`,
+        });
+      }
+      const levels = seniorityLevels(list);
+      if (!levels) {
+        return reply.code(400).send({ error: 'marca al menos un nivel: sin ninguno se descartaría toda oferta que diga el suyo' });
+      }
+      changes.experience = { years, levels };
     }
 
     if (body.geo !== undefined) {

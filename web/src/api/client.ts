@@ -255,6 +255,9 @@ export type EnglishLevel = 'none' | 'a1' | 'a2' | 'b1' | 'b2' | 'c1' | 'c2' | 'n
 /** The trades someone can look for work in; the server's `ROLES`. */
 export type Role = 'software' | 'qa' | 'data' | 'devops' | 'design';
 
+/** From less to more experience; the server's `SENIORITY_LEVELS`. */
+export type SeniorityLevel = 'trainee' | 'junior' | 'semi' | 'senior' | 'lead';
+
 export interface CandidateProfile {
   language: 'es' | 'en';
   /** Never empty. */
@@ -263,8 +266,8 @@ export interface CandidateProfile {
   core: string[];
   cannotDo: string[];
   english: { level: EnglishLevel; filter: boolean };
-  /** `years: null` = not said: nothing is filtered by level. */
-  experience: { years: number | null; filter: boolean };
+  /** `levels` are ticks: only postings of those levels arrive. All ticked = no filter. */
+  experience: { years: number | null; levels: SeniorityLevel[] };
   geo: { country: string; city: string | null; timezone: string; excludeLocalEmployers: boolean };
   modality: { remoteGlobal: boolean; remoteHomeCountry: boolean; hybrid: boolean; onsite: boolean };
 }
@@ -277,6 +280,7 @@ export interface OnboardingState {
     englishLevels: EnglishLevel[];
     ecosystems: { id: string; label: string }[];
     roles: Role[];
+    seniorityLevels: SeniorityLevel[];
   };
   canEnhance: boolean;
   acceptedFiles: string[];
@@ -293,6 +297,8 @@ export interface CvReading {
   years: number | null;
   /** The trades the CV's headline names; empty when it names none. */
   roles: Role[];
+  /** Levels proposed from the CV's years; empty when it does not say them. */
+  levels: SeniorityLevel[];
   foundInCv: boolean;
   enhanced: boolean;
 }

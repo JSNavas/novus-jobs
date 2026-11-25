@@ -4,9 +4,10 @@ import { adBody, cleanLinkedInNoise, extractApplyUrl, extractEmail, isAggregator
 import { classifyLocation, isLocalEmployer, type HomeGeo } from './location.js';
 import { findCountry } from './countries.js';
 import {
-  demandedYears, englishDemand, hasSeveralOpenings, isOtherEcosystem, isOwnRole, statedLevel, unknownRequiredTech,
+  adLevel, demandedYears, englishDemand, hasSeveralOpenings, isOtherEcosystem, isOwnRole, unknownRequiredTech,
 } from './requirements.js';
 import { englishRank, type CandidateProfile, type Language, type ModalityPreference } from '../profile/types.js';
+import { levelsForDemandedYears, wantsEveryLevel } from '../profile/seniority.js';
 import { t } from '../i18n/index.js';
 
 export interface Offer {
@@ -134,25 +135,23 @@ function rejectByVetoes(ctx: Context, ad: string, profile: CandidateProfile): Ve
 }
 
 /**
- * How far above your experience an ad may ask before it is discarded. Ads
- * overshoot, and people with two years fewer than asked get hired every day;
- * five years for someone with one is another job.
+ * The levels are ticks: a posting is discarded when the level it states, or
+ * the one its mandatory years point at, is none of the ticked ones. With every
+ * level ticked, or a post with several openings, nothing is discarded here.
  */
-export const SENIORITY_SLACK_YEARS = 2;
-
 function rejectBySeniority(ctx: Context, ad: string, profile: CandidateProfile): Verdict | null {
-  const { years, filter } = profile.experience;
-  if (!filter || years === null) return null;
+  const { levels } = profile.experience;
+  if (wantsEveryLevel(levels)) return null;
   if (hasSeveralOpenings(ad)) return null;
-  const level = statedLevel(ctx.text);
-  if (level && level.years > years + SENIORITY_SLACK_YEARS) {
-    return reject(ctx, { code: 'reject.seniorityLevel', params: { level: level.label, yours: years } }, 'veto');
+  const stated = adLevel(ctx.text);
+  if (stated) {
+    if (stated.levels.some((level) => levels.includes(level))) return null;
+    return reject(ctx, { code: 'reject.seniorityLevel', params: { level: stated.label } }, 'veto');
   }
   const demanded = demandedYears(ad);
-  if (demanded !== null && demanded > years + SENIORITY_SLACK_YEARS) {
-    return reject(ctx, { code: 'reject.seniority', params: { demanded, yours: years } }, 'veto');
-  }
-  return null;
+  if (demanded === null) return null;
+  if (levelsForDemandedYears(demanded).some((level) => levels.includes(level))) return null;
+  return reject(ctx, { code: 'reject.seniority', params: { demanded } }, 'veto');
 }
 
 function rejectByEnglish(ctx: Context, ad: string, profile: CandidateProfile): Verdict | null {

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { PROFILE } from '../profile/profile.js';
-import { demandedYears, englishDemand, isOtherEcosystem, isOwnRole, statedLevel, unknownRequiredTech } from './requirements.js';
+import { adLevel, demandedYears, englishDemand, isOtherEcosystem, isOwnRole, unknownRequiredTech } from './requirements.js';
 import { englishRank, type EnglishLevel } from '../profile/types.js';
 
 describe('englishDemand', () => {
@@ -161,26 +161,36 @@ describe('demandedYears — the years an ad makes mandatory', () => {
   });
 });
 
-describe('statedLevel — the level a board writes on its own line', () => {
-  it('reads the levels Get on Board uses', () => {
-    assert.deepEqual(statedLevel('X busca: Dev\nNivel: Senior\nModalidad: 100% remoto'), { label: 'Senior', years: 5 });
-    assert.equal(statedLevel('Nivel: Semi Senior')?.years, 2, '"semi senior" is not "senior"');
-    assert.equal(statedLevel('Nivel: Junior')?.years, 0);
-    assert.equal(statedLevel('Nivel: Expert')?.years, 7);
-    assert.equal(statedLevel('Nivel: Sin experiencia')?.years, 0);
+describe('adLevel — the level an ad states', () => {
+  it('reads the levels Get on Board writes on their own line', () => {
+    assert.deepEqual(adLevel('X busca: Dev\nNivel: Senior\nModalidad: 100% remoto'), { levels: ['senior'], label: 'Senior' });
+    assert.deepEqual(adLevel('Nivel: Semi Senior')?.levels, ['semi'], '"semi senior" is not "senior"');
+    assert.deepEqual(adLevel('Nivel: Junior')?.levels, ['junior']);
+    assert.deepEqual(adLevel('Nivel: Expert')?.levels, ['lead']);
+    assert.deepEqual(adLevel('Nivel: Sin experiencia')?.levels, ['trainee']);
   });
 
-  it('when several are named, the lowest one is the door', () => {
-    assert.equal(statedLevel('Nivel: Semisenior / Senior.')?.years, 2);
-    assert.equal(statedLevel('Seniority: Senior / Lead / Architect')?.years, 5);
+  it('a line naming several levels keeps them all', () => {
+    assert.deepEqual(adLevel('Nivel: Semisenior / Senior.')?.levels, ['semi', 'senior']);
+    assert.deepEqual(adLevel('Seniority: Senior / Lead / Architect')?.levels, ['senior', 'lead']);
   });
 
-  it('only a line of its own counts: a level in the prose is not the role\'s level', () => {
-    assert.equal(statedLevel('Trabajarás junto a desarrolladores senior del equipo'), null);
+  it('the title of our own headline states it too', () => {
+    assert.deepEqual(adLevel('Ace busca: QA Tester Entry Level\nRequisitos…'), { levels: ['trainee'], label: 'Entry Level' });
+    assert.deepEqual(adLevel('Acme busca: Sr. Backend Engineer – Node.js')?.levels, ['senior']);
+    assert.deepEqual(adLevel('BC busca: Technical Lead Full-Stack')?.levels, ['lead']);
   });
 
-  it('a level line about something else is ignored', () => {
-    assert.equal(statedLevel('Inglés\nNivel: avanzado'), null);
+  it('a LinkedIn post\'s first line is its author, not the job', () => {
+    assert.equal(adLevel('María López · Senior Talent Partner\nBuscamos desarrollador Node.js'), null);
+  });
+
+  it('a level in the prose is not the role\'s level', () => {
+    assert.equal(adLevel('Trabajarás junto a desarrolladores senior del equipo'), null);
+  });
+
+  it('a level line about something else names no level', () => {
+    assert.equal(adLevel('Inglés\nNivel: avanzado'), null);
   });
 });
 

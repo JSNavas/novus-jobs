@@ -14,11 +14,13 @@ describe('rutas del alta', () => {
   let db: Db;
   let app: FastifyInstance;
   let profiles: ProfileRepository;
+  let settings: SettingsRepository;
 
   beforeEach(async () => {
     dir = mkdtempSync(join(tmpdir(), 'onboarding-test-'));
     db = openDatabase(dir);
-    profiles = new ProfileRepository(new SettingsRepository(db));
+    settings = new SettingsRepository(db);
+    profiles = new ProfileRepository(settings);
     app = Fastify({ logger: false });
     registerOnboardingRoutes(app, { profiles, dataDir: dir, enhancer: null });
     await app.ready();
@@ -90,21 +92,31 @@ describe('rutas del alta', () => {
     assert.deepEqual(profiles.get().roles, ['qa', 'devops']);
   });
 
-  it('una instalación nueva no sabe tus años y no filtra por nivel hasta que los digas', () => {
-    assert.deepEqual(profiles.get().experience, { years: null, filter: true });
+  it('una instalación nueva no sabe tus años y tiene todos los niveles marcados: no filtra por nivel', () => {
+    assert.deepEqual(profiles.get().experience, { years: null, levels: ['trainee', 'junior', 'semi', 'senior', 'lead'] });
   });
 
-  it('los años de experiencia se guardan, y vaciarlos vuelve a "no lo he dicho"', async () => {
-    assert.equal((await put({ experience: { years: 2, filter: true } })).statusCode, 200);
-    assert.deepEqual(profiles.get().experience, { years: 2, filter: true });
-    assert.equal((await put({ experience: { years: null, filter: true } })).statusCode, 200);
+  it('los años y los niveles se guardan, y vaciar los años vuelve a "no lo he dicho"', async () => {
+    assert.equal((await put({ experience: { years: 9, levels: ['semi', 'senior'] } })).statusCode, 200);
+    assert.deepEqual(profiles.get().experience, { years: 9, levels: ['semi', 'senior'] });
+    assert.equal((await put({ experience: { years: null, levels: ['semi', 'senior'] } })).statusCode, 200);
     assert.equal(profiles.get().experience.years, null);
   });
 
-  it('unos años imposibles se rechazan en vez de guardarse', async () => {
-    assert.equal((await put({ experience: { years: -1, filter: true } })).statusCode, 400);
-    assert.equal((await put({ experience: { years: 'muchos', filter: true } })).statusCode, 400);
-    assert.equal((await put({ experience: { years: 80, filter: true } })).statusCode, 400);
+  it('unos años imposibles, un nivel inventado o ningún nivel se rechazan en vez de guardarse', async () => {
+    const levels = ['senior'];
+    assert.equal((await put({ experience: { years: -1, levels } })).statusCode, 400);
+    assert.equal((await put({ experience: { years: 'muchos', levels } })).statusCode, 400);
+    assert.equal((await put({ experience: { years: 80, levels } })).statusCode, 400);
+    assert.equal((await put({ experience: { years: 3, levels: ['guru'] } })).statusCode, 400);
+    assert.equal((await put({ experience: { years: 3, levels: [] } })).statusCode, 400);
+  });
+
+  it('un perfil guardado con el filtro de antes (años + margen) pasa a los niveles que propone', () => {
+    settings.set('candidateProfile', JSON.stringify({ experience: { years: 9, filter: true } }));
+    assert.deepEqual(profiles.get().experience.levels, ['semi', 'senior', 'lead']);
+    settings.set('candidateProfile', JSON.stringify({ experience: { years: 9, filter: false } }));
+    assert.equal(profiles.get().experience.levels.length, 5);
   });
 
   it('no se cierra el alta sin una tecnología de núcleo', async () => {

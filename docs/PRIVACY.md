@@ -41,8 +41,8 @@ third party, and the fact that you are reading jobs at a given time is itself
 information.
 
 Your profile is summarised in the instruction (your trade, the technologies you
-know and do not work with, your English level, your years of experience and the country you
-work from, so the model can judge a posting against them). Your name, your CV
+know and do not work with, your English level, your years of experience and the levels you
+want, and the country you work from, so the model can judge a posting against them). Your name, your CV
 and your email are never part of it.
 
 **To turn it off:** remove `OPENROUTER_API_KEY` and `GEMINI_API_KEY`. The rules

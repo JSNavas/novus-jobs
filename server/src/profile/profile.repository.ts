@@ -1,7 +1,11 @@
 import type { SettingsRepository } from '../db/settings.repository.js';
 import { DEFAULT_PROFILE } from './defaults.js';
 import { isRole, type Role } from './roles.js';
-import { ENGLISH_LEVELS, LANGUAGES, MAX_EXPERIENCE_YEARS, type CandidateProfile, type EnglishLevel, type Language } from './types.js';
+import { levelsForYears } from './seniority.js';
+import {
+  ENGLISH_LEVELS, LANGUAGES, MAX_EXPERIENCE_YEARS, SENIORITY_LEVELS,
+  type CandidateProfile, type EnglishLevel, type Language, type SeniorityLevel,
+} from './types.js';
 
 export const PROFILE_KEY = 'candidateProfile';
 
@@ -47,10 +51,7 @@ function parseProfile(raw: string | null): CandidateProfile {
       level: level(record(stored.english)?.level) ?? DEFAULT_PROFILE.english.level,
       filter: bool(record(stored.english)?.filter) ?? DEFAULT_PROFILE.english.filter,
     },
-    experience: {
-      years: experienceYears(record(stored.experience)?.years),
-      filter: bool(record(stored.experience)?.filter) ?? DEFAULT_PROFILE.experience.filter,
-    },
+    experience: experienceOf(record(stored.experience)),
     geo: {
       country: text(record(stored.geo)?.country) ?? DEFAULT_PROFILE.geo.country,
       city: text(record(stored.geo)?.city),
@@ -118,6 +119,26 @@ export function roles(value: unknown): Role[] | null {
   if (!Array.isArray(value)) return null;
   const known = [...new Set(value.filter(isRole))];
   return known.length ? known : null;
+}
+
+/**
+ * The ticked levels, or null when none is left: ticking nothing would discard
+ * every posting that states a level.
+ */
+export function seniorityLevels(value: unknown): SeniorityLevel[] | null {
+  if (!Array.isArray(value)) return null;
+  const known = SENIORITY_LEVELS.filter((level) => value.includes(level));
+  return known.length ? known : null;
+}
+
+function experienceOf(stored: Record<string, unknown> | null): CandidateProfile['experience'] {
+  const years = experienceYears(stored?.years);
+  const levels = seniorityLevels(stored?.levels);
+  if (levels) return { years, levels };
+  // Saved for a few hours as { years, filter } before levels were ticks: the
+  // filter on meant "not far above my years", which is what the proposal says.
+  const filter = bool(stored?.filter);
+  return { years, levels: filter === true ? levelsForYears(years) : [...DEFAULT_PROFILE.experience.levels] };
 }
 
 /** Whole years, 0 to MAX_EXPERIENCE_YEARS. Anything else is "not said". */

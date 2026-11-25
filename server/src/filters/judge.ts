@@ -3,7 +3,9 @@ import type { Config } from '../config.js';
 import { findCountry } from './countries.js';
 import { otherTradesFor, tradesFor } from '../profile/roles.js';
 import { t } from '../i18n/index.js';
-import { SENIORITY_SLACK_YEARS, type CandidateProfile, type Offer } from './decide.js';
+import type { CandidateProfile, Offer } from './decide.js';
+import { LEVEL_NAMES_FOR_JUDGE, wantsEveryLevel } from '../profile/seniority.js';
+import { SENIORITY_LEVELS } from '../profile/types.js';
 
 const JUDGE_REJECTIONS = ['onsite', 'other-country', 'english', 'seniority', 'technology', 'local-employer', 'role'] as const;
 type JudgeRejection = (typeof JUDGE_REJECTIONS)[number];
@@ -73,22 +75,22 @@ function unwantedModalities(profile: CandidateProfile): string[] {
 }
 
 function experienceLine(profile: CandidateProfile): string {
-  const { years, filter } = profile.experience;
-  if (years === null) return '- No ha dicho cuántos años de experiencia tiene: no descartes por nivel.';
-  return filter
-    ? `- Experiencia: ${years} años. Si EXIGEN bastante más que eso, el puesto no le sirve.`
-    : `- Experiencia: ${years} años. NO descartes por nivel: quiere verlas igual.`;
+  const { years, levels } = profile.experience;
+  const said = years === null ? '' : `Experiencia: ${years} años. `;
+  if (wantsEveryLevel(levels)) return `- ${said}Acepta puestos de CUALQUIER nivel: no descartes por nivel.`;
+  return `- ${said}Solo quiere puestos de nivel: ${levels.map((l) => LEVEL_NAMES_FOR_JUDGE[l]).join(', ')}.`;
 }
 
 function seniorityRule(profile: CandidateProfile): string {
-  const { years, filter } = profile.experience;
-  if (years === null || !filter) return '   "seniority"         → no lo uses: no quiere filtrar por nivel.';
+  const { levels } = profile.experience;
+  if (wantsEveryLevel(levels)) return '   "seniority"         → no lo uses: acepta cualquier nivel.';
+  const unwanted = SENIORITY_LEVELS.filter((level) => !levels.includes(level));
   return [
-    `   "seniority"         → EXIGEN bastante más experiencia que sus ${years} años: un`,
-    `                         mínimo obligatorio de más de ${years + SENIORITY_SLACK_YEARS} años, o un nivel`,
-    '                         (senior, lead, staff, principal, experto) que con su',
-    '                         experiencia no tiene. Un puesto de nivel IGUAL o INFERIOR',
-    '                         al suyo NO es descarte.',
+    '   "seniority"         → el puesto es CLARAMENTE de un nivel que no quiere:',
+    `                         ${unwanted.map((l) => LEVEL_NAMES_FOR_JUDGE[l]).join(', ')}.`,
+    '                         Lo dice el título, una línea de nivel o los años que EXIGE.',
+    '                         Si admite varios niveles y uno es de los suyos, o no dice',
+    '                         su nivel, NO es descarte.',
   ].join('\n');
 }
 

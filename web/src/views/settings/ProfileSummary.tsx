@@ -6,7 +6,7 @@ import { saveOnboardingStep, type CandidateProfile, type OnboardingState } from 
 import { AppAlert, AppChip } from '../../components/ui';
 import { distinctTech, hasTech, removeTech } from '../../distinctTech';
 import { t } from '../../i18n';
-import { RoleChoice } from '../onboarding/StepPanels';
+import { LevelChoice, RoleChoice } from '../onboarding/StepPanels';
 
 const VISIBLE = 12;
 
@@ -234,19 +234,10 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
               helperText={lists.experience.years === null ? t('exp.summary.none') : undefined}
               sx={{ minWidth: 140 }}
             />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  size="small"
-                  checked={lists.experience.filter}
-                  disabled={lists.experience.years === null}
-                  onChange={(event) => setLists((prev) => ({
-                    ...prev,
-                    experience: { ...prev.experience, filter: event.target.checked },
-                  }))}
-                />
-              }
-              label={t('exp.filter')}
+            <LevelChoice
+              options={catalogue.seniorityLevels}
+              value={lists.experience.levels}
+              onChange={(levels) => setLists((prev) => ({ ...prev, experience: { ...prev.experience, levels } }))}
             />
           </Stack>
         </Field>
@@ -361,7 +352,7 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
       </Box>
 
       <Stack direction="row" spacing={1} mb={3}>
-        <Button variant="contained" size="small" disabled={!dirty || saving || !lists.roles.length} onClick={save}>
+        <Button variant="contained" size="small" disabled={!dirty || saving || !lists.roles.length || !lists.experience.levels.length} onClick={save}>
           {t('int.save')}
         </Button>
         <Button variant="text" size="small" disabled={!dirty || saving} onClick={() => setLists(initial())}>

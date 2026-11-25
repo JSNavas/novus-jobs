@@ -8,7 +8,7 @@ const PERFIL: CandidateProfile = {
   roles: ['software'],
   stack: ['Node.js'], core: ['Node.js'], cannotDo: ['Java'],
   english: { level: 'b1', filter: true },
-  experience: { years: null, filter: true },
+  experience: { years: null, levels: ['trainee', 'junior', 'semi', 'senior', 'lead'] },
   geo: { country: 'VE', city: null, timezone: 'America/Caracas', excludeLocalEmployers: true },
   modality: { remoteGlobal: true, remoteHomeCountry: true, hybrid: false, onsite: false },
 };
@@ -92,28 +92,23 @@ describe('LlmJudge — el nivel sale del perfil, no de quien escribió el proyec
     return { prompt, verdicts };
   }
 
-  it('un junior: el modelo sabe sus años y puede descartar lo que pide mucho más', async () => {
-    const { prompt } = await promptFor({ ...PERFIL, experience: { years: 1, filter: true } });
-    assert.match(prompt, /Experiencia: 1 años/);
-    assert.match(prompt, /"seniority"\s+→ EXIGEN bastante más experiencia que sus 1 años/);
-    assert.match(prompt, /más de 3 años/, 'el margen es el mismo que el de la regla');
+  it('a senior who ticked Semi Senior and Senior: the model knows, and that Junior is not theirs', async () => {
+    const { prompt } = await promptFor({ ...PERFIL, experience: { years: 9, levels: ['semi', 'senior'] } });
+    assert.match(prompt, /Experiencia: 9 años\. Solo quiere puestos de nivel: semi senior/);
+    const rule = prompt.slice(prompt.indexOf('"seniority"'), prompt.indexOf('"technology"'));
+    assert.match(rule, /junior/);
+    assert.doesNotMatch(rule, /semi senior/, 'what is ticked is not a reason to discard');
   });
 
-  it('sin años declarados no se descarta por nivel', async () => {
+  it('every level ticked: no level is a reason', async () => {
     const { prompt } = await promptFor(PERFIL);
-    assert.match(prompt, /No ha dicho cuántos años de experiencia tiene: no descartes por nivel/);
-    assert.match(prompt, /"seniority"\s+→ no lo uses/);
-  });
-
-  it('con el filtro apagado ve todos los niveles aunque diga sus años', async () => {
-    const { prompt } = await promptFor({ ...PERFIL, experience: { years: 2, filter: false } });
-    assert.match(prompt, /NO descartes por nivel: quiere verlas igual/);
+    assert.match(prompt, /CUALQUIER nivel: no descartes por nivel/);
     assert.match(prompt, /"seniority"\s+→ no lo uses/);
   });
 
   it('"seniority" es un descarte que el pipeline entiende', async () => {
     const answer = { text: '[{"i":0,"esOferta":true,"descarte":"seniority","esAgregador":false,"motivo":"piden 8 años"}]' };
-    const { verdicts } = await promptFor({ ...PERFIL, experience: { years: 1, filter: true } }, answer);
+    const { verdicts } = await promptFor({ ...PERFIL, experience: { years: 1, levels: ['junior'] } }, answer);
     assert.equal((verdicts as { rejection: string }[])[0]?.rejection, 'seniority');
   });
 });

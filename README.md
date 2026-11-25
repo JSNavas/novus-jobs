@@ -172,11 +172,14 @@ Open **http://127.0.0.1:47831** and the setup wizard walks you through it:
    offered. The trade decides which postings are yours: a QA engineer gets QA
    openings and not developer ones, even when both mention Selenium. The CV's
    headline proposes it ("QA Automation Engineer").
-3. **English and experience.** Your English level and your years of experience,
-   and whether postings demanding much more than that should be hidden. A junior
-   with two years does not get "5+ years" or "Seniority: Senior" postings; a
-   role at your level or below always reaches you, and *desirable* years never
-   discard anything. Leave the years empty and nothing is filtered by level.
+3. **English and experience.** Your English level, your years of experience,
+   and the **levels you want to receive** — Trainee, Junior, Semi Senior, Senior,
+   Lead/Staff — as ticks. Tick Semi Senior and Senior and nothing Junior reaches
+   you; tick them all and everything does. A posting's level is read from the
+   board's level line ("Seniority: Senior"), its title, or the years it
+   *demands* ("5+ years" is Senior; "3+ years" is open to Semi Senior and Senior
+   alike). A posting that does not state its level always gets through. The CV
+   proposes the ticks from your years: your level and the one below.
 4. **Where.** The country you work from, your time zone, and which arrangements
    you accept — fully remote, remote-in-your-country, hybrid, on-site. The time
    zone matters: search slots are hours on *your* clock, and the dashboard

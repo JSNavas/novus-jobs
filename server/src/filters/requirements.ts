@@ -1,5 +1,6 @@
 import { namesOwnTrade, type Role } from '../profile/roles.js';
-import { ENGLISH_LEVELS, type EnglishLevel } from '../profile/types.js';
+import { levelsInLabel } from '../profile/seniority.js';
+import { ENGLISH_LEVELS, type EnglishLevel, type SeniorityLevel } from '../profile/types.js';
 import { escapeRegex } from './text-match.js';
 
 export interface EnglishDemand {
@@ -237,37 +238,39 @@ export function demandedYears(text: string): number | null {
   return most;
 }
 
-export interface StatedLevel {
-  /** As the ad wrote it, for the reason shown to the person. */
+export interface AdLevel {
+  /** The levels the ad is for. */
+  readonly levels: readonly SeniorityLevel[];
+  /** As the ad wrote it ("Semi Senior", "Jr"), for the reason shown to the person. */
   readonly label: string;
-  /** The fewest years that level usually means. */
-  readonly years: number;
 }
 
 const LEVEL_LINE = /^[ \t]*(?:nivel|seniority(?:\s+level)?)[ \t]*:[ \t]*(.+)$/im;
-// Checked in this order: "semi senior" before "senior", "expert" before both.
-const LEVEL_YEARS: ReadonlyArray<readonly [RegExp, number]> = [
-  [/\bsemi[\s-]?senior\b|\bssr\b|\bmid(?:[\s-]?level)?\b/i, 2],
-  [/\bexpert[oa]?\b|\blead\b|\bstaff\b|\bprincipal\b|\barchitect\b|\barquitect[oa]\b/i, 7],
-  [/\bsenior\b|\bsr\b/i, 5],
-  [/\bjunior\b|\bjr\b/i, 0],
-  [/sin\s+experiencia|no\s+experience|\btrainee\b|\bintern(?:ship)?\b|pasant[ií]a|practicante|\bentry[\s-]?level\b/i, 0],
-];
+// Our own first line for a board posting: "Acme busca: Senior Backend Engineer".
+// A LinkedIn post starts with its author's headline instead ("Senior Recruiter
+// at…"), which says nothing about the job, so only this line is read as a title.
+const OWN_HEADLINE = /\sbusca:\s*(.+)$/;
+
+function ownHeadlineTitle(text: string): string | null {
+  const first = text.slice(0, text.indexOf('\n') >= 0 ? text.indexOf('\n') : text.length);
+  return OWN_HEADLINE.exec(first)?.[1]?.trim() ?? null;
+}
 
 /**
- * The level a board states on a line of its own ("Nivel: Senior"). When it
- * names several ("Semisenior / Senior") the lowest one is the door.
+ * The level an ad states: on a board's line of its own ("Nivel: Semi Senior")
+ * or in the title of our headline ("busca: Junior QA Analyst"). Null when it
+ * states none — then only the years it demands can tell.
  */
-export function statedLevel(text: string): StatedLevel | null {
+export function adLevel(text: string): AdLevel | null {
   const line = LEVEL_LINE.exec(text)?.[1]?.trim();
-  if (!line) return null;
-  const parts = line.split(/\s*(?:\/|,|\bor\b|\bo\b|\by\b|\band\b)\s*/i).filter(Boolean);
-  let lowest: number | null = null;
-  for (const part of parts) {
-    const found = LEVEL_YEARS.find(([re]) => re.test(part));
-    if (found && (lowest === null || found[1] < lowest)) lowest = found[1];
+  if (line) {
+    const stated = levelsInLabel(line);
+    if (stated.levels.length) return { levels: stated.levels, label: stated.words };
   }
-  return lowest === null ? null : { label: line.replace(/[.\s]+$/, ''), years: lowest };
+  const title = ownHeadlineTitle(text);
+  if (!title) return null;
+  const named = levelsInLabel(title);
+  return named.levels.length ? { levels: named.levels, label: named.words } : null;
 }
 
 const SEVERAL_OPENINGS = new RegExp(String.raw`\b[2-9]\s*(?:vacantes|posiciones|perfiles|oportunidades|roles|puestos|b[úu]squedas)\b`, 'i');

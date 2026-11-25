@@ -17,6 +17,9 @@ export const STEPS: readonly StepDefinition[] = [
   { label: 'wiz.step.done', hint: 'wiz.step.done.hint', optional: true },
 ];
 
+/** How many levels exist: a draft with all of them ticked has not chosen yet. */
+const ALL_LEVELS = 5;
+
 export interface Draft {
   language: CandidateProfile['language'];
   roles: CandidateProfile['roles'];
@@ -55,10 +58,13 @@ export function applyReading(draft: Draft, cv: CvReading): Draft {
       ? draft.vetoEcosystems
       : cv.suggestedVetoes.map((v) => v.ecosystem),
     english: cv.english ? { level: cv.english, filter: draft.english.filter } : draft.english,
-    // The CV knew the years all along; until now nobody kept them.
+    // The CV knew the years all along; until now nobody kept them. Its level
+    // proposal only replaces the default (every level), never a choice made.
     experience: {
-      ...draft.experience,
       years: draft.experience.years ?? cv.years,
+      levels: cv.levels.length && draft.experience.levels.length === ALL_LEVELS
+        ? [...cv.levels]
+        : draft.experience.levels,
     },
     geo: {
       ...draft.geo,
@@ -69,6 +75,7 @@ export function applyReading(draft: Draft, cv: CvReading): Draft {
 }
 
 export function blockingError(step: number, draft: Draft): string | null {
+  if (step === 2 && !draft.experience.levels.length) return t('wiz.needLevel');
   if (step !== 1) return null;
   if (!draft.roles.length) return t('wiz.needRole');
   if (!draft.core.length) {

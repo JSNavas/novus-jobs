@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import {
   getSettings, listIntegrations, readCv, updateIntegrationEnabled, updateSettings,
-  type CvReading, type EnglishLevel, type Integration, type OnboardingState, type Role, type Settings,
+  type CvReading, type EnglishLevel, type Integration, type OnboardingState, type Role, type SeniorityLevel, type Settings,
 } from '../../api/client';
 
 const MIN_MOTIVATION_CHARS = 50;
@@ -273,6 +273,7 @@ export const EnglishStep = ({ state, draft, onChange }: PanelProps) => (
     </Typography>
 
     <ExperienceFields
+      levelOptions={state.catalogue.seniorityLevels}
       value={draft.experience}
       onChange={(experience) => onChange({ ...draft, experience })}
     />
@@ -281,13 +282,45 @@ export const EnglishStep = ({ state, draft, onChange }: PanelProps) => (
 
 const MAX_EXPERIENCE_YEARS = 50;
 
+const LEVEL_KEYS: Record<SeniorityLevel, TranslationKey> = {
+  trainee: 'level.trainee', junior: 'level.junior', semi: 'level.semi', senior: 'level.senior', lead: 'level.lead',
+};
+
+export interface LevelChoiceProps {
+  options: readonly SeniorityLevel[];
+  value: readonly SeniorityLevel[];
+  onChange: (next: SeniorityLevel[]) => void;
+}
+
+/** The levels whose postings arrive. Kept in level order whatever the clicking order. */
+export const LevelChoice = ({ options, value, onChange }: LevelChoiceProps) => (
+  <Stack direction="row" flexWrap="wrap" useFlexGap columnGap={2}>
+    {options.map((level) => (
+      <FormControlLabel
+        key={level}
+        control={
+          <Checkbox
+            size="small"
+            checked={value.includes(level)}
+            onChange={(event) => onChange(options.filter((option) => (
+              option === level ? event.target.checked : value.includes(option)
+            )))}
+          />
+        }
+        label={<Typography variant="body2">{t(LEVEL_KEYS[level])}</Typography>}
+      />
+    ))}
+  </Stack>
+);
+
 export interface ExperienceFieldsProps {
+  levelOptions: readonly SeniorityLevel[];
   value: OnboardingState['profile']['experience'];
   onChange: (next: OnboardingState['profile']['experience']) => void;
 }
 
-/** Years of experience and whether to hide what is far above them. Shared by the wizard and the profile editor. */
-export const ExperienceFields = ({ value, onChange }: ExperienceFieldsProps) => (
+/** Years of experience and the levels to receive. Shared by the wizard and the profile editor. */
+export const ExperienceFields = ({ levelOptions, value, onChange }: ExperienceFieldsProps) => (
   <Stack spacing={1.5}>
     <TextField
       type="number"
@@ -306,18 +339,16 @@ export const ExperienceFields = ({ value, onChange }: ExperienceFieldsProps) => 
       slotProps={{ htmlInput: { min: 0, max: MAX_EXPERIENCE_YEARS, step: 1 } }}
       sx={{ maxWidth: 240 }}
     />
-    <FormControlLabel
-      control={
-        <Switch
-          checked={value.filter}
-          disabled={value.years === null}
-          onChange={(event) => onChange({ ...value, filter: event.target.checked })}
-        />
-      }
-      label={<Typography variant="body2">{t('exp.filter')}</Typography>}
-    />
+    <Box>
+      <Typography variant="body2" mb={0.5}>{t('exp.levels')}</Typography>
+      <LevelChoice
+        options={levelOptions}
+        value={value.levels}
+        onChange={(levels) => onChange({ ...value, levels })}
+      />
+    </Box>
     <Typography variant="caption" color="textSecondary">
-      {t('exp.filter.help')}
+      {t('exp.levels.help')}
     </Typography>
   </Stack>
 );
