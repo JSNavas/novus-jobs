@@ -80,8 +80,6 @@ export function loadConfig(): Config {
     linkedinFeedUrl: optional('LINKEDIN_FEED_URL') ?? DEFAULT_FEED_URL,
     geminiApiKey: optional('GEMINI_API_KEY'),
     openrouterApiKey: optional('OPENROUTER_API_KEY'),
-    // Free models only, tried in order. Chosen on 25 Nov 2026 against Gemini on 60
-    // real offers: Ernie agreed on 51 and the other 9 were right rejections.
     freeModels: (optional('FREE_MODELS') ?? DEFAULT_FREE_MODELS).split(',').map((m) => m.trim()).filter(Boolean),
     judgeModel: optional('JUDGE_MODEL') ?? DEFAULT_JUDGE_MODEL,
     mail: mailConfig(),

@@ -132,7 +132,6 @@ export interface RoleChoiceProps {
   onChange: (next: Role[]) => void;
 }
 
-/** Which trades to look for work in. Shared by the wizard and the profile editor. */
 export const RoleChoice = ({ options, value, onChange }: RoleChoiceProps) => (
   <Stack direction="row" flexWrap="wrap" useFlexGap columnGap={2}>
     {options.map((role) => (
@@ -292,7 +291,6 @@ export interface LevelChoiceProps {
   onChange: (next: SeniorityLevel[]) => void;
 }
 
-/** The levels whose postings arrive. Kept in level order whatever the clicking order. */
 export const LevelChoice = ({ options, value, onChange }: LevelChoiceProps) => (
   <Stack direction="row" flexWrap="wrap" useFlexGap columnGap={2}>
     {options.map((level) => (
@@ -319,7 +317,6 @@ export interface ExperienceFieldsProps {
   onChange: (next: OnboardingState['profile']['experience']) => void;
 }
 
-/** Years of experience and the levels to receive. Shared by the wizard and the profile editor. */
 export const ExperienceFields = ({ levelOptions, value, onChange }: ExperienceFieldsProps) => (
   <Stack spacing={1.5}>
     <TextField

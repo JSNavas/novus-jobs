@@ -9,13 +9,7 @@ export interface Technology {
   readonly name: string;
   readonly aliases?: readonly string[];
   readonly ecosystem: Ecosystem;
-  /** Defines the trade of whoever has it in their CV: it goes to the core. */
   readonly core?: boolean;
-  /**
-   * Defines the trade only for these trades. Cypress is the core of a QA
-   * engineer and a side tool of a developer, who should not start receiving
-   * QA postings because their CV mentions an end-to-end test.
-   */
   readonly coreFor?: readonly Role[];
 }
 

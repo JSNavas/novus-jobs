@@ -17,7 +17,6 @@ export const STEPS: readonly StepDefinition[] = [
   { label: 'wiz.step.done', hint: 'wiz.step.done.hint', optional: true },
 ];
 
-/** How many levels exist: a draft with all of them ticked has not chosen yet. */
 const ALL_LEVELS = 5;
 
 export interface Draft {
@@ -49,8 +48,6 @@ export function draftFrom(state: OnboardingState): Draft {
 export function applyReading(draft: Draft, cv: CvReading): Draft {
   return {
     ...draft,
-    // The CV's headline says the trade ("QA Automation Engineer"); when it says
-    // none, what was chosen stays.
     roles: cv.roles.length ? [...cv.roles] : draft.roles,
     stack: [...new Set([...draft.stack, ...cv.stack])],
     core: [...new Set([...draft.core, ...cv.core])],
@@ -58,8 +55,6 @@ export function applyReading(draft: Draft, cv: CvReading): Draft {
       ? draft.vetoEcosystems
       : cv.suggestedVetoes.map((v) => v.ecosystem),
     english: cv.english ? { level: cv.english, filter: draft.english.filter } : draft.english,
-    // The CV knew the years all along; until now nobody kept them. Its level
-    // proposal only replaces the default (every level), never a choice made.
     experience: {
       years: draft.experience.years ?? cv.years,
       levels: cv.levels.length && draft.experience.levels.length === ALL_LEVELS

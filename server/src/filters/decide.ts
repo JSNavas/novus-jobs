@@ -134,11 +134,6 @@ function rejectByVetoes(ctx: Context, ad: string, profile: CandidateProfile): Ve
   return null;
 }
 
-/**
- * The levels are ticks: a posting is discarded when the level it states, or
- * the one its mandatory years point at, is none of the ticked ones. With every
- * level ticked, or a post with several openings, nothing is discarded here.
- */
 function rejectBySeniority(ctx: Context, ad: string, profile: CandidateProfile): Verdict | null {
   const { levels } = profile.experience;
   if (wantsEveryLevel(levels)) return null;

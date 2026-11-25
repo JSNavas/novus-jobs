@@ -16,9 +16,7 @@ export interface CvExtraction {
   country: string | null;
   city: string | null;
   years: number | null;
-  /** The trades the CV's headline names; empty when it names none. */
   roles: Role[];
-  /** The levels proposed from the years; empty when the CV does not say them. */
   levels: SeniorityLevel[];
   foundInCv: boolean;
 }
@@ -104,12 +102,6 @@ function adjectiveMeansCountry(t: string, adjective: string): boolean {
 
 const HEADER_CHARS = 400;
 
-/**
- * Where the person lives. The header first — the country usually sits under
- * the name — and whole words only: a CV once came out Argentinian
- * because "la plata" is inside "la plataforma", and Colombian through the
- * "cali" in "geolocalización".
- */
 function findPlace(t: string): { code: string; city: string | null } | null {
   return placeIn(t.slice(0, HEADER_CHARS)) ?? placeIn(t);
 }

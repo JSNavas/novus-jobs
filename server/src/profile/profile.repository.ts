@@ -114,17 +114,12 @@ function level(value: unknown): EnglishLevel | null {
   return ENGLISH_LEVELS.find((l) => l === value) ?? null;
 }
 
-/** The known trades in the list, or null when none is left: a profile always has one. */
 export function roles(value: unknown): Role[] | null {
   if (!Array.isArray(value)) return null;
   const known = [...new Set(value.filter(isRole))];
   return known.length ? known : null;
 }
 
-/**
- * The ticked levels, or null when none is left: ticking nothing would discard
- * every posting that states a level.
- */
 export function seniorityLevels(value: unknown): SeniorityLevel[] | null {
   if (!Array.isArray(value)) return null;
   const known = SENIORITY_LEVELS.filter((level) => value.includes(level));
@@ -135,13 +130,10 @@ function experienceOf(stored: Record<string, unknown> | null): CandidateProfile[
   const years = experienceYears(stored?.years);
   const levels = seniorityLevels(stored?.levels);
   if (levels) return { years, levels };
-  // Saved for a few hours as { years, filter } before levels were ticks: the
-  // filter on meant "not far above my years", which is what the proposal says.
   const filter = bool(stored?.filter);
   return { years, levels: filter === true ? levelsForYears(years) : [...DEFAULT_PROFILE.experience.levels] };
 }
 
-/** Whole years, 0 to MAX_EXPERIENCE_YEARS. Anything else is "not said". */
 export function experienceYears(value: unknown): number | null {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return null;
   const years = Math.floor(value);

@@ -106,11 +106,6 @@ function namedAsTechnology(t: string, index: number, length: number): boolean {
   return TECH_CUE.test(near);
 }
 
-/**
- * The first technology from `cannotDo` the ad makes mandatory. `known` are the
- * person's core technologies: "Node.js, Python o Go" asks for one of them, so
- * Go is not demanded from someone who knows Node.
- */
 export function unknownRequiredTech(text: string, cannotDo: readonly string[], known: readonly string[] = []): string | null {
   if (!cannotDo.length) return null;
   const t = text.toLowerCase();
@@ -134,7 +129,6 @@ const DISJUNCTIVE = /\/|\||\by\/o\b|\bo\b|\bu\b|\bor\b/i;
 
 const KNOWN_PATTERN_CACHE = new Map<string, RegExp | null>();
 
-/** A list of technologies as one case-insensitive pattern; null for an empty list. */
 function techPattern(techs: readonly string[]): RegExp | null {
   const key = techs.join('|');
   if (KNOWN_PATTERN_CACHE.has(key)) return KNOWN_PATTERN_CACHE.get(key) ?? null;
@@ -161,11 +155,6 @@ function isAlternativeToKnownTech(t: string, i: number, length: number, knownTec
   return CHOOSE_ONE.test(sentence) && knownTech.test(sentence);
 }
 
-/**
- * Does the text name, as a technology, something the person does not work
- * with? It used to be a fixed list of "foreign stacks" — the author's — so a
- * QA engineer testing an Angular app had it filed under somebody else's job.
- */
 export function namesForeignTech(text: string, cannotDo: readonly string[]): boolean {
   if (!cannotDo.length) return false;
   const t = text.toLowerCase();
@@ -176,22 +165,14 @@ export function namesForeignTech(text: string, cannotDo: readonly string[]): boo
   return false;
 }
 
-/** A posting titled as one of your trades, that names nothing you do not work with. */
 export function isOwnRole(text: string, roles: readonly Role[], cannotDo: readonly string[]): boolean {
   return namesOwnTrade(text, roles) && !namesForeignTech(text, cannotDo);
 }
 
-/** Only "JavaScript" matched, and the posting is someone else's stack that also uses it. */
 export function isOtherEcosystem(text: string, coreMatch: readonly string[], cannotDo: readonly string[]): boolean {
   const onlyJs = coreMatch.length > 0 && coreMatch.every((x) => /^javascript$/i.test(x));
   return onlyJs && namesForeignTech(text, cannotDo);
 }
-
-// ── Experience ────────────────────────────────────────────────────────────────
-// What the ad asks for, read two ways: the years it writes ("5+ years of
-// experience", "mínimo 3 años") and the level a board states on its own line
-// ("Nivel: Semi Senior" from Get on Board). Both are read conservatively: the
-// rule that uses them only discards what is clearly far above the person.
 
 const YEARS_UNIT = String.raw`(?:years?|yrs?\.?|años|anos)`;
 const YEARS_MENTION = new RegExp(
@@ -200,13 +181,9 @@ const YEARS_MENTION = new RegExp(
 );
 const EXPERIENCE_CUE = /experien|trayectoria|track\s+record/i;
 const OPTIONAL_EXPERIENCE = /deseable|valorable|se\s+valora\w*|valoramos|\bplus\b|nice\s+to\s+have|no\s+excluyente|opcional|optional|preferibl\w*|preferr?ed|preferably|ideal(?:mente|ly)?|bonus/i;
-// "We have 15 years of experience", "una empresa con 10 años en el mercado":
-// the company bragging, not a requirement.
 const ABOUT_THE_COMPANY = /\b(?:we|we've|we're|our|us|tenemos|contamos|nuestr[oa]s?|empresa|company|compañía|founded|fundad[ao]s?|en\s+el\s+mercado|in\s+the\s+market|in\s+business|clientes|clients)\b/i;
 const EXPERIENCE_WINDOW = 60;
 const MAX_DEMANDED_YEARS = 20;
-// A clause ends at a line, a bullet or a punctuation mark followed by a space,
-// so "5 años de experiencia, deseable 2 con AWS" reads as two separate demands.
 const CLAUSE_BREAK = new RegExp(String.raw`${BULLET.source}|[.;,!?](?=\s|$)`, 'gu');
 
 function clauseAround(t: string, index: number, length: number): string {
@@ -220,10 +197,6 @@ function clauseAround(t: string, index: number, length: number): string {
   return before.slice(start) + t.slice(index, index + length) + after.slice(0, end);
 }
 
-/**
- * The most years of experience the ad makes mandatory, or null when it asks
- * for none. A range counts by its floor: "3-5 years" lets three in.
- */
 export function demandedYears(text: string): number | null {
   const t = text.toLowerCase();
   let most: number | null = null;
@@ -239,16 +212,11 @@ export function demandedYears(text: string): number | null {
 }
 
 export interface AdLevel {
-  /** The levels the ad is for. */
   readonly levels: readonly SeniorityLevel[];
-  /** As the ad wrote it ("Semi Senior", "Jr"), for the reason shown to the person. */
   readonly label: string;
 }
 
 const LEVEL_LINE = /^[ \t]*(?:nivel|seniority(?:\s+level)?)[ \t]*:[ \t]*(.+)$/im;
-// Our own first line for a board posting: "Acme busca: Senior Backend Engineer".
-// A LinkedIn post starts with its author's headline instead ("Senior Recruiter
-// at…"), which says nothing about the job, so only this line is read as a title.
 const OWN_HEADLINE = /\sbusca:\s*(.+)$/;
 
 function ownHeadlineTitle(text: string): string | null {
@@ -256,11 +224,6 @@ function ownHeadlineTitle(text: string): string | null {
   return OWN_HEADLINE.exec(first)?.[1]?.trim() ?? null;
 }
 
-/**
- * The level an ad states: on a board's line of its own ("Nivel: Semi Senior")
- * or in the title of our headline ("busca: Junior QA Analyst"). Null when it
- * states none — then only the years it demands can tell.
- */
 export function adLevel(text: string): AdLevel | null {
   const line = LEVEL_LINE.exec(text)?.[1]?.trim();
   if (line) {

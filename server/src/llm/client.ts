@@ -1,8 +1,3 @@
-/**
- * The one shape every model call in the server uses. Google's SDK already has
- * it (`client.models.generateContent`), so Gemini plugs in as is; the
- * OpenAI-compatible providers get a small adapter below.
- */
 export interface TextModel {
   models: {
     generateContent(request: { model: string; contents: string }): Promise<{ text?: string | undefined }>;
@@ -11,11 +6,6 @@ export interface TextModel {
 
 const REQUEST_TIMEOUT_MS = 180_000;
 
-/**
- * Any `/chat/completions` endpoint (OpenRouter, NVIDIA NIM, a local proxy).
- * It answers with its own model: the name the caller passes is Gemini's and
- * means nothing here.
- */
 export class OpenAiCompatibleModel implements TextModel {
   readonly models = { generateContent: (request: { model: string; contents: string }) => this.complete(request.contents) };
 
@@ -48,10 +38,6 @@ export interface ModelLink {
   readonly model: string;
 }
 
-/**
- * Tries each model in order and keeps the first answer. A free model that runs
- * out of quota hands the call to the next one instead of leaving the rules alone.
- */
 export class FallbackModel implements TextModel {
   readonly models = {
     generateContent: async (request: { model: string; contents: string }): Promise<{ text?: string | undefined }> => {
