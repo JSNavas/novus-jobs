@@ -126,14 +126,14 @@ QA Automation Engineer — Acme (2021 – present), 4 years of experience
   });
 });
 
-describe('extractFromCv — place and level, from the real CVs that broke them', () => {
-  const SENIOR = `JUAN PÉREZ
-Full Stack Engineer · 9 años de experiencia
-Venezuela, Estado Falcón · Remoto · Disponibilidad inmediata
+describe('extractFromCv — place and level, from the kind of CV that broke them', () => {
+  const SENIOR = `ANA TORRES
+Backend Engineer · 9 años de experiencia
+Venezuela · Remoto
 
 EXPERIENCIA
-- Entregué los módulos de liquidación de la plataforma de una caja de compensación.
-- Tableros con exportación a Excel y geolocalización con Leaflet.`;
+- Migré la plataforma de reservas a microservicios.
+- Mapas con geolocalización para el equipo de logística.`;
 
   it('"la plataforma" is not La Plata, nor "geolocalización" Cali: the header says Venezuela', () => {
     const cv = extractFromCv(SENIOR);

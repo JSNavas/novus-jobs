@@ -105,8 +105,8 @@ function adjectiveMeansCountry(t: string, adjective: string): boolean {
 const HEADER_CHARS = 400;
 
 /**
- * Where the person lives. The header first — "Venezuela, Estado Falcón" sits
- * under the name — and whole words only: a CV once came out Argentinian
+ * Where the person lives. The header first — the country usually sits under
+ * the name — and whole words only: a CV once came out Argentinian
  * because "la plata" is inside "la plataforma", and Colombian through the
  * "cali" in "geolocalización".
  */
