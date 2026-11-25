@@ -185,8 +185,10 @@ Variables de entorno (`server/.env`, todas opcionales):
 | `MAIL_FROM` | — | Remitente (dominio verificado en Resend) |
 | `MAIL_TO` | — | A quién se avisa |
 | `DASHBOARD_URL` | `http://127.0.0.1:<PORT>/` | El enlace que lleva el correo |
-| `GEMINI_API_KEY` | — | Activa el juez LLM (Google AI Studio, capa gratuita). Sin clave mandan solo las reglas |
-| `JUDGE_MODEL` | `gemini-3.5-flash` | Modelo del juez, y el de la lectura opcional del CV |
+| `OPENROUTER_API_KEY` | — | Activa el juez LLM con modelos **gratis** de OpenRouter (solo los `:free`, coste cero) |
+| `FREE_MODELS` | `baidu/ernie-5.5-flash-preview:free,google/gemma-4-26b-a4b-it:free` | Modelos gratis que se prueban en orden; si uno da 429 o falla, contesta el siguiente |
+| `GEMINI_API_KEY` | — | Gemini (Google AI Studio, capa gratuita) como último respaldo, o como único juez si no hay clave de OpenRouter. Sin ninguna de las dos mandan solo las reglas |
+| `JUDGE_MODEL` | `gemini-3.5-flash` | Modelo de Gemini cuando le toca contestar |
 | `DATA_DIR` | `server/data` | Base de datos, tu CV, marca de pasada y logs |
 
 Lo que decide **qué oferta te llega** no está aquí: vive en la base de datos y se edita en la propia aplicación, sin reiniciar nada. El `.env` solo lleva lo que no puede estar ahí —puertos, rutas y credenciales—, y por eso se lee una sola vez al arrancar.
@@ -399,7 +401,9 @@ Un rescate entra marcado como **«por confirmar»**, no como oferta limpia; y si
 
 El modelo por defecto es `gemini-3.5-flash`, no el `-lite`: el `lite` es el más barato y por eso el más disputado, y una pasada perdió sus 19 juicios con un `503 high demand` con reintento incluido. Clasificar texto corto no pide más inteligencia; pide que conteste.
 
-Va por **Gemini en la capa gratuita de Google AI Studio**. Se le manda casi toda la pasada (todo menos los descartes por stack): una llamada por pasada en tandas de 60 publicaciones.
+Se le manda casi toda la pasada (todo menos los descartes por stack): una llamada por pasada en tandas de 60 publicaciones. La llamada recorre una **cadena de modelos gratis**: primero los de `FREE_MODELS` en OpenRouter y, al final, Gemini. El primero que contesta decide; las reglas solo deciden solas si fallan todos.
+
+**Por qué no Gemini solo.** Su capa gratuita se agotaba (106 tandas perdidas por `429` en el log del 25 nov 2026), y en esas tandas entraron sin segunda opinión un puesto clínico de salud mental y trabajos de entrenar IA. **Por qué Ernie primero.** Se midió contra Gemini sobre 60 ofertas reales: coincidieron en 51, y las 9 diferencias eran todas descartes correctos que Gemini dejó pasar (ML, investigación, ServiceNow). Gemma 4 decide igual de bien pero da `429` a menudo, así que va de segunda. gpt-oss y Llama ya no son gratis en OpenRouter ni en NVIDIA. Antes de cambiar `FREE_MODELS`, compara el candidato con Gemini sobre ofertas reales de tu `jobs.db`.
 
 > **Cuidado con el presupuesto cuando crecen las fuentes.** La capa gratuita da 20 peticiones al día. Con dos plataformas y tres pasadas sobraba; con once cada hora, el 12 de noviembre de 2026 se agotó a media mañana y **502 de las 875 ofertas del día las decidieron solo las reglas**. El juez degrada como debe y lo escribe en el log, pero el panel todavía no lo enseña. Mientras tanto: ritmos de 3 h o más en las fuentes abiertas, y la tanda de 60 que ya está puesta.
 

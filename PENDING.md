@@ -210,7 +210,9 @@ lo escribe en el log —`[juez] 4 tanda(s) sin veredicto`—, pero el panel ense
 la pasada en verde y la oferta guardada dice `judge_status = skipped`, que no
 se ve por ningún lado.
 
-Hace falta que la pasada lo diga: un aviso en el dashboard cuando una pasada se
+Desde el 25 nov 2026 el juez recorre una cadena de modelos gratis (OpenRouter y
+Gemini al final), así que quedarse sin ninguno es mucho más raro. Sigue haciendo
+falta que la pasada lo diga: un aviso en el dashboard cuando una pasada se
 quedó sin segunda opinión, y que la tarjeta de una oferta no juzgada lo
 indique. Mitigado en parte subiendo la tanda del juez de 20 a 60 y bajando el
 ritmo de las fuentes a 3 h, pero mitigar no es avisar.

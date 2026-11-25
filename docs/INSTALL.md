@@ -21,8 +21,10 @@ no account to create.
 
 Optional, and the app works fully without them:
 
-- A **Gemini API key** ([free tier](https://aistudio.google.com/apikey)) for the
-  LLM judge and for reading your CV with a model.
+- An **OpenRouter API key** ([keys](https://openrouter.ai/keys)) for the LLM judge.
+  Only free (`:free`) models are used, so it costs nothing.
+- A **Gemini API key** ([free tier](https://aistudio.google.com/apikey)) as the
+  judge's last fallback, or as the only judge if you have no OpenRouter key.
 - A **Resend API key** for email notifications.
 
 No database to install: it is a SQLite file.
@@ -75,7 +77,8 @@ The two you will most likely want:
 # Keep your data outside the repo, so a fresh clone cannot touch it
 DATA_DIR=/Users/you/.novus-jobs/data
 
-# The LLM judge, and the optional CV reading
+# The LLM judge, and the optional CV reading: free OpenRouter models first, Gemini last
+OPENROUTER_API_KEY=...
 GEMINI_API_KEY=...
 ```
 

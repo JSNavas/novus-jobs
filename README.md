@@ -199,7 +199,7 @@ To keep it running after you close the terminal, see
 | Your profile | A row in your SQLite file. |
 | Job postings | Same file. |
 | Your browser sessions | Your disk, outside the repo, `0600`. |
-| Anything to a third party | **Only if you opt in:** the LLM judge sends job postings (not your CV) to Google; the "read my CV with the model" button sends the CV text, and only when you click it. Both need your own API key and both are off without one. |
+| Anything to a third party | **Only if you opt in:** the LLM judge sends job postings (not your CV) to free OpenRouter models, with Google's Gemini as fallback; the "read my CV with the model" button sends the CV text, and only when you click it. Both need your own API key and both are off without one. |
 
 No analytics, no crash reporting, no update check. The server binds to
 `127.0.0.1`. Full detail: **[docs/PRIVACY.md](docs/PRIVACY.md)**.

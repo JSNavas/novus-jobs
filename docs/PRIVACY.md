@@ -28,13 +28,14 @@ Delete the data directory and nothing of you is left.
 
 ## The two things that can send data out
 
-Both are opt-in, both need **your own** Google API key, and both are inert
-without one.
+Both are opt-in, both need **your own** API key (OpenRouter, Google or both),
+and both are inert without one.
 
 ### 1. The LLM judge — sends job postings
 
-If `GEMINI_API_KEY` is set, each pass sends the **text of the job postings** it
-read to Google's Gemini API, in batches, to act as a second pair of eyes over
+If `OPENROUTER_API_KEY` or `GEMINI_API_KEY` is set, each pass sends the **text
+of the job postings** it read to the first model that answers — free models on
+OpenRouter first, then Google's Gemini API — in batches, to act as a second pair of eyes over
 the rules. These are public job ads, not your data — but they are a request to a
 third party, and the fact that you are reading jobs at a given time is itself
 information.
@@ -43,21 +44,24 @@ Your profile is summarised in the instruction (the technologies you do not work
 with, so the model can judge a posting against them). Your name, your CV and
 your email are never part of it.
 
-**To turn it off:** remove `GEMINI_API_KEY`. The rules decide alone; the app
-works fully.
+**To turn it off:** remove `OPENROUTER_API_KEY` and `GEMINI_API_KEY`. The rules
+decide alone; the app works fully.
+
+Free models on OpenRouter may log prompts on the provider's side. Postings are
+public ads, but keep that in mind before pointing `FREE_MODELS` elsewhere.
 
 ### 2. "Read my CV with the model" — sends your CV text
 
 During setup there is a switch that sends the **text of your CV** to the same
-API, to extract skills that the local rules could not recognise. It is off by
+model chain, to extract skills that the local rules could not recognise. It is off by
 default, it is a single click that you make, and the screen says plainly what it
 does before you make it.
 
 Without it, the CV is read entirely on your machine with pattern rules against a
 catalogue of technologies. That reads less, and what it misses you type by hand.
 
-**To turn it off:** do not switch it on. Without `GEMINI_API_KEY` the switch is
-not even offered.
+**To turn it off:** do not switch it on. Without an LLM key the switch is not
+even offered.
 
 ## Email notifications
 
