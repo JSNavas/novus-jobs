@@ -17,6 +17,8 @@ export interface Config {
   browserHeadless: boolean;
   linkedinFeedUrl: string;
   geminiApiKey: string | null;
+  openrouterApiKey: string | null;
+  freeModels: string[];
   judgeModel: string;
   mail: { apiKey: string; from: string; to: string } | null;
   dashboardUrl: string;
@@ -36,6 +38,7 @@ const DEFAULT_SCHEDULE_HOURS = '9,13,18';
 const DEFAULT_SOURCES = 'linkedin,linkedin-jobs,getonbrd,hackernews';
 const DEFAULT_FEED_URL = 'https://www.linkedin.com/feed/';
 const DEFAULT_JUDGE_MODEL = 'gemini-3.5-flash';
+const DEFAULT_FREE_MODELS = 'baidu/ernie-5.5-flash-preview:free,google/gemma-4-26b-a4b-it:free';
 const HOME_DIR = join(homedir(), '.novus-jobs');
 
 function optional(name: string): string | null {
@@ -76,6 +79,10 @@ export function loadConfig(): Config {
     browserHeadless: optional('BROWSER_HEADLESS') !== 'false',
     linkedinFeedUrl: optional('LINKEDIN_FEED_URL') ?? DEFAULT_FEED_URL,
     geminiApiKey: optional('GEMINI_API_KEY'),
+    openrouterApiKey: optional('OPENROUTER_API_KEY'),
+    // Free models only, tried in order. Chosen on 25 Nov 2026 against Gemini on 60
+    // real offers: Ernie agreed on 51 and the other 9 were right rejections.
+    freeModels: (optional('FREE_MODELS') ?? DEFAULT_FREE_MODELS).split(',').map((m) => m.trim()).filter(Boolean),
     judgeModel: optional('JUDGE_MODEL') ?? DEFAULT_JUDGE_MODEL,
     mail: mailConfig(),
     dashboardUrl: optional('DASHBOARD_URL') ?? `http://127.0.0.1:${parsePort(optional('PORT'))}/`,

@@ -1,4 +1,4 @@
-import type { GoogleGenAI } from '@google/genai';
+import type { TextModel } from '../llm/client.js';
 import type { Config } from '../config.js';
 import { findCountry } from './countries.js';
 import { t } from '../i18n/index.js';
@@ -155,7 +155,7 @@ const TRANSIENT = /\b(429|500|502|503|504)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|high
 
 export class LlmJudge {
   constructor(
-    private readonly client: GoogleGenAI,
+    private readonly client: TextModel,
     private readonly model: string,
   ) {}
 

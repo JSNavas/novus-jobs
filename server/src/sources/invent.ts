@@ -1,4 +1,4 @@
-import type { GoogleGenAI } from '@google/genai';
+import type { TextModel } from '../llm/client.js';
 import { DescriptorError, parseDescriptor, type SourceDescriptor } from './descriptor.js';
 
 const MAX_SAMPLE_CHARS = 12_000;
@@ -77,7 +77,7 @@ function firstJsonObject(text: string): Record<string, unknown> | null {
 }
 
 export class DescriptorInventor {
-  constructor(private readonly client: GoogleGenAI, private readonly model: string) {}
+  constructor(private readonly client: TextModel, private readonly model: string) {}
 
   async invent(endpoint: string, payload: unknown, listPath: string | null): Promise<SourceDescriptor> {
     const sample = JSON.stringify(sampleOf(payload, listPath), null, 1).slice(0, MAX_SAMPLE_CHARS);

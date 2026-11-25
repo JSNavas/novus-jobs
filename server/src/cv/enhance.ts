@@ -1,4 +1,4 @@
-import type { GoogleGenAI } from '@google/genai';
+import type { TextModel } from '../llm/client.js';
 import { COUNTRIES } from '../filters/countries.js';
 import { ENGLISH_LEVELS, type EnglishLevel } from '../profile/types.js';
 import { knownTechnology, suggestVetoesFor, type CvExtraction } from './extract.js';
@@ -28,7 +28,7 @@ export interface CvEnhancement {
 const MAX_CV_CHARS = 20_000;
 
 export class CvEnhancer {
-  constructor(private readonly client: GoogleGenAI, private readonly model: string) {}
+  constructor(private readonly client: TextModel, private readonly model: string) {}
 
   async enhance(cvText: string): Promise<CvEnhancement | null> {
     try {

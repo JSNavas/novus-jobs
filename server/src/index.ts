@@ -13,6 +13,7 @@ import { readMaxAgeMonths } from './routes/settings.js';
 import { SettingsRepository } from './db/settings.repository.js';
 import { LlmJudge } from './filters/judge.js';
 import { CvEnhancer } from './cv/enhance.js';
+import { FallbackModel, OpenAiCompatibleModel, type ModelLink } from './llm/client.js';
 import { ProfileRepository } from './profile/profile.repository.js';
 import { Mailer } from './notify/mailer.js';
 import { readMailOnlyNew, readMailTo } from './routes/settings.js';
@@ -29,6 +30,8 @@ import { readCatalog, SourceDescriptors } from './sources/descriptors.js';
 import { HiddenSources } from './sources/hidden.js';
 import { LinkedInSearches } from './sources/linkedin-searches.js';
 import { SourceToggles } from './sources/toggles.js';
+
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1';
 
 async function main(): Promise<void> {
   const config = loadConfig();
@@ -63,12 +66,24 @@ async function main(): Promise<void> {
       ...[...natives, ...buildDescribedSources(pool)].filter((source) => !hidden.has(source.name)),
     );
   };
-  const gemini = config.geminiApiKey ? new GoogleGenAI({ apiKey: config.geminiApiKey }) : null;
-  const judge = gemini ? new LlmJudge(gemini, config.judgeModel) : null;
-  const enhancer = gemini ? new CvEnhancer(gemini, config.judgeModel) : null;
-  console.log(judge
-    ? `[arranque] juez LLM activo (${config.judgeModel})`
-    : '[arranque] sin GEMINI_API_KEY: el juez LLM queda desactivado y mandan las reglas');
+  const links: ModelLink[] = [
+    ...(config.openrouterApiKey
+      ? config.freeModels.map((model) => ({
+          label: model,
+          client: new OpenAiCompatibleModel(OPENROUTER_URL, config.openrouterApiKey ?? '', model),
+          model,
+        }))
+      : []),
+    ...(config.geminiApiKey
+      ? [{ label: config.judgeModel, client: new GoogleGenAI({ apiKey: config.geminiApiKey }), model: config.judgeModel }]
+      : []),
+  ];
+  const llm = links.length ? new FallbackModel(links) : null;
+  const judge = llm ? new LlmJudge(llm, config.judgeModel) : null;
+  const enhancer = llm ? new CvEnhancer(llm, config.judgeModel) : null;
+  console.log(llm
+    ? `[arranque] juez LLM activo (${llm.describe()})`
+    : '[arranque] sin OPENROUTER_API_KEY ni GEMINI_API_KEY: el juez LLM queda desactivado y mandan las reglas');
 
   const mailer = new Mailer(config.mail, {
     to: () => readMailTo(settings, config.mail?.to ?? null) || null,
@@ -108,7 +123,7 @@ async function main(): Promise<void> {
 
   const app = await buildApp({
     descriptors,
-    inventor: gemini ? new DescriptorInventor(gemini, config.judgeModel) : null,
+    inventor: llm ? new DescriptorInventor(llm, config.judgeModel) : null,
     isNativeSource,
     reloadDescribed,
     hidden,
