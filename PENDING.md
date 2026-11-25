@@ -114,6 +114,21 @@ URL** antes de abrirla. Hoy `isFresh` recibe el texto, y el texto exige abrir
 la tarjeta. Un `isKnownUrl` en el contrato de fuente ahorraría casi todas las
 aperturas en régimen.
 
+### 1.11 LinkedIn empleos no lista vacantes desde el 19 nov · 1 hora
+
+Desde el 19 nov 2026 (última pasada buena, 16:30 UTC) cada pasada de
+`linkedin-jobs` falla igual: *«la sesión está activa pero
+…/jobs/collections/recommended/ no listó ninguna vacante: ¿cambió el
+maquetado?»*. La sesión sirve —el feed (`linkedin`) se lee bien a las mismas
+horas—, así que lo probable es que LinkedIn cambiara la página de la lista.
+
+Duele más que otras porque era la fuente con más ofertas que encajan: BairesDev,
+Sezzle o Altura entraron por ahí. Hay que abrir la lista con la sesión y mirar
+qué marcado tiene ahora, sin pasadas de prueba de más: la cuenta sana manda.
+
+Aparte, `interfell` falla a ratos con `fetch failed` (11 de 26 pasadas entre el
+22 y el 25 nov) y vuelve sola. No pide nada mientras siga volviendo.
+
 ### 1.9 El texto de la oferta se compone en español, siempre · 2 horas
 
 `described.source.ts`, `getonbrd.source.ts` y `hackernews.source.ts` arman el
@@ -262,7 +277,7 @@ de una línea. Es el buscador de GitHub y se rellena en dos minutos.
 - **Releases con versión y changelog.** Un repositorio sin releases parece
   abandonado aunque tenga commits de ayer.
 - **Imagen de Docker publicada** en GHCR, construida por el CI.
-- **Pruebas del dashboard** (Vitest + Testing Library). El servidor tiene 237;
+- **Pruebas del dashboard** (Vitest + Testing Library). El servidor tiene 435;
   el frontend, cero.
 - **Portugués de Brasil.** El mecanismo de idiomas ya está; es un fichero de
   diccionario. LATAM es el mercado natural de este proyecto y Brasil es la

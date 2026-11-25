@@ -30,7 +30,7 @@ Novus Jobs lee el feed en tu nombre, aplica tu criterio y te deja en el dashboar
 2. **Que no tengas que mirar.** Tres pasadas al día y un correo cuando hay algo. El silencio significa que no había nada, y eso también es información.
 3. **Que tu cuenta de LinkedIn siga sana.** Es lo único irremplazable de todo esto. El ritmo que la plataforma ve está limitado por cuatro topes simultáneos y no se sube ni aunque insistas con el botón.
 4. **Que iniciar sesión pase una sola vez.** La sesión se guarda y se refresca sola; si caduca, te llega un correo diciendo exactamente qué comando correr.
-5. **Que sirva a cualquiera.** Empezó con el perfil de una persona escrito en el código y ya no: al abrirlo la primera vez hay un alta que lee tu CV, te propone tu stack y tus vetos, y guarda tu perfil en tu base de datos. Nada de lo que decide qué oferta te llega está en el código.
+5. **Que sirva a cualquiera.** Empezó con el perfil de una persona escrito en el código y ya no: al abrirlo la primera vez hay un alta que lee tu CV, te propone tu oficio, tu stack, tus vetos y los niveles que quieres recibir, y guarda tu perfil en tu base de datos. Nada de lo que decide qué oferta te llega está en el código.
 6. **Que crezca a más plataformas, y sin mí.** LinkedIn fue la primera, no la única. Hoy son siete, y cinco de ellas no tienen código propio: son **descriptores**, un JSON que dice de dónde se bajan las vacantes y en qué campos vienen. Añadir un portal dejó de ser un commit de este repositorio para ser un fichero que cualquiera escribe, exporta y comparte.
 7. **Que te diga dónde poner el esfuerzo.** Si dos o tres vacantes piden lo mismo, eso es lo relevante. El [Enfoque](#enfoque) lo cuenta solo, y lo que empieza a pedirse y nadie clasificó asoma igual.
 
@@ -127,7 +127,7 @@ cp .env.example .env           # todo lo de dentro es opcional: los valores por 
 npm start                      # http://127.0.0.1:47831 (PORT)
 ```
 
-La primera vez te recibe el **alta**: seis pasos para subir el CV, revisar tu stack, tu inglés, desde dónde buscas y qué plataformas quieres. Hasta terminarla no se lanza ninguna búsqueda — sin perfil, el filtro descartaría todo lo que encontrase y verías un dashboard vacío sin saber por qué.
+La primera vez te recibe el **alta**: seis pasos para subir el CV, revisar tu oficio y tu stack, tu inglés y tu experiencia, desde dónde buscas y qué plataformas quieres. Del CV se leen el stack, el inglés, los años, el oficio (de la cabecera) y el país; el país, primero en la cabecera y por palabras enteras: buscando trozos de texto, «la plata» dentro de «la plataforma» hacía argentino un CV venezolano. Hasta terminarla no se lanza ninguna búsqueda — sin perfil, el filtro descartaría todo lo que encontrase y verías un dashboard vacío sin saber por qué.
 
 Para que no se apague al cerrar la terminal, el servicio permanente está en [docs/INSTALL.md](docs/INSTALL.md), con macOS, Linux y Windows.
 
@@ -312,7 +312,7 @@ Lo que se cambia sin tocar código ni reiniciar nada:
 | Ajuste | Qué decide |
 |---|---|
 | **Idioma** | español o inglés: la interfaz, los correos y los motivos de descarte |
-| **Tu perfil** | tu stack, tu núcleo, tus vetos, tu inglés, desde dónde buscas y tu zona horaria: lo que decide qué oferta te llega. Se edita en la misma pantalla del alta, desde Configuración |
+| **Tu perfil** | tu oficio, tu stack, tu núcleo, tus vetos, tu inglés, tus años y los niveles que quieres recibir, desde dónde buscas y tu zona horaria: lo que decide qué oferta te llega. Se edita en la misma pantalla del alta, desde Configuración |
 | **Motivación** | el párrafo que copia cada oferta, con sus huecos |
 | **Antigüedad máxima** | cuántos meses puede tener una vacante para entrar (3 por defecto) |
 | **Plataformas** | cuáles están encendidas y a qué ritmo va cada una (en Integraciones) |
@@ -353,7 +353,7 @@ Las reglas miran letras; el juez mira significado. Es el segundo par de ojos, y 
 
 Lo que atrapa es lo que ninguna expresión regular puede: *"esto es una base de talentos, no una vacante"*. Eso mismo, literal, en la primera pasada con el juez encendido. Y al revés: *"React, Angular o similar"* no es un veto por Angular, pero la regex no sabe leerlo.
 
-El juez juzga además **si el puesto es de su oficio**. Las reglas no saben de oficios: en cuanto una tecnología del núcleo aparece en el anuncio, dejan pasar. Así entró un «Ingeniero de Seguridad de Red» porque mencionaba Python. Eso lo ve el modelo, no una expresión regular.
+El juez juzga además **si el puesto es de su oficio**. Las reglas no saben de oficios: en cuanto una tecnología del núcleo aparece en el anuncio, dejan pasar. Así entró un «Ingeniero de Seguridad de Red» porque mencionaba Python. Eso lo ve el modelo, no una expresión regular. Y su oficio es el que marcaste en el perfil, no uno fijo: a quien marcó QA le descarta los puestos de programador, y a quien marcó desarrollo, los de QA.
 
 ### Lo que el juez no puede revocar
 
@@ -453,6 +453,13 @@ El paréntesis que acompaña a *remote* se lee aparte, porque en Hacker News es
 donde vive la restricción: `REMOTE (US, East Coast hours)` es Estados Unidos
 —el sitio pesa más que el reloj—, mientras que `REMOTE (PT to ET overlap
 preferred)` no nombra ningún sitio y sigue siendo global.
+
+La línea del pin también es una línea de ubicación, cuando nombra un sitio.
+Freelanly pone el sitio solo, tras un 📍 —«📍 EE. UU. (Remoto)»—, y el «roles
+tech remotos» de su pie hacía pasar por remotas globales ofertas solo para
+Estados Unidos o Canadá: cinco llegaron a la bandeja antes del 25 nov 2026. Un
+país extranjero en esa línea pesa más que la palabra *remoto*, y un pin que no
+nombra ningún sitio («📍 Condiciones:») no cuenta.
 
 > Esto obligó a conocer el mundo entero. El catálogo tenía 30 países, así que
 > una oferta para Bielorrusia, Moldavia, Ucrania y Emiratos no nombraba a nadie
