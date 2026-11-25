@@ -19,6 +19,7 @@ export const STEPS: readonly StepDefinition[] = [
 
 export interface Draft {
   language: CandidateProfile['language'];
+  roles: CandidateProfile['roles'];
   stack: string[];
   core: string[];
   vetoEcosystems: string[];
@@ -31,6 +32,7 @@ export interface Draft {
 export function draftFrom(state: OnboardingState): Draft {
   return {
     language: state.profile.language,
+    roles: [...state.profile.roles],
     stack: [...state.profile.stack],
     core: [...state.profile.core],
     vetoEcosystems: [],
@@ -44,6 +46,9 @@ export function draftFrom(state: OnboardingState): Draft {
 export function applyReading(draft: Draft, cv: CvReading): Draft {
   return {
     ...draft,
+    // The CV's headline says the trade ("QA Automation Engineer"); when it says
+    // none, what was chosen stays.
+    roles: cv.roles.length ? [...cv.roles] : draft.roles,
     stack: [...new Set([...draft.stack, ...cv.stack])],
     core: [...new Set([...draft.core, ...cv.core])],
     vetoEcosystems: draft.vetoEcosystems.length
@@ -65,6 +70,7 @@ export function applyReading(draft: Draft, cv: CvReading): Draft {
 
 export function blockingError(step: number, draft: Draft): string | null {
   if (step !== 1) return null;
+  if (!draft.roles.length) return t('wiz.needRole');
   if (!draft.core.length) {
     return t('wiz.needCore');
   }

@@ -96,3 +96,32 @@ describe('extractFromCv', () => {
     assert.equal(knownTechnology('MiFrameworkInventado'), null);
   });
 });
+
+describe('extractFromCv — the trade', () => {
+  const QA_CV = `María Pérez
+QA Automation Engineer
+Caracas, Venezuela · English B2
+
+EXPERIENCE
+QA Automation Engineer — Acme (2021 – present), 4 years of experience
+- End-to-end suites with Cypress and Playwright, API tests with Postman.
+- Regression with Selenium WebDriver and Java, TestNG.
+`;
+
+  it('reads the trade off the headline, and the QA tools become the core', () => {
+    const cv = extractFromCv(QA_CV);
+    assert.deepEqual(cv.roles, ['qa']);
+    for (const tool of ['Cypress', 'Playwright', 'Postman', 'Selenium']) assert.ok(cv.core.includes(tool), tool);
+  });
+
+  it('a developer who mentions Cypress does not get it as core, nor the QA trade', () => {
+    const cv = extractFromCv(CV);
+    assert.ok(!cv.roles.includes('qa'));
+    assert.ok(!cv.core.includes('Cypress'));
+  });
+
+  it('a developer who "worked with the QA team" further down is not QA', () => {
+    const dev = `Juan Gómez\nFull Stack Developer\n\n${'Built features. '.repeat(60)}\nWorked closely with the QA team.`;
+    assert.deepEqual(extractFromCv(dev).roles, ['software']);
+  });
+});

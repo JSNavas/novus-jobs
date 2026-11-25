@@ -75,6 +75,21 @@ describe('rutas del alta', () => {
     assert.equal((await put({ english: { level: 'altísimo', filter: true } })).statusCode, 400);
   });
 
+  it('una instalación nueva busca desarrollo de software hasta que elijas otro oficio', async () => {
+    assert.deepEqual(profiles.get().roles, ['software']);
+    const res = await app.inject({ method: 'GET', url: '/api/onboarding' });
+    assert.ok((res.json() as { catalogue: { roles: string[] } }).catalogue.roles.includes('qa'));
+  });
+
+  it('el oficio se guarda, y no se acepta ninguno inventado ni quedarse sin oficio', async () => {
+    assert.equal((await put({ roles: ['qa', 'devops'] })).statusCode, 200);
+    assert.deepEqual(profiles.get().roles, ['qa', 'devops']);
+    assert.equal((await put({ roles: ['astronauta'] })).statusCode, 400);
+    assert.equal((await put({ roles: [] })).statusCode, 400);
+    assert.equal((await put({ roles: 'qa' })).statusCode, 400);
+    assert.deepEqual(profiles.get().roles, ['qa', 'devops']);
+  });
+
   it('una instalación nueva no sabe tus años y no filtra por nivel hasta que los digas', () => {
     assert.deepEqual(profiles.get().experience, { years: null, filter: true });
   });

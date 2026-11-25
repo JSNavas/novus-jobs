@@ -1,6 +1,7 @@
 import type { TextModel } from '../llm/client.js';
 import type { Config } from '../config.js';
 import { findCountry } from './countries.js';
+import { otherTradesFor, tradesFor } from '../profile/roles.js';
 import { t } from '../i18n/index.js';
 import { SENIORITY_SLACK_YEARS, type CandidateProfile, type Offer } from './decide.js';
 
@@ -101,9 +102,10 @@ function instruction(profile: CandidateProfile, country: string | null): string 
   ].filter(Boolean).join(', ');
 
   return [
-    'Eres el filtro de ofertas de trabajo de un desarrollador. Juzga cada publicación que te paso.',
+    'Eres el filtro de ofertas de trabajo de una persona que busca empleo. Juzga cada publicación que te paso.',
     '',
     'EL CANDIDATO:',
+    `- Su oficio: ${tradesFor(profile.roles)}.`,
     `- Sabe: ${profile.stack.join(', ') || 'no lo ha dicho'}.`,
     `- Su oficio lo definen: ${profile.core.join(', ') || 'no lo ha dicho'}.`,
     profile.cannotDo.length
@@ -139,13 +141,11 @@ function instruction(profile: CandidateProfile, country: string | null): string 
     profile.geo.excludeLocalEmployers && country
       ? `   "local-employer" → la contrata una empresa de ${country}.`
       : '   "local-employer" → no lo uses.',
-    '   "role"              → el puesto NO es de desarrollo de software, aunque el',
-    '                         anuncio mencione tecnologías que él sabe. Es de',
-    '                         seguridad/redes, datos (data engineer, analista BI),',
-    '                         QA manual, soporte, diseño, producto, ventas o',
-    '                         reclutamiento. Él programa. Un puesto de desarrollo que',
-    '                         ADEMÁS pida nociones de seguridad o datos NO es "role":',
-    '                         lo es cuando el trabajo principal no es escribir software.',
+    '   "role"              → el trabajo principal del puesto NO es de su oficio, aunque',
+    '                         el anuncio mencione tecnologías que sabe. NO son de su',
+    `                         oficio: ${otherTradesFor(profile.roles)}.`,
+    '                         Un puesto de su oficio que ADEMÁS pida nociones de otra',
+    '                         área NO es "role": lo es cuando el trabajo principal es otro.',
     '   null                → EL RESTO DE CASOS.',
     '',
     '   Si no está en esa lista, es null. Que no diga si es remoto NO es un descarte.',

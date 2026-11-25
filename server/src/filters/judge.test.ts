@@ -5,6 +5,7 @@ import type { CandidateProfile, Offer } from './decide.js';
 
 const PERFIL: CandidateProfile = {
   language: 'es',
+  roles: ['software'],
   stack: ['Node.js'], core: ['Node.js'], cannotDo: ['Java'],
   english: { level: 'b1', filter: true },
   experience: { years: null, filter: true },
@@ -114,5 +115,34 @@ describe('LlmJudge — el nivel sale del perfil, no de quien escribió el proyec
     const answer = { text: '[{"i":0,"esOferta":true,"descarte":"seniority","esAgregador":false,"motivo":"piden 8 años"}]' };
     const { verdicts } = await promptFor({ ...PERFIL, experience: { years: 1, filter: true } }, answer);
     assert.equal((verdicts as { rejection: string }[])[0]?.rejection, 'seniority');
+  });
+});
+
+describe('LlmJudge — el oficio sale del perfil', () => {
+  async function promptFor(profile: CandidateProfile): Promise<string> {
+    let prompt = '';
+    const client = { models: { async generateContent(request: { contents: string }) { prompt = request.contents; return respuesta(1); } } };
+    await new LlmJudge(client as never, 'modelo-de-prueba').judge(offers(1), profile);
+    return prompt;
+  }
+  const roleRule = (prompt: string): string => prompt.slice(prompt.indexOf('"role"'), prompt.indexOf('null                →'));
+
+  it('a QA: su oficio es QA, y QA no aparece entre lo que no es suyo', async () => {
+    const prompt = await promptFor({ ...PERFIL, roles: ['qa'] });
+    assert.match(prompt, /Su oficio: QA y testing/);
+    assert.doesNotMatch(roleRule(prompt), /QA y testing/);
+    assert.match(roleRule(prompt), /desarrollo de software/, 'para un QA, programar es otro oficio');
+  });
+
+  it('a developer keeps what the judge already discarded for them: QA, data, DevOps', async () => {
+    const rule = roleRule(await promptFor(PERFIL));
+    for (const other of ['QA y testing', 'datos', 'DevOps', 'soporte técnico', 'reclutamiento']) {
+      assert.ok(rule.includes(other), `${other} sigue siendo otro oficio`);
+    }
+    assert.doesNotMatch(rule, /desarrollo de software/);
+  });
+
+  it('nobody is "un desarrollador" by default any more', async () => {
+    assert.doesNotMatch(await promptFor({ ...PERFIL, roles: ['data'] }), /de un desarrollador/);
   });
 });

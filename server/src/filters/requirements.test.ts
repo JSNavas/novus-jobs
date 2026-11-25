@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { PROFILE } from '../profile/profile.js';
-import { demandedYears, englishDemand, statedLevel, unknownRequiredTech } from './requirements.js';
+import { demandedYears, englishDemand, isOtherEcosystem, isOwnRole, statedLevel, unknownRequiredTech } from './requirements.js';
 import { englishRank, type EnglishLevel } from '../profile/types.js';
 
 describe('englishDemand', () => {
@@ -66,7 +66,7 @@ describe('englishDemand — lo que de verdad piden', () => {
 });
 
 describe('unknownRequiredTech', () => {
-  const veto = (t: string) => unknownRequiredTech(t, PROFILE.cannotDo);
+  const veto = (t: string) => unknownRequiredTech(t, PROFILE.cannotDo, PROFILE.core);
 
   it('descarta la tecnología que el anuncio EXIGE', () => {
     assert.match(veto('3+ años de experiencia en desarrollo backend con C++.') ?? '', /c\+\+/);
@@ -181,5 +181,35 @@ describe('statedLevel — the level a board writes on its own line', () => {
 
   it('a level line about something else is ignored', () => {
     assert.equal(statedLevel('Inglés\nNivel: avanzado'), null);
+  });
+});
+
+describe('the trade and the foreign stacks come from the profile', () => {
+  it('a QA posting is "your role" for QA, not for a developer', () => {
+    const ad = 'Buscamos QA Automation Engineer para nuestro equipo remoto';
+    assert.equal(isOwnRole(ad, ['qa'], []), true);
+    assert.equal(isOwnRole(ad, ['software'], PROFILE.cannotDo), false);
+  });
+
+  it('a developer keeps the titles that were "own role" before', () => {
+    assert.equal(isOwnRole('Desarrollador Full Stack remoto', ['software'], PROFILE.cannotDo), true);
+    assert.equal(isOwnRole('Full stack developer (Java, Spring Boot)', ['software'], PROFILE.cannotDo), false);
+  });
+
+  it('a "go" far from anything technical is not the Go language (the old fixed list said it was)', () => {
+    const ad = 'Desarrollador Full Stack para proyecto remoto.\nBeneficios: horario flexible, días libres y ganas de crecer. Ready, set, go!';
+    assert.equal(isOwnRole(ad, ['software'], PROFILE.cannotDo), true);
+  });
+
+  it('a QA testing an Angular app is not in someone else\'s ecosystem: Angular is not in their vetoes', () => {
+    const ad = 'QA Engineer: pruebas E2E con JavaScript sobre una app en Angular';
+    assert.equal(isOtherEcosystem(ad, ['JavaScript'], []), false);
+    assert.equal(isOtherEcosystem(ad, ['JavaScript'], PROFILE.cannotDo), true, 'for a developer who vetoed Angular it is');
+  });
+
+  it('"with Java or C#" asks for one of them: a QA who knows Java is not vetoed by C#', () => {
+    const ad = 'Requisitos: automatización con Selenium y Java o C#.';
+    assert.equal(unknownRequiredTech(ad, ['C#'], ['Selenium', 'Java']), null);
+    assert.equal(unknownRequiredTech(ad, ['C#'], ['Python']), 'c#');
   });
 });

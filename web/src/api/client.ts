@@ -252,8 +252,13 @@ export function updateIntegrationSchedule(
 
 export type EnglishLevel = 'none' | 'a1' | 'a2' | 'b1' | 'b2' | 'c1' | 'c2' | 'native';
 
+/** The trades someone can look for work in; the server's `ROLES`. */
+export type Role = 'software' | 'qa' | 'data' | 'devops' | 'design';
+
 export interface CandidateProfile {
   language: 'es' | 'en';
+  /** Never empty. */
+  roles: Role[];
   stack: string[];
   core: string[];
   cannotDo: string[];
@@ -271,6 +276,7 @@ export interface OnboardingState {
     countries: { code: string; label: string; cities: string[] }[];
     englishLevels: EnglishLevel[];
     ecosystems: { id: string; label: string }[];
+    roles: Role[];
   };
   canEnhance: boolean;
   acceptedFiles: string[];
@@ -285,6 +291,8 @@ export interface CvReading {
   country: string | null;
   city: string | null;
   years: number | null;
+  /** The trades the CV's headline names; empty when it names none. */
+  roles: Role[];
   foundInCv: boolean;
   enhanced: boolean;
 }
@@ -319,6 +327,7 @@ export function saveOnboardingStep(changes: {
   core?: string[];
   cannotDo?: string[];
   vetoEcosystems?: string[];
+  roles?: Role[];
   english?: { level: EnglishLevel; filter: boolean };
   experience?: CandidateProfile['experience'];
   geo?: CandidateProfile['geo'];

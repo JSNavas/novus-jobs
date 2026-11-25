@@ -7,7 +7,8 @@ import { extractFromCv, vetoesOf } from '../cv/extract.js';
 import { ACCEPTED_EXTENSIONS, extractCvText, UnsupportedCvError } from '../cv/text.js';
 import { COUNTRIES } from '../filters/countries.js';
 import { ECOSYSTEM_LABELS, VETOABLE_ECOSYSTEMS, type Ecosystem } from '../profile/technologies.js';
-import { experienceYears, type ProfileRepository } from '../profile/profile.repository.js';
+import { experienceYears, roles, type ProfileRepository } from '../profile/profile.repository.js';
+import { isRole, ROLES } from '../profile/roles.js';
 import {
   ENGLISH_LEVELS, LANGUAGES, MAX_EXPERIENCE_YEARS, type CandidateProfile, type EnglishLevel, type Language,
 } from '../profile/types.js';
@@ -32,6 +33,7 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
       })),
       englishLevels: ENGLISH_LEVELS,
       languages: LANGUAGES,
+      roles: ROLES,
       ecosystems: VETOABLE_ECOSYSTEMS.map((eco) => ({ id: eco, label: ECOSYSTEM_LABELS[eco] })),
     },
     canEnhance: deps.enhancer !== null,
@@ -100,6 +102,19 @@ export function registerOnboardingRoutes(app: FastifyInstance, deps: OnboardingR
         });
       }
       changes.cannotDo = vetoesOf(ids as Ecosystem[]);
+    }
+
+    if (body.roles !== undefined) {
+      const list = Array.isArray(body.roles) ? body.roles : null;
+      const unknown = list?.find((role) => !isRole(role));
+      if (!list || unknown !== undefined) {
+        return reply.code(400).send({
+          error: `${unknown === undefined ? '"roles" tiene que ser una lista' : `"${String(unknown)}" no es un oficio que conozca`}. Son: ${ROLES.join(', ')}`,
+        });
+      }
+      const chosen = roles(list);
+      if (!chosen) return reply.code(400).send({ error: 'elige al menos un oficio: sin ninguno no sé qué puestos son los tuyos' });
+      changes.roles = chosen;
     }
 
     if (body.language !== undefined) {

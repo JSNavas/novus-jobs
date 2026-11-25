@@ -2,6 +2,7 @@ import type { CandidateProfile } from './types.js';
 
 export const PROFILE: CandidateProfile = {
   language: 'es',
+  roles: ['software'],
   stack: [
     'TypeScript', 'JavaScript', 'Node.js', 'NodeJS', 'Node', 'Python', 'PHP',
     'NestJS', 'Nest.js', 'Fastify', 'Express', 'Laravel', 'Symfony', 'Livewire',

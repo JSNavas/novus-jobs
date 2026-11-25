@@ -6,10 +6,12 @@ import { saveOnboardingStep, type CandidateProfile, type OnboardingState } from 
 import { AppAlert, AppChip } from '../../components/ui';
 import { distinctTech, hasTech, removeTech } from '../../distinctTech';
 import { t } from '../../i18n';
+import { RoleChoice } from '../onboarding/StepPanels';
 
 const VISIBLE = 12;
 
 interface Draft {
+  roles: CandidateProfile['roles'];
   core: string[];
   stack: string[];
   cannotDo: string[];
@@ -90,6 +92,7 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
   const { profile, catalogue } = onboarding;
 
   const initial = (): Draft => ({
+    roles: [...profile.roles],
     core: [...profile.core],
     stack: [...profile.stack],
     cannotDo: [...profile.cannotDo],
@@ -107,6 +110,7 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
 
   const dirty = (['core', 'stack', 'cannotDo'] as const)
       .some((field) => lists[field].join('|') !== profile[field].join('|'))
+    || lists.roles.join('|') !== profile.roles.join('|')
     || JSON.stringify(lists.english) !== JSON.stringify(profile.english)
     || JSON.stringify(lists.experience) !== JSON.stringify(profile.experience)
     || JSON.stringify(lists.geo) !== JSON.stringify(profile.geo)
@@ -120,6 +124,7 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
     setSaving(true);
     setError(null);
     saveOnboardingStep({
+      roles: lists.roles,
       core: lists.core,
       stack: lists.stack,
       cannotDo: lists.cannotDo,
@@ -161,6 +166,13 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
 
   return (
     <Box>
+      <Field label={t('roles.title')}>
+        <RoleChoice
+          options={catalogue.roles}
+          value={lists.roles}
+          onChange={(roles) => setLists((prev) => ({ ...prev, roles }))}
+        />
+      </Field>
       <Field label={t('set.profile.core')}>{editor('core', 'success')}</Field>
       <Field label={t('set.profile.stack')}>{editor('stack')}</Field>
       <Field label={t('set.profile.vetoes')}>{editor('cannotDo', 'warning')}</Field>
@@ -349,7 +361,7 @@ const ProfileSummary = ({ onboarding, onSaved }: ProfileSummaryProps) => {
       </Box>
 
       <Stack direction="row" spacing={1} mb={3}>
-        <Button variant="contained" size="small" disabled={!dirty || saving} onClick={save}>
+        <Button variant="contained" size="small" disabled={!dirty || saving || !lists.roles.length} onClick={save}>
           {t('int.save')}
         </Button>
         <Button variant="text" size="small" disabled={!dirty || saving} onClick={() => setLists(initial())}>

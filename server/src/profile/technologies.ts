@@ -1,3 +1,5 @@
+import type { Role } from './roles.js';
+
 export type Ecosystem =
   | 'node' | 'php' | 'python' | 'jvm' | 'dotnet' | 'go' | 'ruby' | 'rust-c'
   | 'elixir' | 'frontend' | 'mobile' | 'data' | 'cms' | 'cloud' | 'devops'
@@ -7,7 +9,14 @@ export interface Technology {
   readonly name: string;
   readonly aliases?: readonly string[];
   readonly ecosystem: Ecosystem;
+  /** Defines the trade of whoever has it in their CV: it goes to the core. */
   readonly core?: boolean;
+  /**
+   * Defines the trade only for these trades. Cypress is the core of a QA
+   * engineer and a side tool of a developer, who should not start receiving
+   * QA postings because their CV mentions an end-to-end test.
+   */
+  readonly coreFor?: readonly Role[];
 }
 
 export const ECOSYSTEM_LABELS: Readonly<Record<Ecosystem, string>> = {
@@ -69,6 +78,7 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'Livewire', ecosystem: 'frontend' },
   { name: 'ECharts', ecosystem: 'frontend' },
   { name: 'Leaflet', ecosystem: 'frontend' },
+  { name: 'Figma', ecosystem: 'frontend', coreFor: ['design'] },
 
   { name: 'PHP', ecosystem: 'php', core: true },
   { name: 'Laravel', ecosystem: 'php', core: true },
@@ -147,12 +157,12 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'Azure', ecosystem: 'cloud' },
   { name: 'Vercel', ecosystem: 'cloud' },
   { name: 'Serverless', ecosystem: 'cloud' },
-  { name: 'Docker', ecosystem: 'devops' },
-  { name: 'Kubernetes', aliases: ['k8s'], ecosystem: 'devops' },
-  { name: 'Terraform', ecosystem: 'devops' },
-  { name: 'Ansible', ecosystem: 'devops' },
-  { name: 'CI/CD', aliases: ['github actions', 'gitlab ci', 'jenkins'], ecosystem: 'devops' },
-  { name: 'Linux', ecosystem: 'devops' },
+  { name: 'Docker', ecosystem: 'devops', coreFor: ['devops'] },
+  { name: 'Kubernetes', aliases: ['k8s'], ecosystem: 'devops', coreFor: ['devops'] },
+  { name: 'Terraform', ecosystem: 'devops', coreFor: ['devops'] },
+  { name: 'Ansible', ecosystem: 'devops', coreFor: ['devops'] },
+  { name: 'CI/CD', aliases: ['github actions', 'gitlab ci', 'jenkins'], ecosystem: 'devops', coreFor: ['devops'] },
+  { name: 'Linux', ecosystem: 'devops', coreFor: ['devops'] },
   { name: 'Nginx', ecosystem: 'devops' },
   { name: 'RabbitMQ', ecosystem: 'devops' },
   { name: 'Kafka', ecosystem: 'devops' },
@@ -161,10 +171,13 @@ export const TECHNOLOGIES: readonly Technology[] = [
   { name: 'Tableau', ecosystem: 'data', core: true },
   { name: 'Spark', aliases: ['pyspark'], ecosystem: 'data', core: true },
   { name: 'Databricks', ecosystem: 'data', core: true },
-  { name: 'Airflow', ecosystem: 'data' },
-  { name: 'Pentaho', ecosystem: 'data' },
-  { name: 'Talend', ecosystem: 'data' },
-  { name: 'ETL', ecosystem: 'data' },
+  { name: 'Airflow', ecosystem: 'data', coreFor: ['data'] },
+  { name: 'Pentaho', ecosystem: 'data', coreFor: ['data'] },
+  { name: 'Talend', ecosystem: 'data', coreFor: ['data'] },
+  { name: 'ETL', ecosystem: 'data', coreFor: ['data'] },
+  { name: 'dbt', ecosystem: 'data', coreFor: ['data'] },
+  { name: 'Snowflake', ecosystem: 'data', coreFor: ['data'] },
+  { name: 'BigQuery', ecosystem: 'data', coreFor: ['data'] },
   { name: 'MATLAB', ecosystem: 'data' },
 
   { name: 'WordPress', ecosystem: 'cms', core: true },
@@ -184,12 +197,22 @@ export const TECHNOLOGIES: readonly Technology[] = [
 
   { name: 'Jest', ecosystem: 'testing' },
   { name: 'Vitest', ecosystem: 'testing' },
-  { name: 'Cypress', ecosystem: 'testing' },
-  { name: 'Playwright', ecosystem: 'testing' },
-  { name: 'Selenium', ecosystem: 'testing' },
+  { name: 'Cypress', ecosystem: 'testing', coreFor: ['qa'] },
+  { name: 'Playwright', ecosystem: 'testing', coreFor: ['qa'] },
+  { name: 'Selenium', aliases: ['webdriver'], ecosystem: 'testing', coreFor: ['qa'] },
+  { name: 'Appium', ecosystem: 'testing', coreFor: ['qa'] },
+  { name: 'Postman', ecosystem: 'testing', coreFor: ['qa'] },
+  { name: 'JMeter', ecosystem: 'testing', coreFor: ['qa'] },
+  { name: 'Cucumber', aliases: ['gherkin'], ecosystem: 'testing', coreFor: ['qa'] },
+  { name: 'TestNG', ecosystem: 'testing', coreFor: ['qa'] },
+  { name: 'JUnit', ecosystem: 'testing', coreFor: ['qa'] },
+  { name: 'Robot Framework', ecosystem: 'testing', coreFor: ['qa'] },
+  { name: 'Katalon', ecosystem: 'testing', coreFor: ['qa'] },
+  { name: 'SoapUI', ecosystem: 'testing', coreFor: ['qa'] },
+  { name: 'TestRail', ecosystem: 'testing' },
   { name: 'PHPUnit', ecosystem: 'testing' },
   { name: 'PyTest', ecosystem: 'testing' },
-  { name: 'K6', ecosystem: 'testing' },
+  { name: 'K6', ecosystem: 'testing', coreFor: ['qa'] },
   { name: 'SonarQube', ecosystem: 'testing' },
   { name: 'Swagger', aliases: ['openapi'], ecosystem: 'testing' },
   { name: 'Sentry', ecosystem: 'testing' },

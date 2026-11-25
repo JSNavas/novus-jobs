@@ -27,7 +27,7 @@ export const es = {
 
   'judge.language': 'Responde en español.',
 
-  'motivation.default': 'Me interesa el puesto de {puesto} en {empresa}: es un rol donde puedo aportar la experiencia que he ido acumulando como desarrollador de software. Vi que piden conocimientos en {tecnologias}, que son justo las tecnologías con las que vengo trabajando. Soy responsable, me gusta trabajar en equipo y me adapto rápido a entornos nuevos. Disfruto aprendiendo tecnologías, integrándolas y mejorando mi forma de trabajar, y cuido las buenas prácticas y el código que se puede mantener.',
+  'motivation.default': 'Me interesa el puesto de {puesto} en {empresa}: es un rol donde puedo aportar la experiencia que he ido acumulando en mi oficio. Vi que piden conocimientos en {tecnologias}, que son justo las tecnologías con las que vengo trabajando. Soy responsable, me gusta trabajar en equipo y me adapto rápido a entornos nuevos. Disfruto aprendiendo tecnologías, integrándolas y mejorando mi forma de trabajar, y cuido las buenas prácticas y el código que se puede mantener.',
 
   'mail.subject.one': '1 oferta nueva para revisar',
   'mail.subject.many': '{count} ofertas nuevas para revisar',

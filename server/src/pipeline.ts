@@ -208,7 +208,7 @@ function applyJudgment(
 
   const location = rules.rejectedBy === 'location' ? JobLocation.Unknown : rules.location;
   if (locationRejectionCode(location, profile.modality)) return rules;
-  if (profile.core.length && !matchStack(text, profile.core).length && !isOwnRole(text)) return rules;
+  if (profile.core.length && !matchStack(text, profile.core).length && !isOwnRole(text, profile.roles, profile.cannotDo)) return rules;
 
   return {
     ...refined,

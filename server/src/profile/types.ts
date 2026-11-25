@@ -1,3 +1,5 @@
+import type { Role } from './roles.js';
+
 export const ENGLISH_LEVELS = ['none', 'a1', 'a2', 'b1', 'b2', 'c1', 'c2', 'native'] as const;
 
 export type EnglishLevel = (typeof ENGLISH_LEVELS)[number];
@@ -45,6 +47,8 @@ export type Language = (typeof LANGUAGES)[number];
 
 export interface CandidateProfile {
   readonly language: Language;
+  /** The trades the person looks for work in. Never empty: see `roles.ts`. */
+  readonly roles: readonly Role[];
   readonly stack: readonly string[];
   readonly core: readonly string[];
   readonly cannotDo: readonly string[];

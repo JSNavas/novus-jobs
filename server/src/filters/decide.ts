@@ -121,7 +121,7 @@ function rejectByLocation(ctx: Context, profile: CandidateProfile): Verdict | nu
 }
 
 function rejectByVetoes(ctx: Context, ad: string, profile: CandidateProfile): Verdict | null {
-  const unknownTech = hasSeveralOpenings(ad) ? null : unknownRequiredTech(ad, profile.cannotDo);
+  const unknownTech = hasSeveralOpenings(ad) ? null : unknownRequiredTech(ad, profile.cannotDo, profile.core);
   if (unknownTech) return reject(ctx, { code: 'reject.unknownTech', params: { tech: unknownTech.trim() } }, 'veto');
   const english = rejectByEnglish(ctx, ad, profile);
   if (english) return english;
@@ -166,23 +166,23 @@ function rejectByEnglish(ctx: Context, ad: string, profile: CandidateProfile): V
   }, 'veto');
 }
 
-function judgeCore(ctx: Context, core: readonly string[]): Verdict | null {
-  if (!core.length) return null;
-  const coreMatch = matchStack(ctx.text, core);
-  if (coreMatch.length && isOtherEcosystem(ctx.text, coreMatch)) {
+function judgeCore(ctx: Context, profile: CandidateProfile): Verdict | null {
+  if (!profile.core.length) return null;
+  const coreMatch = matchStack(ctx.text, profile.core);
+  if (coreMatch.length && isOtherEcosystem(ctx.text, coreMatch, profile.cannotDo)) {
     return reject(ctx, { code: 'reject.otherEcosystem', params: {} }, 'stack');
   }
   if (coreMatch.length) return null;
-  if (isOwnRole(ctx.text)) return accept(ctx, true);
+  if (isOwnRole(ctx.text, profile.roles, profile.cannotDo)) return accept(ctx, true);
   const rejection: Rejection = ctx.stackMatch.length
     ? { code: 'reject.peripheral', params: { matches: ctx.stackMatch.join(', ') } }
     : { code: 'reject.noStack', params: {} };
   return reject(ctx, rejection, 'stack');
 }
 
-function judgeStack(ctx: Context): Verdict | null {
+function judgeStack(ctx: Context, profile: CandidateProfile): Verdict | null {
   if (ctx.stackMatch.length) return null;
-  if (isOwnRole(ctx.text)) return accept(ctx, true);
+  if (isOwnRole(ctx.text, profile.roles, profile.cannotDo)) return accept(ctx, true);
   return reject(ctx, { code: 'reject.noStack', params: {} }, 'stack');
 }
 
@@ -190,9 +190,9 @@ export function decideShipping(offer: Offer, profile: CandidateProfile): Verdict
   const ctx = buildContext(offer.text, profile);
   const early = rejectNonOffer(ctx) ?? rejectByLocation(ctx, profile) ?? rejectByVetoes(ctx, adBody(offer.text), profile);
   if (early) return early;
-  const core = judgeCore(ctx, profile.core);
+  const core = judgeCore(ctx, profile);
   if (core) return core;
-  const stack = judgeStack(ctx);
+  const stack = judgeStack(ctx, profile);
   if (stack) return stack;
   if (ctx.location === JobLocation.Unknown) return accept(ctx, true);
   return accept(ctx, false);

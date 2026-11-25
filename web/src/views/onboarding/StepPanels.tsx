@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import {
   getSettings, listIntegrations, readCv, updateIntegrationEnabled, updateSettings,
-  type CvReading, type EnglishLevel, type Integration, type OnboardingState, type Settings,
+  type CvReading, type EnglishLevel, type Integration, type OnboardingState, type Role, type Settings,
 } from '../../api/client';
 
 const MIN_MOTIVATION_CHARS = 50;
@@ -120,8 +120,53 @@ export const CvStep = ({ state, draft, onChange, onRead }: CvPanelProps) => {
   );
 };
 
+const ROLE_KEYS: Record<Role, TranslationKey> = {
+  software: 'role.software', qa: 'role.qa', data: 'role.data', devops: 'role.devops', design: 'role.design',
+};
+
+export const roleLabel = (role: Role): string => t(ROLE_KEYS[role]);
+
+export interface RoleChoiceProps {
+  options: readonly Role[];
+  value: readonly Role[];
+  onChange: (next: Role[]) => void;
+}
+
+/** Which trades to look for work in. Shared by the wizard and the profile editor. */
+export const RoleChoice = ({ options, value, onChange }: RoleChoiceProps) => (
+  <Stack direction="row" flexWrap="wrap" useFlexGap columnGap={2}>
+    {options.map((role) => (
+      <FormControlLabel
+        key={role}
+        control={
+          <Checkbox
+            size="small"
+            checked={value.includes(role)}
+            onChange={(event) => onChange(
+              event.target.checked ? [...value, role] : value.filter((r) => r !== role),
+            )}
+          />
+        }
+        label={<Typography variant="body2">{roleLabel(role)}</Typography>}
+      />
+    ))}
+  </Stack>
+);
+
 export const StackStep = ({ state, draft, onChange }: PanelProps) => (
   <Stack spacing={3}>
+    <Box>
+      <Typography variant="subtitle2" mb={0.5}>{t('roles.title')}</Typography>
+      <Typography variant="caption" color="textSecondary" display="block" mb={1}>
+        {t('roles.help')}
+      </Typography>
+      <RoleChoice
+        options={state.catalogue.roles}
+        value={draft.roles}
+        onChange={(roles) => onChange({ ...draft, roles })}
+      />
+    </Box>
+
     <Box>
       <Typography variant="subtitle2" mb={0.5}>{t('stack.all')}</Typography>
       <Typography variant="caption" color="textSecondary" display="block" mb={1.5}>

@@ -1,7 +1,9 @@
+import { DEFAULT_ROLES } from './roles.js';
 import type { CandidateProfile } from './types.js';
 
 export const DEFAULT_PROFILE: CandidateProfile = {
   language: 'es',
+  roles: DEFAULT_ROLES,
   stack: [],
   core: [],
   cannotDo: [],

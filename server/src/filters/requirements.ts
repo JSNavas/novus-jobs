@@ -1,3 +1,4 @@
+import { namesOwnTrade, type Role } from '../profile/roles.js';
 import { ENGLISH_LEVELS, type EnglishLevel } from '../profile/types.js';
 import { escapeRegex } from './text-match.js';
 
@@ -104,14 +105,21 @@ function namedAsTechnology(t: string, index: number, length: number): boolean {
   return TECH_CUE.test(near);
 }
 
-export function unknownRequiredTech(text: string, cannotDo: readonly string[]): string | null {
+/**
+ * The first technology from `cannotDo` the ad makes mandatory. `known` are the
+ * person's core technologies: "Node.js, Python o Go" asks for one of them, so
+ * Go is not demanded from someone who knows Node.
+ */
+export function unknownRequiredTech(text: string, cannotDo: readonly string[], known: readonly string[] = []): string | null {
+  if (!cannotDo.length) return null;
   const t = text.toLowerCase();
+  const knownTech = techPattern(known);
   for (const m of t.matchAll(unknownTechPattern(cannotDo))) {
     const i = m.index ?? 0;
     const window = t.slice(Math.max(0, i - TECH_WINDOW), i + m[0].length + TECH_WINDOW);
     if (OPTIONAL_TECH.test(window)) continue;
     if (ALSO_A_PLAIN_WORD.has(m[0]) && !namedAsTechnology(t, i, m[0].length)) continue;
-    if (isAlternativeToKnownTech(t, i, m[0].length)) continue;
+    if (knownTech && isAlternativeToKnownTech(t, i, m[0].length, knownTech)) continue;
     if (MIGRATION_CONTEXT.test(window)) continue;
     return m[0];
   }
@@ -120,32 +128,62 @@ export function unknownRequiredTech(text: string, cannotDo: readonly string[]): 
 
 const LIST_SEPARATOR = String.raw`(?:\s*(?:,|/|\||·|•|;|\by\/o\b|\bo\b|\bu\b|\bor\b)\s*)`;
 const LIST_ITEM = String.raw`\.?[a-záéíóúñ0-9][a-záéíóúñ0-9.#+_-]*(?:\s+(?!(?:o|u|y|or|and)\b)\.?[a-záéíóúñ0-9][a-záéíóúñ0-9.#+_-]*){0,2}`;
-const KNOWN_TECH = /\b(node(?:js|\.js)?|typescript|javascript|react|reactjs|vue(?:js|\.js)?|nuxt|next(?:js|\.js)?|php|laravel|python|nest(?:js|\.js)?|fastapi|express)\b/i;
 const CHOOSE_ONE = /al\s+menos\s+uno|alguno?\s+de\s+(?:los|las)|cualquiera\s+de|o\s+similar(?:es)?|u\s+otr[ao]s?|entre\s+otr[ao]s|o\s+equivalentes?/i;
 const DISJUNCTIVE = /\/|\||\by\/o\b|\bo\b|\bu\b|\bor\b/i;
 
-function isAlternativeToKnownTech(t: string, i: number, length: number): boolean {
+const KNOWN_PATTERN_CACHE = new Map<string, RegExp | null>();
+
+/** A list of technologies as one case-insensitive pattern; null for an empty list. */
+function techPattern(techs: readonly string[]): RegExp | null {
+  const key = techs.join('|');
+  if (KNOWN_PATTERN_CACHE.has(key)) return KNOWN_PATTERN_CACHE.get(key) ?? null;
+  const alternatives = [...techs]
+    .sort((a, b) => b.length - a.length)
+    .map((tech) => escapeRegex(tech.toLowerCase()).replace(/ /g, String.raw`\s+`))
+    .join('|');
+  const pattern = alternatives
+    ? new RegExp(String.raw`(?<![a-z0-9#+.])(?:${alternatives})(?![a-z0-9#+]|\.[a-z])`, 'i')
+    : null;
+  KNOWN_PATTERN_CACHE.set(key, pattern);
+  return pattern;
+}
+
+function isAlternativeToKnownTech(t: string, i: number, length: number, knownTech: RegExp): boolean {
   const chain = new RegExp(`${LIST_ITEM}(?:${LIST_SEPARATOR}${LIST_ITEM})+`, 'gi');
   const end = i + length;
   for (const c of t.matchAll(chain)) {
     const from = c.index ?? 0;
     if (from > i || from + c[0].length < end) continue;
-    if (KNOWN_TECH.test(c[0]) && DISJUNCTIVE.test(c[0])) return true;
+    if (knownTech.test(c[0]) && DISJUNCTIVE.test(c[0])) return true;
   }
   const sentence = t.slice(Math.max(0, i - 120), end + 120);
-  return CHOOSE_ONE.test(sentence) && KNOWN_TECH.test(sentence);
+  return CHOOSE_ONE.test(sentence) && knownTech.test(sentence);
 }
 
-const STACKS_FOREIGN = /\b(\.net|dotnet|asp\.net|c#|blazor|java\b|spring\s*boot|kotlin|swift\b|ruby\s+on\s+rails|\brails\b|golang|\bgo\b|angular|flutter|scala|elixir|phoenix|drupal|umbraco|sharepoint|salesforce|abap|cobol)\b/i;
-const OWN_ROLES = /\b(front[\s-]?end|back[\s-]?end|full[\s-]?stack|web\s+developer|desarrollador(a)?\s+web|software\s+engineer|desarrollador(a)?\s+(de\s+)?software)\b/i;
-
-export function isOwnRole(text: string): boolean {
-  return OWN_ROLES.test(text) && !STACKS_FOREIGN.test(text);
+/**
+ * Does the text name, as a technology, something the person does not work
+ * with? It used to be a fixed list of "foreign stacks" — the author's — so a
+ * QA engineer testing an Angular app had it filed under somebody else's job.
+ */
+export function namesForeignTech(text: string, cannotDo: readonly string[]): boolean {
+  if (!cannotDo.length) return false;
+  const t = text.toLowerCase();
+  for (const m of t.matchAll(unknownTechPattern(cannotDo))) {
+    if (ALSO_A_PLAIN_WORD.has(m[0]) && !namedAsTechnology(t, m.index ?? 0, m[0].length)) continue;
+    return true;
+  }
+  return false;
 }
 
-export function isOtherEcosystem(text: string, coreMatch: readonly string[]): boolean {
+/** A posting titled as one of your trades, that names nothing you do not work with. */
+export function isOwnRole(text: string, roles: readonly Role[], cannotDo: readonly string[]): boolean {
+  return namesOwnTrade(text, roles) && !namesForeignTech(text, cannotDo);
+}
+
+/** Only "JavaScript" matched, and the posting is someone else's stack that also uses it. */
+export function isOtherEcosystem(text: string, coreMatch: readonly string[], cannotDo: readonly string[]): boolean {
   const onlyJs = coreMatch.length > 0 && coreMatch.every((x) => /^javascript$/i.test(x));
-  return onlyJs && STACKS_FOREIGN.test(text);
+  return onlyJs && namesForeignTech(text, cannotDo);
 }
 
 // ── Experience ────────────────────────────────────────────────────────────────

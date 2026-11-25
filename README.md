@@ -166,8 +166,12 @@ Open **http://127.0.0.1:47831** and the setup wizard walks you through it:
    your CV and the stack, English level, years of experience and location are
    read off it — locally, with pattern rules, on your machine. You can skip the
    upload and type everything by hand.
-2. **Your stack.** What you know, which technologies define your trade, and which
-   ecosystems you do not want to be offered.
+2. **Your trade and stack.** What you do — software development, QA and testing,
+   data, DevOps, UX/UI design; more than one if you like — what you know, which
+   technologies define your trade, and which ecosystems you do not want to be
+   offered. The trade decides which postings are yours: a QA engineer gets QA
+   openings and not developer ones, even when both mention Selenium. The CV's
+   headline proposes it ("QA Automation Engineer").
 3. **English and experience.** Your English level and your years of experience,
    and whether postings demanding much more than that should be hidden. A junior
    with two years does not get "5+ years" or "Seniority: Senior" postings; a

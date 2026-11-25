@@ -1,5 +1,6 @@
 import type { SettingsRepository } from '../db/settings.repository.js';
 import { DEFAULT_PROFILE } from './defaults.js';
+import { isRole, type Role } from './roles.js';
 import { ENGLISH_LEVELS, LANGUAGES, MAX_EXPERIENCE_YEARS, type CandidateProfile, type EnglishLevel, type Language } from './types.js';
 
 export const PROFILE_KEY = 'candidateProfile';
@@ -38,6 +39,7 @@ function parseProfile(raw: string | null): CandidateProfile {
   if (!stored) return DEFAULT_PROFILE;
   return {
     language: LANGUAGES.find((l) => l === stored.language) ?? DEFAULT_PROFILE.language,
+    roles: roles(stored.roles) ?? DEFAULT_PROFILE.roles,
     stack: strings(stored.stack) ?? DEFAULT_PROFILE.stack,
     core: strings(stored.core) ?? DEFAULT_PROFILE.core,
     cannotDo: strings(stored.cannotDo) ?? DEFAULT_PROFILE.cannotDo,
@@ -109,6 +111,13 @@ function timezone(value: unknown): string | null {
 
 function level(value: unknown): EnglishLevel | null {
   return ENGLISH_LEVELS.find((l) => l === value) ?? null;
+}
+
+/** The known trades in the list, or null when none is left: a profile always has one. */
+export function roles(value: unknown): Role[] | null {
+  if (!Array.isArray(value)) return null;
+  const known = [...new Set(value.filter(isRole))];
+  return known.length ? known : null;
 }
 
 /** Whole years, 0 to MAX_EXPERIENCE_YEARS. Anything else is "not said". */

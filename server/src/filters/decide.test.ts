@@ -116,3 +116,36 @@ describe('decideShipping — the level comes from the profile', () => {
     assert.equal(decide(ad).accepted, true);
   });
 });
+
+describe('decideShipping — a QA profile gets QA postings', () => {
+  const QA: CandidateProfile = {
+    ...PROFILE,
+    roles: ['qa'],
+    stack: ['Cypress', 'Selenium', 'Playwright', 'Postman', 'JavaScript', 'Java', 'Jira'],
+    core: ['Cypress', 'Selenium', 'Playwright', 'Postman'],
+    cannotDo: ['C#', '.NET'],
+    experience: { years: 3, filter: true },
+  };
+  const decide = (text: string, profile: CandidateProfile = QA) => decideShipping({ text, url: null }, profile);
+  const REMOTE = 'Trabajo 100% remoto, podemos contratar desde Venezuela.';
+
+  it('a QA automation posting with their tools passes', () => {
+    const verdict = decide(`Buscamos QA Automation Engineer con Cypress y Postman. ${REMOTE}`);
+    assert.equal(verdict.accepted, true);
+    assert.ok(verdict.stackMatch.includes('Cypress'));
+  });
+
+  it('a QA posting that names none of their tools still reaches them, unconfirmed', () => {
+    const verdict = decide(`Se busca QA Engineer para pruebas funcionales. ${REMOTE}`);
+    assert.equal(verdict.accepted, true);
+    assert.equal(verdict.uncertain, true);
+  });
+
+  it('the same postings are not a developer\'s', () => {
+    assert.equal(decide(`Se busca QA Engineer para pruebas funcionales. ${REMOTE}`, PROFILE).accepted, false);
+  });
+
+  it('a developer posting is not a QA\'s: none of their tools, not their title', () => {
+    assert.equal(decide(`Desarrollador Backend con Go y Kafka. ${REMOTE}`).accepted, false);
+  });
+});

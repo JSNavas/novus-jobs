@@ -4,6 +4,7 @@ import {
   ECOSYSTEM_LABELS, TECHNOLOGIES, VETOABLE_ECOSYSTEMS, spellingsOf, technologiesOf,
   type Ecosystem,
 } from '../profile/technologies.js';
+import { rolesInCv, type Role } from '../profile/roles.js';
 import { ENGLISH_LEVELS, type EnglishLevel } from '../profile/types.js';
 
 export interface CvExtraction {
@@ -14,6 +15,8 @@ export interface CvExtraction {
   country: string | null;
   city: string | null;
   years: number | null;
+  /** The trades the CV's headline names; empty when it names none. */
+  roles: Role[];
   foundInCv: boolean;
 }
 
@@ -21,7 +24,10 @@ export function extractFromCv(text: string): CvExtraction {
   const t = text.toLowerCase();
   const found = TECHNOLOGIES.filter((tech) => spellingsOf(tech).some((s) => wordIn(t, s.toLowerCase())));
   const stack = found.map((tech) => tech.name);
-  const core = found.filter((tech) => tech.core).map((tech) => tech.name);
+  const roles = rolesInCv(text);
+  const core = found
+    .filter((tech) => tech.core || tech.coreFor?.some((role) => roles.includes(role)))
+    .map((tech) => tech.name);
   const place = findPlace(t);
   return {
     stack,
@@ -31,6 +37,7 @@ export function extractFromCv(text: string): CvExtraction {
     country: place?.code ?? null,
     city: place?.city ?? null,
     years: findYears(t),
+    roles,
     foundInCv: stack.length > 0,
   };
 }
