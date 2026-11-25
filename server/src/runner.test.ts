@@ -100,6 +100,16 @@ describe('Runner — suelo de las búsquedas manuales', () => {
     assert.equal(run.id, 1);
   });
 
+  it('una búsqueda de una plataforma solo ejecuta la elegida', () => {
+    runner([LINKEDIN, GETONBRD]).startManual('getonbrd');
+    assert.deepEqual(runs.list(50).items.map((run) => run.source), ['getonbrd']);
+  });
+
+  it('rechaza una plataforma desconocida o apagada', () => {
+    assert.match(refusal(() => runner([GETONBRD]).startManual('inexistente')), /no se encontró/);
+    assert.match(refusal(() => runner([GETONBRD], { enabled: () => false }).startManual('getonbrd')), /Integraciones/);
+  });
+
   it('una segunda búsqueda a los 10 min se niega y dice cuánto falta', () => {
     pastManual(null);
     advance(10 * 60_000);

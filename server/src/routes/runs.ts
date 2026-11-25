@@ -63,11 +63,26 @@ export function registerRunRoutes(app: FastifyInstance, deps: RunRoutesDeps): vo
     return reply.send(run);
   });
 
-  app.post('/api/runs', (_request, reply) => {
+  app.post('/api/runs', (request, reply) => {
     try {
-      const run = deps.runner.startManual();
-      deps.scheduler.markCurrentSlot();
+      const body = request.body as { source?: unknown } | null;
+      if (body?.source !== undefined && (typeof body.source !== 'string' || !body.source.trim())) {
+        return reply.code(400).send({ error: 'La plataforma no es válida.' });
+      }
+      const run = deps.runner.startManual(body?.source as string | undefined);
+      if (!body?.source) deps.scheduler.markCurrentSlot();
       return reply.code(202).send(run);
+    } catch (error) {
+      if (error instanceof RunRefusedError) return reply.code(409).send({ error: error.message });
+      throw error;
+    }
+  });
+
+  app.post<{ Params: { id: string } }>('/api/runs/:id/retry', (request, reply) => {
+    const previous = deps.runs.find(Number(request.params.id));
+    if (!previous) return reply.code(404).send({ error: 'pasada no encontrada' });
+    try {
+      return reply.code(202).send(deps.runner.startManual(previous.source));
     } catch (error) {
       if (error instanceof RunRefusedError) return reply.code(409).send({ error: error.message });
       throw error;

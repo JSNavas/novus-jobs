@@ -156,6 +156,14 @@ describe('API HTTP', () => {
     assert.equal(missing.statusCode, 404);
   });
 
+  it('reintentar una pasada inexistente no inicia una búsqueda general', async () => {
+    const before = db.prepare('SELECT COUNT(*) AS count FROM runs').get() as { count: number };
+    const response = await app.inject({ method: 'POST', url: '/api/runs/999999/retry' });
+    const after = db.prepare('SELECT COUNT(*) AS count FROM runs').get() as { count: number };
+    assert.equal(response.statusCode, 404);
+    assert.equal(after.count, before.count);
+  });
+
   it('GET /api/jobs sin resultados es 200 con lista vacía', async () => {
     const res = await app.inject({ method: 'GET', url: '/api/jobs?source=otra-fuente' });
     assert.equal(res.statusCode, 200);

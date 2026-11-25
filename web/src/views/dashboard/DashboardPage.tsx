@@ -9,7 +9,7 @@ import {
   type Icon as TablerIcon,
 } from '@tabler/icons-react';
 import {
-  getOnboarding, listIntegrations, listJobs, listRuns, PAGE_SIZE, startRun,
+  getOnboarding, listIntegrations, listJobs, listRuns, PAGE_SIZE, startRun, retryRun,
   type Integration, type OnboardingState, type Stats,
 } from '../../api/client';
 import { useNotifications } from '../../notifications';
@@ -173,10 +173,10 @@ const DashboardPage = () => {
     if (searching && notices.length > noticesAtStart.current) setSearching(false);
   }, [notices.length, searching]);
 
-  const search = (): void => {
+  const search = (runId?: number): void => {
     noticesAtStart.current = notices.length;
     setSearching(true);
-    startRun().catch((cause: unknown) => {
+    (runId === undefined ? startRun() : retryRun(runId)).then(() => { refresh(); }).catch((cause: unknown) => {
       setSearching(false);
       push({
         tone: 'error',
@@ -207,7 +207,7 @@ const DashboardPage = () => {
           variant="outlined"
           size="small"
           startIcon={<IconRefresh size={14} stroke={1.6} />}
-          onClick={search}
+          onClick={() => search()}
           disabled={searching}
         >
             {searching ? t('dash.searching') : t('dash.searchNow')}
@@ -344,6 +344,11 @@ const DashboardPage = () => {
                           <Typography variant="caption" color="textSecondary" noWrap sx={{ maxWidth: 220 }}>
                             {run.failure ? runFailureLabel(run.failure) : run.error}
                           </Typography>
+                        ) : null}
+                        {run.status === RunStatus.Error && integrations.some((item) => item.name === run.source) ? (
+                          <Button size="small" disabled={searching || running} onClick={(event) => { event.stopPropagation(); search(run.id); }}>
+                            {t('dash.retry')}
+                          </Button>
                         ) : null}
                       </Stack>
                     </TableCell>

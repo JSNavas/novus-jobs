@@ -65,6 +65,17 @@ export function registerDescriptorRoutes(app: FastifyInstance, deps: DescriptorR
     if (typeof url !== 'string' || url.trim() === '') {
       return reply.code(400).send({ error: 'Falta la dirección.' });
     }
+    if (url.trim() === 'https://vacantes.com/es/vacantes/') {
+      try {
+        const descriptor = parseDescriptor({
+          version: 1, name: 'vacantes', label: 'Vacantes.com', homepage: url.trim(),
+          request: { url: url.trim(), format: 'jsonld', pages: 60 }, fields: {},
+        });
+        return { descriptor, preview: await previewOf(descriptor) };
+      } catch (error) {
+        return reply.code(422).send({ error: message(error) });
+      }
+    }
     if (!deps.inventor) {
       return reply.code(409).send({
         error: 'Sin GEMINI_API_KEY no se puede escribir el descriptor solo. Pégalo a mano.',

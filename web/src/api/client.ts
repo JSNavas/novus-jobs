@@ -116,6 +116,10 @@ export function startRun(): Promise<RunInfo> {
   return request<RunInfo>('/runs', { method: 'POST' });
 }
 
+export function retryRun(id: number): Promise<RunInfo> {
+  return request<RunInfo>(`/runs/${id}/retry`, { method: 'POST' });
+}
+
 export interface FocusTopic {
   name: string;
   area: string;

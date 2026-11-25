@@ -82,6 +82,7 @@ export const es = {
   'dash.running': 'Búsqueda en curso',
   'dash.running.detail': 'Leyendo {platforms} plataformas. El resultado aparece aquí en cuanto termine.',
   'dash.searchNow': 'Buscar ahora',
+  'dash.retry': 'Reintentar',
   'dash.searching': 'Buscando…',
   'sidebar.lastRunFailed': 'La última búsqueda falló',
   'sidebar.searching': 'En curso',

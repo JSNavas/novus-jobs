@@ -84,6 +84,7 @@ export const en: Record<keyof typeof es, string> = {
   'dash.running': 'Search running',
   'dash.running.detail': 'Reading {platforms} platforms. The result shows up here as soon as it finishes.',
   'dash.searchNow': 'Search now',
+  'dash.retry': 'Retry',
   'dash.searching': 'Searching…',
   'sidebar.lastRunFailed': 'The last search failed',
   'sidebar.searching': 'Running',

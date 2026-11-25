@@ -168,7 +168,7 @@ El dashboard lo dice arriba, con qué hacer. Los motivos son cuatro y solo uno t
 | `layout` | Hay sesión y el feed vino vacío: cambió el DOM | Mirar la captura en `server/data/logs/` |
 | `other` | Red, timeout, lo demás | Esperar la franja siguiente |
 
-El botón «Buscar ahora» tiene un suelo de **una hora**, y con `login_required` se niega del todo: insistir contra una pantalla de login no arregla nada y es lo que marca una cuenta.
+En el historial, **«Reintentar»** junto a una pasada fallida busca solo esa plataforma. Respeta sus límites de frecuencia y, si no puede arrancar, explica por qué. «Buscar ahora» busca todas las plataformas encendidas que puedan ejecutarse. Cada fuente conserva su propio intervalo mínimo; con `login_required` se exige volver a iniciar sesión antes de reintentar.
 
 Variables de entorno (`server/.env`, todas opcionales):
 
@@ -528,6 +528,12 @@ se ofrecen.
 Después el modelo escribe el mapeo y, antes de guardar, ves las tres primeras
 ofertas tal y como las leerá el filtro. Si algo falla, se corrige ahí mismo y se
 vuelve a probar.
+
+Vacantes.com viene en el catálogo: lee los datos `JobPosting` de las ofertas
+enlazadas desde su página de vacantes. El alta también reconoce las direcciones
+de Vacantes.com y propone esa lectura, incluida la dirección de GraphQL. Las
+fuentes de API reintentan una vez después de dos segundos si reciben un 403,
+429 o 503; si vuelve a fallar, la pasada conserva el error para mostrarlo.
 
 Lo que el modelo escribe se guarda como datos y **no se vuelve a llamar**: las
 siguientes diez mil vacantes se extraen con ese JSON, sin IA y sin coste. La IA

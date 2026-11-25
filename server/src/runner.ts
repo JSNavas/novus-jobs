@@ -72,10 +72,11 @@ export class Runner implements PassRunner {
     return last ? Date.parse(last) : null;
   }
 
-  startManual(): RunInfo {
+  startManual(sourceName?: string): RunInfo {
     if (this.busy) throw new RunRefusedError('ya hay una búsqueda en curso');
     if (!this.deps.onboarded()) throw new RunRefusedError('todavía no has terminado el alta: sin tu perfil, una búsqueda descartaría todo lo que encuentre');
-    const active = this.deps.sources.filter((s) => this.deps.enabled(s.name));
+    if (sourceName && !this.deps.sources.some((s) => s.name === sourceName)) throw new RunRefusedError('no se encontró esa plataforma');
+    const active = this.deps.sources.filter((s) => this.deps.enabled(s.name) && (!sourceName || s.name === sourceName));
     if (!active.length) throw new RunRefusedError('no hay ninguna plataforma encendida: enciende alguna en Integraciones');
 
     const allowed: JobSource[] = [];

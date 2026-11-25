@@ -268,6 +268,10 @@ export async function discover(input: string, pool: BrowserPool | null = null): 
     return { candidates: [], notes: ['La dirección tiene que ser https.'] };
   }
 
+  if (target.hostname === 'vacantes.com' || target.hostname === 'www.vacantes.com') {
+    return { candidates: [{ url: 'https://vacantes.com/es/vacantes/', format: 'jsonld', how: 'las ofertas publican sus datos en cada página', count: 0 }], notes };
+  }
+
   const direct = await asJsonCandidate(target.href, 'la dirección que pegaste ya devuelve JSON');
   if (direct) return { candidates: [direct], notes };
 

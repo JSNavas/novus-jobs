@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "name": "vacantes",
+  "label": "Vacantes.com",
+  "homepage": "https://vacantes.com/es/vacantes/",
+  "request": {
+    "url": "https://vacantes.com/es/vacantes/",
+    "format": "jsonld",
+    "pages": 60
+  },
+  "fields": {}
+}

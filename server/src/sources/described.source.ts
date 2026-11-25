@@ -276,7 +276,7 @@ export class DescribedSource implements JobSource {
 
     const { format } = this.descriptor.request;
 
-    const response = await fetch(target, {
+    const options: RequestInit = {
       method,
       headers: {
         accept: format === 'json' ? 'application/json' : 'text/html, application/rss+xml, application/xml',
@@ -286,7 +286,14 @@ export class DescribedSource implements JobSource {
       },
       body: body ? JSON.stringify(body) : undefined,
       signal: AbortSignal.timeout(TIMEOUT_MS),
-    });
+    };
+    let response = await fetch(target, options);
+    // A transient refusal can clear; keep the failure visible if it persists.
+    if (response.status === 403 || response.status === 429 || response.status === 503) {
+      await response.body?.cancel();
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      response = await fetch(target, { ...options, signal: AbortSignal.timeout(TIMEOUT_MS) });
+    }
 
     if (!response.ok) {
       throw new Error(`${target.href} respondió ${response.status} ${response.statusText}`);
